@@ -243,27 +243,17 @@ class _AppTextFieldState extends State<AppTextField> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: const BorderRadius.all(Radius.circular(16)),
-            borderSide: BorderSide(
-              color: theme.colorScheme.secondary,
-            ),
+            borderSide: BorderSide(color: theme.colorScheme.secondary),
           ),
           floatingLabelBehavior: FloatingLabelBehavior.never,
           border: InputBorder.none,
           errorBorder: OutlineInputBorder(
-            borderRadius: const BorderRadius.all(
-              Radius.circular(16),
-            ),
-            borderSide: BorderSide(
-              color: theme.colorScheme.errorContainer,
-            ),
+            borderRadius: const BorderRadius.all(Radius.circular(16)),
+            borderSide: BorderSide(color: theme.colorScheme.errorContainer),
           ),
           focusedErrorBorder: OutlineInputBorder(
-            borderRadius: const BorderRadius.all(
-              Radius.circular(16),
-            ),
-            borderSide: BorderSide(
-              color: theme.colorScheme.errorContainer,
-            ),
+            borderRadius: const BorderRadius.all(Radius.circular(16)),
+            borderSide: BorderSide(color: theme.colorScheme.errorContainer),
           ),
         ),
       ),

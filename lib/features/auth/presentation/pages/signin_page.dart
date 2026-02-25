@@ -49,10 +49,7 @@ class _SigninPageState extends ConsumerState<SigninPage> {
     if (!_formKey.currentState!.validate()) return;
     ref
         .read(signinProvider.notifier)
-        .signin(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
+        .signin(_emailController.text.trim(), _passwordController.text);
   }
 
   Future<void> _handleEmailNotConfirmed(String email) async {
@@ -115,26 +112,22 @@ class _SigninPageState extends ConsumerState<SigninPage> {
           actions: [
             AppButton.icon(
               onPressed: () => ref.read(appThemeProvider.notifier).toggle(),
-              icon: Icon(
-                switch (currentTheme) {
-                  LightTheme() => CupertinoIcons.sun_max,
-                  DarkTheme() => CupertinoIcons.moon,
-                  SystemTheme() =>
-                    MediaQuery.platformBrightnessOf(context) == Brightness.dark
-                        ? CupertinoIcons.moon
-                        : CupertinoIcons.sun_max,
-                },
-              ),
+              icon: Icon(switch (currentTheme) {
+                LightTheme() => CupertinoIcons.sun_max,
+                DarkTheme() => CupertinoIcons.moon,
+                SystemTheme() =>
+                  MediaQuery.platformBrightnessOf(context) == Brightness.dark
+                      ? CupertinoIcons.moon
+                      : CupertinoIcons.sun_max,
+              }),
             ),
 
             IconButton(
               onPressed: () => ref.read(appLocaleProvider.notifier).toggle(),
-              icon: Icon(
-                switch (ref.watch(appLocaleProvider)) {
-                  ArabicLocale() => Icons.language, // showing AR → tap for EN
-                  _ => Icons.language_outlined, // showing EN → tap for AR
-                },
-              ),
+              icon: Icon(switch (ref.watch(appLocaleProvider)) {
+                ArabicLocale() => Icons.language, // showing AR → tap for EN
+                _ => Icons.language_outlined, // showing EN → tap for AR
+              }),
             ),
           ],
         ),
