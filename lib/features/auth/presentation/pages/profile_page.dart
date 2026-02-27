@@ -20,32 +20,28 @@ class ProfilePage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () => context.goNamed(RouteNames.home),
+          onPressed: () => context.goNamed(RouteNames.test),
           icon: const Icon(Icons.arrow_back_outlined),
         ),
         title: const Text('Profile'),
         actions: [
           AppButton.icon(
             onPressed: () => ref.read(appThemeProvider.notifier).toggle(),
-            icon: Icon(
-              switch (currentTheme) {
-                LightTheme() => CupertinoIcons.sun_max,
-                DarkTheme() => CupertinoIcons.moon,
-                SystemTheme() =>
-                  MediaQuery.platformBrightnessOf(context) == Brightness.dark
-                      ? CupertinoIcons.moon
-                      : CupertinoIcons.sun_max,
-              },
-            ),
+            icon: Icon(switch (currentTheme) {
+              LightTheme() => CupertinoIcons.sun_max,
+              DarkTheme() => CupertinoIcons.moon,
+              SystemTheme() =>
+                MediaQuery.platformBrightnessOf(context) == Brightness.dark
+                    ? CupertinoIcons.moon
+                    : CupertinoIcons.sun_max,
+            }),
           ),
           IconButton(
             onPressed: () => ref.read(appLocaleProvider.notifier).toggle(),
-            icon: Icon(
-              switch (ref.watch(appLocaleProvider)) {
-                ArabicLocale() => Icons.language, // showing AR → tap for EN
-                _ => Icons.language_outlined, // showing EN → tap for AR
-              },
-            ),
+            icon: Icon(switch (ref.watch(appLocaleProvider)) {
+              ArabicLocale() => Icons.language, // showing AR → tap for EN
+              _ => Icons.language_outlined, // showing EN → tap for AR
+            }),
           ),
         ],
       ),
@@ -80,9 +76,7 @@ class ProfilePage extends ConsumerWidget {
           );
         },
         error: (error, stackTrace) {
-          return Center(
-            child: Text('Error loading profile: $error'),
-          );
+          return Center(child: Text('Error loading profile: $error'));
         },
         loading: () => const Center(child: CircularProgressIndicator()),
       ),

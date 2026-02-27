@@ -3,13 +3,14 @@ import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_name_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_password_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/forgot_password_page.dart';
-import 'package:future_riverpod/features/auth/presentation/pages/home_page.dart';
+import 'package:future_riverpod/features/auth/presentation/pages/home_test.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/profile_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/signin_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/signup_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/splash_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/verify_email_page.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_provider.dart';
+import 'package:future_riverpod/features/home/presentation/pages/home_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -71,6 +72,11 @@ GoRouter router(Ref ref) {
       ),
 
       // Protected Routes
+      GoRoute(
+        path: '/test',
+        name: RouteNames.test,
+        builder: (context, state) => const HomeTest(),
+      ),
       GoRoute(
         path: '/home',
         name: RouteNames.home,

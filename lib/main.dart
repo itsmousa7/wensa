@@ -53,8 +53,11 @@ class MyApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      theme: AppTheme.lightTheme(languageCode: languageCode),
-      darkTheme: AppTheme.darkTheme(languageCode: languageCode),
+      theme: AppTheme.lightTheme(languageCode: languageCode, context: context),
+      darkTheme: AppTheme.darkTheme(
+        languageCode: languageCode,
+        context: context,
+      ),
       themeMode: switch (themeState) {
         LightTheme() => ThemeMode.light,
         DarkTheme() => ThemeMode.dark,

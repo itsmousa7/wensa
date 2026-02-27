@@ -10,8 +10,11 @@ class AppTheme {
   AppTheme._();
 
   /// Get light theme
-  static ThemeData lightTheme({String languageCode = 'en'}) {
-    final textTheme = AppTypography.getTextTheme(languageCode, isDark: false);
+  static ThemeData lightTheme({
+    String languageCode = 'en',
+    required BuildContext context,
+  }) {
+    final textTheme = AppTypography.getTextTheme(languageCode, context);
 
     return ThemeData(
       useMaterial3: true,
@@ -57,9 +60,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: AppColors.white,
         elevation: AppSpacing.elevationSM,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.borderRadiusLG,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusLG),
         margin: AppSpacing.paddingZero,
       ),
 
@@ -217,9 +218,7 @@ class AppTheme {
         backgroundColor: AppColors.lightGreenPrimary,
         foregroundColor: AppColors.black,
         elevation: AppSpacing.elevationMD,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.borderRadiusLG,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusLG),
       ),
 
       // Bottom Navigation Bar Theme
@@ -267,9 +266,7 @@ class AppTheme {
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.white,
         elevation: AppSpacing.elevationLG,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.borderRadiusXL,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusXL),
         titleTextStyle: textTheme.headlineSmall,
         contentTextStyle: textTheme.bodyMedium,
       ),
@@ -280,9 +277,7 @@ class AppTheme {
         contentTextStyle: textTheme.bodyMedium?.copyWith(
           color: AppColors.white,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.borderRadiusMD,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusMD),
         behavior: SnackBarBehavior.floating,
         elevation: AppSpacing.elevationMD,
       ),
@@ -294,9 +289,7 @@ class AppTheme {
         disabledColor: AppColors.lightSecondary.withOpacity(0.5),
         labelStyle: textTheme.bodySmall,
         padding: AppSpacing.paddingAllSM,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.borderRadiusSM,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusSM),
       ),
 
       // Switch Theme
@@ -328,9 +321,7 @@ class AppTheme {
           color: AppColors.lightSecondary,
           width: AppSpacing.borderMedium,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.borderRadiusXS,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusXS),
       ),
 
       // Radio Theme
@@ -353,8 +344,11 @@ class AppTheme {
   }
 
   /// Get dark theme
-  static ThemeData darkTheme({String languageCode = 'en'}) {
-    final textTheme = AppTypography.getTextTheme(languageCode, isDark: true);
+  static ThemeData darkTheme({
+    String languageCode = 'en',
+    required BuildContext context,
+  }) {
+    final textTheme = AppTypography.getTextTheme(languageCode, context);
 
     return ThemeData(
       useMaterial3: true,
@@ -400,9 +394,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: AppColors.darkSecondary,
         elevation: AppSpacing.elevationSM,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.borderRadiusLG,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusLG),
         margin: AppSpacing.paddingZero,
       ),
 
@@ -557,9 +549,7 @@ class AppTheme {
         backgroundColor: AppColors.darkGreenPrimary,
         foregroundColor: AppColors.white,
         elevation: AppSpacing.elevationMD,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.borderRadiusLG,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusLG),
       ),
 
       // Bottom Navigation Bar Theme
@@ -607,9 +597,7 @@ class AppTheme {
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.darkSecondary,
         elevation: AppSpacing.elevationLG,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.borderRadiusXL,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusXL),
         titleTextStyle: textTheme.headlineSmall,
         contentTextStyle: textTheme.bodyMedium,
       ),
@@ -620,9 +608,7 @@ class AppTheme {
         contentTextStyle: textTheme.bodyMedium?.copyWith(
           color: AppColors.white,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.borderRadiusMD,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusMD),
         behavior: SnackBarBehavior.floating,
         elevation: AppSpacing.elevationMD,
       ),
@@ -634,9 +620,7 @@ class AppTheme {
         disabledColor: AppColors.darkSecondary.withOpacity(0.5),
         labelStyle: textTheme.bodySmall,
         padding: AppSpacing.paddingAllSM,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.borderRadiusSM,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusSM),
       ),
 
       // Switch Theme
@@ -668,9 +652,7 @@ class AppTheme {
           color: AppColors.darkSecondary,
           width: AppSpacing.borderMedium,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.borderRadiusXS,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusXS),
       ),
 
       // Radio Theme

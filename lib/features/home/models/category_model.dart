@@ -6,12 +6,11 @@ part 'category_model.g.dart';
 @freezed
 abstract class CategoryModel with _$CategoryModel {
   const factory CategoryModel({
-    @Default('') String id,
-    @Default('') String nameAr,
-    @Default('') String nameEn,
+    required String id,
+    required String nameAr,
+    required String nameEn,
     String? iconUrl,
     String? colorHex,
-    String? createdAt,
   }) = _CategoryModel;
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) => CategoryModel(
@@ -20,6 +19,9 @@ abstract class CategoryModel with _$CategoryModel {
     nameEn: json['name_en'] ?? '',
     iconUrl: json['icon_url'],
     colorHex: json['color_hex'],
-    createdAt: json['created_at'],
   );
+}
+
+extension CategoryModelX on CategoryModel {
+  String nameFor(String locale) => locale == 'ar' ? nameAr : nameEn;
 }

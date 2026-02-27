@@ -21,14 +21,14 @@ class AppTypography {
   }
 
   /// Create TextTheme for the given language
-  static TextTheme getTextTheme(String languageCode, {required bool isDark}) {
+  static TextTheme getTextTheme(String languageCode, BuildContext context) {
     final titleFont = getTitleFontFamily(languageCode);
 
     final baseTextTheme = languageCode == 'ar'
         ? GoogleFonts.rubikTextTheme() // base theme from Rubik for Arabic
         : GoogleFonts.robotoTextTheme();
 
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
+    final textColor = Theme.of(context).colorScheme.onSurface;
 
     return baseTextTheme.copyWith(
       // ── Display — Hrof (ar) / Roboto (en) ────────────────
@@ -113,7 +113,7 @@ class AppTypography {
       ),
       bodyMedium: baseTextTheme.bodyMedium?.copyWith(
         fontSize: 14,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
         letterSpacing: 0.25,
         color: textColor,
         fontFamily: languageCode == 'ar'
@@ -122,7 +122,7 @@ class AppTypography {
       ),
       bodySmall: baseTextTheme.bodySmall?.copyWith(
         fontSize: 12,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w600,
         letterSpacing: 0.4,
         color: textColor,
         fontFamily: languageCode == 'ar'

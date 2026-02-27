@@ -7,8 +7,8 @@ import 'package:future_riverpod/features/auth/presentation/providers/user_profil
 import 'package:future_riverpod/features/auth/presentation/widgets/app_button.dart';
 import 'package:go_router/go_router.dart';
 
-class HomePage extends ConsumerWidget {
-  const HomePage({super.key});
+class HomeTest extends ConsumerWidget {
+  const HomeTest({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

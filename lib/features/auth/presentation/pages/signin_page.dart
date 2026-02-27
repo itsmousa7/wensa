@@ -108,6 +108,7 @@ class _SigninPageState extends ConsumerState<SigninPage> {
       behavior: HitTestBehavior.opaque,
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
           actions: [
             AppButton.icon(
