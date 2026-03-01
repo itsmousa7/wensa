@@ -24,14 +24,15 @@ class PromotedBanner extends ConsumerWidget {
         child: Skeletonizer(
           enabled: true,
           effect: ShimmerEffect(
-            baseColor: theme.colorScheme.surfaceContainer,
-            highlightColor: theme.colorScheme.surfaceContainerHighest,
+            baseColor: theme.colorScheme.surfaceContainer, // card bg
+            highlightColor: theme.colorScheme.surfaceContainerHighest, // sweep
+            duration: const Duration(milliseconds: 1200),
           ),
           child: Container(
             height: 82,
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainer,
-              borderRadius: BorderRadius.circular(10),
+              color: theme.colorScheme.surfaceContainer, // same as baseColor
+              borderRadius: BorderRadius.circular(18),
             ),
             child: Row(
               children: [
@@ -40,7 +41,7 @@ class PromotedBanner extends ConsumerWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainer,
+                    color: theme.colorScheme.surfaceContainerHighest, // 👈 bone
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),
@@ -54,7 +55,9 @@ class PromotedBanner extends ConsumerWidget {
                         height: 12,
                         width: 160,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest,
+                          color: theme
+                              .colorScheme
+                              .surfaceContainerHighest, // 👈 bone
                           borderRadius: BorderRadius.circular(6),
                         ),
                       ),
@@ -63,7 +66,9 @@ class PromotedBanner extends ConsumerWidget {
                         height: 10,
                         width: 100,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest,
+                          color: theme
+                              .colorScheme
+                              .surfaceContainerHighest, // 👈 bone
                           borderRadius: BorderRadius.circular(6),
                         ),
                       ),
@@ -75,7 +80,7 @@ class PromotedBanner extends ConsumerWidget {
                   height: 30,
                   margin: const EdgeInsets.only(right: 18),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest,
+                    color: theme.colorScheme.surfaceContainerHighest, // 👈 bone
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),

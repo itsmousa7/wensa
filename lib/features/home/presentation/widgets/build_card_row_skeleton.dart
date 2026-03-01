@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:future_riverpod/features/home/presentation/pages/home_page.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class BuildCardRowSkeleton extends StatelessWidget {
@@ -7,61 +6,81 @@ class BuildCardRowSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context).colorScheme;
     return Skeletonizer(
-    enabled: true,
-    effect: const ShimmerEffect(baseColor: kSurface2, highlightColor: kBorder),
-    child: SizedBox(
-      height: 210,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 22),
-        itemCount: 3,
-        separatorBuilder: (_, _) => const SizedBox(width: 14),
-        itemBuilder: (_, _) => Container(
-          width: 170,
-          decoration: BoxDecoration(
-            color: kSurface2,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // صورة
-              Container(
-                height: 112,
-                width: 170,
-                decoration: const BoxDecoration(
-                  color: kBorder,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-              ),
-              // badge
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-                child: Container(
-                  width: 50,
-                  height: 16,
+      enabled: true,
+      effect: ShimmerEffect(
+        baseColor: theme.surfaceContainer,
+        highlightColor: theme.surfaceContainerHighest,
+      ),
+      child: SizedBox(
+        height: 210,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 22),
+          itemCount: 3,
+          separatorBuilder: (_, _) => const SizedBox(width: 14),
+          itemBuilder: (_, _) => SizedBox(
+            width: 250,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Image — fully rounded to match ClipRRect(radius: 20)
+                Container(
+                  height: 130,
+                  width: double.infinity,
                   decoration: BoxDecoration(
-                    color: kBorder,
-                    borderRadius: BorderRadius.circular(8),
+                    color: theme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-              ),
-              // title
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Container(height: 13, width: 130, color: kBorder),
-              ),
-              const SizedBox(height: 6),
-              // subtitle
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Container(height: 10, width: 80, color: kBorder),
-              ),
-            ],
+
+                // Text area
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title + badge row
+                      Row(
+                        children: [
+                          Container(
+                            height: 13,
+                            width: 130,
+                            decoration: BoxDecoration(
+                              color: theme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            height: 20,
+                            width: 52,
+                            decoration: BoxDecoration(
+                              color: theme.surfaceContainer,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Subtitle
+                      Container(
+                        height: 10,
+                        width: 90,
+                        decoration: BoxDecoration(
+                          color: theme.surfaceContainer,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),);
+    );
   }
 }

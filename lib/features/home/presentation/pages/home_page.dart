@@ -1,22 +1,17 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
-import 'package:future_riverpod/features/home/presentation/providers/home_provider.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/app_bar.dart';
-import 'package:future_riverpod/features/home/presentation/widgets/build_card_row_skeleton.dart';
-import 'package:future_riverpod/features/home/presentation/widgets/build_error_widget.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/category_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/home_search_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/hot_event_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/new_opening.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/promoted_banner.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/trending_feed.dart';
-import 'package:future_riverpod/features/places/domain/models/place_model.dart';
 
 // ── Color Tokens ──────────────────────────────────────────────────────────────
 const kBg = Color(0xFF0B0B12);
@@ -89,7 +84,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   String get _seeAll => isAr ? 'عرض الكل ›' : 'See all ›';
 
   String get trendingBadge => isAr ? '🔥 رائج' : '🔥 Hot';
-  String get _justOpened => isAr ? '✦ افتُتح حديثاً' : '✦ Just Opened';
   String get eventBadge => isAr ? '🎉 حدث' : '🎉 Event';
 
   String _navLabel(int i) {
@@ -188,136 +182,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   );
 
   // ── CATEGORIES ────────────────────────────────────────────────────────────
-
-  // ── NEW OPENINGS ──────────────────────────────────────────────────────────
-  Widget _buildNewOpeningsSection() {
-    final newOpeningsAsync = ref.watch(newOpeningsProvider);
-    return newOpeningsAsync.when(
-      loading: () => BuildCardRowSkeleton(),
-      error: (e, _) => buildErrorWidget(e.toString()),
-      data: (places) => SizedBox(
-        height: 210,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 22),
-          itemCount: places.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 14),
-          itemBuilder: (_, i) => _buildPlaceCard(places[i]),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlaceCard(PlaceModel place) => GestureDetector(
-    onTap: () {
-      /* TODO: Navigate to place detail */
-    },
-    child: Container(
-      width: 170,
-      decoration: BoxDecoration(
-        color: kSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: kBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
-                child: SizedBox(
-                  height: 112,
-                  width: double.infinity,
-                  child: place.coverImageUrl != null
-                      ? CachedNetworkImage(
-                          imageUrl: place.coverImageUrl!,
-                          fit: BoxFit.cover,
-                          placeholder: (_, _) => Container(color: kSurface2),
-                          errorWidget: (_, _, _) => Container(color: kSurface2),
-                        )
-                      : Container(color: kSurface2),
-                ),
-              ),
-              Positioned(
-                top: 9,
-                left: isAr ? null : 9,
-                right: isAr ? 9 : null,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: kNewGreen,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    _justOpened,
-                    style: const TextStyle(
-                      color: kText,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              if (place.isVerified == true)
-                Positioned(
-                  top: 9,
-                  right: isAr ? null : 9,
-                  left: isAr ? 9 : null,
-                  child: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Text(
-                        '✓',
-                        style: TextStyle(
-                          color: kTeal,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isAr ? place.nameAr : place.nameEn,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: kText,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                if (place.area != null)
-                  Text(
-                    '📍 ${place.area}',
-                    style: const TextStyle(color: kText3, fontSize: 10),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
 
   // ── BOTTOM NAV ────────────────────────────────────────────────────────────
   Widget _buildBottomNav() {
