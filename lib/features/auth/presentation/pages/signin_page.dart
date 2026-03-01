@@ -145,7 +145,9 @@ class _SigninPageState extends ConsumerState<SigninPage> {
                   children: [
                     Text(
                       context.tr('sign_in'),
-                      style: theme.textTheme.displayMedium,
+                      style: theme.textTheme.displayMedium?.copyWith(
+                        color: theme.colorScheme.outline,
+                      ),
                     ),
 
                     const Gap(AppSpacing.xl),
@@ -238,7 +240,9 @@ class _SigninPageState extends ConsumerState<SigninPage> {
                       children: [
                         Text(
                           context.tr('no_account'),
-                          style: theme.textTheme.bodyMedium,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
                         ),
                         AppButton.text(
                           label: context.tr('sign_up'),

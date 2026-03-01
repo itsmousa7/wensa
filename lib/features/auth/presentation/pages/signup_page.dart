@@ -99,7 +99,9 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                 children: [
                   Text(
                     context.tr('sign_up'),
-                    style: theme.textTheme.displayMedium,
+                    style: theme.textTheme.displayMedium?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
                   ),
                   const Gap(20),
                   Row(
@@ -186,6 +188,9 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     children: [
                       Text(
                         context.tr('have_account'),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.outline,
+                        ),
                       ),
                       AppButton.text(
                         label: context.tr('log_in'),

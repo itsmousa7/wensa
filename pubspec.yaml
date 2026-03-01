@@ -67,12 +67,10 @@ flutter:
   #   - .env
 
   fonts:
-    - family: Hrof
+    - family: Graphik-Bold
       fonts:
-        - asset: assets/fonts/hrof.ttf
-    - family: Hazm
+        - asset: assets/fonts/graphik-bold.ttf
+      
+    - family: Graphik-Light
       fonts:
-        - asset: assets/fonts/hazm.ttf
-    - family: Zain
-      fonts:
-        - asset: assets/fonts/zain.ttf
+        - asset: assets/fonts/graphik-light.ttf

@@ -34,6 +34,7 @@ class AppTheme {
         errorContainer: AppColors.lightRedSecondary, // ← add
         onErrorContainer: AppColors.black,
         surfaceContainer: AppColors.lightTextField,
+        surfaceContainerLowest: AppColors.disableGray,
       ),
 
       // Scaffold Background
@@ -119,11 +120,11 @@ class AppTheme {
 
         // Text styles
         hintStyle: AppTypography.hint(
-          isDark: false,
+          context: context,
           languageCode: languageCode,
         ),
         errorStyle: AppTypography.error(
-          isDark: false,
+          context: context,
           languageCode: languageCode,
         ),
         labelStyle: textTheme.bodyMedium,
@@ -157,7 +158,7 @@ class AppTheme {
             ),
           ),
           textStyle: AppTypography.button(
-            isDark: false,
+            context: context,
             languageCode: languageCode,
           ),
         ),
@@ -182,7 +183,7 @@ class AppTheme {
             width: AppSpacing.borderMedium,
           ),
           textStyle: AppTypography.button(
-            isDark: false,
+            context: context,
             languageCode: languageCode,
           ),
         ),
@@ -198,7 +199,7 @@ class AppTheme {
             vertical: AppSpacing.sm,
           ),
           textStyle: AppTypography.button(
-            isDark: false,
+            context: context,
             languageCode: languageCode,
           ).copyWith(fontWeight: FontWeight.w500),
         ),
@@ -452,9 +453,12 @@ class AppTheme {
         ),
 
         // Text styles
-        hintStyle: AppTypography.hint(isDark: true, languageCode: languageCode),
+        hintStyle: AppTypography.hint(
+          context: context,
+          languageCode: languageCode,
+        ),
         errorStyle: AppTypography.error(
-          isDark: true,
+          context: context,
           languageCode: languageCode,
         ),
         labelStyle: textTheme.bodyMedium,
@@ -488,7 +492,7 @@ class AppTheme {
             ),
           ),
           textStyle: AppTypography.button(
-            isDark: true,
+            context: context,
             languageCode: languageCode,
           ),
         ),
@@ -513,7 +517,7 @@ class AppTheme {
             width: AppSpacing.borderMedium,
           ),
           textStyle: AppTypography.button(
-            isDark: true,
+            context: context,
             languageCode: languageCode,
           ),
         ),
@@ -529,7 +533,7 @@ class AppTheme {
             vertical: AppSpacing.sm,
           ),
           textStyle: AppTypography.button(
-            isDark: true,
+            context: context,
             languageCode: languageCode,
           ).copyWith(fontWeight: FontWeight.w500),
         ),

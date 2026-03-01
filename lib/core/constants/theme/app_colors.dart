@@ -25,6 +25,7 @@ class AppColors {
 
   /// Primary background color for light theme
   static const Color lightPrimary = Color(0xFFF8F8F8);
+  static const disableGray = Color(0xFFA0A0B8);
 
   /// Secondary background color for light theme
   static const Color lightSecondary = Color.fromARGB(255, 231, 231, 231);

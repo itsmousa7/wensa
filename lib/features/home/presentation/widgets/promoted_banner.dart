@@ -24,7 +24,7 @@ class PromotedBanner extends ConsumerWidget {
         child: Skeletonizer(
           enabled: true,
           effect: ShimmerEffect(
-            baseColor: theme.colorScheme.surfaceContainerHighest,
+            baseColor: theme.colorScheme.surfaceContainer,
             highlightColor: theme.colorScheme.surfaceContainerHighest,
           ),
           child: Container(
@@ -40,7 +40,7 @@ class PromotedBanner extends ConsumerWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest,
+                    color: theme.colorScheme.surfaceContainer,
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),
@@ -84,22 +84,17 @@ class PromotedBanner extends ConsumerWidget {
           ),
         ),
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (banners) {
         if (banners.isEmpty) return const SizedBox.shrink();
         final banner = banners.first;
         return Padding(
           padding: const EdgeInsets.fromLTRB(22, 6, 22, 0),
           child: GestureDetector(
-            onTap: () {
-              /* TODO: navigate */
-            },
-            child: Container(
+            onTap: () {},
+            child: SizedBox(
               height: 82,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: kOrange.withValues(alpha: 0.3)),
-              ),
+
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(18),
                 child: Stack(
@@ -118,8 +113,8 @@ class PromotedBanner extends ConsumerWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              Colors.black.withValues(alpha: 0.7),
-                              Colors.black.withValues(alpha: 0.2),
+                              AppColors.black.withValues(alpha: 0.7),
+                              AppColors.black.withValues(alpha: 0.2),
                             ],
                           ),
                         ),
@@ -141,14 +136,14 @@ class PromotedBanner extends ConsumerWidget {
                                       ? (banner.placeNameAr ?? '')
                                       : (banner.placeNameEn ?? ''),
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.background,
+                                    color: AppColors.white,
                                   ),
                                 ),
                                 if (banner.placeArea != null)
                                   Text(
                                     banner.placeArea!,
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                      color: AppColors.lightTextField,
+                                      color: AppColors.white,
                                     ),
                                   ),
                               ],
