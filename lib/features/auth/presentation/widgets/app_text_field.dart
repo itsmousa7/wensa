@@ -224,7 +224,10 @@ class _AppTextFieldState extends State<AppTextField> {
         textCapitalization: widget.textCapitalization,
         cursorColor: theme.colorScheme.secondary,
         cursorErrorColor: theme.colorScheme.errorContainer,
-        style: theme.textTheme.bodyLarge,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: theme.colorScheme.outline,
+          ),
+
         decoration: InputDecoration(
           hintText: widget.hint,
           helperText: widget.helperText,

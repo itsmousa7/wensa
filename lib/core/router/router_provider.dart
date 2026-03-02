@@ -11,27 +11,44 @@ import 'package:future_riverpod/features/auth/presentation/pages/splash_page.dar
 import 'package:future_riverpod/features/auth/presentation/pages/verify_email_page.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_provider.dart';
 import 'package:future_riverpod/features/home/presentation/pages/home_page.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/nav_shell.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'router_provider.g.dart';
 
+// ── Placeholder pages for branches that are not yet built ────────────────────
+// Replace these with your real Explore / Map pages when ready.
+class _ExplorePage extends StatelessWidget {
+  const _ExplorePage();
+  @override
+  Widget build(BuildContext context) =>
+      const Scaffold(body: Center(child: Text('Explore — coming soon')));
+}
+
+class _MapPage extends StatelessWidget {
+  const _MapPage();
+  @override
+  Widget build(BuildContext context) =>
+      const Scaffold(body: Center(child: Text('Map — coming soon')));
+}
+
 @Riverpod(keepAlive: true)
 GoRouter router(Ref ref) {
   return GoRouter(
-    initialLocation: '/verify-email',
+    initialLocation: '/signin',
     debugLogDiagnostics: true,
     redirect: (context, state) => _redirect(ref, state),
     refreshListenable: GoRouterRefreshNotifier(ref),
     routes: [
-      // Splash
+      // ── Splash ─────────────────────────────────────────────────────────────
       GoRoute(
         path: '/splash',
         name: RouteNames.splash,
         builder: (context, state) => const SplashPage(),
       ),
 
-      // Auth Routes (Public)
+      // ── Auth routes (public) ───────────────────────────────────────────────
       GoRoute(
         path: '/signin',
         name: RouteNames.signin,
@@ -44,7 +61,7 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(
         path: '/forgot-password',
-        name: RouteNames.forgotPassword, // ← was wrongly using resetPassword
+        name: RouteNames.forgotPassword,
         builder: (context, state) => const ForgotPasswordPage(),
       ),
       GoRoute(
@@ -58,46 +75,91 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: '/changeName',
         name: RouteNames.changeName,
-        builder: (context, state) {
-          return const ChangeNamePage();
-        },
+        builder: (context, state) => const ChangeNamePage(),
       ),
       GoRoute(
         name: RouteNames.verifyEmail,
         path: '/verify-email',
         builder: (context, state) => VerifyEmailPage(
           email: state.uri.queryParameters['email'],
-          type: state.uri.queryParameters['type'], // <-- THIS LINE IS MISSING
+          type: state.uri.queryParameters['type'],
         ),
       ),
 
-      // Protected Routes
+      // ── Dev / test route ───────────────────────────────────────────────────
       GoRoute(
         path: '/test',
         name: RouteNames.test,
         builder: (context, state) => const HomeTest(),
       ),
-      GoRoute(
-        path: '/home',
-        name: RouteNames.home,
-        builder: (context, state) => const HomePage(),
-      ),
-      GoRoute(
-        path: '/profile',
-        name: RouteNames.profile,
-        builder: (context, state) => const ProfilePage(),
+
+      // ── Bottom-nav shell (protected) ───────────────────────────────────────
+      // StatefulShellRoute keeps every branch alive in an IndexedStack so that
+      // navigating between tabs does NOT reset scroll position or page state.
+      StatefulShellRoute.indexedStack(
+        // The shell wraps the branches and draws the BottomBar.
+        builder: (context, state, navigationShell) =>
+            NavShell(navigationShell: navigationShell),
+
+        branches: [
+          // ── Branch 0 : Home ────────────────────────────────────────────────
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home',
+                name: RouteNames.home,
+                builder: (context, state) => const HomePage(),
+              ),
+            ],
+          ),
+
+          // ── Branch 1 : Explore ─────────────────────────────────────────────
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/explore',
+                // Add RouteNames.explore to your RouteNames class
+                name: 'explore',
+                builder: (context, state) => const _ExplorePage(),
+              ),
+            ],
+          ),
+
+          // ── Branch 2 : Map ─────────────────────────────────────────────────
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/map',
+                // Add RouteNames.map to your RouteNames class
+                name: 'map',
+                builder: (context, state) => const _MapPage(),
+              ),
+            ],
+          ),
+
+          // ── Branch 3 : Profile ─────────────────────────────────────────────
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/profile',
+                name: RouteNames.profile,
+                builder: (context, state) => const ProfilePage(),
+              ),
+            ],
+          ),
+        ],
       ),
     ],
   );
 }
 
+// ── Redirect logic ─────────────────────────────────────────────────────────────
 String? _redirect(Ref ref, GoRouterState state) {
   final isAuthenticated = ref.read(isAuthenticatedProvider);
   final isEmailVerified = ref.read(isEmailVerifiedProvider);
 
   final path = state.matchedLocation;
 
-  // Define which pages are public (don't require auth)
   final publicPages = [
     '/splash',
     '/signin',
@@ -105,71 +167,52 @@ String? _redirect(Ref ref, GoRouterState state) {
     '/forgot-password',
     '/verify-email',
   ];
+
+  // Protected shell paths — any sub-route of the bottom-nav
+  final shellPaths = ['/home', '/explore', '/map', '/profile'];
+  shellPaths.any((p) => path.startsWith(p));
   final isOnPublicPage = publicPages.any((p) => path.startsWith(p));
 
-  // Splash - redirect to appropriate page based on auth state
+  // Splash
   if (path == '/splash') {
-    if (isAuthenticated && isEmailVerified) {
-      return '/home';
-    }
-    if (isAuthenticated && !isEmailVerified) {
-      return '/verify-email';
-    }
-    return null; // Stay on splash, let splash page handle navigation
+    if (isAuthenticated && isEmailVerified) return '/home';
+    if (isAuthenticated && !isEmailVerified) return '/verify-email';
+    return null;
   }
-  // Add this block BEFORE the "User is fully authenticated" check
-  if (path.startsWith('/changePassword')) {
-    // Allow unauthenticated access only when coming from forgot password flow
-    final fromForgot = state.uri.queryParameters['from'] == 'forgot';
-    if (fromForgot) return null; // forgot password flow — let through
 
-    // In-app flow — must be authenticated
+  // changePassword — allow unauthenticated only from forgot-password flow
+  if (path.startsWith('/changePassword')) {
+    final fromForgot = state.uri.queryParameters['from'] == 'forgot';
+    if (fromForgot) return null;
     if (isAuthenticated && isEmailVerified) return null;
     return '/signin';
   }
-  // CRITICAL: Allow verify-email page for new signups (with email parameter)
-  if (path.startsWith('/verify-email')) {
-    // ✅ If user just verified their email, they're now fully authenticated.
-    // Must check this BEFORE hasEmailParam, otherwise the email query param
-    // causes this block to return null and the user is stuck on this page forever.
-    if (isAuthenticated && isEmailVerified) {
-      return '/home';
-    }
 
+  // Verify email
+  if (path.startsWith('/verify-email')) {
+    if (isAuthenticated && isEmailVerified) return '/home';
     final hasEmailParam = state.uri.queryParameters.containsKey('email');
-    if ((isAuthenticated && !isEmailVerified) || hasEmailParam) {
-      return null;
-    }
+    if ((isAuthenticated && !isEmailVerified) || hasEmailParam) return null;
     return '/signin';
   }
 
-  // User is fully authenticated (logged in + email verified)
+  // Fully authenticated
   if (isAuthenticated && isEmailVerified) {
-    // Redirect from auth pages to home
-    if (isOnPublicPage) {
-      return '/home';
-    }
-    // Allow access to protected pages
-    return null;
+    if (isOnPublicPage) return '/home';
+    return null; // allow everything else (shell pages, changeName, etc.)
   }
 
-  // User is logged in but email NOT verified
+  // Authenticated but email not verified
   if (isAuthenticated && !isEmailVerified) {
-    // Force to verify-email page
     return '/verify-email';
   }
 
-  // User is NOT logged in
-  // Allow public pages
-  if (isOnPublicPage) {
-    return null;
-  }
-
-  // Redirect protected pages to signin
+  // Not authenticated
+  if (isOnPublicPage) return null;
   return '/signin';
 }
 
-// Notifier to refresh router on auth changes
+// ── Router refresh notifier ───────────────────────────────────────────────────
 class GoRouterRefreshNotifier extends ChangeNotifier {
   GoRouterRefreshNotifier(this._ref) {
     _ref.listen(authStateProvider, (previous, next) {

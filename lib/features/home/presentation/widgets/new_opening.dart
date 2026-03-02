@@ -17,6 +17,7 @@ class NewOpening extends ConsumerWidget {
       data: (places) => SizedBox(
         height: 210,
         child: ListView.separated(
+          physics: BouncingScrollPhysics(),
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 22),
           itemCount: places.length,

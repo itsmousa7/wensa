@@ -42,6 +42,7 @@ class MyApp extends ConsumerWidget {
     final languageCode = switch (localeState) {
       ArabicLocale() => 'ar',
       _ => 'en', // default to en for system unless device is Arabic
+      
     };
 
     return MaterialApp.router(

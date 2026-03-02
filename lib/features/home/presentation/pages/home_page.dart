@@ -9,6 +9,7 @@ import 'package:future_riverpod/features/home/presentation/widgets/app_bar.dart'
 import 'package:future_riverpod/features/home/presentation/widgets/category_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/home_search_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/hot_event_section.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/nav_shell.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/new_opening.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/promoted_banner.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/trending_feed.dart';
@@ -28,8 +29,6 @@ const kText3 = Color(0xFF5A5A72);
 const kNewGreen = Color(0xFF22C55E);
 const kEventBlue = Color(0xFF4C6EF5);
 
-// ── Infinite carousel offset ──────────────────────────────────────────────────
-// نبدأ من صفحة 10000 حتى الـ carousel يقدر يسكرول للخلف وللأمام بلا نهاية
 const _kInfiniteOffset = 10000;
 
 class HomePage extends ConsumerStatefulWidget {
@@ -40,15 +39,15 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
-  int _navIndex = 0;
-
   late final PageController _pageCtrl;
   Timer? _autoScrollTimer;
+
+  // Track whether a refresh is in progress
+  bool _isRefreshing = false;
 
   @override
   void initState() {
     super.initState();
-    // ✅ نبدأ من _kInfiniteOffset حتى يكون عندنا مساحة للسكرول للخلف أيضاً
     _pageCtrl = PageController(
       viewportFraction: 0.88,
       initialPage: _kInfiniteOffset,
@@ -75,6 +74,26 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   bool get isAr => ref.watch(appLocaleProvider) is ArabicLocale;
 
+  // ── Pull-to-refresh ────────────────────────────────────────────────────────
+  // Replace the body of this method with your real data-refresh calls.
+  // e.g.: ref.invalidate(hotEventsProvider); ref.invalidate(trendingProvider);
+  Future<void> _onRefresh() async {
+    if (_isRefreshing) return;
+    setState(() => _isRefreshing = true);
+    try {
+      // ↓ Invalidate your Riverpod providers here so they re-fetch:
+      // ref.invalidate(hotEventsProvider);
+      // ref.invalidate(trendingFeedProvider);
+      // ref.invalidate(newOpeningsProvider);
+      // ref.invalidate(promotedBannerProvider);
+
+      // Minimum visual delay so the spinner doesn't flash
+      await Future.delayed(const Duration(milliseconds: 600));
+    } finally {
+      if (mounted) setState(() => _isRefreshing = false);
+    }
+  }
+
   // ── Localized strings ──────────────────────────────────────────────────────
   String get _hotEventsLabel => isAr ? '🔥 الأحداث الساخنة' : '🔥 Hot Events';
   String get _categoryLabel => isAr ? 'تصفح حسب الفئة' : 'Browse by Category';
@@ -83,18 +102,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   String get _newOpeningsLabel => isAr ? 'افتتاحات جديدة' : 'New Openings';
   String get _seeAll => isAr ? 'عرض الكل ›' : 'See all ›';
 
-  String get trendingBadge => isAr ? '🔥 رائج' : '🔥 Hot';
-  String get eventBadge => isAr ? '🎉 حدث' : '🎉 Event';
-
-  String _navLabel(int i) {
-    const ar = ['الرئيسية', 'استكشف', 'الخريطة', 'محفوظة', 'حسابي'];
-    const en = ['Home', 'Explore', 'Map', 'Saved', 'Profile'];
-    return isAr ? ar[i] : en[i];
-  }
-
   @override
   Widget build(BuildContext context) {
-    // ✅ هذا السطر يجبر الـ build على إعادة التشغيل عند تغيير اللغة
     ref.watch(appLocaleProvider);
 
     SystemChrome.setSystemUIOverlayStyle(
@@ -104,56 +113,57 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
     );
 
+    // The scroll controller is shared with NavShell so that re-tapping
+    // the Home tab scrolls back to the top.
+    final scrollController = ref.read(homeScrollControllerProvider);
+
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
-          child: Stack(
-            children: [
-              // ── CustomScrollView ─────────────────────────────────────────
-              // كل قسم هو SliverToBoxAdapter — يحوّل Widget عادي إلى Sliver
-              // الفايدة: scroll واحد يتحكم في كل الصفحة معاً
-              CustomScrollView(
-                slivers: [
-                  // ✅ HomeAppBar الآن ConsumerWidget — ما تحتاج تمرر isAr
-                  const SliverToBoxAdapter(child: HomeAppBar()),
-                  SliverToBoxAdapter(child: HomeSearchBar()),
-                  SliverToBoxAdapter(child: PromotedBanner()),
-                  SliverToBoxAdapter(
-                    child: _sectionTitle(_hotEventsLabel, more: true),
-                  ),
-                  SliverToBoxAdapter(child: HotEventsSection()),
-
-                  SliverToBoxAdapter(child: _sectionTitle(_categoryLabel)),
-                  SliverToBoxAdapter(child: CategoryBar(isAr: isAr)),
-                  SliverToBoxAdapter(
-                    child: _sectionTitle(_trendingLabel, more: true),
-                  ),
-                  SliverToBoxAdapter(child: TrendingFeed()),
-                  SliverToBoxAdapter(
-                    child: _sectionTitle(_newOpeningsLabel, more: true),
-                  ),
-                  SliverToBoxAdapter(child: NewOpening()),
-                  // مساحة فراغ فوق الـ bottom nav حتى المحتوى ما يختبئ تحته
-                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
-                ],
+          child: RefreshIndicator(
+            // Called when the user swipes down past the top edge
+            onRefresh: _onRefresh,
+            color: Theme.of(context).colorScheme.primary,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            displacement: 60,
+            child: CustomScrollView(
+              // ← Wire the shared controller so NavShell can scroll us to top
+              controller: scrollController,
+              // physics must allow over-scroll for RefreshIndicator to trigger
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
               ),
-              // ── Bottom Nav فوق كل شيء ────────────────────────────────────
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: _buildBottomNav(),
-              ),
-            ],
+              slivers: [
+                const SliverToBoxAdapter(child: HomeAppBar()),
+                SliverToBoxAdapter(child: HomeSearchBar()),
+                SliverToBoxAdapter(child: PromotedBanner()),
+                SliverToBoxAdapter(
+                  child: _sectionTitle(_hotEventsLabel, more: true),
+                ),
+                SliverToBoxAdapter(child: HotEventsSection()),
+                SliverToBoxAdapter(child: _sectionTitle(_categoryLabel)),
+                SliverToBoxAdapter(child: CategoryBar(isAr: isAr)),
+                SliverToBoxAdapter(
+                  child: _sectionTitle(_trendingLabel, more: true),
+                ),
+                SliverToBoxAdapter(child: TrendingFeed()),
+                SliverToBoxAdapter(
+                  child: _sectionTitle(_newOpeningsLabel, more: true),
+                ),
+                SliverToBoxAdapter(child: NewOpening()),
+                // Extra space so last items aren't hidden behind the nav bar
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // ── SECTION TITLE ─────────────────────────────────────────────────────────
+  // ── Section title ──────────────────────────────────────────────────────────
   Widget _sectionTitle(String title, {bool more = false}) => Padding(
     padding: const EdgeInsets.fromLTRB(22, 20, 22, 12),
     child: Row(
@@ -180,58 +190,6 @@ class _HomePageState extends ConsumerState<HomePage> {
       ],
     ),
   );
-
-  // ── CATEGORIES ────────────────────────────────────────────────────────────
-
-  // ── BOTTOM NAV ────────────────────────────────────────────────────────────
-  Widget _buildBottomNav() {
-    const icons = ['🏠', '🔭', '🗺️', '❤️', '👤'];
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.95),
-      ),
-      padding: const EdgeInsets.fromLTRB(10, 12, 10, 24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(5, (i) {
-          final isActive = i == _navIndex;
-          return GestureDetector(
-            onTap: () => setState(() => _navIndex = i),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(icons[i], style: const TextStyle(fontSize: 22)),
-                const SizedBox(height: 4),
-                Text(
-                  _navLabel(i),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: isActive ? kOrange : kText3,
-                  ),
-                ),
-                if (isActive)
-                  Container(
-                    margin: const EdgeInsets.only(top: 3),
-                    width: 4,
-                    height: 4,
-                    decoration: const BoxDecoration(
-                      color: kOrange,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-              ],
-            ),
-          );
-        }),
-      ),
-    );
-  }
-
-  // ── SKELETON CARD ROW ─────────────────────────────────────────────────────
-  // ✅ Skeletonizer يرسم نفس شكل الـ card الحقيقي بدل مستطيلات عشوائية
-
-  // ── HELPERS ───────────────────────────────────────────────────────────────
 }
+
+                      

@@ -91,6 +91,7 @@ class _HotEventsSectionState extends ConsumerState<HotEventsSection> {
   Widget _buildCarousel(List<EventModel> events) => SizedBox(
     height: 200,
     child: PageView.builder(
+      physics: BouncingScrollPhysics(),
       controller: _pageCtrl,
       itemCount: null,
       onPageChanged: (abs) => setState(() => _eventIndex = abs % events.length),

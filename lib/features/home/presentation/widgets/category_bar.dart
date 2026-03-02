@@ -51,6 +51,7 @@ class _CategoryBarState extends ConsumerState<CategoryBar> {
       data: (cats) => SizedBox(
         height: 90,
         child: ListView.separated(
+          physics: BouncingScrollPhysics(),
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 22),
           itemCount: cats.length,
