@@ -71,6 +71,7 @@ class _HotEventsSectionState extends ConsumerState<HotEventsSection> {
     final theme = Theme.of(context);
 
     return hotEventsAsync.when(
+      skipLoadingOnRefresh: false,
       loading: () => _buildSkeleton(theme),
       error: (e, _) => _buildError(e.toString()),
       // ✅ الـ dots داخل الـ Column هنا — لا تعيدها في home_page
@@ -90,6 +91,7 @@ class _HotEventsSectionState extends ConsumerState<HotEventsSection> {
   // ── CAROUSEL ──────────────────────────────────────────────────────────────
   Widget _buildCarousel(List<EventModel> events) => SizedBox(
     height: 200,
+
     child: PageView.builder(
       physics: BouncingScrollPhysics(),
       controller: _pageCtrl,
@@ -99,10 +101,7 @@ class _HotEventsSectionState extends ConsumerState<HotEventsSection> {
         final i = abs % events.length;
         final event = events[i];
         return Padding(
-          padding: EdgeInsets.only(
-            left: _isAr ? 0 : 22,
-            right: _isAr ? 22 : 14,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: 10),
           child: i == 0
               ? _HeroEventCard(event: event, isAr: _isAr, tt: _tt)
               : _SmallEventCard(event: event, isAr: _isAr, tt: _tt),

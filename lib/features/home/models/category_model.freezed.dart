@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CategoryModel {
 
- String get id; String get nameAr; String get nameEn; String? get iconUrl; String? get colorHex; String? get createdAt;
+ String get id; String get nameAr; String get nameEn; String? get iconUrl; String? get colorHex;
 /// Create a copy of CategoryModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $CategoryModelCopyWith<CategoryModel> get copyWith => _$CategoryModelCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoryModel&&(identical(other.id, id) || other.id == id)&&(identical(other.nameAr, nameAr) || other.nameAr == nameAr)&&(identical(other.nameEn, nameEn) || other.nameEn == nameEn)&&(identical(other.iconUrl, iconUrl) || other.iconUrl == iconUrl)&&(identical(other.colorHex, colorHex) || other.colorHex == colorHex)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CategoryModel&&(identical(other.id, id) || other.id == id)&&(identical(other.nameAr, nameAr) || other.nameAr == nameAr)&&(identical(other.nameEn, nameEn) || other.nameEn == nameEn)&&(identical(other.iconUrl, iconUrl) || other.iconUrl == iconUrl)&&(identical(other.colorHex, colorHex) || other.colorHex == colorHex));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,nameAr,nameEn,iconUrl,colorHex,createdAt);
+int get hashCode => Object.hash(runtimeType,id,nameAr,nameEn,iconUrl,colorHex);
 
 @override
 String toString() {
-  return 'CategoryModel(id: $id, nameAr: $nameAr, nameEn: $nameEn, iconUrl: $iconUrl, colorHex: $colorHex, createdAt: $createdAt)';
+  return 'CategoryModel(id: $id, nameAr: $nameAr, nameEn: $nameEn, iconUrl: $iconUrl, colorHex: $colorHex)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $CategoryModelCopyWith<$Res>  {
   factory $CategoryModelCopyWith(CategoryModel value, $Res Function(CategoryModel) _then) = _$CategoryModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String nameAr, String nameEn, String? iconUrl, String? colorHex, String? createdAt
+ String id, String nameAr, String nameEn, String? iconUrl, String? colorHex
 });
 
 
@@ -65,14 +65,13 @@ class _$CategoryModelCopyWithImpl<$Res>
 
 /// Create a copy of CategoryModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nameAr = null,Object? nameEn = null,Object? iconUrl = freezed,Object? colorHex = freezed,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nameAr = null,Object? nameEn = null,Object? iconUrl = freezed,Object? colorHex = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,nameAr: null == nameAr ? _self.nameAr : nameAr // ignore: cast_nullable_to_non_nullable
 as String,nameEn: null == nameEn ? _self.nameEn : nameEn // ignore: cast_nullable_to_non_nullable
 as String,iconUrl: freezed == iconUrl ? _self.iconUrl : iconUrl // ignore: cast_nullable_to_non_nullable
 as String?,colorHex: freezed == colorHex ? _self.colorHex : colorHex // ignore: cast_nullable_to_non_nullable
-as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -158,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String nameAr,  String nameEn,  String? iconUrl,  String? colorHex,  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String nameAr,  String nameEn,  String? iconUrl,  String? colorHex)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CategoryModel() when $default != null:
-return $default(_that.id,_that.nameAr,_that.nameEn,_that.iconUrl,_that.colorHex,_that.createdAt);case _:
+return $default(_that.id,_that.nameAr,_that.nameEn,_that.iconUrl,_that.colorHex);case _:
   return orElse();
 
 }
@@ -179,10 +178,10 @@ return $default(_that.id,_that.nameAr,_that.nameEn,_that.iconUrl,_that.colorHex,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String nameAr,  String nameEn,  String? iconUrl,  String? colorHex,  String? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String nameAr,  String nameEn,  String? iconUrl,  String? colorHex)  $default,) {final _that = this;
 switch (_that) {
 case _CategoryModel():
-return $default(_that.id,_that.nameAr,_that.nameEn,_that.iconUrl,_that.colorHex,_that.createdAt);case _:
+return $default(_that.id,_that.nameAr,_that.nameEn,_that.iconUrl,_that.colorHex);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +198,10 @@ return $default(_that.id,_that.nameAr,_that.nameEn,_that.iconUrl,_that.colorHex,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String nameAr,  String nameEn,  String? iconUrl,  String? colorHex,  String? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String nameAr,  String nameEn,  String? iconUrl,  String? colorHex)?  $default,) {final _that = this;
 switch (_that) {
 case _CategoryModel() when $default != null:
-return $default(_that.id,_that.nameAr,_that.nameEn,_that.iconUrl,_that.colorHex,_that.createdAt);case _:
+return $default(_that.id,_that.nameAr,_that.nameEn,_that.iconUrl,_that.colorHex);case _:
   return null;
 
 }
@@ -214,15 +213,14 @@ return $default(_that.id,_that.nameAr,_that.nameEn,_that.iconUrl,_that.colorHex,
 @JsonSerializable()
 
 class _CategoryModel implements CategoryModel {
-  const _CategoryModel({this.id = '', this.nameAr = '', this.nameEn = '', this.iconUrl, this.colorHex, this.createdAt});
+  const _CategoryModel({required this.id, required this.nameAr, required this.nameEn, this.iconUrl, this.colorHex});
   factory _CategoryModel.fromJson(Map<String, dynamic> json) => _$CategoryModelFromJson(json);
 
-@override@JsonKey() final  String id;
-@override@JsonKey() final  String nameAr;
-@override@JsonKey() final  String nameEn;
+@override final  String id;
+@override final  String nameAr;
+@override final  String nameEn;
 @override final  String? iconUrl;
 @override final  String? colorHex;
-@override final  String? createdAt;
 
 /// Create a copy of CategoryModel
 /// with the given fields replaced by the non-null parameter values.
@@ -237,16 +235,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategoryModel&&(identical(other.id, id) || other.id == id)&&(identical(other.nameAr, nameAr) || other.nameAr == nameAr)&&(identical(other.nameEn, nameEn) || other.nameEn == nameEn)&&(identical(other.iconUrl, iconUrl) || other.iconUrl == iconUrl)&&(identical(other.colorHex, colorHex) || other.colorHex == colorHex)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CategoryModel&&(identical(other.id, id) || other.id == id)&&(identical(other.nameAr, nameAr) || other.nameAr == nameAr)&&(identical(other.nameEn, nameEn) || other.nameEn == nameEn)&&(identical(other.iconUrl, iconUrl) || other.iconUrl == iconUrl)&&(identical(other.colorHex, colorHex) || other.colorHex == colorHex));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,nameAr,nameEn,iconUrl,colorHex,createdAt);
+int get hashCode => Object.hash(runtimeType,id,nameAr,nameEn,iconUrl,colorHex);
 
 @override
 String toString() {
-  return 'CategoryModel(id: $id, nameAr: $nameAr, nameEn: $nameEn, iconUrl: $iconUrl, colorHex: $colorHex, createdAt: $createdAt)';
+  return 'CategoryModel(id: $id, nameAr: $nameAr, nameEn: $nameEn, iconUrl: $iconUrl, colorHex: $colorHex)';
 }
 
 
@@ -257,7 +255,7 @@ abstract mixin class _$CategoryModelCopyWith<$Res> implements $CategoryModelCopy
   factory _$CategoryModelCopyWith(_CategoryModel value, $Res Function(_CategoryModel) _then) = __$CategoryModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String nameAr, String nameEn, String? iconUrl, String? colorHex, String? createdAt
+ String id, String nameAr, String nameEn, String? iconUrl, String? colorHex
 });
 
 
@@ -274,14 +272,13 @@ class __$CategoryModelCopyWithImpl<$Res>
 
 /// Create a copy of CategoryModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? nameAr = null,Object? nameEn = null,Object? iconUrl = freezed,Object? colorHex = freezed,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? nameAr = null,Object? nameEn = null,Object? iconUrl = freezed,Object? colorHex = freezed,}) {
   return _then(_CategoryModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,nameAr: null == nameAr ? _self.nameAr : nameAr // ignore: cast_nullable_to_non_nullable
 as String,nameEn: null == nameEn ? _self.nameEn : nameEn // ignore: cast_nullable_to_non_nullable
 as String,iconUrl: freezed == iconUrl ? _self.iconUrl : iconUrl // ignore: cast_nullable_to_non_nullable
 as String?,colorHex: freezed == colorHex ? _self.colorHex : colorHex // ignore: cast_nullable_to_non_nullable
-as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

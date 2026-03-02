@@ -8,12 +8,11 @@ part of 'category_model.dart';
 
 _CategoryModel _$CategoryModelFromJson(Map<String, dynamic> json) =>
     _CategoryModel(
-      id: json['id'] as String? ?? '',
-      nameAr: json['nameAr'] as String? ?? '',
-      nameEn: json['nameEn'] as String? ?? '',
+      id: json['id'] as String,
+      nameAr: json['nameAr'] as String,
+      nameEn: json['nameEn'] as String,
       iconUrl: json['iconUrl'] as String?,
       colorHex: json['colorHex'] as String?,
-      createdAt: json['createdAt'] as String?,
     );
 
 Map<String, dynamic> _$CategoryModelToJson(_CategoryModel instance) =>
@@ -23,5 +22,4 @@ Map<String, dynamic> _$CategoryModelToJson(_CategoryModel instance) =>
       'nameEn': instance.nameEn,
       'iconUrl': instance.iconUrl,
       'colorHex': instance.colorHex,
-      'createdAt': instance.createdAt,
     };

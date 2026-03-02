@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
-import 'package:future_riverpod/features/home/presentation/pages/home_page.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/home_search_bar.dart';
 
 enum FeedCardBadge { trending, event, newOpening }
 
@@ -41,9 +42,12 @@ class FeedCard extends ConsumerWidget {
     // Text-area badge (only for trending / event)
     final (badgeColor, badgeText) = switch (badge) {
       FeedCardBadge.trending => (kOrange, isAr ? '🔥 رائج' : '🔥 Hot'),
-      FeedCardBadge.event => (kEventBlue, isAr ? '🎉 حدث' : '🎉 Event'),
+      FeedCardBadge.event => (
+        AppColors.headline2,
+        isAr ? '🎉 حدث' : '🎉 Event',
+      ),
       FeedCardBadge.newOpening => (
-        kNewGreen,
+        AppColors.success,
         isAr ? '✦ افتتح مؤخراً' : '✦ Just Opened',
       ),
     };
@@ -92,13 +96,13 @@ class FeedCard extends ConsumerWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: kNewGreen,
+                        color: AppColors.success,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         justOpenedLabel,
                         style: const TextStyle(
-                          color: kText,
+                          color: AppColors.shadegrey2,
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
                         ),
@@ -123,7 +127,7 @@ class FeedCard extends ConsumerWidget {
                         child: Text(
                           '✓',
                           style: TextStyle(
-                            color: kTeal,
+                            color: AppColors.darkPrimary,
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
                           ),

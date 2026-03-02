@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
-import 'package:future_riverpod/features/home/presentation/pages/home_page.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -18,6 +17,7 @@ class PromotedBanner extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return bannersAsync.when(
+      skipLoadingOnRefresh: false,
       // ✅ Skeletonizer — يرسم skeleton بنفس شكل الـ widget الحقيقي
       loading: () => Padding(
         padding: const EdgeInsets.fromLTRB(22, 6, 22, 0),
@@ -110,7 +110,8 @@ class PromotedBanner extends ConsumerWidget {
                         fit: BoxFit.cover,
                         placeholder: (_, _) =>
                             Container(color: theme.colorScheme.primary),
-                        errorWidget: (_, _, _) => Container(color: kSurface2),
+                        errorWidget: (_, _, _) =>
+                            Container(color: AppColors.success),
                       ),
                     ),
                     Positioned.fill(

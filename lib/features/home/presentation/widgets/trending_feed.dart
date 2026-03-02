@@ -24,6 +24,7 @@ class _TrendingFeedState extends ConsumerState<TrendingFeed> {
     final trendingAsync = ref.watch(trendingFeedProvider);
 
     return trendingAsync.when(
+      skipLoadingOnRefresh: false,
       loading: () => BuildCardRowSkeleton(),
       error: (e, _) => buildErrorWidget(e.toString()),
       data: (items) => SizedBox(

@@ -1,6 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_provider.dart';
+import 'package:lottie/lottie.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class CategoryBar extends ConsumerStatefulWidget {
@@ -17,6 +19,8 @@ class _CategoryBarState extends ConsumerState<CategoryBar> {
     final selectedIndex = ref.watch(selectedCategoryProvider);
     final theme = Theme.of(context).colorScheme;
     return categoriesAsync.when(
+      skipLoadingOnRefresh: false,
+
       loading: () => Skeletonizer(
         enabled: true,
         effect: ShimmerEffect(
@@ -90,12 +94,7 @@ class _CategoryBarState extends ConsumerState<CategoryBar> {
                             ]
                           : [],
                     ),
-                    child: Center(
-                      child: Text(
-                        _categoryEmoji(cat.nameEn),
-                        style: const TextStyle(fontSize: 26),
-                      ),
-                    ),
+                    child: Center(child: _categoryIcon(cat.nameEn)),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -118,15 +117,36 @@ class _CategoryBarState extends ConsumerState<CategoryBar> {
   }
 }
 
-String _categoryEmoji(String nameEn) {
-  const map = {
-    'Restaurants': '🍽️',
-    'Music': '🎵',
-    'Malls': '🛍️',
-    'Cafes': '☕',
-    'Cinema': '🎬',
-    'Festivals': '🎪',
-    'Sports': '🏋️',
-  };
-  return map[nameEn] ?? '📍';
+Widget _categoryIcon(String nameEn) {
+  switch (nameEn) {
+    case 'Sports':
+      return Lottie.asset(
+        'assets/lottie/categories/gym.json',
+        width: 42,
+        height: 42,
+        fit: BoxFit.contain,
+        repeat: true,
+      );
+
+    case 'Restaurants':
+      return const Icon(CupertinoIcons.flame); // food / dining vibe
+
+    case 'Music':
+      return const Icon(CupertinoIcons.music_albums);
+
+    case 'Malls':
+      return const Icon(CupertinoIcons.shopping_cart);
+
+    case 'Cafes':
+      return const Icon(Icons.local_cafe);
+
+    case 'Cinema':
+      return const Icon(CupertinoIcons.film);
+
+    case 'Festivals':
+      return const Icon(CupertinoIcons.sparkles);
+
+    default:
+      return const Icon(CupertinoIcons.location);
+  }
 }

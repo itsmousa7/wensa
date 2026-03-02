@@ -12,6 +12,7 @@ class NewOpening extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final newOpeningsAsync = ref.watch(newOpeningsProvider);
     return newOpeningsAsync.when(
+      skipLoadingOnRefresh: false,
       loading: () => BuildCardRowSkeleton(),
       error: (e, _) => buildErrorWidget(e.toString()),
       data: (places) => SizedBox(

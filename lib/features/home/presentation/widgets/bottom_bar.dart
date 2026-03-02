@@ -1,4 +1,5 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 
@@ -61,8 +62,8 @@ class BottomBar extends StatelessWidget {
     final langCode = isAr ? 'ar' : 'en';
 
     final activeColor = scheme.primary;
-    final inactiveColor = scheme.onSurface.withValues(alpha: 0.45);
-    final bgColor = scheme.surface.withValues(alpha: 0.55);
+    final inactiveColor = scheme.outline.withValues(alpha: 0.45);
+    final bgColor = scheme.surface.withValues(alpha: 0.20);
     final pillColor = scheme.primary.withValues(alpha: 0.15);
 
     // ════════════════════════════════════════════════════

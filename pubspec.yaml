@@ -44,6 +44,7 @@ dependencies:
     sdk: flutter
   cached_network_image: ^3.4.1
   skeletonizer: ^2.1.3
+  lottie: ^3.3.2
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +65,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icons/
+    - assets/lottie/categories/
   #   - .env
 
   fonts:
