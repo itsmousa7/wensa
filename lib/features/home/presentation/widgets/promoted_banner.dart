@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
-import 'package:future_riverpod/features/home/presentation/providers/home_provider.dart';
+import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class PromotedBanner extends ConsumerWidget {

@@ -1,26 +1,25 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:future_riverpod/features/home/presentation/providers/home_provider.dart';
+import 'package:future_riverpod/core/constants/app_typography.dart';
+import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:lottie/lottie.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class CategoryBar extends ConsumerStatefulWidget {
+class CategoryBar extends ConsumerWidget {
   const CategoryBar({super.key, required this.isAr});
   final bool isAr;
-  @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _CategoryBarState();
-}
 
-class _CategoryBarState extends ConsumerState<CategoryBar> {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final categoriesAsync = ref.watch(categoriesProvider);
+    // ✅ BUG 1 FIX: int? — null يعني لا فئة مختارة
     final selectedIndex = ref.watch(selectedCategoryProvider);
     final theme = Theme.of(context).colorScheme;
+    final tt = AppTypography.getTextTheme(isAr ? 'ar' : 'en', context);
+
     return categoriesAsync.when(
       skipLoadingOnRefresh: false,
-
       loading: () => Skeletonizer(
         enabled: true,
         effect: ShimmerEffect(
@@ -33,14 +32,14 @@ class _CategoryBarState extends ConsumerState<CategoryBar> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 22),
             itemCount: 6,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (_, _) => Column(
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, __) => Column(
               children: [
                 Container(
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: theme.surfaceContainer,
+                    color: theme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
@@ -51,21 +50,25 @@ class _CategoryBarState extends ConsumerState<CategoryBar> {
           ),
         ),
       ),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
       data: (cats) => SizedBox(
-        height: 90,
+        height: 110,
         child: ListView.separated(
-          physics: BouncingScrollPhysics(),
+          physics: const BouncingScrollPhysics(),
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 22),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
           itemCount: cats.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 12),
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
           itemBuilder: (_, i) {
-            final isActive = i == selectedIndex;
+            // ✅ BUG 1 FIX: null-safe — لو selectedIndex = null كل الفئات inactive
+            final isActive = selectedIndex == i;
             final cat = cats[i];
+
             return GestureDetector(
-              onTap: () =>
-                  ref.read(selectedCategoryProvider.notifier).select(i),
+              onTap: () {
+                // نفس الفئة مرة ثانية → deselect (يرجع null)
+                ref.read(selectedCategoryProvider.notifier).select(i);
+              },
               child: Column(
                 children: [
                   AnimatedContainer(
@@ -73,23 +76,21 @@ class _CategoryBarState extends ConsumerState<CategoryBar> {
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      color: isActive
-                          ? theme.primary.withValues(alpha: 0.6)
-                          : theme.onPrimaryContainer.withValues(alpha: 0.4),
+                      // ✅ BUG 5: theme colors
+                      color: theme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isActive
-                            ? theme.primary.withValues(alpha: 0.4)
-                            : theme.surfaceContainerHighest.withValues(
-                                alpha: 0.4,
-                              ),
+                            ? theme.primary.withValues(alpha: 0.3)
+                            : theme.surfaceContainerHigh,
                         width: 1.5,
                       ),
                       boxShadow: isActive
                           ? [
                               BoxShadow(
-                                color: theme.primary.withValues(alpha: 0.3),
-                                blurRadius: 14,
+                                color: theme.primary.withValues(alpha: 0.25),
+                                blurRadius: 10,
+                                spreadRadius: 1,
                               ),
                             ]
                           : [],
@@ -98,13 +99,13 @@ class _CategoryBarState extends ConsumerState<CategoryBar> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    widget.isAr ? cat.nameAr : cat.nameEn,
-                    style: TextStyle(
+                    isAr ? cat.nameAr : cat.nameEn,
+                    // ✅ BUG 5: AppTypography
+                    style: tt.labelSmall?.copyWith(
                       color: isActive
-                          ? theme.outline
-                          : theme.surfaceContainerLowest,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                          ? theme.primary
+                          : theme.onSurface.withValues(alpha: 0.5),
+                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                 ],

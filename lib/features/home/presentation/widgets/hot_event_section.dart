@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
-import 'package:future_riverpod/features/home/presentation/providers/home_provider.dart';
+import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:future_riverpod/features/places/domain/models/event_model.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 

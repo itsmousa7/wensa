@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:future_riverpod/features/home/presentation/providers/home_provider.dart';
+import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/build_card_row_skeleton.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/build_error_widget.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/feed_card.dart';

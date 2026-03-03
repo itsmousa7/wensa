@@ -14,7 +14,6 @@ class CategoryFeedItem {
   final String? subtitleAr;
   final String? coverImageUrl;
   final bool isVerified;
-  final String type; // 'place' | 'event'
 
   const CategoryFeedItem({
     required this.id,
@@ -24,20 +23,17 @@ class CategoryFeedItem {
     this.subtitleAr,
     this.coverImageUrl,
     this.isVerified = false,
-    required this.type,
   });
 
-  factory CategoryFeedItem.fromPlace(Map<String, dynamic> m) =>
-      CategoryFeedItem(
-        id: m['id'] as String,
-        titleEn: m['name_en'] as String? ?? '',
-        titleAr: m['name_ar'] as String? ?? '',
-        subtitleEn: m['area'] as String?,
-        subtitleAr: m['area'] as String?,
-        coverImageUrl: m['cover_image_url'] as String?,
-        isVerified: m['is_verified'] as bool? ?? false,
-        type: 'place',
-      );
+  factory CategoryFeedItem.fromRow(Map<String, dynamic> m) => CategoryFeedItem(
+    id: m['id'] as String,
+    titleEn: m['name_en'] as String? ?? '',
+    titleAr: m['name_ar'] as String? ?? '',
+    subtitleEn: m['area'] as String?,
+    subtitleAr: m['area'] as String?,
+    coverImageUrl: m['cover_image_url'] as String?,
+    isVerified: m['is_verified'] as bool? ?? false,
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -47,12 +43,14 @@ class CategoryFeedState {
   final List<CategoryFeedItem> items;
   final bool isLoading;
   final bool hasMore;
+  final bool hasError; // ✅ BUG 2 FIX: نتتبع الـ error بشكل صريح
   final int page;
 
   const CategoryFeedState({
     this.items = const [],
-    this.isLoading = false,
+    this.isLoading = true, // ← true عند البداية حتى يظهر skeleton
     this.hasMore = true,
+    this.hasError = false,
     this.page = 0,
   });
 
@@ -60,55 +58,46 @@ class CategoryFeedState {
     List<CategoryFeedItem>? items,
     bool? isLoading,
     bool? hasMore,
+    bool? hasError,
     int? page,
   }) => CategoryFeedState(
     items: items ?? this.items,
     isLoading: isLoading ?? this.isLoading,
     hasMore: hasMore ?? this.hasMore,
+    hasError: hasError ?? this.hasError,
     page: page ?? this.page,
   );
+
+  // ── Convenience getters ────────────────────────────────────────────────────
+  bool get isEmpty => items.isEmpty && !isLoading && !hasError;
+  bool get isFirstLoad => items.isEmpty && isLoading;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  SelectedCategory — starts at null (nothing selected)
-// ─────────────────────────────────────────────────────────────────────────────
-@riverpod
-class SelectedCategory extends _$SelectedCategory {
-  @override
-  int? build() => null; // ✅ null = no category selected by default
-
-  void select(int index) {
-    // Tap same category → deselect; tap different → select
-    state = state == index ? null : index;
-  }
-
-  void clear() => state = null;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  CategoryFeed — autoDispose family, one per categoryId
+//  CategoryFeedNotifier — ✅ BUG 3: Riverpod Generator
 // ─────────────────────────────────────────────────────────────────────────────
 @riverpod
 class CategoryFeed extends _$CategoryFeed {
   static const _pageSize = 10;
-  final _db = Supabase.instance.client;
 
   @override
   CategoryFeedState build(String categoryId) {
-    // Kick off first page after the frame
+    // نشغّل الـ loadMore بعد أول build مباشرة
     Future.microtask(loadMore);
-    return const CategoryFeedState();
+    return const CategoryFeedState(); // isLoading = true
   }
 
   Future<void> loadMore() async {
-    if (state.isLoading || !state.hasMore) return;
-    state = state.copyWith(isLoading: true);
+    if (state.isLoading && state.page > 0) return; // منع تكرار
+    if (!state.hasMore) return;
+
+    state = state.copyWith(isLoading: true, hasError: false);
 
     try {
       final from = state.page * _pageSize;
       final to = from + _pageSize - 1;
 
-      final rows = await _db
+      final rows = await Supabase.instance.client
           .from('places')
           .select('id, name_en, name_ar, area, cover_image_url, is_verified')
           .eq('category_id', categoryId)
@@ -116,7 +105,7 @@ class CategoryFeed extends _$CategoryFeed {
           .range(from, to);
 
       final fetched = (rows as List)
-          .map((r) => CategoryFeedItem.fromPlace(r as Map<String, dynamic>))
+          .map((r) => CategoryFeedItem.fromRow(r as Map<String, dynamic>))
           .toList();
 
       state = state.copyWith(
@@ -125,8 +114,9 @@ class CategoryFeed extends _$CategoryFeed {
         hasMore: fetched.length == _pageSize,
         page: state.page + 1,
       );
-    } catch (_) {
-      state = state.copyWith(isLoading: false, hasMore: false);
+    } catch (e) {
+      // ✅ BUG 2 FIX: نحفظ الـ error في state بدل crash
+      state = state.copyWith(isLoading: false, hasMore: false, hasError: true);
     }
   }
 

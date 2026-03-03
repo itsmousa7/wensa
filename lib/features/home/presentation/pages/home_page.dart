@@ -6,17 +6,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
-import 'package:future_riverpod/features/home/presentation/providers/home_provider.dart';
+import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
+import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_scroll_controller.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/app_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/category_bar.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/category_feed_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/home_search_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/hot_event_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/new_opening.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/promoted_banner.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/trending_feed.dart';
 
-// ── Color Tokens ──────────────────────────────────────────────────────────────
 const kBg = Color(0xFF0B0B12);
 const kSurface = Color(0xFF14141F);
 const kSurface2 = Color(0xFF1E1E2E);
@@ -39,16 +40,18 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
-  // ── نحذف _autoScrollTimer و _pageCtrl — انتقلوا لـ HotEventsSection ───────
   bool _isRefreshing = false;
-
-  // ✅ نتابع الـ scroll يدوياً لمعرفة متى يسحب المستخدم للأسفل
   late final ScrollController _scrollCtrl;
 
   @override
   void initState() {
     super.initState();
     _scrollCtrl = ref.read(homeScrollControllerProvider);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   Future<void> _onRefresh() async {
@@ -60,15 +63,18 @@ class _HomePageState extends ConsumerState<HomePage> {
       ref.invalidate(newOpeningsProvider);
       ref.invalidate(promotedBannersProvider);
       ref.invalidate(categoriesProvider);
+      // لو في فئة محددة نعيد تحميل بياناتها
+      final selectedIdx = ref.read(selectedCategoryProvider);
+      if (selectedIdx != null) {
+        final cats = ref.read(categoriesProvider).value;
+        if (cats != null && selectedIdx < cats.length) {
+          ref.invalidate(categoryFeedProvider(cats[selectedIdx].id));
+        }
+      }
       await Future.delayed(const Duration(milliseconds: 1200));
     } finally {
       if (mounted) setState(() => _isRefreshing = false);
     }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   bool get isAr => ref.watch(appLocaleProvider) is ArabicLocale;
@@ -82,8 +88,21 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    print('HomePage build');
     ref.watch(appLocaleProvider);
+
+    // ✅ نراقب الـ selectedCategory — يعيد بناء الـ slivers عند كل تغيير
+    final selectedIdx = ref.watch(selectedCategoryProvider);
+
+    // نجلب الفئات لنعرف اسم الفئة المحددة
+    final categories = ref.watch(categoriesProvider).value;
+
+    // الفئة المحددة حالياً — null لو لا يوجد اختيار
+    final selectedCat =
+        (selectedIdx != null &&
+            categories != null &&
+            selectedIdx < categories.length)
+        ? categories[selectedIdx]
+        : null;
 
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -100,16 +119,15 @@ class _HomePageState extends ConsumerState<HomePage> {
           bottom: false,
           child: CustomScrollView(
             controller: _scrollCtrl,
-            // ✅ BouncingScrollPhysics يسمح بالسحب للأسفل بشعور native iOS
             physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics(),
             ),
             slivers: [
+              // ── Pull to refresh ──────────────────────────────────────────
               CupertinoSliverRefreshControl(
                 refreshTriggerPullDistance: 80,
                 refreshIndicatorExtent: 50,
                 onRefresh: _onRefresh,
-                // builder مخصص — يظهر فقط عند السحب، مثل Instagram بالضبط
                 builder:
                     (
                       context,
@@ -137,7 +155,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 ),
                               )
                             : Opacity(
-                                // ← يظهر تدريجياً فقط أثناء السحب
                                 opacity: progress,
                                 child: Icon(
                                   Icons.keyboard_arrow_down_rounded,
@@ -151,6 +168,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     },
               ),
 
+              // ── ثابت دائماً ──────────────────────────────────────────────
               const SliverToBoxAdapter(child: HomeAppBar()),
               SliverToBoxAdapter(child: HomeSearchBar()),
               SliverToBoxAdapter(child: PromotedBanner()),
@@ -158,16 +176,37 @@ class _HomePageState extends ConsumerState<HomePage> {
                 child: _sectionTitle(_hotEventsLabel, more: true),
               ),
               const SliverToBoxAdapter(child: HotEventsSection()),
+
+              // ── Category bar — دائماً مرئي ───────────────────────────────
               SliverToBoxAdapter(child: _sectionTitle(_categoryLabel)),
               SliverToBoxAdapter(child: CategoryBar(isAr: isAr)),
-              SliverToBoxAdapter(
-                child: _sectionTitle(_trendingLabel, more: true),
-              ),
-              const SliverToBoxAdapter(child: TrendingFeed()),
-              SliverToBoxAdapter(
-                child: _sectionTitle(_newOpeningsLabel, more: true),
-              ),
-              const SliverToBoxAdapter(child: NewOpening()),
+
+              // ── مشروط: إذا لا يوجد اختيار → عادي ، يوجد اختيار → Feed ──
+              if (selectedCat == null) ...[
+                // ── الصفحة الطبيعية ─────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: _sectionTitle(_trendingLabel, more: true),
+                ),
+                const SliverToBoxAdapter(child: TrendingFeed()),
+                SliverToBoxAdapter(
+                  child: _sectionTitle(_newOpeningsLabel, more: true),
+                ),
+                const SliverToBoxAdapter(child: NewOpening()),
+              ] else ...[
+                // ── Category feed ────────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: _sectionTitle(
+                    isAr ? selectedCat.nameAr : selectedCat.nameEn,
+                  ),
+                ),
+                // ✅ CategoryFeedSection ترجع SliverList مباشرة
+                CategoryFeedSection(
+                  categoryId: selectedCat.id,
+                  categoryNameEn: selectedCat.nameEn,
+                  categoryNameAr: selectedCat.nameAr,
+                ),
+              ],
+
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),

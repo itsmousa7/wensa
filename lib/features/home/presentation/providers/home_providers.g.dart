@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'home_provider.dart';
+part of 'home_providers.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -255,7 +255,7 @@ String _$categoriesHash() => r'526aa6e532539af2cf061b001b5491c2a3b13012';
 final selectedCategoryProvider = SelectedCategoryProvider._();
 
 final class SelectedCategoryProvider
-    extends $NotifierProvider<SelectedCategory, int> {
+    extends $NotifierProvider<SelectedCategory, int?> {
   SelectedCategoryProvider._()
     : super(
         from: null,
@@ -275,27 +275,27 @@ final class SelectedCategoryProvider
   SelectedCategory create() => SelectedCategory();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(int value) {
+  Override overrideWithValue(int? value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<int>(value),
+      providerOverride: $SyncValueProvider<int?>(value),
     );
   }
 }
 
-String _$selectedCategoryHash() => r'002df8395441d97c9bb68549b7f238c43f0e0840';
+String _$selectedCategoryHash() => r'22c4f5bc96511971529bc67280d05373bc74098e';
 
-abstract class _$SelectedCategory extends $Notifier<int> {
-  int build();
+abstract class _$SelectedCategory extends $Notifier<int?> {
+  int? build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<int, int>;
+    final ref = this.ref as $Ref<int?, int?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<int, int>,
-              int,
+              AnyNotifier<int?, int?>,
+              int?,
               Object?,
               Object?
             >;

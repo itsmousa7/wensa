@@ -9,58 +9,6 @@ part of 'category_feed_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(SelectedCategory)
-final selectedCategoryProvider = SelectedCategoryProvider._();
-
-final class SelectedCategoryProvider
-    extends $NotifierProvider<SelectedCategory, int?> {
-  SelectedCategoryProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'selectedCategoryProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$selectedCategoryHash();
-
-  @$internal
-  @override
-  SelectedCategory create() => SelectedCategory();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(int? value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<int?>(value),
-    );
-  }
-}
-
-String _$selectedCategoryHash() => r'243f684ddabc3d33d7aa92490723d6d6bb36e1ca';
-
-abstract class _$SelectedCategory extends $Notifier<int?> {
-  int? build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final ref = this.ref as $Ref<int?, int?>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<int?, int?>,
-              int?,
-              Object?,
-              Object?
-            >;
-    element.handleCreate(ref, build);
-  }
-}
-
 @ProviderFor(CategoryFeed)
 final categoryFeedProvider = CategoryFeedFamily._();
 
@@ -110,7 +58,7 @@ final class CategoryFeedProvider
   }
 }
 
-String _$categoryFeedHash() => r'fbf1710b0afd6d6e6750680d5bd13c523edf8092';
+String _$categoryFeedHash() => r'1c7d3b386a425f97d2ab8d9294b60f95c832ecc8';
 
 final class CategoryFeedFamily extends $Family
     with
