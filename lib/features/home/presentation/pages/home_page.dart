@@ -82,6 +82,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    print('HomePage build');
     ref.watch(appLocaleProvider);
 
     SystemChrome.setSystemUIOverlayStyle(

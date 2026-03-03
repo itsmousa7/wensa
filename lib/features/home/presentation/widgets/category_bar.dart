@@ -129,22 +129,58 @@ Widget _categoryIcon(String nameEn) {
       );
 
     case 'Restaurants':
-      return const Icon(CupertinoIcons.flame); // food / dining vibe
+      return Lottie.asset(
+        'assets/lottie/categories/food.json',
+        width: 42,
+        height: 42,
+        fit: BoxFit.contain,
+        repeat: true,
+      );
 
     case 'Music':
-      return const Icon(CupertinoIcons.music_albums);
+      return Lottie.asset(
+        'assets/lottie/categories/music.json',
+        width: 42,
+        height: 42,
+        fit: BoxFit.contain,
+        repeat: true,
+      );
 
     case 'Malls':
-      return const Icon(CupertinoIcons.shopping_cart);
+      return Lottie.asset(
+        'assets/lottie/categories/mall.json',
+        width: 42,
+        height: 42,
+        fit: BoxFit.contain,
+        repeat: true,
+      );
 
     case 'Cafes':
-      return const Icon(Icons.local_cafe);
+      return Lottie.asset(
+        'assets/lottie/categories/cafe.json',
+        width: 42,
+        height: 42,
+        fit: BoxFit.contain,
+        repeat: true,
+      );
 
     case 'Cinema':
-      return const Icon(CupertinoIcons.film);
+      return Lottie.asset(
+        'assets/lottie/categories/movie.json',
+        width: 42,
+        height: 42,
+        fit: BoxFit.contain,
+        repeat: true,
+      );
 
     case 'Festivals':
-      return const Icon(CupertinoIcons.sparkles);
+      return Lottie.asset(
+        'assets/lottie/categories/festival.json',
+        width: 42,
+        height: 42,
+        fit: BoxFit.contain,
+        repeat: true,
+      );
 
     default:
       return const Icon(CupertinoIcons.location);
