@@ -5,14 +5,11 @@ import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/new_opening_badge.dart';
+import 'package:gap/gap.dart';
+import 'package:lottie/lottie.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  CategoryFeedSection
-//
-//  ✅ BUG 2 FIX: دائماً يرجع Sliver — حتى في الـ loading/empty/error states
-//               لأن CustomScrollView يحتاج Slivers فقط
-// ─────────────────────────────────────────────────────────────────────────────
 class CategoryFeedSection extends ConsumerWidget {
   const CategoryFeedSection({
     super.key,
@@ -29,29 +26,16 @@ class CategoryFeedSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final feed = ref.watch(categoryFeedProvider(categoryId));
     final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
-    final theme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     final tt = AppTypography.getTextTheme(isAr ? 'ar' : 'en', context);
 
     // ── First load skeleton ────────────────────────────────────────────────
     if (feed.isFirstLoad) {
       return SliverList(
         delegate: SliverChildBuilderDelegate(
-          (_, __) => Padding(
+          (_, _) => Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-            child: Skeletonizer(
-              enabled: true,
-              effect: ShimmerEffect(
-                baseColor: theme.surfaceContainer,
-                highlightColor: theme.surfaceContainerHighest,
-              ),
-              child: Container(
-                height: 280,
-                decoration: BoxDecoration(
-                  color: theme.surfaceContainer,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-            ),
+            child: _buildSkeleton(theme),
           ),
           childCount: 3,
         ),
@@ -68,13 +52,13 @@ class CategoryFeedSection extends ConsumerWidget {
               Icon(
                 Icons.wifi_off_rounded,
                 size: 40,
-                color: theme.onSurface.withValues(alpha: 0.25),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.25),
               ),
               const SizedBox(height: 12),
               Text(
                 isAr ? 'تعذّر تحميل البيانات' : 'Failed to load',
                 style: tt.bodyMedium?.copyWith(
-                  color: theme.onSurface.withValues(alpha: 0.4),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
               ),
             ],
@@ -83,30 +67,34 @@ class CategoryFeedSection extends ConsumerWidget {
       );
     }
 
-    // ── ✅ BUG 2 FIX: Empty state — يظهر رسالة واضحة ─────────────────────
+    // ── Empty state ────────────────────────────────────────────────────────
     if (feed.isEmpty) {
       final catName = isAr ? categoryNameAr : categoryNameEn;
       return SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 22),
+          padding: const EdgeInsets.symmetric(horizontal: 22),
           child: Column(
             children: [
-              Text('🔍', style: const TextStyle(fontSize: 44)),
-              const SizedBox(height: 16),
+              SizedBox(
+                height: 200,
+                child: Lottie.asset('assets/lottie/animation/empty.json'),
+              ),
+
               Text(
                 isAr
                     ? 'لا توجد أماكن في فئة "$catName" حالياً'
                     : 'No places found in "$catName" yet',
                 textAlign: TextAlign.center,
                 style: tt.bodyLarge?.copyWith(
-                  color: theme.onSurface.withValues(alpha: 0.5),
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 isAr ? 'تحقق لاحقاً!' : 'Check back later!',
                 style: tt.bodySmall?.copyWith(
-                  color: theme.onSurface.withValues(alpha: 0.3),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
                 ),
               ),
             ],
@@ -118,7 +106,6 @@ class CategoryFeedSection extends ConsumerWidget {
     // ── Feed list (infinite scroll) ────────────────────────────────────────
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
-        // آخر slot = load more indicator أو end caption
         if (index == feed.items.length) {
           if (feed.hasMore) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -132,7 +119,7 @@ class CategoryFeedSection extends ConsumerWidget {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: theme.primary,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
               ),
@@ -144,7 +131,7 @@ class CategoryFeedSection extends ConsumerWidget {
               child: Text(
                 isAr ? '— لقد وصلت للنهاية —' : '— You\'ve reached the end —',
                 style: tt.labelSmall?.copyWith(
-                  color: theme.onSurface.withValues(alpha: 0.3),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
                 ),
               ),
             ),
@@ -153,10 +140,10 @@ class CategoryFeedSection extends ConsumerWidget {
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-          child: _FullWidthFeedCard(
+          child: FullWidthFeedCard(
             item: feed.items[index],
             isAr: isAr,
-            theme: theme,
+            theme: theme.colorScheme,
             tt: tt,
           ),
         );
@@ -166,12 +153,11 @@ class CategoryFeedSection extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  _FullWidthFeedCard
-//  ✅ BUG 4: حذف الـ Explore button — الكارد كاملاً قابل للنقر
-//  ✅ BUG 5: ألوان من theme + AppTypography
+//  FullWidthFeedCard  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
-class _FullWidthFeedCard extends StatelessWidget {
-  const _FullWidthFeedCard({
+class FullWidthFeedCard extends StatelessWidget {
+  const FullWidthFeedCard({
+    super.key,
     required this.item,
     required this.isAr,
     required this.theme,
@@ -191,24 +177,14 @@ class _FullWidthFeedCard extends StatelessWidget {
       },
       child: Container(
         width: double.infinity,
-        decoration: BoxDecoration(
-          // ✅ BUG 5: theme colors
-          color: theme.surfaceContainer,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: theme.outlineVariant.withValues(alpha: 0.3),
-          ),
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Cover image + overlays ────────────────────────────────────
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
+                  borderRadius: BorderRadius.circular(20),
                   child: SizedBox(
                     height: 200,
                     width: double.infinity,
@@ -216,119 +192,63 @@ class _FullWidthFeedCard extends StatelessWidget {
                         ? CachedNetworkImage(
                             imageUrl: item.coverImageUrl!,
                             fit: BoxFit.cover,
-                            placeholder: (_, __) =>
-                                Container(color: theme.surfaceContainerHighest),
-                            errorWidget: (_, __, ___) =>
-                                Container(color: theme.surfaceContainerHighest),
+                            placeholder: (_, _) =>
+                                Container(color: theme.outline),
+                            errorWidget: (_, _, _) =>
+                                Container(color: theme.outline),
                           )
-                        : Container(color: theme.surfaceContainerHighest),
+                        : Container(color: theme.outline),
                   ),
                 ),
-
-                // Gradient overlay
                 Positioned.fill(
                   child: ClipRRect(
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(20),
                     ),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.35),
-                          ],
-                          stops: const [0.5, 1.0],
-                        ),
-                      ),
-                    ),
+                    child: const DecoratedBox(decoration: BoxDecoration()),
                   ),
                 ),
-
-                // Verified badge — top end
-                if (item.isVerified)
-                  Positioned(
-                    top: 12,
-                    right: isAr ? null : 12,
-                    left: isAr ? 12 : null,
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '✓',
-                          style: tt.labelMedium?.copyWith(
-                            color: theme.tertiary,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                // "Just Opened" badge — top start
                 Positioned(
                   top: 12,
                   left: isAr ? null : 12,
                   right: isAr ? 12 : null,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      // ✅ BUG 5: theme.tertiary للـ "New" badge
-                      color: theme.tertiary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      isAr ? '✦ افتتح مؤخراً' : '✦ Just Opened',
-                      style: tt.labelSmall?.copyWith(
-                        color: theme.onTertiary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
+                  child: newOpeningBadge(isAr, context),
                 ),
               ],
             ),
-
-            // ── Text area — NO explore button ────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title
-                  Text(
-                    isAr ? item.titleAr : item.titleEn,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: tt.titleMedium?.copyWith(color: theme.onSurface),
+                  Row(
+                    children: [
+                      Text(
+                        isAr ? item.titleAr : item.titleEn,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: tt.titleMedium?.copyWith(color: theme.onSurface),
+                      ),
+                      Gap(10),
+                      if (item.isVerified)
+                        SizedBox(
+                          height: 16,
+                          child: Image.asset('assets/icons/verify.png'),
+                        ),
+                    ],
                   ),
-
-                  // Subtitle (area)
                   if ((isAr ? item.subtitleAr : item.subtitleEn) != null) ...[
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(
-                          Icons.location_on_rounded,
-                          size: 12,
-                          color: theme.onSurface.withValues(alpha: 0.4),
+                        SizedBox(
+                          height: 10,
+                          child: Image.asset('assets/icons/location.png'),
                         ),
-                        const SizedBox(width: 3),
+                        Gap(4),
                         Text(
                           isAr ? item.subtitleAr! : item.subtitleEn!,
-                          style: tt.bodySmall?.copyWith(
-                            color: theme.onSurface.withValues(alpha: 0.5),
-                          ),
+                          style: tt.bodySmall?.copyWith(color: theme.onSurface),
                         ),
                       ],
                     ),
@@ -342,3 +262,97 @@ class _FullWidthFeedCard extends StatelessWidget {
     );
   }
 }
+
+Widget _buildSkeleton(ThemeData theme) => Skeletonizer(
+  enabled: true,
+  effect: ShimmerEffect(
+    baseColor: theme.colorScheme.surfaceContainer,
+    highlightColor: theme.colorScheme.surfaceContainerHighest,
+    duration: const Duration(milliseconds: 1200),
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // ── Cover image: matches SizedBox(height:200), borderRadius:20 ──
+      Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              height: 200,
+              width: double.infinity,
+              color: theme.colorScheme.surfaceContainerHighest,
+            ),
+          ),
+          // ── Badge pill: matches "Just Opened" chip ───────────────────
+          Positioned(
+            top: 12,
+            left: 12,
+            child: Container(
+              width: 90,
+              height: 24,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+      // ── Text block: matches padding fromLTRB(16, 14, 16, 16) ─────────
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title row: titleMedium ~h16 + verify icon 16×16
+            Row(
+              children: [
+                Container(
+                  height: 16,
+                  width: 160,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  height: 16,
+                  width: 16,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            // Subtitle row: location icon 12×12 + bodySmall text ~h12
+            Row(
+              children: [
+                Container(
+                  height: 12,
+                  width: 12,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 3),
+                Container(
+                  height: 12,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ],
+  ),
+);

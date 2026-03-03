@@ -365,14 +365,14 @@ class AppTheme {
         onError: AppColors.white,
         surface: AppColors.darkPrimary,
         onSurface: AppColors.darkTextPrimary,
-        surfaceContainerHighest: AppColors.darkSecondary,
         errorContainer: AppColors.darkRedSecondary, // ← add
         onErrorContainer: AppColors.white,
-        surfaceContainer: AppColors.darkTextField,
+        surfaceContainer: AppColors.darkPrimary,
+        surfaceContainerHighest: AppColors.darkSecondary,
       ),
 
       // Scaffold Background
-      scaffoldBackgroundColor: AppColors.darkPrimary,
+      scaffoldBackgroundColor: AppColors.black,
 
       // Typography
       textTheme: textTheme,

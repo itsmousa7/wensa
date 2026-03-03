@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
-import 'package:future_riverpod/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/user_profile_provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -102,31 +101,7 @@ class HomeAppBar extends ConsumerWidget {
               ),
             ],
           ),
-
-          const Spacer(),
-
-          // ── Sign out ──────────────────────────────────────────────────────
-          IconButton(
-            onPressed: () => ref.read(authRepositoryProvider).signOut(),
-            icon: Icon(
-              CupertinoIcons.fullscreen_exit,
-              color: theme.colorScheme.onSurface,
-              size: 20,
-            ),
-          ),
-
-          // ── Language toggle ───────────────────────────────────────────────
-          IconButton(
-            onPressed: () => ref.read(appLocaleProvider.notifier).toggle(),
-            icon: Icon(
-              isAr ? Icons.language : Icons.language_outlined,
-              color: theme.colorScheme.onSurface,
-              size: 20,
-            ),
-          ),
-
-          const SizedBox(width: 4),
-
+          Spacer(),
           // ── Bell ──────────────────────────────────────────────────────────
           Stack(
             children: [

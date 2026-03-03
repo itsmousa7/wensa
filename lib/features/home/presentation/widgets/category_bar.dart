@@ -15,42 +15,13 @@ class CategoryBar extends ConsumerWidget {
     final categoriesAsync = ref.watch(categoriesProvider);
     // ✅ BUG 1 FIX: int? — null يعني لا فئة مختارة
     final selectedIndex = ref.watch(selectedCategoryProvider);
-    final theme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     final tt = AppTypography.getTextTheme(isAr ? 'ar' : 'en', context);
 
     return categoriesAsync.when(
       skipLoadingOnRefresh: false,
-      loading: () => Skeletonizer(
-        enabled: true,
-        effect: ShimmerEffect(
-          baseColor: theme.surfaceContainer,
-          highlightColor: theme.surfaceContainerHighest,
-        ),
-        child: SizedBox(
-          height: 90,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 22),
-            itemCount: 6,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (_, __) => Column(
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: theme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(width: 48, height: 10, color: theme.surfaceContainer),
-              ],
-            ),
-          ),
-        ),
-      ),
-      error: (_, __) => const SizedBox.shrink(),
+      loading: () => _buildSkeleton(theme),
+      error: (_, _) => const SizedBox.shrink(),
       data: (cats) => SizedBox(
         height: 110,
         child: ListView.separated(
@@ -58,7 +29,7 @@ class CategoryBar extends ConsumerWidget {
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
           itemCount: cats.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          separatorBuilder: (_, _) => const SizedBox(width: 12),
           itemBuilder: (_, i) {
             // ✅ BUG 1 FIX: null-safe — لو selectedIndex = null كل الفئات inactive
             final isActive = selectedIndex == i;
@@ -77,18 +48,20 @@ class CategoryBar extends ConsumerWidget {
                     height: 64,
                     decoration: BoxDecoration(
                       // ✅ BUG 5: theme colors
-                      color: theme.surface,
+                      color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isActive
-                            ? theme.primary.withValues(alpha: 0.3)
-                            : theme.surfaceContainerHigh,
+                            ? theme.colorScheme.primary.withValues(alpha: 0.3)
+                            : theme.colorScheme.surfaceContainerHigh,
                         width: 1.5,
                       ),
                       boxShadow: isActive
                           ? [
                               BoxShadow(
-                                color: theme.primary.withValues(alpha: 0.25),
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.25,
+                                ),
                                 blurRadius: 10,
                                 spreadRadius: 1,
                               ),
@@ -103,9 +76,9 @@ class CategoryBar extends ConsumerWidget {
                     // ✅ BUG 5: AppTypography
                     style: tt.labelSmall?.copyWith(
                       color: isActive
-                          ? theme.primary
-                          : theme.onSurface.withValues(alpha: 0.5),
-                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
                     ),
                   ),
                 ],
@@ -118,6 +91,50 @@ class CategoryBar extends ConsumerWidget {
   }
 }
 
+// ─── CategoryBar._buildSkeleton ──────────────────────────────────────────────
+// FIX: ListView inside Skeletonizer must use NeverScrollableScrollPhysics.
+//      Without it the scrollable viewport creates its own layer and the shimmer
+//      can't paint over it — exactly what HotEventsSection already does correctly.
+
+Widget _buildSkeleton(ThemeData theme) => Skeletonizer(
+  enabled: true,
+  effect: ShimmerEffect(
+    baseColor: theme.colorScheme.surfaceContainerHighest,
+    highlightColor: theme.colorScheme.surfaceContainerHighest,
+    duration: const Duration(milliseconds: 1200),
+  ),
+  child: SizedBox(
+    height: 110,
+    child: ListView.separated(
+      scrollDirection: Axis.horizontal,
+      physics: const NeverScrollableScrollPhysics(), // ← THE FIX
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+      itemCount: 6,
+      separatorBuilder: (_, _) => const SizedBox(width: 12),
+      itemBuilder: (_, _) => Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            height: 11,
+            width: 40,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+);
 Widget _categoryIcon(String nameEn) {
   switch (nameEn) {
     case 'Sports':

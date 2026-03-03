@@ -203,8 +203,8 @@ class BottomBar extends StatelessWidget {
                                         fontFamily: fontFamily,
                                         fontSize: isAr ? 10.0 : 11.0,
                                         fontWeight: isActive
-                                            ? FontWeight.w700
-                                            : FontWeight.w400,
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
                                         color: isActive
                                             ? activeColor
                                             : inactiveColor,

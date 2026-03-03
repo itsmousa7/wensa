@@ -105,3 +105,55 @@ abstract class _$CategoryFeed extends $Notifier<CategoryFeedState> {
     element.handleCreate(ref, () => build(_$args));
   }
 }
+
+@ProviderFor(AllPlacesFeed)
+final allPlacesFeedProvider = AllPlacesFeedProvider._();
+
+final class AllPlacesFeedProvider
+    extends $NotifierProvider<AllPlacesFeed, CategoryFeedState> {
+  AllPlacesFeedProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'allPlacesFeedProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$allPlacesFeedHash();
+
+  @$internal
+  @override
+  AllPlacesFeed create() => AllPlacesFeed();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CategoryFeedState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CategoryFeedState>(value),
+    );
+  }
+}
+
+String _$allPlacesFeedHash() => r'ed36a67f05fa0572547455ad19fbdfe40228ea9e';
+
+abstract class _$AllPlacesFeed extends $Notifier<CategoryFeedState> {
+  CategoryFeedState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<CategoryFeedState, CategoryFeedState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<CategoryFeedState, CategoryFeedState>,
+              CategoryFeedState,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

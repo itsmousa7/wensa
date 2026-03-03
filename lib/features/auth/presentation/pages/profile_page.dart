@@ -6,6 +6,7 @@ import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/theme_provider.dart';
 import 'package:future_riverpod/core/constants/theme/theme_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
+import 'package:future_riverpod/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/user_profile_provider.dart';
 import 'package:future_riverpod/features/auth/presentation/widgets/app_button.dart';
 import 'package:go_router/go_router.dart';
@@ -15,8 +16,10 @@ class ProfilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
     final userInformation = ref.watch(userProfileProvider);
     final currentTheme = ref.watch(appThemeProvider);
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -71,6 +74,39 @@ class ProfilePage extends ConsumerWidget {
                     style: TextStyle(color: Color.fromARGB(255, 54, 244, 54)),
                   ),
                 ),
+                // ── Sign out ──────────────────────────────────────────────────────
+                IconButton(
+                  onPressed: () => ref.read(authRepositoryProvider).signOut(),
+                  icon: Icon(
+                    CupertinoIcons.square_arrow_right,
+                    color: theme.colorScheme.onSurface,
+                    size: 20,
+                  ),
+                ),
+
+                // ── Language toggle ───────────────────────────────────────────────
+                IconButton(
+                  onPressed: () =>
+                      ref.read(appLocaleProvider.notifier).toggle(),
+                  icon: Icon(
+                    isAr ? Icons.language : Icons.language_outlined,
+                    color: theme.colorScheme.onSurface,
+                    size: 20,
+                  ),
+                ),
+                AppButton.icon(
+                  onPressed: () => ref.read(appThemeProvider.notifier).toggle(),
+                  icon: Icon(switch (currentTheme) {
+                    LightTheme() => CupertinoIcons.sun_max,
+                    DarkTheme() => CupertinoIcons.moon,
+                    SystemTheme() =>
+                      MediaQuery.platformBrightnessOf(context) ==
+                              Brightness.dark
+                          ? CupertinoIcons.moon
+                          : CupertinoIcons.sun_max,
+                  }),
+                ),
+                const SizedBox(width: 4),
               ],
             ),
           );

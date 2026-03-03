@@ -19,76 +19,7 @@ class PromotedBanner extends ConsumerWidget {
     return bannersAsync.when(
       skipLoadingOnRefresh: false,
       // ✅ Skeletonizer — يرسم skeleton بنفس شكل الـ widget الحقيقي
-      loading: () => Padding(
-        padding: const EdgeInsets.fromLTRB(22, 6, 22, 0),
-        child: Skeletonizer(
-          enabled: true,
-          effect: ShimmerEffect(
-            baseColor: theme.colorScheme.surfaceContainer, // card bg
-            highlightColor: theme.colorScheme.surfaceContainerHighest, // sweep
-            duration: const Duration(milliseconds: 1200),
-          ),
-          child: Container(
-            height: 82,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainer, // same as baseColor
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 18),
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest, // 👈 bone
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        height: 12,
-                        width: 160,
-                        decoration: BoxDecoration(
-                          color: theme
-                              .colorScheme
-                              .surfaceContainerHighest, // 👈 bone
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        height: 10,
-                        width: 100,
-                        decoration: BoxDecoration(
-                          color: theme
-                              .colorScheme
-                              .surfaceContainerHighest, // 👈 bone
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: 70,
-                  height: 30,
-                  margin: const EdgeInsets.only(right: 18),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest, // 👈 bone
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      loading: () => _buildSkeleton(theme),
       error: (_, _) => const SizedBox.shrink(),
       data: (banners) {
         if (banners.isEmpty) return const SizedBox.shrink();
@@ -141,34 +72,22 @@ class PromotedBanner extends ConsumerWidget {
                                   isAr
                                       ? (banner.placeNameAr ?? '')
                                       : (banner.placeNameEn ?? ''),
-                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                  style: theme.textTheme.bodyLarge?.copyWith(
                                     color: AppColors.white,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 if (banner.placeArea != null)
                                   Text(
                                     banner.placeArea!,
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                      color: AppColors.white,
+                                      color: AppColors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
+                                      fontWeight: FontWeight.w900,
                                     ),
                                   ),
                               ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 13,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              isAr ? 'استكشف' : 'Explore',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.surface,
-                              ),
                             ),
                           ),
                         ],
@@ -184,3 +103,83 @@ class PromotedBanner extends ConsumerWidget {
     );
   }
 }
+
+// ─── PromotedBanner._buildSkeleton ───────────────────────────────────────────
+// FIX: ClipRRect creates a new paint layer that breaks Skeletonizer's shimmer.
+//      Replace ClipRRect + Container with a single Container + BoxDecoration.
+
+Widget _buildSkeleton(ThemeData theme) => Skeletonizer(
+  enabled: true,
+  effect: ShimmerEffect(
+    baseColor: theme.colorScheme.surfaceContainer,
+    highlightColor: theme.colorScheme.surfaceContainerHighest,
+    duration: const Duration(milliseconds: 1200),
+  ),
+  child: Padding(
+    padding: const EdgeInsets.fromLTRB(22, 6, 22, 0),
+    child: SizedBox(
+      height: 82,
+      child: Container(
+        // ← was ClipRRect + Container
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(18), // same radius, no clip layer
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        child: Row(
+          children: [
+            Container(
+              height: 30,
+              width: 30,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 14,
+                    width: 120,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    height: 12,
+                    width: 80,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                height: 12,
+                width: 48,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  ),
+);

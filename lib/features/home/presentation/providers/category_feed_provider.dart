@@ -125,3 +125,53 @@ class CategoryFeed extends _$CategoryFeed {
     await loadMore();
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  AllPlacesFeed — نفس CategoryFeed لكن بدون فلتر category
+// ─────────────────────────────────────────────────────────────────────────────
+@riverpod
+class AllPlacesFeed extends _$AllPlacesFeed {
+  static const _pageSize = 10;
+
+  @override
+  CategoryFeedState build() {
+    Future.microtask(loadMore);
+    return const CategoryFeedState();
+  }
+
+  Future<void> loadMore() async {
+    if (state.isLoading && state.page > 0) return;
+    if (!state.hasMore) return;
+
+    state = state.copyWith(isLoading: true, hasError: false);
+
+    try {
+      final from = state.page * _pageSize;
+      final to = from + _pageSize - 1;
+
+      final rows = await Supabase.instance.client
+          .from('places')
+          .select('id, name_en, name_ar, area, cover_image_url, is_verified')
+          .order('hotness_score', ascending: false)
+          .range(from, to);
+
+      final fetched = (rows as List)
+          .map((r) => CategoryFeedItem.fromRow(r as Map<String, dynamic>))
+          .toList();
+
+      state = state.copyWith(
+        items: [...state.items, ...fetched],
+        isLoading: false,
+        hasMore: fetched.length == _pageSize,
+        page: state.page + 1,
+      );
+    } catch (_) {
+      state = state.copyWith(isLoading: false, hasMore: false, hasError: true);
+    }
+  }
+
+  Future<void> refresh() async {
+    state = const CategoryFeedState();
+    await loadMore();
+  }
+}

@@ -6,12 +6,13 @@ class BuildCardRowSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     return Skeletonizer(
       enabled: true,
       effect: ShimmerEffect(
-        baseColor: theme.surfaceContainer,
-        highlightColor: theme.surfaceContainerHighest,
+        baseColor: theme.colorScheme.surfaceContainer,
+        highlightColor: theme.colorScheme.surfaceContainerHighest,
+        duration: const Duration(milliseconds: 1200),
       ),
       child: SizedBox(
         height: 210,
@@ -25,30 +26,29 @@ class BuildCardRowSkeleton extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Image — fully rounded to match ClipRRect(radius: 20)
-                Container(
-                  height: 130,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: theme.surfaceContainer,
-                    borderRadius: BorderRadius.circular(20),
+                // ── Cover image: height 130, borderRadius 20 ──────────
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    height: 130,
+                    width: double.infinity,
+                    color: theme.colorScheme.surfaceContainerHighest,
                   ),
                 ),
-
-                // Text area
+                // ── Text block: matches padding fromLTRB(12,10,12,12) ─
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Title + badge row
+                      // Title ~h13 + badge 52×20
                       Row(
                         children: [
                           Container(
                             height: 13,
                             width: 130,
                             decoration: BoxDecoration(
-                              color: theme.surfaceContainerHighest,
+                              color: theme.colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(6),
                             ),
                           ),
@@ -57,19 +57,19 @@ class BuildCardRowSkeleton extends StatelessWidget {
                             height: 20,
                             width: 52,
                             decoration: BoxDecoration(
-                              color: theme.surfaceContainer,
+                              color: theme.colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      // Subtitle
+                      // Subtitle ~h10
                       Container(
                         height: 10,
                         width: 90,
                         decoration: BoxDecoration(
-                          color: theme.surfaceContainer,
+                          color: theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(6),
                         ),
                       ),

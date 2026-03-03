@@ -9,6 +9,7 @@ import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_scroll_controller.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/all_places_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/app_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/category_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/category_feed_section.dart';
@@ -63,6 +64,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       ref.invalidate(newOpeningsProvider);
       ref.invalidate(promotedBannersProvider);
       ref.invalidate(categoriesProvider);
+      ref.invalidate(allPlacesFeedProvider);
       // لو في فئة محددة نعيد تحميل بياناتها
       final selectedIdx = ref.read(selectedCategoryProvider);
       if (selectedIdx != null) {
@@ -84,6 +86,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   String get _trendingLabel =>
       isAr ? 'الأكثر رواجاً هذا الأسبوع' : 'Trending This Week';
   String get _newOpeningsLabel => isAr ? 'افتتاحات جديدة' : 'New Openings';
+  String get _allPlacesLabel => isAr ? 'كل الأماكن' : 'All Places';
   String get _seeAll => isAr ? 'عرض الكل ›' : 'See all ›';
 
   @override
@@ -192,6 +195,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                   child: _sectionTitle(_newOpeningsLabel, more: true),
                 ),
                 const SliverToBoxAdapter(child: NewOpening()),
+                SliverToBoxAdapter(child: _sectionTitle(_allPlacesLabel)),
+                const AllPlacesSection(),
               ] else ...[
                 // ── Category feed ────────────────────────────────────────
                 SliverToBoxAdapter(
