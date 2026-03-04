@@ -196,11 +196,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                     isAr ? selectedCat.nameAr : selectedCat.nameEn,
                   ),
                 ),
-                // CategoryFeedSection(
-                //   categoryId: selectedCat.id,
-                //   categoryNameEn: selectedCat.nameEn,
-                //   categoryNameAr: selectedCat.nameAr,
-                // ),
+                CategoryFeedSection(
+                  categoryId: selectedCat.id,
+                  categoryNameEn: selectedCat.nameEn,
+                  categoryNameAr: selectedCat.nameAr,
+                ),
               ],
 
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
