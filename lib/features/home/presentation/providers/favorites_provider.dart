@@ -182,7 +182,7 @@ class FavoritesFeed extends _$FavoritesFeed {
 // ─────────────────────────────────────────────────────────────────────────────
 //  SeeAllType
 // ─────────────────────────────────────────────────────────────────────────────
-enum SeeAllType { trending, newOpenings }
+enum SeeAllType { trending, newOpenings, allEvents }
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  SeeAllFeed
@@ -225,6 +225,12 @@ class SeeAllFeed extends _$SeeAllFeed {
               )
               .eq('is_new', true)
               .order('created_at', ascending: false)
+              .range(from, to);
+        case SeeAllType.allEvents:
+          rows = await Supabase.instance.client
+              .from('events')
+              .select('id, title_en, title_ar, city, cover_image_url')
+              .order('hotness_score', ascending: false)
               .range(from, to);
       }
 

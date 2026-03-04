@@ -4,14 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/features/home/presentation/providers/all_events_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/feed_list_section.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  SeeAllPage
-//  Uses FeedListSection so the skeleton, error, empty, and cards are
-//  identical to AllPlacesSection and FavoritesSection — zero duplication.
-// ─────────────────────────────────────────────────────────────────────────────
+// SeeAllType lives in favorites_provider.dart — do NOT redefine it here.
+// Just add allEvents to the enum there (see favorites_provider snippet).
+
 class SeeAllPage extends ConsumerWidget {
   const SeeAllPage({
     super.key,
@@ -27,9 +26,13 @@ class SeeAllPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
-    final feed = ref.watch(seeAllFeedProvider(type));
     final cs = Theme.of(context).colorScheme;
     final tt = AppTypography.getTextTheme(isAr ? 'ar' : 'en', context);
+
+    // Both providers now return CategoryFeedState — FeedListSection is happy.
+    final feed = type == SeeAllType.allEvents
+        ? ref.watch(allEventsSeeAllProvider)
+        : ref.watch(seeAllFeedProvider(type));
 
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
@@ -70,17 +73,22 @@ class SeeAllPage extends ConsumerWidget {
                 ),
               ),
 
-              // ── Feed — skeleton / error / empty / list all handled inside ─
+              // ── Feed ─────────────────────────────────────────────────────
               FeedListSection(
                 feed: feed,
-                onLoadMore: () =>
-                    ref.read(seeAllFeedProvider(type).notifier).loadMore(),
-                emptyTitleEn: type == SeeAllType.trending
-                    ? 'Nothing trending right now'
-                    : 'No new openings yet',
-                emptyTitleAr: type == SeeAllType.trending
-                    ? 'لا يوجد شيء رائج الآن'
-                    : 'لا توجد افتتاحات جديدة',
+                onLoadMore: () => type == SeeAllType.allEvents
+                    ? ref.read(allEventsSeeAllProvider.notifier).loadMore()
+                    : ref.read(seeAllFeedProvider(type).notifier).loadMore(),
+                emptyTitleEn: switch (type) {
+                  SeeAllType.trending => 'Nothing trending right now',
+                  SeeAllType.newOpenings => 'No new openings yet',
+                  SeeAllType.allEvents => 'No events right now',
+                },
+                emptyTitleAr: switch (type) {
+                  SeeAllType.trending => 'لا يوجد شيء رائج الآن',
+                  SeeAllType.newOpenings => 'لا توجد افتتاحات جديدة',
+                  SeeAllType.allEvents => 'لا توجد أحداث حالياً',
+                },
               ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 40)),

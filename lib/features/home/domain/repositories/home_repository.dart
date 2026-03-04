@@ -1,8 +1,7 @@
-
 import 'package:future_riverpod/features/home/models/category_model.dart';
+import 'package:future_riverpod/features/home/models/promoted_banner.dart';
 import 'package:future_riverpod/features/places/domain/models/event_model.dart';
 import 'package:future_riverpod/features/places/domain/models/place_model.dart';
-import 'package:future_riverpod/features/home/models/promoted_banner.dart';
 import 'package:future_riverpod/features/places/domain/models/trending_feed_item_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -25,10 +24,7 @@ class HomeRepository {
   // ── 2. Trending Feed (places + events mixed) ───────────────────────────────
   // يجلب من الـ View اللي بنيناه في Supabase — يدمج الأماكن والأحداث تلقائياً
   Future<List<TrendingFeedItemModel>> getTrendingFeed() async {
-    final data = await _supabase
-        .from('trending_feed')
-        .select()
-        .limit(10);
+    final data = await _supabase.from('trending_feed').select().limit(10);
 
     return data.map((e) => TrendingFeedItemModel.fromJson(e)).toList();
   }
@@ -59,11 +55,20 @@ class HomeRepository {
 
   // ── 5. Categories ──────────────────────────────────────────────────────────
   Future<List<CategoryModel>> getCategories() async {
-    final data = await _supabase
-        .from('categories')
-        .select()
-        .order('name_en');
+    final data = await _supabase.from('categories').select().order('name_en');
 
     return data.map((e) => CategoryModel.fromJson(e)).toList();
+  }
+
+  Future<List<EventModel>> getAllEvents({int limit = 20}) async {
+    final rows = await _supabase
+        .from('events')
+        .select()
+        .order('hotness_score', ascending: false)
+        .limit(limit);
+
+    return (rows as List)
+        .map((r) => EventModel.fromJson(r as Map<String, dynamic>))
+        .toList();
   }
 }

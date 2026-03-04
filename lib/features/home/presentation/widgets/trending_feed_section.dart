@@ -6,16 +6,20 @@ import 'package:future_riverpod/features/home/presentation/providers/home_provid
 import 'package:future_riverpod/features/home/presentation/widgets/build_card_row_skeleton.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/build_error_widget.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/feed_card.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/view_all_card.dart';
 import 'package:future_riverpod/features/places/domain/models/trending_feed_item_model.dart';
 
-class TrendingFeed extends ConsumerStatefulWidget {
-  const TrendingFeed({super.key});
+class TrendingFeedSection extends ConsumerStatefulWidget {
+  const TrendingFeedSection({super.key, this.onViewAll});
+
+  final VoidCallback? onViewAll;
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _TrendingFeedState();
+  ConsumerState<TrendingFeedSection> createState() =>
+      _TrendingFeedSectionState();
 }
 
-class _TrendingFeedState extends ConsumerState<TrendingFeed> {
+class _TrendingFeedSectionState extends ConsumerState<TrendingFeedSection> {
   bool get isAr => ref.watch(appLocaleProvider) is ArabicLocale;
 
   @override
@@ -24,7 +28,7 @@ class _TrendingFeedState extends ConsumerState<TrendingFeed> {
 
     return trendingAsync.when(
       skipLoadingOnRefresh: false,
-      loading: () => BuildCardRowSkeleton(),
+      loading: () => const BuildCardRowSkeleton(),
       error: (e, _) => buildErrorWidget(e.toString()),
       data: (items) => SizedBox(
         height: 210,
@@ -32,9 +36,12 @@ class _TrendingFeedState extends ConsumerState<TrendingFeed> {
           physics: const BouncingScrollPhysics(),
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 22),
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 14),
+          itemCount: items.length + (widget.onViewAll != null ? 1 : 0),
+          separatorBuilder: (_, _) => const SizedBox(width: 14),
           itemBuilder: (_, i) {
+            if (widget.onViewAll != null && i == items.length) {
+              return ViewAllCard(isAr: isAr, onTap: widget.onViewAll!);
+            }
             final item = items[i];
             return FeedCard(
               placeId: item.id,
@@ -46,7 +53,6 @@ class _TrendingFeedState extends ConsumerState<TrendingFeed> {
               badge: item.isEvent
                   ? FeedCardBadge.event
                   : FeedCardBadge.trending,
-              // ✅ Pass the correct type so the heart saves to event_id column
               itemType: item.isEvent ? 'event' : 'place',
               onTap: () {
                 /* TODO: Navigate */

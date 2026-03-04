@@ -23,7 +23,7 @@ class CategoryFeedSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final feed = ref.watch(categoryFeedProvider(categoryId));
     final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
-    final theme = Theme.of(context);
+    final cs = Theme.of(context).colorScheme;
     final tt = AppTypography.getTextTheme(isAr ? 'ar' : 'en', context);
 
     // ── Skeleton ───────────────────────────────────────────────────────────
@@ -41,21 +41,22 @@ class CategoryFeedSection extends ConsumerWidget {
 
     // ── Error ──────────────────────────────────────────────────────────────
     if (feed.hasError) {
-      return SliverToBoxAdapter(
+      return SliverFillRemaining(
+        hasScrollBody: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 22),
+          padding: const EdgeInsets.symmetric(horizontal: 22),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.wifi_off_rounded,
-                size: 40,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.25),
+              Lottie.asset(
+                'assets/lottie/animation/no_internet.json',
+                height: 300,
               ),
               const SizedBox(height: 12),
               Text(
-                isAr ? 'تعذّر تحميل البيانات' : 'Failed to load',
+                isAr ? 'حدث خطأ!' : 'Something went wrong!',
                 style: tt.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                  color: cs.onSurface.withValues(alpha: 0.4),
                 ),
               ),
             ],
@@ -67,10 +68,12 @@ class CategoryFeedSection extends ConsumerWidget {
     // ── Empty ──────────────────────────────────────────────────────────────
     if (feed.isEmpty) {
       final catName = isAr ? categoryNameAr : categoryNameEn;
-      return SliverToBoxAdapter(
+      return SliverFillRemaining(
+        hasScrollBody: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 22),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(
                 height: 200,
@@ -82,15 +85,16 @@ class CategoryFeedSection extends ConsumerWidget {
                     : 'No places found in "$catName" yet',
                 textAlign: TextAlign.center,
                 style: tt.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurface,
+                  color: cs.onSurface,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 isAr ? 'تحقق لاحقاً!' : 'Check back later!',
+                textAlign: TextAlign.center,
                 style: tt.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: cs.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -115,7 +119,7 @@ class CategoryFeedSection extends ConsumerWidget {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: theme.colorScheme.primary,
+                    color: cs.primary,
                   ),
                 ),
               ),
@@ -127,7 +131,7 @@ class CategoryFeedSection extends ConsumerWidget {
               child: Text(
                 isAr ? '— لقد وصلت للنهاية —' : '— You\'ve reached the end —',
                 style: tt.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                  color: cs.onSurface.withValues(alpha: 0.3),
                 ),
               ),
             ),
@@ -136,7 +140,6 @@ class CategoryFeedSection extends ConsumerWidget {
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-          // ✅ Uses shared FullWidthFeedCard with heart + favorites
           child: FullWidthFeedCard(item: feed.items[index]),
         );
       }, childCount: feed.items.length + 1),

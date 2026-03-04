@@ -51,8 +51,8 @@ class FavoritesPage extends ConsumerWidget {
                 // Favorites are not paginated — no onLoadMore
                 emptyTitleEn: 'No favorites yet',
                 emptyTitleAr: 'لا توجد مفضلات بعد',
-                emptySubtitleEn: 'Tap the ♡ on any place to save it here',
-                emptySubtitleAr: 'اضغط على ♡ في أي مكان لحفظه هنا',
+                emptySubtitleEn: 'Double tap on any place to save it here',
+                emptySubtitleAr: 'اضغط مرتين في أي مكان لحفظه هنا',
               ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 40)),

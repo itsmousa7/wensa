@@ -1,24 +1,27 @@
 import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/features/home/presentation/providers/all_events_provider.dart'; // ✅ NEW
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_scroll_controller.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/all_events_section.dart'; // ✅ NEW
 import 'package:future_riverpod/features/home/presentation/widgets/all_places_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/app_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/category_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/category_feed_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/home_search_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/hot_event_section.dart';
-import 'package:future_riverpod/features/home/presentation/widgets/new_opening.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/new_opening_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/promoted_banner.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/see_all_page.dart';
-import 'package:future_riverpod/features/home/presentation/widgets/trending_feed.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/trending_feed_section.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -51,6 +54,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       ref.invalidate(categoriesProvider);
       ref.invalidate(allPlacesFeedProvider);
       ref.invalidate(favoritesFeedProvider);
+      ref.invalidate(allEventsProvider); // ✅ NEW — refresh events too
       final selectedIdx = ref.read(selectedCategoryProvider);
       if (selectedIdx != null) {
         final cats = ref.read(categoriesProvider).value;
@@ -71,6 +75,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   String get _trendingLabel =>
       isAr ? 'الأكثر رواجاً هذا الأسبوع' : 'Trending This Week';
   String get _newOpeningsLabel => isAr ? 'افتتاحات جديدة' : 'New Openings';
+  String get _allEventsLabel => isAr ? 'جميع الأحداث' : 'All Events'; // ✅ NEW
   String get _allPlacesLabel => isAr ? 'كل الأماكن' : 'All Places';
   String get _seeAll => isAr ? 'عرض الكل ›' : 'See all ›';
 
@@ -78,12 +83,16 @@ class _HomePageState extends ConsumerState<HomePage> {
     CupertinoPageRoute(
       builder: (_) => SeeAllPage(
         type: type,
-        titleEn: type == SeeAllType.trending
-            ? 'Trending This Week'
-            : 'New Openings',
-        titleAr: type == SeeAllType.trending
-            ? 'الأكثر رواجاً'
-            : 'افتتاحات جديدة',
+        titleEn: switch (type) {
+          SeeAllType.trending => 'Trending This Week',
+          SeeAllType.newOpenings => 'New Openings',
+          SeeAllType.allEvents => 'All Events', // ✅ NEW
+        },
+        titleAr: switch (type) {
+          SeeAllType.trending => 'الأكثر رواجاً',
+          SeeAllType.newOpenings => 'افتتاحات جديدة',
+          SeeAllType.allEvents => 'جميع الأحداث', // ✅ NEW
+        },
       ),
     ),
   );
@@ -172,22 +181,43 @@ class _HomePageState extends ConsumerState<HomePage> {
                   child: _sectionTitle(
                     _trendingLabel,
                     more: true,
-                    // ✅ Tapping "See all" → SeeAllPage (trending)
                     onMoreTap: () => _goToSeeAll(SeeAllType.trending),
                   ),
                 ),
-                const SliverToBoxAdapter(child: TrendingFeed()),
+                SliverToBoxAdapter(
+                  child: TrendingFeedSection(
+                    onViewAll: () => _goToSeeAll(SeeAllType.trending),
+                  ),
+                ),
 
                 SliverToBoxAdapter(
                   child: _sectionTitle(
                     _newOpeningsLabel,
                     more: true,
-                    // ✅ Tapping "See all" → SeeAllPage (newOpenings)
                     onMoreTap: () => _goToSeeAll(SeeAllType.newOpenings),
                   ),
                 ),
-                const SliverToBoxAdapter(child: NewOpening()),
+                SliverToBoxAdapter(
+                  child: NewOpeningSection(
+                    onViewAll: () => _goToSeeAll(SeeAllType.newOpenings),
+                  ),
+                ),
 
+                // ✅ NEW — All Events section
+                SliverToBoxAdapter(
+                  child: _sectionTitle(
+                    _allEventsLabel,
+                    more: true,
+                    onMoreTap: () => _goToSeeAll(SeeAllType.allEvents),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: AllEventsSection(
+                    onViewAll: () => _goToSeeAll(SeeAllType.allEvents),
+                  ),
+                ),
+
+                // ✅ END NEW
                 SliverToBoxAdapter(child: _sectionTitle(_allPlacesLabel)),
                 const AllPlacesSection(),
               ] else ...[

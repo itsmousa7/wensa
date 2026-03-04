@@ -7,24 +7,6 @@ import 'package:future_riverpod/features/home/presentation/providers/category_fe
 import 'package:future_riverpod/features/home/presentation/widgets/full_width_feed_card.dart';
 import 'package:lottie/lottie.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  FeedListSection
-//
-//  A single reusable sliver widget that renders a paginated CategoryFeedState.
-//  Used by:
-//    • AllPlacesSection   → pass feed + onLoadMore from allPlacesFeedProvider
-//    • SeeAllSection      → pass feed + onLoadMore from seeAllFeedProvider
-//    • FavoritesSection   → pass feed (no pagination, onLoadMore = null)
-//
-//  Usage example:
-//
-//    FeedListSection(
-//      feed: ref.watch(allPlacesFeedProvider),
-//      onLoadMore: () => ref.read(allPlacesFeedProvider.notifier).loadMore(),
-//      emptyTitleEn: 'No places yet',
-//      emptyTitleAr: 'لا توجد أماكن',
-//    )
-// ─────────────────────────────────────────────────────────────────────────────
 class FeedListSection extends ConsumerWidget {
   const FeedListSection({
     super.key,
@@ -38,36 +20,26 @@ class FeedListSection extends ConsumerWidget {
     this.skeletonCount = 3,
   });
 
-  /// The state from any CategoryFeed-based provider.
   final CategoryFeedState feed;
-
-  /// Called when the list reaches the bottom and [feed.hasMore] is true.
-  /// Pass null for non-paginated feeds (e.g. Favorites).
   final VoidCallback? onLoadMore;
-
-  /// Optional tap callback forwarded to each card.
   final void Function(CategoryFeedItem item)? onTapItem;
-
   final String emptyTitleEn;
   final String emptyTitleAr;
   final String emptySubtitleEn;
   final String emptySubtitleAr;
-
-  /// How many skeleton cards to show while loading the first page.
   final int skeletonCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
+    final cs = Theme.of(context).colorScheme;
     final tt = AppTypography.getTextTheme(isAr ? 'ar' : 'en', context);
 
-    // ── Skeleton (first load) ──────────────────────────────────────────────
+    // ── Skeleton ───────────────────────────────────────────────────────────
     if (feed.isFirstLoad) {
       return SliverList(
         delegate: SliverChildBuilderDelegate(
-          (_, __) => Padding(
+          (_, _) => Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
             child: buildFullWidthSkeleton(context),
           ),
@@ -78,19 +50,20 @@ class FeedListSection extends ConsumerWidget {
 
     // ── Error ──────────────────────────────────────────────────────────────
     if (feed.hasError) {
-      return SliverToBoxAdapter(
+      return SliverFillRemaining(
+        hasScrollBody: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 22),
+          padding: const EdgeInsets.symmetric(horizontal: 22),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.wifi_off_rounded,
-                size: 40,
-                color: cs.onSurface.withValues(alpha: 0.25),
+              Lottie.asset(
+                height: 300,
+                'assets/lottie/animation/no_internet.json',
               ),
               const SizedBox(height: 12),
               Text(
-                isAr ? 'تعذّر تحميل البيانات' : 'Failed to load',
+                isAr ? 'حدث خطأ!' : 'Something went wrong!',
                 style: tt.bodyMedium?.copyWith(
                   color: cs.onSurface.withValues(alpha: 0.4),
                 ),
@@ -103,10 +76,12 @@ class FeedListSection extends ConsumerWidget {
 
     // ── Empty ──────────────────────────────────────────────────────────────
     if (feed.isEmpty) {
-      return SliverToBoxAdapter(
+      return SliverFillRemaining(
+        hasScrollBody: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(
                 height: 200,
@@ -123,6 +98,7 @@ class FeedListSection extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 isAr ? emptySubtitleAr : emptySubtitleEn,
+                textAlign: TextAlign.center,
                 style: tt.bodySmall?.copyWith(
                   color: cs.onSurface.withValues(alpha: 0.6),
                 ),
@@ -136,7 +112,6 @@ class FeedListSection extends ConsumerWidget {
     // ── Infinite list ──────────────────────────────────────────────────────
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
-        // Footer: loading spinner or end-of-list label
         if (index == feed.items.length) {
           if (feed.hasMore && onLoadMore != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) => onLoadMore!());
@@ -167,7 +142,6 @@ class FeedListSection extends ConsumerWidget {
           );
         }
 
-        // Card
         final item = feed.items[index];
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
