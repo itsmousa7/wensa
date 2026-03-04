@@ -57,13 +57,13 @@ class FeedListSection extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Lottie.asset(
-                height: 300,
-                'assets/lottie/animation/no_internet.json',
+              SizedBox(
+                height: 200,
+                child: Lottie.asset('assets/lottie/animation/no_internet.json'),
               ),
               const SizedBox(height: 12),
               Text(
-                isAr ? 'حدث خطأ!' : 'Something went wrong!',
+                isAr ? 'تعذّر تحميل البيانات' : 'Failed to load',
                 style: tt.bodyMedium?.copyWith(
                   color: cs.onSurface.withValues(alpha: 0.4),
                 ),
@@ -79,7 +79,7 @@ class FeedListSection extends ConsumerWidget {
       return SliverFillRemaining(
         hasScrollBody: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 22),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
@@ -6,16 +7,28 @@ import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/features/home/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/feed_list_section.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  FavoritesPage
-//  Uses FeedListSection → same skeleton, card, error, empty as AllPlaces
-//  and SeeAll. No custom shimmer here — zero duplication.
-// ─────────────────────────────────────────────────────────────────────────────
-class FavoritesPage extends ConsumerWidget {
+class FavoritesPage extends ConsumerStatefulWidget {
   const FavoritesPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FavoritesPage> createState() => _FavoritesPageState();
+}
+
+class _FavoritesPageState extends ConsumerState<FavoritesPage> {
+  bool _isRefreshing = false;
+
+  Future<void> _onRefresh() async {
+    if (_isRefreshing) return;
+    setState(() => _isRefreshing = true);
+    try {
+      await ref.read(favoritesFeedProvider.notifier).refresh();
+    } finally {
+      if (mounted) setState(() => _isRefreshing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
     final feed = ref.watch(favoritesFeedProvider);
     final cs = Theme.of(context).colorScheme;
@@ -31,7 +44,42 @@ class FavoritesPage extends ConsumerWidget {
               parent: AlwaysScrollableScrollPhysics(),
             ),
             slivers: [
-              // ── Title ──────────────────────────────────────────────────────
+              // ── Pull to refresh ─────────────────────────────────────────
+              CupertinoSliverRefreshControl(
+                refreshTriggerPullDistance: 80,
+                refreshIndicatorExtent: 50,
+                onRefresh: _onRefresh,
+                builder: (context, mode, pulledExtent, triggerDistance, _) {
+                  final progress = (pulledExtent / triggerDistance).clamp(
+                    0.0,
+                    1.0,
+                  );
+                  final loading =
+                      mode == RefreshIndicatorMode.refresh ||
+                      mode == RefreshIndicatorMode.armed;
+                  return Center(
+                    child: loading
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: cs.primary,
+                            ),
+                          )
+                        : Opacity(
+                            opacity: progress,
+                            child: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 24,
+                              color: cs.onSurface.withValues(alpha: 0.5),
+                            ),
+                          ),
+                  );
+                },
+              ),
+
+              // ── Title ────────────────────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(22, 16, 22, 8),
@@ -45,10 +93,9 @@ class FavoritesPage extends ConsumerWidget {
                 ),
               ),
 
-              // ── Feed — skeleton/error/empty/list all handled by FeedListSection
+              // ── Feed ─────────────────────────────────────────────────────
               FeedListSection(
                 feed: feed,
-                // Favorites are not paginated — no onLoadMore
                 emptyTitleEn: 'No favorites yet',
                 emptyTitleAr: 'لا توجد مفضلات بعد',
                 emptySubtitleEn: 'Double tap on any place to save it here',

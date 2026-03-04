@@ -43,24 +43,21 @@ class CategoryFeedSection extends ConsumerWidget {
     if (feed.hasError) {
       return SliverFillRemaining(
         hasScrollBody: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Lottie.asset(
-                'assets/lottie/animation/no_internet.json',
-                height: 300,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              height: 200,
+              child: Lottie.asset('assets/lottie/animation/no_internet.json'),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isAr ? 'تعذّر تحميل البيانات' : 'Failed to load',
+              style: tt.bodyMedium?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.4),
               ),
-              const SizedBox(height: 12),
-              Text(
-                isAr ? 'حدث خطأ!' : 'Something went wrong!',
-                style: tt.bodyMedium?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.4),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
