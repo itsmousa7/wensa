@@ -17,6 +17,7 @@ class NavItem {
   });
 }
 
+// ✅ Map → Favorites (index 2)
 const kNavItems = [
   NavItem(
     icon: Icons.home_outlined,
@@ -31,10 +32,10 @@ const kNavItems = [
     labelAr: 'استكشف',
   ),
   NavItem(
-    icon: Icons.map_outlined,
-    activeIcon: Icons.map_rounded,
-    labelEn: 'Map',
-    labelAr: 'الخريطة',
+    icon: Icons.favorite_border_rounded, // ← was map
+    activeIcon: Icons.favorite_rounded, // ← was map
+    labelEn: 'Favorites', // ← was Map
+    labelAr: 'المفضلة', // ← was الخريطة
   ),
   NavItem(
     icon: Icons.person_outline_rounded,
@@ -66,27 +67,11 @@ class BottomBar extends StatelessWidget {
     final bgColor = scheme.surface.withValues(alpha: 0.20);
     final pillColor = scheme.primary.withValues(alpha: 0.15);
 
-    // ════════════════════════════════════════════════════
-    // 📐 HEIGHT CONTROLS — adjust these to resize the bar
-    // ════════════════════════════════════════════════════
-
-    // ① The bar capsule height in pixels
     const barHeight = 62.0;
-
-    // ② Pill height = barHeight minus this gap (top + bottom combined).
-    //    Smaller number → pill fills more of the bar height.
     const pillGap = 8.5;
     const pillHeight = barHeight - pillGap;
-
-    // ③ How far the pill sits from the top edge of the bar
-    const pillVerticalOffset = pillGap / 2; // keeps it centred
-
-    // ④ Outer spacing around the bar capsule.
-    //    • bottom → how high the bar floats above the screen edge.
-    //      Increase to push it further up. Currently 30 (was 10, +20 as requested).
-    //    • top    → gap between bar and the page content above it.
-    //    • horizontal → left/right margin from screen edges.
-    const double paddingBottom = 25; // ← ✏️ raise / lower the bar here
+    const pillVerticalOffset = pillGap / 2;
+    const double paddingBottom = 25;
     const double paddingTop = 10;
     const double paddingHorizontal = 16;
 
@@ -101,8 +86,6 @@ class BottomBar extends StatelessWidget {
         builder: (context, constraints) {
           final totalWidth = constraints.maxWidth - 2;
           final itemWidth = totalWidth / kNavItems.length;
-
-          // Pill width = slot width minus side gap
           final pillWidth = itemWidth - 6;
           final pillOffset =
               currentIndex * itemWidth + (itemWidth - pillWidth) / 2;
@@ -113,7 +96,7 @@ class BottomBar extends StatelessWidget {
               filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
               child: Container(
                 width: totalWidth,
-                height: barHeight, // ← controlled by ① above
+                height: barHeight,
                 decoration: BoxDecoration(
                   color: bgColor,
                   borderRadius: BorderRadius.circular(50),
@@ -135,7 +118,7 @@ class BottomBar extends StatelessWidget {
                   child: Stack(
                     clipBehavior: Clip.hardEdge,
                     children: [
-                      // ── Sliding pill indicator ───────────────────────────
+                      // Sliding pill indicator
                       AnimatedPositioned(
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeInOutCubic,
@@ -152,7 +135,7 @@ class BottomBar extends StatelessWidget {
                         ),
                       ),
 
-                      // ── Tab items ────────────────────────────────────────
+                      // Tab items
                       Positioned.fill(
                         child: Row(
                           children: List.generate(kNavItems.length, (i) {

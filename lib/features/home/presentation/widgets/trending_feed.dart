@@ -38,6 +38,7 @@ class _TrendingFeedState extends ConsumerState<TrendingFeed> {
           itemBuilder: (_, i) {
             final item = items[i];
             return FeedCard(
+              placeId: item.id,
               coverImageUrl: item.coverImageUrl,
               titleEn: item.titleEn,
               titleAr: item.titleAr,

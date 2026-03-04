@@ -26,6 +26,7 @@ class NewOpening extends ConsumerWidget {
           itemBuilder: (_, i) {
             final place = places[i];
             return FeedCard(
+              placeId: place.id,
               coverImageUrl: place.coverImageUrl,
               titleEn: place.nameEn,
               titleAr: place.nameAr,

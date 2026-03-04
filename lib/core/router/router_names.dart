@@ -9,4 +9,5 @@ class RouteNames {
   static const verifyEmail = 'otpPage';
   static const splash = 'splash';
   static const profile = 'profile';
+  static const favorites = 'favorites';
 }

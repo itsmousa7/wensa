@@ -10,6 +10,7 @@ import 'package:future_riverpod/features/auth/presentation/pages/signup_page.dar
 import 'package:future_riverpod/features/auth/presentation/pages/splash_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/verify_email_page.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_provider.dart';
+import 'package:future_riverpod/features/home/presentation/pages/favorites_page.dart';
 import 'package:future_riverpod/features/home/presentation/pages/home_page.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/nav_shell.dart';
 import 'package:go_router/go_router.dart';
@@ -24,13 +25,6 @@ class _ExplorePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       const Scaffold(body: Center(child: Text('Explore — coming soon')));
-}
-
-class _MapPage extends StatelessWidget {
-  const _MapPage();
-  @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: Center(child: Text('Map — coming soon')));
 }
 
 @Riverpod(keepAlive: true)
@@ -129,10 +123,10 @@ GoRouter router(Ref ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/map',
-                // Add RouteNames.map to your RouteNames class
-                name: 'map',
-                builder: (context, state) => const _MapPage(),
+                path: '/favorites',
+                // Add RouteNames.favorites to your RouteNames class
+                name: RouteNames.favorites,
+                builder: (context, state) => const FavoritesPage(),
               ),
             ],
           ),

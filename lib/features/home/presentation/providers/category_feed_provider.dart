@@ -14,6 +14,7 @@ class CategoryFeedItem {
   final String? subtitleAr;
   final String? coverImageUrl;
   final bool isVerified;
+  final String type; // 'place' | 'event'
 
   const CategoryFeedItem({
     required this.id,
@@ -23,8 +24,10 @@ class CategoryFeedItem {
     this.subtitleAr,
     this.coverImageUrl,
     this.isVerified = false,
+    this.type = 'place',
   });
 
+  /// From places table (name_en / name_ar)
   factory CategoryFeedItem.fromRow(Map<String, dynamic> m) => CategoryFeedItem(
     id: m['id'] as String,
     titleEn: m['name_en'] as String? ?? '',
@@ -33,7 +36,21 @@ class CategoryFeedItem {
     subtitleAr: m['area'] as String?,
     coverImageUrl: m['cover_image_url'] as String?,
     isVerified: m['is_verified'] as bool? ?? false,
+    type: 'place',
   );
+
+  /// From trending_feed view (title_en / title_ar)
+  factory CategoryFeedItem.fromTrendingRow(Map<String, dynamic> m) =>
+      CategoryFeedItem(
+        id: m['id'] as String,
+        titleEn: m['title_en'] as String? ?? '',
+        titleAr: m['title_ar'] as String? ?? '',
+        subtitleEn: m['subtitle_en'] as String?,
+        subtitleAr: m['subtitle_ar'] as String?,
+        coverImageUrl: m['cover_image_url'] as String?,
+        isVerified: m['is_verified'] as bool? ?? false,
+        type: m['type'] as String? ?? 'place',
+      );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
