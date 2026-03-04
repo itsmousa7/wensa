@@ -24,10 +24,11 @@ class FeedCard extends ConsumerWidget {
     this.subtitleAr,
     this.badge = FeedCardBadge.trending,
     this.isVerified = false,
+    this.itemType = 'place', // ✅ NEW — 'place' | 'event'
     this.onTap,
   });
 
-  final String placeId;
+  final String placeId; // holds the item ID regardless of type
   final String? coverImageUrl;
   final String titleEn;
   final String titleAr;
@@ -35,6 +36,7 @@ class FeedCard extends ConsumerWidget {
   final String? subtitleAr;
   final FeedCardBadge badge;
   final bool isVerified;
+  final String itemType; // ✅ NEW
   final VoidCallback? onTap;
 
   @override
@@ -61,14 +63,17 @@ class FeedCard extends ConsumerWidget {
 
     return GestureDetector(
       onTap: onTap,
-      onDoubleTap: () => ref.read(favoritesProvider.notifier).toggle(placeId),
+      // ✅ Pass itemType so events insert into event_id column, not place_id
+      onDoubleTap: () => ref
+          .read(favoritesProvider.notifier)
+          .toggle(placeId, itemType: itemType),
       child: Container(
         width: 250,
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Image ───────────────────────────────────────────────────
+            // ── Image ──────────────────────────────────────────────────────
             Stack(
               children: [
                 ClipRRect(
@@ -89,7 +94,7 @@ class FeedCard extends ConsumerWidget {
                   ),
                 ),
 
-                // ✅ Badge (start) + Heart (end) — same row with spacer
+                // Badge
                 Positioned(
                   top: 8,
                   left: isAr ? null : 8,
@@ -102,14 +107,16 @@ class FeedCard extends ConsumerWidget {
                   ),
                 ),
 
-                // ✅ Heart — opposite corner
+                // Heart
                 Positioned(
                   top: 7,
                   right: isAr ? null : 8,
                   left: isAr ? 8 : null,
                   child: GestureDetector(
-                    onTap: () =>
-                        ref.read(favoritesProvider.notifier).toggle(placeId),
+                    // ✅ Pass itemType here too
+                    onTap: () => ref
+                        .read(favoritesProvider.notifier)
+                        .toggle(placeId, itemType: itemType),
                     child: Container(
                       width: 28,
                       height: 28,
@@ -130,7 +137,7 @@ class FeedCard extends ConsumerWidget {
               ],
             ),
 
-            // ── Text area ───────────────────────────────────────────────
+            // ── Text area ──────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
               child: Column(

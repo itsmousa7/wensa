@@ -5,8 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 part 'favorites_provider.g.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Favorites — Set<String> of favorited place IDs
-//  Stored in Supabase `favorites` table (wain_flosi project)
+//  Favorites — Set<String> of ALL favorited IDs (places + events)
 // ─────────────────────────────────────────────────────────────────────────────
 @riverpod
 class Favorites extends _$Favorites {
@@ -22,19 +21,18 @@ class Favorites extends _$Favorites {
         .select('place_id, event_id')
         .eq('user_id', user.id);
 
-    return (rows as List).expand((r) {
+    return (rows as List).expand<String>((r) {
       final ids = <String>[];
-      if (r['place_id'] != null) ids.add(r['place_id'] as String);
-      if (r['event_id'] != null) ids.add(r['event_id'] as String);
+      final p = r['place_id'] as String?;
+      final e = r['event_id'] as String?;
+      if (p != null) ids.add(p);
+      if (e != null) ids.add(e);
       return ids;
     }).toSet();
   }
 
-  bool isFavorited(String placeId) =>
-      state.value?.contains(placeId) ?? false;
+  bool isFavorited(String id) => state.value?.contains(id) ?? false;
 
-  /// Toggle favorite — works for both places and events
-  /// itemType: 'place' (default) | 'event'
   Future<void> toggle(String itemId, {String itemType = 'place'}) async {
     final user = _db.auth.currentUser;
     if (user == null) return;
@@ -52,13 +50,11 @@ class Favorites extends _$Favorites {
 
     try {
       if (!wasLiked) {
-        // Add — use place_id or event_id based on type
         final row = itemType == 'event'
             ? {'user_id': user.id, 'event_id': itemId}
             : {'user_id': user.id, 'place_id': itemId};
-        await _db.from('favorites').upsert(row);
+        await _db.from('favorites').insert(row);
       } else {
-        // Remove
         final col = itemType == 'event' ? 'event_id' : 'place_id';
         await _db
             .from('favorites')
@@ -74,7 +70,7 @@ class Favorites extends _$Favorites {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  FavoritesFeed — جلب الأماكن المفضلة كاملة من Supabase
+//  FavoritesFeed
 // ─────────────────────────────────────────────────────────────────────────────
 @riverpod
 class FavoritesFeed extends _$FavoritesFeed {
@@ -85,7 +81,9 @@ class FavoritesFeed extends _$FavoritesFeed {
   }
 
   Future<void> _load() async {
-    final user = Supabase.instance.client.auth.currentUser;
+    final db = Supabase.instance.client;
+    final user = db.auth.currentUser;
+
     if (user == null) {
       state = const CategoryFeedState(isLoading: false, hasMore: false);
       return;
@@ -93,35 +91,86 @@ class FavoritesFeed extends _$FavoritesFeed {
 
     state = const CategoryFeedState(isLoading: true);
 
-    try {
-      final rows = await Supabase.instance.client
-          .from('favorites')
-          .select(
-            'place_id, event_id, places(id, name_en, name_ar, area, cover_image_url, is_verified), events(id, title_en, title_ar, subtitle_en, subtitle_ar, cover_image_url, is_verified)',
-          )
-          .eq('user_id', user.id)
-          .order('created_at', ascending: false);
+    final items = <CategoryFeedItem>[];
 
-      final items = (rows as List)
-          .map((r) {
-            final p = r['places'] as Map<String, dynamic>?;
-            if (p != null) return CategoryFeedItem.fromRow(p);
-            final e = r['events'] as Map<String, dynamic>?;
-            if (e != null)
-              return CategoryFeedItem.fromTrendingRow({...e, 'type': 'event'});
-            return null;
-          })
-          .whereType<CategoryFeedItem>()
+    // ── Places ───────────────────────────────────────────────────────────────
+    try {
+      final placeRows = await db
+          .from('favorites')
+          .select('place_id')
+          .eq('user_id', user.id)
+          .not('place_id', 'is', null);
+
+      final placeIds = (placeRows as List)
+          .map((r) => r['place_id'] as String?)
+          .whereType<String>()
           .toList();
 
-      state = CategoryFeedState(items: items, isLoading: false, hasMore: false);
+      if (placeIds.isNotEmpty) {
+        final places = await db
+            .from('places')
+            .select('id, name_en, name_ar, area, cover_image_url, is_verified')
+            .inFilter('id', placeIds);
+
+        items.addAll(
+          (places as List).map(
+            (p) => CategoryFeedItem.fromRow(p as Map<String, dynamic>),
+          ),
+        );
+      }
     } catch (_) {
       state = const CategoryFeedState(
         isLoading: false,
         hasMore: false,
         hasError: true,
       );
+      return;
     }
+
+    // ── Events ───────────────────────────────────────────────────────────────
+    // events table columns: id, title_en, title_ar, city, cover_image_url
+    // subtitle_en / subtitle_ar do NOT exist on events — use city instead
+    try {
+      final eventRows = await db
+          .from('favorites')
+          .select('event_id')
+          .eq('user_id', user.id)
+          .not('event_id', 'is', null);
+
+      final eventIds = (eventRows as List)
+          .map((r) => r['event_id'] as String?)
+          .whereType<String>()
+          .toList();
+
+      if (eventIds.isNotEmpty) {
+        // ✅ Only select columns that actually exist on the events table
+        final events = await db
+            .from('events')
+            .select('id, title_en, title_ar, city, cover_image_url')
+            .inFilter('id', eventIds);
+
+        items.addAll(
+          (events as List).map((e) {
+            final m = e as Map<String, dynamic>;
+            // Map city → subtitle since events have no subtitle_en/ar column
+            return CategoryFeedItem(
+              id: m['id'] as String,
+              titleEn: m['title_en'] as String? ?? '',
+              titleAr: m['title_ar'] as String? ?? '',
+              subtitleEn: m['city'] as String?,
+              subtitleAr: m['city'] as String?,
+              coverImageUrl: m['cover_image_url'] as String?,
+              isVerified: false,
+              type: 'event',
+            );
+          }),
+        );
+      }
+    } catch (_) {
+      // Events load failed — places already in list, still show them
+    }
+
+    state = CategoryFeedState(items: items, isLoading: false, hasMore: false);
   }
 
   Future<void> refresh() async {
@@ -131,12 +180,12 @@ class FavoritesFeed extends _$FavoritesFeed {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  SeeAllType — نوع صفحة "عرض الكل"
+//  SeeAllType
 // ─────────────────────────────────────────────────────────────────────────────
 enum SeeAllType { trending, newOpenings }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  SeeAllFeed — paginated feed لـ See All pages
+//  SeeAllFeed
 // ─────────────────────────────────────────────────────────────────────────────
 @riverpod
 class SeeAllFeed extends _$SeeAllFeed {

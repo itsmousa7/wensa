@@ -33,7 +33,7 @@ final class FavoritesProvider
   Favorites create() => Favorites();
 }
 
-String _$favoritesHash() => r'bed54313d7a8e19c8a867a4e35ffd10a0144515c';
+String _$favoritesHash() => r'e25dee70d1d8a76b5c7703f73ff0e6feba2a3fd4';
 
 abstract class _$Favorites extends $AsyncNotifier<Set<String>> {
   FutureOr<Set<String>> build();
@@ -85,7 +85,7 @@ final class FavoritesFeedProvider
   }
 }
 
-String _$favoritesFeedHash() => r'473f660a13c77e552ab79c0f4a94e48aacd809f1';
+String _$favoritesFeedHash() => r'38d19f4e480a854a978c01d0bc62a6b69d1285a5';
 
 abstract class _$FavoritesFeed extends $Notifier<CategoryFeedState> {
   CategoryFeedState build();
@@ -154,7 +154,7 @@ final class SeeAllFeedProvider
   }
 }
 
-String _$seeAllFeedHash() => r'9dee1475d6c2c1797e58db49bfc3680c27f35550';
+String _$seeAllFeedHash() => r'7bd5c1171f7e2f460d322dac8770ed1e28123ee7';
 
 final class SeeAllFeedFamily extends $Family
     with

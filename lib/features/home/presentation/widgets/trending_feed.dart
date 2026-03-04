@@ -17,8 +17,7 @@ class TrendingFeed extends ConsumerStatefulWidget {
 
 class _TrendingFeedState extends ConsumerState<TrendingFeed> {
   bool get isAr => ref.watch(appLocaleProvider) is ArabicLocale;
-  String get trendingBadge => isAr ? '🔥 رائج' : '🔥 Hot';
-  String get eventBadge => isAr ? '🎉 حدث' : '🎉 Event';
+
   @override
   Widget build(BuildContext context) {
     final trendingAsync = ref.watch(trendingFeedProvider);
@@ -30,11 +29,11 @@ class _TrendingFeedState extends ConsumerState<TrendingFeed> {
       data: (items) => SizedBox(
         height: 210,
         child: ListView.separated(
-          physics: BouncingScrollPhysics(),
+          physics: const BouncingScrollPhysics(),
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 22),
           itemCount: items.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 14),
+          separatorBuilder: (_, __) => const SizedBox(width: 14),
           itemBuilder: (_, i) {
             final item = items[i];
             return FeedCard(
@@ -47,6 +46,8 @@ class _TrendingFeedState extends ConsumerState<TrendingFeed> {
               badge: item.isEvent
                   ? FeedCardBadge.event
                   : FeedCardBadge.trending,
+              // ✅ Pass the correct type so the heart saves to event_id column
+              itemType: item.isEvent ? 'event' : 'place',
               onTap: () {
                 /* TODO: Navigate */
               },

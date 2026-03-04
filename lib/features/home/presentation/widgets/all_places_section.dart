@@ -1,10 +1,11 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  all_places_section.dart  ← drop-in replacement
+// ═══════════════════════════════════════════════════════════════════════════
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:future_riverpod/core/constants/app_typography.dart';
-import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
-import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
-import 'package:future_riverpod/features/home/presentation/widgets/full_width_feed_card.dart';
+import 'package:future_riverpod/features/home/presentation/providers/favorites_provider.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/feed_list_section.dart';
 
 class AllPlacesSection extends ConsumerWidget {
   const AllPlacesSection({super.key});
@@ -12,101 +13,52 @@ class AllPlacesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final feed = ref.watch(allPlacesFeedProvider);
-    final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
-    final cs = Theme.of(context).colorScheme;
-    final tt = AppTypography.getTextTheme(isAr ? 'ar' : 'en', context);
 
-    if (feed.isFirstLoad) {
-      return SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (_, __) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-            child: buildFullWidthSkeleton(context),
-          ),
-          childCount: 3,
-        ),
-      );
-    }
+    return FeedListSection(
+      feed: feed,
+      onLoadMore: () => ref.read(allPlacesFeedProvider.notifier).loadMore(),
+      emptyTitleEn: 'No places yet',
+      emptyTitleAr: 'لا توجد أماكن حالياً',
+    );
+  }
+}
 
-    if (feed.hasError) {
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 22),
-          child: Column(
-            children: [
-              Icon(
-                Icons.wifi_off_rounded,
-                size: 36,
-                color: cs.onSurface.withValues(alpha: 0.25),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                isAr ? 'تعذّر التحميل' : 'Failed to load',
-                style: tt.bodyMedium?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.4),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+class SeeAllSection extends ConsumerWidget {
+  const SeeAllSection({super.key, required this.type});
 
-    if (feed.isEmpty) {
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 22),
-          child: Center(
-            child: Text(
-              isAr ? 'لا توجد أماكن حالياً' : 'No places yet',
-              style: tt.bodyMedium?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.4),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
+  final SeeAllType type;
 
-    return SliverList(
-      delegate: SliverChildBuilderDelegate((context, index) {
-        if (index == feed.items.length) {
-          if (feed.hasMore) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              ref.read(allPlacesFeedProvider.notifier).loadMore();
-            });
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: cs.primary,
-                  ),
-                ),
-              ),
-            );
-          }
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Center(
-              child: Text(
-                isAr ? '— لقد وصلت للنهاية —' : '— You\'ve reached the end —',
-                style: tt.labelSmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.3),
-                ),
-              ),
-            ),
-          );
-        }
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final feed = ref.watch(seeAllFeedProvider(type));
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-          child: FullWidthFeedCard(item: feed.items[index]),
-        );
-      }, childCount: feed.items.length + 1),
+    return FeedListSection(
+      feed: feed,
+      onLoadMore: () => ref.read(seeAllFeedProvider(type).notifier).loadMore(),
+      emptyTitleEn: type == SeeAllType.trending
+          ? 'Nothing trending right now'
+          : 'No new openings yet',
+      emptyTitleAr: type == SeeAllType.trending
+          ? 'لا يوجد شيء رائج الآن'
+          : 'لا توجد افتتاحات جديدة',
+    );
+  }
+}
+
+class FavoritesSection extends ConsumerWidget {
+  const FavoritesSection({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final feed = ref.watch(favoritesFeedProvider);
+
+    return FeedListSection(
+      feed: feed,
+      // No onLoadMore — favorites aren't paginated
+      emptyTitleEn: 'No favorites yet',
+      emptyTitleAr: 'لا توجد مفضلات بعد',
+      emptySubtitleEn: 'Tap the ♡ on any place to save it here',
+      emptySubtitleAr: 'اضغط على ♡ في أي مكان لحفظه هنا',
     );
   }
 }

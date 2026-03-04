@@ -10,7 +10,8 @@ _FavoriteModel _$FavoriteModelFromJson(Map<String, dynamic> json) =>
     _FavoriteModel(
       id: json['id'] as String? ?? '',
       userId: json['userId'] as String? ?? '',
-      placeId: json['placeId'] as String? ?? '',
+      placeId: json['placeId'] as String?,
+      eventId: json['eventId'] as String?,
       createdAt: json['createdAt'] as String?,
     );
 
@@ -19,5 +20,6 @@ Map<String, dynamic> _$FavoriteModelToJson(_FavoriteModel instance) =>
       'id': instance.id,
       'userId': instance.userId,
       'placeId': instance.placeId,
+      'eventId': instance.eventId,
       'createdAt': instance.createdAt,
     };

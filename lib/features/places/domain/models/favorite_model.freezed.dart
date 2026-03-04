@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$FavoriteModel {
 
- String get id; String get userId; String get placeId; String? get createdAt;
+ String get id; String get userId; String? get placeId;// nullable — a favorite is either a place OR event
+ String? get eventId;// nullable — added after migration
+ String? get createdAt;
 /// Create a copy of FavoriteModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +30,16 @@ $FavoriteModelCopyWith<FavoriteModel> get copyWith => _$FavoriteModelCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FavoriteModel&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FavoriteModel&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,placeId,createdAt);
+int get hashCode => Object.hash(runtimeType,id,userId,placeId,eventId,createdAt);
 
 @override
 String toString() {
-  return 'FavoriteModel(id: $id, userId: $userId, placeId: $placeId, createdAt: $createdAt)';
+  return 'FavoriteModel(id: $id, userId: $userId, placeId: $placeId, eventId: $eventId, createdAt: $createdAt)';
 }
 
 
@@ -48,7 +50,7 @@ abstract mixin class $FavoriteModelCopyWith<$Res>  {
   factory $FavoriteModelCopyWith(FavoriteModel value, $Res Function(FavoriteModel) _then) = _$FavoriteModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String userId, String placeId, String? createdAt
+ String id, String userId, String? placeId, String? eventId, String? createdAt
 });
 
 
@@ -65,12 +67,13 @@ class _$FavoriteModelCopyWithImpl<$Res>
 
 /// Create a copy of FavoriteModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? placeId = null,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? placeId = freezed,Object? eventId = freezed,Object? createdAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
-as String,placeId: null == placeId ? _self.placeId : placeId // ignore: cast_nullable_to_non_nullable
-as String,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String,placeId: freezed == placeId ? _self.placeId : placeId // ignore: cast_nullable_to_non_nullable
+as String?,eventId: freezed == eventId ? _self.eventId : eventId // ignore: cast_nullable_to_non_nullable
+as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -156,10 +159,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String userId,  String placeId,  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String userId,  String? placeId,  String? eventId,  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _FavoriteModel() when $default != null:
-return $default(_that.id,_that.userId,_that.placeId,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.placeId,_that.eventId,_that.createdAt);case _:
   return orElse();
 
 }
@@ -177,10 +180,10 @@ return $default(_that.id,_that.userId,_that.placeId,_that.createdAt);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String userId,  String placeId,  String? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String userId,  String? placeId,  String? eventId,  String? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _FavoriteModel():
-return $default(_that.id,_that.userId,_that.placeId,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.placeId,_that.eventId,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -197,10 +200,10 @@ return $default(_that.id,_that.userId,_that.placeId,_that.createdAt);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String userId,  String placeId,  String? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String userId,  String? placeId,  String? eventId,  String? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _FavoriteModel() when $default != null:
-return $default(_that.id,_that.userId,_that.placeId,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.placeId,_that.eventId,_that.createdAt);case _:
   return null;
 
 }
@@ -212,12 +215,15 @@ return $default(_that.id,_that.userId,_that.placeId,_that.createdAt);case _:
 @JsonSerializable()
 
 class _FavoriteModel implements FavoriteModel {
-  const _FavoriteModel({this.id = '', this.userId = '', this.placeId = '', this.createdAt});
+  const _FavoriteModel({this.id = '', this.userId = '', this.placeId, this.eventId, this.createdAt});
   factory _FavoriteModel.fromJson(Map<String, dynamic> json) => _$FavoriteModelFromJson(json);
 
 @override@JsonKey() final  String id;
 @override@JsonKey() final  String userId;
-@override@JsonKey() final  String placeId;
+@override final  String? placeId;
+// nullable — a favorite is either a place OR event
+@override final  String? eventId;
+// nullable — added after migration
 @override final  String? createdAt;
 
 /// Create a copy of FavoriteModel
@@ -233,16 +239,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _FavoriteModel&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _FavoriteModel&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,placeId,createdAt);
+int get hashCode => Object.hash(runtimeType,id,userId,placeId,eventId,createdAt);
 
 @override
 String toString() {
-  return 'FavoriteModel(id: $id, userId: $userId, placeId: $placeId, createdAt: $createdAt)';
+  return 'FavoriteModel(id: $id, userId: $userId, placeId: $placeId, eventId: $eventId, createdAt: $createdAt)';
 }
 
 
@@ -253,7 +259,7 @@ abstract mixin class _$FavoriteModelCopyWith<$Res> implements $FavoriteModelCopy
   factory _$FavoriteModelCopyWith(_FavoriteModel value, $Res Function(_FavoriteModel) _then) = __$FavoriteModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String userId, String placeId, String? createdAt
+ String id, String userId, String? placeId, String? eventId, String? createdAt
 });
 
 
@@ -270,12 +276,13 @@ class __$FavoriteModelCopyWithImpl<$Res>
 
 /// Create a copy of FavoriteModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? placeId = null,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? placeId = freezed,Object? eventId = freezed,Object? createdAt = freezed,}) {
   return _then(_FavoriteModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
-as String,placeId: null == placeId ? _self.placeId : placeId // ignore: cast_nullable_to_non_nullable
-as String,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String,placeId: freezed == placeId ? _self.placeId : placeId // ignore: cast_nullable_to_non_nullable
+as String?,eventId: freezed == eventId ? _self.eventId : eventId // ignore: cast_nullable_to_non_nullable
+as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
