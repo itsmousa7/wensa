@@ -51,7 +51,7 @@ class AllEventsSection extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 22),
             itemCount: items.length + 1,
-            separatorBuilder: (_, __) => const SizedBox(width: 14),
+            separatorBuilder: (_, _) => const SizedBox(width: 14),
             itemBuilder: (context, i) {
               if (i == items.length) {
                 return ViewAllCard(isAr: isAr, onTap: onViewAll);

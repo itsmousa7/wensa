@@ -1,6 +1,3 @@
-// ═══════════════════════════════════════════════════════════════════════════
-//  all_places_section.dart  ← drop-in replacement
-// ═══════════════════════════════════════════════════════════════════════════
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
@@ -41,24 +38,6 @@ class SeeAllSection extends ConsumerWidget {
       emptyTitleAr: type == SeeAllType.trending
           ? 'لا يوجد شيء رائج الآن'
           : 'لا توجد افتتاحات جديدة',
-    );
-  }
-}
-
-class FavoritesSection extends ConsumerWidget {
-  const FavoritesSection({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final feed = ref.watch(favoritesFeedProvider);
-
-    return FeedListSection(
-      feed: feed,
-      // No onLoadMore — favorites aren't paginated
-      emptyTitleEn: 'No favorites yet',
-      emptyTitleAr: 'لا توجد مفضلات بعد',
-      emptySubtitleEn: 'Tap the ♡ on any place to save it here',
-      emptySubtitleAr: 'اضغط على ♡ في أي مكان لحفظه هنا',
     );
   }
 }

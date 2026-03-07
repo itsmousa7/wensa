@@ -31,7 +31,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
   Widget build(BuildContext context) {
     final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
     final feed = ref.watch(favoritesFeedProvider);
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context).colorScheme;
     final tt = AppTypography.getTextTheme(isAr ? 'ar' : 'en', context);
 
     return Directionality(
@@ -64,7 +64,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: cs.primary,
+                              color: theme.primary,
                             ),
                           )
                         : Opacity(
@@ -72,7 +72,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
                             child: Icon(
                               Icons.keyboard_arrow_down_rounded,
                               size: 24,
-                              color: cs.onSurface.withValues(alpha: 0.5),
+                              color: theme.onSurface.withValues(alpha: 0.5),
                             ),
                           ),
                   );
@@ -86,7 +86,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
                   child: Text(
                     isAr ? 'المفضلة' : 'Favorites',
                     style: tt.headlineMedium?.copyWith(
-                      color: cs.onSurface,
+                      color: theme.onSurface,
                       fontWeight: FontWeight.w800,
                     ),
                   ),

@@ -4,43 +4,36 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/build_card_row_skeleton.dart';
-import 'package:future_riverpod/features/home/presentation/widgets/build_error_widget.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/feed_card.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/view_all_card.dart';
 import 'package:future_riverpod/features/places/domain/models/trending_feed_item_model.dart';
 
-class TrendingFeedSection extends ConsumerStatefulWidget {
+class TrendingFeedSection extends ConsumerWidget {
   const TrendingFeedSection({super.key, this.onViewAll});
 
   final VoidCallback? onViewAll;
 
   @override
-  ConsumerState<TrendingFeedSection> createState() =>
-      _TrendingFeedSectionState();
-}
-
-class _TrendingFeedSectionState extends ConsumerState<TrendingFeedSection> {
-  bool get isAr => ref.watch(appLocaleProvider) is ArabicLocale;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
     final trendingAsync = ref.watch(trendingFeedProvider);
 
     return trendingAsync.when(
       skipLoadingOnRefresh: false,
       loading: () => const BuildCardRowSkeleton(),
-      error: (e, _) => buildErrorWidget(e.toString()),
+      // ✅ Silent fail — home_page shows the centered error instead
+      error: (_, __) => const SizedBox.shrink(),
       data: (items) => SizedBox(
         height: 210,
         child: ListView.separated(
           physics: const BouncingScrollPhysics(),
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 22),
-          itemCount: items.length + (widget.onViewAll != null ? 1 : 0),
-          separatorBuilder: (_, _) => const SizedBox(width: 14),
+          itemCount: items.length + (onViewAll != null ? 1 : 0),
+          separatorBuilder: (_, __) => const SizedBox(width: 14),
           itemBuilder: (_, i) {
-            if (widget.onViewAll != null && i == items.length) {
-              return ViewAllCard(isAr: isAr, onTap: widget.onViewAll!);
+            if (onViewAll != null && i == items.length) {
+              return ViewAllCard(isAr: isAr, onTap: onViewAll!);
             }
             final item = items[i];
             return FeedCard(
@@ -50,13 +43,13 @@ class _TrendingFeedSectionState extends ConsumerState<TrendingFeedSection> {
               titleAr: item.titleAr,
               subtitleEn: item.subtitleEn,
               subtitleAr: item.subtitleAr,
-              badge: item.isEvent
+              badge:
+                  item
+                      .isEvent // ✅ WensaBadge
                   ? FeedCardBadge.event
                   : FeedCardBadge.trending,
               itemType: item.isEvent ? 'event' : 'place',
-              onTap: () {
-                /* TODO: Navigate */
-              },
+              onTap: () {},
             );
           },
         ),

@@ -34,7 +34,7 @@ Container feedBadge({
       textAlign: TextAlign.center, // ✅ يحل مشكلة المحاذاة
       // ✅ TextStyle مباشر بدل copyWith — يحل مشكلة التكرار
       style: TextStyle(
-        color: AppColors.white,
+        color: AppColors.black,
         fontSize: 11,
         fontWeight: FontWeight.w700,
         fontFamily: AppTypography.getBodyFontFamily(isAr ? 'ar' : 'en'),

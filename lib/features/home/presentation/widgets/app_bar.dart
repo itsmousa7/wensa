@@ -71,7 +71,7 @@ class HomeAppBar extends ConsumerWidget {
                 ),
 
                 error: (_, _) => Text(
-                  '— 👋',
+                  '',
                   style: textTheme.titleMedium?.copyWith(
                     color: theme.colorScheme.onSurface,
                   ),

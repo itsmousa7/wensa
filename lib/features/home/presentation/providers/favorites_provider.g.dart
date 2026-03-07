@@ -154,7 +154,7 @@ final class SeeAllFeedProvider
   }
 }
 
-String _$seeAllFeedHash() => r'7bd5c1171f7e2f460d322dac8770ed1e28123ee7';
+String _$seeAllFeedHash() => r'3f29eddf2e8e07acc1f96398350a24cc5b12ba45';
 
 final class SeeAllFeedFamily extends $Family
     with

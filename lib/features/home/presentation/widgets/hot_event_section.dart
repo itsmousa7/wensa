@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/new_opening_badge.dart';
 import 'package:future_riverpod/features/places/domain/models/event_model.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -133,9 +135,6 @@ class _HotEventsSectionState extends ConsumerState<HotEventsSection> {
     ),
   );
 
-  // ── SKELETON — نفس أسلوب PromotedBanner بالضبط ────────────────────────────
-  //  PromotedBanner:  surfaceContainer bg + surfaceContainerHighest للعناصر
-  //  هنا نطبق نفس الفكرة على كارد أكبر (200px height)
   Widget _buildSkeleton(ThemeData theme) => Skeletonizer(
     enabled: true,
     effect: ShimmerEffect(
@@ -297,136 +296,116 @@ class _HeroEventCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {},
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
-          color: _kSurface2,
-        ),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(22),
-                child: event.coverImageUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: event.coverImageUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (_, _) => Container(color: _kSurface2),
-                        errorWidget: (_, _, _) => Container(color: _kSurface2),
-                      )
-                    : Container(color: _kSurface2),
-              ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: event.coverImageUrl != null
+                  ? CachedNetworkImage(
+                      imageUrl: event.coverImageUrl!,
+                      fit: BoxFit.cover,
+                      placeholder: (_, _) => Container(color: _kSurface2),
+                      errorWidget: (_, _, _) => Container(color: _kSurface2),
+                    )
+                  : Container(color: _kSurface2),
             ),
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(22),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.92),
-                      ],
-                      stops: const [0.3, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Hot badge
-            Positioned(
-              top: 12,
-              left: isAr ? null : 12,
-              right: isAr ? 12 : null,
+          ),
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _kOrange,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _kOrange.withValues(alpha: 0.5),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: Text(
-                  isAr ? '🔥 رائج' : '🔥 Hot',
-                  style: tt.labelSmall?.copyWith(
-                    color: _kText,
-                    fontWeight: FontWeight.w700,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.92),
+                    ],
+                    stops: const [0.3, 1.0],
                   ),
                 ),
               ),
             ),
-            // Content
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isAr ? event.titleAr : event.titleEn,
-                      style: tt.titleLarge?.copyWith(
-                        color: _kText,
-                        letterSpacing: -0.3,
-                      ),
+          ),
+          // Hot badge
+          Positioned(
+            top: 12,
+            left: isAr ? null : 12,
+            right: isAr ? 12 : null,
+            child: feedBadge(
+              isAr: isAr,
+              context: context,
+              color: AppColors.headline,
+              text: isAr ? '🔥 رائج' : '🔥 Hot',
+            ),
+          ),
+          // Content
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isAr ? event.titleAr : event.titleEn,
+                    style: tt.titleLarge?.copyWith(
+                      color: _kText,
+                      letterSpacing: -0.3,
                     ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '📅 ${_formatDate(event.startDate)}',
-                          style: tt.bodySmall?.copyWith(color: Colors.white70),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '📍 ${event.city ?? ''}',
-                          style: tt.bodySmall?.copyWith(color: Colors.white70),
-                        ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '📅 ${_formatDate(event.startDate)}',
+                        style: tt.bodySmall?.copyWith(color: Colors.white70),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '📍 ${event.city ?? ''}',
+                        style: tt.bodySmall?.copyWith(color: Colors.white70),
+                      ),
 
-                        Spacer(),
-                        if (event.ticketUrl != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 7,
+                      Spacer(),
+                      if (event.ticketUrl != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [_kOrange, _kOrange2],
                             ),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [_kOrange, _kOrange2],
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _kOrange.withValues(alpha: 0.5),
+                                blurRadius: 12,
                               ),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: _kOrange.withValues(alpha: 0.5),
-                                  blurRadius: 12,
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              isAr ? 'احجز الآن' : 'Book Now',
-                              style: tt.labelMedium?.copyWith(
-                                color: _kText,
-                                fontWeight: FontWeight.w700,
-                              ),
+                            ],
+                          ),
+                          child: Text(
+                            isAr ? 'احجز الآن' : 'Book Now',
+                            style: tt.labelMedium?.copyWith(
+                              color: _kText,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                      ],
-                    ),
-                  ],
-                ),
+                        ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

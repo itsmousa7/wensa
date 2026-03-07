@@ -9,6 +9,58 @@ part of 'router_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(SupabaseReady)
+final supabaseReadyProvider = SupabaseReadyProvider._();
+
+final class SupabaseReadyProvider
+    extends $NotifierProvider<SupabaseReady, bool> {
+  SupabaseReadyProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'supabaseReadyProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$supabaseReadyHash();
+
+  @$internal
+  @override
+  SupabaseReady create() => SupabaseReady();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$supabaseReadyHash() => r'cf5dcb3b92b107a55f8d426da9e65a4f69fb38ca';
+
+abstract class _$SupabaseReady extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(router)
 final routerProvider = RouterProvider._();
 
@@ -48,4 +100,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'7e90a6be5d038ceaa0891d771105a4003e5cc8f9';
+String _$routerHash() => r'092998e36840a2955ff6fb9dc2d47987ad316ba5';

@@ -43,7 +43,7 @@ class ViewAllCard extends StatelessWidget {
                 ),
                 child: Icon(
                   isAr
-                      ? Icons.arrow_back_ios_new_rounded
+                      ? Icons.arrow_forward_ios_rounded
                       : Icons.arrow_forward_ios_rounded,
                   color: cs.primary,
                   size: 16,

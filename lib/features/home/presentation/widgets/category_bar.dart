@@ -74,11 +74,11 @@ class CategoryBar extends ConsumerWidget {
                   Text(
                     isAr ? cat.nameAr : cat.nameEn,
                     // ✅ BUG 5: AppTypography
-                    style: tt.labelSmall?.copyWith(
+                    style: tt.labelLarge?.copyWith(
                       color: isActive
                           ? theme.colorScheme.primary
                           : theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                      fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],

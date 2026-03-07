@@ -10,9 +10,6 @@ import 'package:gap/gap.dart';
 
 enum FeedCardBadge { trending, event, newOpening }
 
-const kOrange = Color(0xFFFF5E2C);
-const kText3 = Color(0xFF5A5A72);
-
 class FeedCard extends ConsumerWidget {
   const FeedCard({
     super.key,
@@ -42,7 +39,7 @@ class FeedCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
-    final theme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     final isFav =
         ref.watch(favoritesProvider).value?.contains(placeId) ?? false;
 
@@ -52,11 +49,11 @@ class FeedCard extends ConsumerWidget {
         isAr ? '🔥 رائج' : '🔥 Hot',
       ),
       FeedCardBadge.event => (
-        const Color(0xFF3E3E9B),
+        AppColors.headline2,
         isAr ? '🎉 حدث' : '🎉 Event',
       ),
       FeedCardBadge.newOpening => (
-        theme.primary,
+        theme.colorScheme.primary,
         isAr ? 'افتتح مؤخراً' : 'Just Opened',
       ),
     };
@@ -85,12 +82,14 @@ class FeedCard extends ConsumerWidget {
                         ? CachedNetworkImage(
                             imageUrl: coverImageUrl!,
                             fit: BoxFit.cover,
-                            placeholder: (_, __) =>
-                                Container(color: theme.surfaceContainer),
-                            errorWidget: (_, __, ___) =>
-                                Container(color: theme.surfaceContainer),
+                            placeholder: (_, _) => Container(
+                              color: theme.colorScheme.surfaceContainer,
+                            ),
+                            errorWidget: (_, _, _) => Container(
+                              color: theme.colorScheme.surfaceContainer,
+                            ),
                           )
-                        : Container(color: theme.surfaceContainer),
+                        : Container(color: theme.colorScheme.surfaceContainer),
                   ),
                 ),
 
@@ -121,7 +120,7 @@ class FeedCard extends ConsumerWidget {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.35),
+                        color: AppColors.black.withValues(alpha: 0.25),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -129,7 +128,7 @@ class FeedCard extends ConsumerWidget {
                             ? Icons.favorite_rounded
                             : Icons.favorite_border_rounded,
                         size: 14,
-                        color: isFav ? Colors.red.shade400 : Colors.white,
+                        color: isFav ? AppColors.alert : AppColors.white,
                       ),
                     ),
                   ),
@@ -152,11 +151,7 @@ class FeedCard extends ConsumerWidget {
                           isAr ? titleAr : titleEn,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: theme.outline,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: theme.textTheme.titleSmall,
                         ),
                       ),
                       if (isVerified) ...[
@@ -173,15 +168,19 @@ class FeedCard extends ConsumerWidget {
                   Row(
                     children: [
                       SizedBox(
-                        height: 9,
-                        child: Image.asset('assets/icons/location.png'),
+                        height: 12,
+                        child: itemType == 'place'
+                            ? Image.asset('assets/icons/location.png')
+                            : Image.asset('assets/icons/calendar.png'),
                       ),
-                      const Gap(4),
+                      const Gap(6),
                       Text(
                         (isAr ? subtitleAr : subtitleEn) ?? '',
                         maxLines: 1,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: theme.onSurface.withValues(alpha: 0.8),
+                          color: theme.colorScheme.outline.withValues(
+                            alpha: 0.7,
+                          ),
                         ),
                       ),
                     ],

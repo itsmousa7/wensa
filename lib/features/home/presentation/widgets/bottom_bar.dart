@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 
 class NavItem {
   final IconData icon;
@@ -106,7 +107,7 @@ class BottomBar extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.18),
+                      color: AppColors.black.withValues(alpha: 0.18),
                       blurRadius: 24,
                       offset: const Offset(0, 6),
                     ),

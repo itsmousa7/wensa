@@ -30,7 +30,7 @@ class CategoryFeedSection extends ConsumerWidget {
     if (feed.isFirstLoad) {
       return SliverList(
         delegate: SliverChildBuilderDelegate(
-          (_, __) => Padding(
+          (_, _) => Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
             child: buildFullWidthSkeleton(context),
           ),
