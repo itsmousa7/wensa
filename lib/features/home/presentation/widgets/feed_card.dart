@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/home/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/new_opening_badge.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 
 enum FeedCardBadge { trending, event, newOpening }
 
@@ -59,8 +61,14 @@ class FeedCard extends ConsumerWidget {
     };
 
     return GestureDetector(
-      onTap: onTap,
-      // ✅ Pass itemType so events insert into event_id column, not place_id
+      onTap:
+          onTap ??
+          (itemType == 'place'
+              ? () => context.pushNamed(
+                  RouteNames.placeDetails,
+                  queryParameters: {'placeId': placeId},
+                )
+              : null),
       onDoubleTap: () => ref
           .read(favoritesProvider.notifier)
           .toggle(placeId, itemType: itemType),
@@ -151,7 +159,9 @@ class FeedCard extends ConsumerWidget {
                           isAr ? titleAr : titleEn,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
                         ),
                       ),
                       if (isVerified) ...[

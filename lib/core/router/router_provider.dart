@@ -15,13 +15,13 @@ import 'package:future_riverpod/features/home/presentation/pages/favorites_page.
 import 'package:future_riverpod/features/home/presentation/pages/home_page.dart';
 import 'package:future_riverpod/features/home/presentation/pages/splash_page.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/nav_shell.dart';
+import 'package:future_riverpod/features/places/presentation/pages/place_details_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'router_provider.g.dart';
 
-// ✅ Riverpod generator — no legacy providers
-// Set to true by SplashPage after Supabase.initialize() completes
+// ✅ Tracks Supabase init state
 @riverpod
 class SupabaseReady extends _$SupabaseReady {
   @override
@@ -89,6 +89,13 @@ GoRouter router(Ref ref) {
           fromForgotPassword: s.uri.queryParameters['from'] == 'forgot',
         ),
       ),
+      // ✅ Place details — receives placeId as query param
+      GoRoute(
+        path: '/placeDetails',
+        name: RouteNames.placeDetails,
+        builder: (_, s) =>
+            PlaceDetailsPage(placeId: s.uri.queryParameters['placeId'] ?? ''),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (_, __, shell) => NavShell(navigationShell: shell),
         branches: [
@@ -135,10 +142,7 @@ GoRouter router(Ref ref) {
 }
 
 String? _redirect(Ref ref, GoRouterState state) {
-  // Splash owns its own navigation — never touch it here
   if (state.matchedLocation == '/splash') return null;
-
-  // Supabase not ready yet — stay on splash
   if (!ref.read(supabaseReadyProvider)) return '/splash';
 
   final isAuth = ref.read(isAuthenticatedProvider);
@@ -151,6 +155,11 @@ String? _redirect(Ref ref, GoRouterState state) {
     '/forgot-password',
     '/verify-email',
   ].any(path.startsWith);
+
+  // Place details is accessible while authenticated
+  if (path.startsWith('/placeDetails')) {
+    return (isAuth && isVerified) ? null : '/signin';
+  }
 
   if (path.startsWith('/changePassword')) {
     if (state.uri.queryParameters['from'] == 'forgot') return null;
@@ -169,25 +178,20 @@ String? _redirect(Ref ref, GoRouterState state) {
   return isPublic ? null : '/signin';
 }
 
-// ✅ Notifier — debounced + guards against pre-init auth reads
 class _RouterNotifier extends ChangeNotifier {
   Timer? _debounce;
 
   _RouterNotifier(Ref ref) {
     ref.listen(supabaseReadyProvider, (_, isReady) {
       if (!isReady) return;
-      // Supabase just became ready — trigger one redirect
       _notify();
-      // Now safe to listen to auth changes
       ref.listen(authStateProvider, (prev, next) {
-        // Only notify on actual state change
         if (prev != next) _notify();
       });
     });
   }
 
   void _notify() {
-    // Debounce 300ms — collapses burst of auth events into one redirect
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), notifyListeners);
   }

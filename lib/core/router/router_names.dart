@@ -10,4 +10,5 @@ class RouteNames {
   static const splash = 'splash';
   static const profile = 'profile';
   static const favorites = 'favorites';
+  static const placeDetails = 'placeDetails';
 }

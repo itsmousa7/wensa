@@ -45,7 +45,6 @@ class NewOpeningSection extends ConsumerWidget {
               badge: FeedCardBadge.newOpening, // ✅ WensaBadge
               isVerified: item.isVerified,
               itemType: 'place',
-              onTap: () {},
             );
           },
         ),

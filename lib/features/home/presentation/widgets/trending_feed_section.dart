@@ -49,7 +49,6 @@ class TrendingFeedSection extends ConsumerWidget {
                   ? FeedCardBadge.event
                   : FeedCardBadge.trending,
               itemType: item.isEvent ? 'event' : 'place',
-              onTap: () {},
             );
           },
         ),

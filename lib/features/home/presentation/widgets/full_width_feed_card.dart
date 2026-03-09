@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/wensa_badge.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class FullWidthFeedCard extends ConsumerWidget {
@@ -31,135 +33,121 @@ class FullWidthFeedCard extends ConsumerWidget {
         ref.watch(favoritesProvider).value?.contains(item.id) ?? false;
 
     return GestureDetector(
+      onTap:
+          onTap ??
+          (item.type == 'place'
+              ? () => context.pushNamed(
+                  RouteNames.placeDetails,
+                  queryParameters: {'placeId': item.id},
+                )
+              : null),
       onDoubleTap: () => ref
           .read(favoritesProvider.notifier)
           .toggle(item.id, itemType: item.type),
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          // ✅ Explicit card background — visible in both light & dark mode
-          color: cs.surfaceContainer,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        clipBehavior: Clip.hardEdge,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ── Image 200px ────────────────────────────────────────────────
-            SizedBox(
-              height: 200,
-              width: double.infinity,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Cover image
-                  item.coverImageUrl != null
-                      ? CachedNetworkImage(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Image 200px ────────────────────────────────────────────────
+          SizedBox(
+            height: 200,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Cover image
+                item.coverImageUrl != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadiusGeometry.circular(16),
+                        child: CachedNetworkImage(
                           imageUrl: item.coverImageUrl!,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) =>
+                          placeholder: (_, _) =>
                               ColoredBox(color: cs.surfaceContainerHighest),
-                          errorWidget: (_, __, ___) =>
+                          errorWidget: (_, _, _) =>
                               ColoredBox(color: cs.surfaceContainerHighest),
-                        )
-                      : ColoredBox(color: cs.surfaceContainerHighest),
+                        ),
+                      )
+                    : ColoredBox(color: cs.surfaceContainerHighest),
 
-                  // Gradient overlay
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.4),
-                        ],
-                        stops: const [0.45, 1.0],
-                      ),
-                    ),
-                  ),
+                // Badge — start corner
+                Positioned(
+                  top: 10,
+                  left: isAr ? null : 10,
+                  right: isAr ? 10 : null,
+                  child: badge != null
+                      ? WensaBadge(type: badge!, isAr: isAr)
+                      : const SizedBox.shrink(),
+                ),
 
-                  // Badge — start corner
-                  Positioned(
-                    top: 10,
-                    left: isAr ? null : 10,
-                    right: isAr ? 10 : null,
-                    child: badge != null
-                        ? WensaBadge(type: badge!, isAr: isAr)
-                        : const SizedBox.shrink(),
+                // Heart — end corner
+                Positioned(
+                  top: 8,
+                  right: isAr ? null : 10,
+                  left: isAr ? 10 : null,
+                  child: _HeartButton(
+                    itemId: item.id,
+                    itemType: item.type,
+                    isFavorited: isFav,
                   ),
-
-                  // Heart — end corner
-                  Positioned(
-                    top: 8,
-                    right: isAr ? null : 10,
-                    left: isAr ? 10 : null,
-                    child: _HeartButton(
-                      itemId: item.id,
-                      itemType: item.type,
-                      isFavorited: isFav,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
 
-            // ── Text area — inside the same Container ──────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title + verify badge inline
+          // ── Text area — inside the same Container ──────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title + verify badge inline
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        isAr ? item.titleAr : item.titleEn,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: tt.titleMedium?.copyWith(color: cs.onSurface),
+                      ),
+                    ),
+                    if (item.isVerified) ...[
+                      const Gap(6),
+                      SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: Image.asset('assets/icons/verify.png'),
+                      ),
+                    ],
+                  ],
+                ),
+
+                // Subtitle (area / location)
+                if ((isAr ? item.subtitleAr : item.subtitleEn) != null) ...[
+                  const SizedBox(height: 5),
                   Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Flexible(
-                        child: Text(
-                          isAr ? item.titleAr : item.titleEn,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: tt.titleMedium?.copyWith(color: cs.onSurface),
+                      SizedBox(
+                        height: 10,
+                        child: Image.asset('assets/icons/location.png'),
+                      ),
+                      const Gap(4),
+                      Text(
+                        isAr ? item.subtitleAr! : item.subtitleEn!,
+                        style: tt.bodySmall?.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.55),
                         ),
                       ),
-                      if (item.isVerified) ...[
-                        const Gap(6),
-                        SizedBox(
-                          height: 16,
-                          width: 16,
-                          child: Image.asset('assets/icons/verify.png'),
-                        ),
-                      ],
                     ],
                   ),
-
-                  // Subtitle (area / location)
-                  if ((isAr ? item.subtitleAr : item.subtitleEn) != null) ...[
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        SizedBox(
-                          height: 10,
-                          child: Image.asset('assets/icons/location.png'),
-                        ),
-                        const Gap(4),
-                        Text(
-                          isAr ? item.subtitleAr! : item.subtitleEn!,
-                          style: tt.bodySmall?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.55),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -177,19 +165,14 @@ Widget buildFullWidthSkeleton(BuildContext context) {
       highlightColor: cs.surfaceContainerHighest,
       duration: const Duration(milliseconds: 1200),
     ),
-    child: Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: cs.surfaceContainer,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Image placeholder
-          SizedBox(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Image placeholder
+        ClipRRect(
+          borderRadius: BorderRadiusGeometry.circular(16),
+          child: SizedBox(
             height: 200,
             width: double.infinity,
             child: Stack(
@@ -225,63 +208,63 @@ Widget buildFullWidthSkeleton(BuildContext context) {
               ],
             ),
           ),
+        ),
 
-          // Text placeholder
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title + verify
-                Row(
-                  children: [
-                    Container(
-                      height: 16,
-                      width: 150,
-                      decoration: BoxDecoration(
-                        color: cs.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+        // Text placeholder
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title + verify
+              Row(
+                children: [
+                  Container(
+                    height: 16,
+                    width: 150,
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const Gap(8),
-                    Container(
-                      height: 16,
-                      width: 16,
-                      decoration: BoxDecoration(
-                        color: cs.surfaceContainerHighest,
-                        shape: BoxShape.circle,
-                      ),
+                  ),
+                  const Gap(8),
+                  Container(
+                    height: 16,
+                    width: 16,
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest,
+                      shape: BoxShape.circle,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                // Location
-                Row(
-                  children: [
-                    Container(
-                      height: 10,
-                      width: 10,
-                      decoration: BoxDecoration(
-                        color: cs.surfaceContainerHighest,
-                        shape: BoxShape.circle,
-                      ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Location
+              Row(
+                children: [
+                  Container(
+                    height: 10,
+                    width: 10,
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest,
+                      shape: BoxShape.circle,
                     ),
-                    const Gap(4),
-                    Container(
-                      height: 10,
-                      width: 90,
-                      decoration: BoxDecoration(
-                        color: cs.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
+                  ),
+                  const Gap(4),
+                  Container(
+                    height: 10,
+                    width: 90,
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 }
