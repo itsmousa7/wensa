@@ -99,37 +99,25 @@ class CategoryBar extends ConsumerWidget {
 Widget _buildSkeleton(ThemeData theme) => Skeletonizer(
   enabled: true,
   effect: ShimmerEffect(
-    baseColor: theme.colorScheme.surfaceContainerHighest,
+    baseColor: theme.colorScheme.surfaceContainer,
     highlightColor: theme.colorScheme.surfaceContainerHighest,
     duration: const Duration(milliseconds: 1200),
+    begin: Alignment.centerRight,
+    end: Alignment.centerLeft,
   ),
   child: SizedBox(
     height: 110,
     child: ListView.separated(
       scrollDirection: Axis.horizontal,
-      physics: const NeverScrollableScrollPhysics(), // ← THE FIX
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
       itemCount: 6,
       separatorBuilder: (_, _) => const SizedBox(width: 12),
       itemBuilder: (_, _) => Column(
         children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainer,
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
+          Bone(width: 64, height: 64, borderRadius: BorderRadius.circular(20)),
           const SizedBox(height: 6),
-          Container(
-            height: 11,
-            width: 40,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainer,
-              borderRadius: BorderRadius.circular(6),
-            ),
-          ),
+          Bone(width: 40, height: 11, borderRadius: BorderRadius.circular(6)),
         ],
       ),
     ),

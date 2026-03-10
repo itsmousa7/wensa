@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/home/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_app_bar_state.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
@@ -52,8 +53,8 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
     Navigator.of(context).push(
       PageRouteBuilder<void>(
         opaque: false,
-        barrierColor: Colors.black87,
-        pageBuilder: (_, __, ___) =>
+
+        pageBuilder: (_, _, _) =>
             PlaceFullscreenViewer(images: images, initialIndex: index),
       ),
     );
@@ -122,44 +123,53 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
                   automaticallyImplyLeading: false,
                   backgroundColor: collapsed
                       ? theme.scaffoldBackgroundColor
-                      : Colors.transparent,
+                      : AppColors.transparent,
                   systemOverlayStyle: const SystemUiOverlayStyle(
-                    statusBarColor: Colors.transparent,
+                    statusBarColor: AppColors.transparent,
                   ),
                   title: collapsed
                       ? Text(
                           name,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: cs.onSurface,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: cs.outline,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         )
                       : null,
+
                   leading: Padding(
-                    padding: const EdgeInsets.only(left: 8, top: 4),
-                    child: PlaceNavButton(
-                      collapsed: collapsed,
-                      onTap: () => Navigator.of(context).pop(),
+                    padding: const EdgeInsets.only(right: 20),
+                    child: PlaceAppBarButton(
                       icon: Icon(
+                        color: AppColors.white,
                         _isAr
                             ? CupertinoIcons.chevron_right
                             : CupertinoIcons.chevron_left,
-                        color: collapsed ? cs.onSurface : Colors.white,
-                        size: 18,
                       ),
+
+                      onTap: () => Navigator.pop(context),
+                      collapsed: collapsed,
                     ),
                   ),
+                  leadingWidth: 75,
                   actions: [
                     Padding(
-                      padding: const EdgeInsets.only(right: 12, top: 4),
-                      child: PlaceHeartButton(
-                        isFavorite: isFav,
-                        collapsed: collapsed,
+                      padding: const EdgeInsets.only(left: 20),
+                      child: PlaceAppBarButton(
+                        icon: Icon(
+                          isFav
+                              ? CupertinoIcons.heart_fill
+                              : CupertinoIcons.heart,
+                          color: isFav
+                              ? AppColors.alert
+                              : (collapsed ? cs.onSurface : AppColors.white),
+                        ),
                         onTap: () => ref
                             .read(favoritesProvider.notifier)
                             .toggle(place.id, itemType: 'place'),
+                        collapsed: collapsed,
+                        animate: true,
                       ),
                     ),
                   ],

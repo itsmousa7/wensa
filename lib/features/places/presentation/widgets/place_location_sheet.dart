@@ -102,7 +102,8 @@ void _showAndroidSheet({
       name: isAr ? 'خرائط جوجل' : 'Google Maps',
       icon: Icons.place_outlined,
       color: const Color(0xFF4285F4),
-      url: 'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
+      url:
+          'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
     ),
     _MapApp(
       name: 'Waze',
@@ -117,11 +118,8 @@ void _showAndroidSheet({
     backgroundColor: Colors.transparent,
     isDismissible: true,
     enableDrag: true,
-    builder: (ctx) => _AndroidLocationSheet(
-      apps: apps,
-      placeName: placeName,
-      isAr: isAr,
-    ),
+    builder: (ctx) =>
+        _AndroidLocationSheet(apps: apps, placeName: placeName, isAr: isAr),
   );
 }
 
@@ -147,13 +145,17 @@ class _AndroidLocationSheet extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.fromLTRB(
-        24, 12, 24, MediaQuery.of(context).padding.bottom + 24,
+        24,
+        12,
+        24,
+        MediaQuery.of(context).padding.bottom + 24,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 40, height: 4,
+            width: 40,
+            height: 4,
             decoration: BoxDecoration(
               color: cs.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(2),
@@ -162,13 +164,16 @@ class _AndroidLocationSheet extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             isAr ? 'افتح الموقع في' : 'Open location in',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             placeName,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: cs.onSurface.withValues(alpha: 0.5)),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.5),
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
@@ -178,10 +183,15 @@ class _AndroidLocationSheet extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             style: TextButton.styleFrom(
               minimumSize: const Size(double.infinity, 48),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               backgroundColor: cs.surfaceContainer,
             ),
-            child: Text(isAr ? 'إلغاء' : 'Cancel', style: TextStyle(color: cs.onSurface)),
+            child: Text(
+              isAr ? 'إلغاء' : 'Cancel',
+              style: TextStyle(color: cs.onSurface),
+            ),
           ),
         ],
       ),
@@ -212,7 +222,8 @@ class _AppTile extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 42, height: 42,
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
                     color: app.color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
@@ -220,14 +231,18 @@ class _AppTile extends StatelessWidget {
                   child: Icon(app.icon, color: app.color, size: 22),
                 ),
                 const SizedBox(width: 14),
-                Text(app.name,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  app.name,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
                 const Spacer(),
-                Icon(Icons.arrow_forward_ios_rounded,
-                    size: 14, color: cs.onSurface.withValues(alpha: 0.3)),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: cs.onSurface.withValues(alpha: 0.3),
+                ),
               ],
             ),
           ),
@@ -238,7 +253,12 @@ class _AppTile extends StatelessWidget {
 }
 
 class _MapApp {
-  const _MapApp({required this.name, required this.icon, required this.color, required this.url});
+  const _MapApp({
+    required this.name,
+    required this.icon,
+    required this.color,
+    required this.url,
+  });
   final String name;
   final IconData icon;
   final Color color;

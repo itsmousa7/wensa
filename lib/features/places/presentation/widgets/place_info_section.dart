@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // ConsumerWidget, WidgetRef
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
@@ -8,7 +9,8 @@ import 'package:future_riverpod/features/places/presentation/widgets/place_conta
 import 'package:future_riverpod/features/places/presentation/widgets/place_details_helper.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_location_sheet.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_opening_hours.dart';
-import 'package:future_riverpod/features/places/presentation/widgets/place_reviews_sheet.dart'; // placeTagsProvider
+import 'package:future_riverpod/features/places/presentation/widgets/place_reviews_sheet.dart';
+import 'package:gap/gap.dart'; // placeTagsProvider
 
 class PlaceInfoSection extends ConsumerWidget {
   const PlaceInfoSection({
@@ -32,7 +34,7 @@ class PlaceInfoSection extends ConsumerWidget {
 
     final name = isAr ? place.nameAr : place.nameEn;
     final desc = isAr ? place.descriptionAr : place.descriptionEn;
-    const descLimit = 160;
+    const descLimit = 120;
     final isLong = (desc ?? '').length > descLimit;
 
     return Padding(
@@ -43,24 +45,19 @@ class PlaceInfoSection extends ConsumerWidget {
           // ── Name + verified ─────────────────────────────────────────────
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  name,
-                  style: tt.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                  ),
+              Text(
+                name,
+                style: tt.titleLarge?.copyWith(
+                  color: cs.outline,
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
+              const Gap(15),
               if (place.isVerified) ...[
-                const SizedBox(width: 8),
-                const Tooltip(
-                  message: 'Verified',
-                  child: Icon(
-                    Icons.verified_rounded,
-                    color: AppColors.lightGreenSecondary,
-                    size: 22,
-                  ),
+                SizedBox(
+                  height: 20,
+                  child: Image.asset('assets/icons/verify.png'),
                 ),
               ],
             ],
@@ -92,10 +89,9 @@ class PlaceInfoSection extends ConsumerWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.location_on_rounded,
-                      size: 16,
-                      color: cs.primary,
+                    SizedBox(
+                      height: 14,
+                      child: Image.asset('assets/icons/location.png'),
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -111,8 +107,8 @@ class PlaceInfoSection extends ConsumerWidget {
                     if (place.latitude != null) ...[
                       const SizedBox(width: 6),
                       Icon(
-                        Icons.open_in_new_rounded,
-                        size: 12,
+                        CupertinoIcons.arrow_up_right_square,
+                        size: 16,
                         color: cs.primary.withValues(alpha: 0.7),
                       ),
                     ],
@@ -123,36 +119,40 @@ class PlaceInfoSection extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // ── Stats row ───────────────────────────────────────────────────
-          Row(
-            children: [
-              _StatChip(
-                icon: Icons.visibility_outlined,
-                value: compactNumber(place.viewCount),
-                label: isAr ? 'مشاهدة' : 'Views',
-              ),
-              const SizedBox(width: 10),
-              _StatChip(
-                icon: Icons.favorite_rounded,
-                value: compactNumber(place.savesCount),
-                label: isAr ? 'إعجاب' : 'Likes',
-                accentColor: Colors.redAccent,
-              ),
-              const SizedBox(width: 10),
-              GestureDetector(
-                onTap: () => showReviewsSheet(
-                  context: context,
-                  placeId: placeId,
-                  placeName: name,
-                  isAr: isAr,
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+
+              children: [
+                _StatChip(
+                  icon: Icons.visibility_outlined,
+                  value: compactNumber(place.viewCount),
+                  label: isAr ? 'مشاهدة' : 'Views',
                 ),
-                child: _StatChip(
-                  icon: Icons.star_rounded,
-                  value: compactNumber(place.reviewsCount),
-                  label: isAr ? 'تقييم' : 'Reviews',
-                  highlighted: true,
+                const SizedBox(width: 10),
+                _StatChip(
+                  icon: Icons.favorite_rounded,
+                  value: compactNumber(place.savesCount),
+                  label: isAr ? 'إعجاب' : 'Likes',
+                  accentColor: AppColors.alert,
                 ),
-              ),
-            ],
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: () => showReviewsSheet(
+                    context: context,
+                    placeId: placeId,
+                    placeName: name,
+                    isAr: isAr,
+                  ),
+                  child: _StatChip(
+                    icon: Icons.star_rounded,
+                    value: compactNumber(place.reviewsCount),
+                    label: isAr ? 'تقييم' : 'Reviews',
+                    highlighted: true,
+                  ),
+                ),
+              ],
+            ),
           ),
 
           // ── Price range ─────────────────────────────────────────────────
@@ -162,9 +162,7 @@ class PlaceInfoSection extends ConsumerWidget {
               children: [
                 Text(
                   isAr ? 'نطاق السعر:' : 'Price range:',
-                  style: tt.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.55),
-                  ),
+                  style: tt.bodyMedium?.copyWith(color: cs.outline),
                 ),
                 const SizedBox(width: 8),
                 ...List.generate(
@@ -186,11 +184,11 @@ class PlaceInfoSection extends ConsumerWidget {
           // ── Tags ────────────────────────────────────────────────────────
           tagsAsync.when(
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
             data: (tags) {
               if ((tags as List).isEmpty) return const SizedBox.shrink();
               return Padding(
-                padding: const EdgeInsets.only(top: 16),
+                padding: const EdgeInsets.only(top: 26),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -199,7 +197,7 @@ class PlaceInfoSection extends ConsumerWidget {
                         (tag) => Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
-                            vertical: 6,
+                            vertical: 8,
                           ),
                           decoration: BoxDecoration(
                             color: cs.primary.withValues(alpha: 0.08),
@@ -237,17 +235,11 @@ class PlaceInfoSection extends ConsumerWidget {
                 isLong && !state.descExpanded
                     ? '${desc.substring(0, descLimit)}...'
                     : desc,
-                style: tt.bodyMedium?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.72),
-                  height: 1.65,
-                ),
+                style: tt.bodyLarge?.copyWith(color: cs.outline, height: 1.65),
               ),
               secondChild: Text(
                 desc,
-                style: tt.bodyMedium?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.72),
-                  height: 1.65,
-                ),
+                style: tt.bodyLarge?.copyWith(color: cs.outline, height: 1.65),
               ),
             ),
             if (isLong)
@@ -357,7 +349,10 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           title,
-          style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          style: tt.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: cs.outline,
+          ),
         ),
       ],
     );
@@ -401,8 +396,10 @@ class _StatChip extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+
         children: [
-          Icon(icon, size: 15, color: color),
+          Icon(icon, size: 20, color: color),
           const SizedBox(width: 5),
           Column(
             mainAxisSize: MainAxisSize.min,
@@ -410,15 +407,15 @@ class _StatChip extends StatelessWidget {
             children: [
               Text(
                 value,
-                style: tt.labelMedium?.copyWith(
+                style: tt.labelLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: color,
                 ),
               ),
               Text(
                 label,
-                style: tt.labelSmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.4),
+                style: tt.titleLarge?.copyWith(
+                  color: cs.onSurface,
                   fontSize: 10,
                 ),
               ),

@@ -1,11 +1,15 @@
 // lib/features/places/presentation/widgets/place_reviews_sheet.dart
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_provider.dart';
 import 'package:future_riverpod/features/places/domain/models/review_with_user_model.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_reviews_provider.dart';
+import 'package:future_riverpod/features/places/presentation/widgets/comment_section_skeleton.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Entry-point
@@ -89,7 +93,7 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
     final hasReviewed =
         reviewsAsync.value?.any((r) => r.review.userId == currentUserId) ??
         false;
-
+    final maxHeight = MediaQuery.of(context).size.height * 0.8;
     // ── Layout: Column fills the full modal height.
     // The top transparent GestureDetector dismisses when tapped — this reliably
     // handles "tap outside to close" even though isScrollControlled:true means
@@ -110,185 +114,191 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
           ),
 
           // ── Actual sheet card ──────────────────────────────────────────────
-          GestureDetector(
-            // Absorb taps inside the card so they don't bubble to the dismiss layer.
-            onTap: () {},
-            child: Container(
-              // 75 % of the screen height; keyboard pushes it up automatically
-              // via MediaQuery.viewInsets in the input area.
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.82,
+          Container(
+            // 75 % of the screen height; keyboard pushes it up automatically
+            // via MediaQuery.viewInsets in the input area.
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            decoration: BoxDecoration(
+              color: theme.scaffoldBackgroundColor,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
               ),
-              decoration: BoxDecoration(
-                color: theme.scaffoldBackgroundColor,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(28),
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // ── Handle + Header ────────────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                    child: Column(
-                      children: [
-                        Center(
-                          child: Container(
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: cs.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                // ── Handle + Header ────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                  child: Column(
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Text(
-                              widget.isAr ? 'التقييمات' : 'Reviews',
-                              style: tt.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Text(
+                            widget.isAr ? 'التقييمات' : 'Reviews',
+                            style: tt.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          reviewsAsync.when(
+                            data: (r) =>
+                                _CountBadge(count: r.length, cs: cs, tt: tt),
+                            loading: () => const SizedBox.shrink(),
+                            error: (_, _) => const SizedBox.shrink(),
+                          ),
+                          const Spacer(),
+                          // ↓ replace the old CircularProgressIndicator with this
+                          if (isLoading)
+                            Skeletonizer(
+                              enabled: true,
+                              effect: ShimmerEffect(
+                                baseColor: cs.surfaceContainer,
+                                highlightColor: cs.surfaceContainerHighest,
+                                duration: const Duration(milliseconds: 1200),
+                                begin: Alignment.centerRight,
+                                end: Alignment.centerLeft,
+                              ),
+                              child: Bone(
+                                width: 60,
+                                height: 14,
+                                borderRadius: BorderRadius.circular(6),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            reviewsAsync.when(
-                              data: (r) =>
-                                  _CountBadge(count: r.length, cs: cs, tt: tt),
-                              loading: () => const SizedBox.shrink(),
-                              error: (_, __) => const SizedBox.shrink(),
-                            ),
-                            const Spacer(),
-                            if (isLoading)
-                              SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: cs.primary,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
                   ),
+                ),
 
+                Divider(
+                  height: 20,
+                  thickness: 0.5,
+                  color: cs.surfaceContainerHighest,
+                ),
+
+                // ── Reviews list ───────────────────────────────────────────
+                Expanded(
+                  child: reviewsAsync.when(
+                    loading: () => const ReviewsSkeleton(),
+                    error: (e, _) => Center(
+                      child: Text(
+                        widget.isAr
+                            ? 'تعذّر تحميل التقييمات'
+                            : 'Could not load reviews',
+                        style: tt.bodyMedium,
+                      ),
+                    ),
+                    data: (reviews) {
+                      if (reviews.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 32),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.chat_bubble_outline_rounded,
+                                  size: 52,
+                                  color: cs.onSurface.withValues(alpha: 0.2),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  widget.isAr
+                                      ? 'لا توجد تقييمات بعد'
+                                      : 'No reviews yet',
+                                  style: tt.bodyMedium?.copyWith(
+                                    color: cs.onSurface.withValues(alpha: 0.45),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  widget.isAr
+                                      ? 'كن أول من يقيّم هذا المكان'
+                                      : 'Be the first to review',
+                                  style: tt.bodySmall?.copyWith(
+                                    color: cs.onSurface.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                      return ListView.separated(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 4,
+                        ),
+                        itemCount: reviews.length,
+                        separatorBuilder: (_, _) => Divider(
+                          height: 1,
+                          thickness: 0.4,
+                          color: cs.surfaceContainerHighest,
+                        ),
+                        itemBuilder: (_, i) {
+                          final r = reviews[i];
+                          final isOwn = r.review.userId == currentUserId;
+                          return _ReviewTile(
+                            reviewWithUser: r,
+                            isOwn: isOwn,
+                            isAr: widget.isAr,
+                            tt: tt,
+                            cs: cs,
+                            // Only allow swipe-delete on own reviews
+                            onDelete: isOwn
+                                ? () => ref
+                                      .read(
+                                        placeReviewsProvider(
+                                          widget.placeId,
+                                        ).notifier,
+                                      )
+                                      .deleteReview(r.review.id)
+                                : null,
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+
+                // ── Add Review area ────────────────────────────────────────
+                if (currentUserId != null) ...[
                   Divider(
-                    height: 20,
+                    height: 1,
                     thickness: 0.5,
                     color: cs.surfaceContainerHighest,
                   ),
 
-                  // ── Reviews list ───────────────────────────────────────────
-                  Flexible(
-                    child: reviewsAsync.when(
-                      loading: () =>
-                          const Center(child: CircularProgressIndicator()),
-                      error: (e, _) => Center(
-                        child: Text(
-                          widget.isAr
-                              ? 'تعذّر تحميل التقييمات'
-                              : 'Could not load reviews',
-                          style: tt.bodyMedium,
-                        ),
-                      ),
-                      data: (reviews) {
-                        if (reviews.isEmpty) {
-                          return Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 32),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.chat_bubble_outline_rounded,
-                                    size: 52,
-                                    color: cs.onSurface.withValues(alpha: 0.2),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    widget.isAr
-                                        ? 'لا توجد تقييمات بعد'
-                                        : 'No reviews yet',
-                                    style: tt.bodyMedium?.copyWith(
-                                      color: cs.onSurface.withValues(
-                                        alpha: 0.45,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    widget.isAr
-                                        ? 'كن أول من يقيّم هذا المكان'
-                                        : 'Be the first to review',
-                                    style: tt.bodySmall?.copyWith(
-                                      color: cs.onSurface.withValues(
-                                        alpha: 0.3,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 280),
+                    child: hasReviewed
+                        ? ConstrainedBox(
+                            key: const ValueKey('banner'),
+                            constraints:
+                                const BoxConstraints(), // ← matches input height
+                            child: _AlreadyReviewedBanner(
+                              isAr: widget.isAr,
+                              cs: cs,
+                              tt: tt,
                             ),
-                          );
-                        }
-                        return ListView.separated(
-                          shrinkWrap: true,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 4,
-                          ),
-                          itemCount: reviews.length,
-                          separatorBuilder: (_, __) => Divider(
-                            height: 1,
-                            thickness: 0.4,
-                            color: cs.surfaceContainerHighest,
-                          ),
-                          itemBuilder: (_, i) {
-                            final r = reviews[i];
-                            final isOwn = r.review.userId == currentUserId;
-                            return _ReviewTile(
-                              reviewWithUser: r,
-                              isOwn: isOwn,
-                              isAr: widget.isAr,
-                              tt: tt,
-                              cs: cs,
-                              // Only allow swipe-delete on own reviews
-                              onDelete: isOwn
-                                  ? () => ref
-                                        .read(
-                                          placeReviewsProvider(
-                                            widget.placeId,
-                                          ).notifier,
-                                        )
-                                        .deleteReview(r.review.id)
-                                  : null,
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-
-                  // ── Add Review area ────────────────────────────────────────
-                  if (currentUserId != null) ...[
-                    Divider(
-                      height: 1,
-                      thickness: 0.5,
-                      color: cs.surfaceContainerHighest,
-                    ),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 280),
-                      child: hasReviewed
-                          ? _AlreadyReviewedBanner(
-                              isAr: widget.isAr,
-                              cs: cs,
-                              tt: tt,
-                            )
-                          : _AddReviewInput(
-                              key: const ValueKey('input'),
+                          )
+                        : ConstrainedBox(
+                            key: const ValueKey('input'),
+                            constraints: const BoxConstraints(minHeight: 120),
+                            child: _AddReviewInput(
                               isAr: widget.isAr,
                               tt: tt,
                               cs: cs,
@@ -299,10 +309,10 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
                                   setState(() => _selectedRating = r),
                               onSubmit: isLoading ? null : _submit,
                             ),
-                    ),
-                  ],
+                          ),
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
         ],
@@ -351,12 +361,7 @@ class _AlreadyReviewedBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     color: Theme.of(context).scaffoldBackgroundColor,
-    padding: EdgeInsets.fromLTRB(
-      20,
-      14,
-      20,
-      MediaQuery.of(context).viewInsets.bottom + 20,
-    ),
+    padding: EdgeInsets.fromLTRB(20, 14, 20, 40),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -408,7 +413,7 @@ class _AddReviewInput extends StatelessWidget {
         16,
         14,
         16,
-        MediaQuery.of(context).viewInsets.bottom + 16,
+        MediaQuery.of(context).viewInsets.bottom + 56,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -425,7 +430,7 @@ class _AddReviewInput extends StatelessWidget {
                   child: Icon(
                     filled ? Icons.star_rounded : Icons.star_outline_rounded,
                     color: filled
-                        ? const Color(0xFFFFB800)
+                        ? AppColors.headline2
                         : cs.onSurface.withValues(alpha: 0.3),
                     size: 36,
                   ),
@@ -475,15 +480,11 @@ class _AddReviewInput extends StatelessWidget {
                         : cs.primary,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: isLoading
-                      ? Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: cs.onPrimary,
-                          ),
-                        )
-                      : Icon(Icons.send_rounded, color: cs.onPrimary, size: 20),
+                  child: Icon(
+                    Icons.send_rounded,
+                    color: cs.onPrimary,
+                    size: 20,
+                  ),
                 ),
               ),
             ],
@@ -590,7 +591,7 @@ class _ReviewTile extends StatelessWidget {
                           Icons.star_rounded,
                           size: 13,
                           color: i < review.rating
-                              ? const Color(0xFFFFB800)
+                              ? AppColors.headline2
                               : cs.surfaceContainerHighest,
                         ),
                       ),
@@ -623,26 +624,30 @@ class _ReviewTile extends StatelessWidget {
 
     // ── Wrap own review in Dismissible for swipe-left to delete ────────────
     if (isOwn && onDelete != null) {
+      // inside _ReviewTile, replace the Dismissible block
       tile = Dismissible(
         key: ValueKey(review.id),
-        direction: DismissDirection.endToStart,
-        // Red delete background revealed on swipe
-        background: Container(
-          alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 20),
+        direction:
+            DismissDirection.endToStart, // same physical gesture both languages
+        background: const SizedBox.shrink(), // not used
+        secondaryBackground: Container(
+          alignment: isAr
+              ? Alignment.centerLeft
+              : Alignment.centerRight, // ← Arabic: left side
+          padding: EdgeInsets.only(left: isAr ? 20 : 0, right: isAr ? 0 : 20),
           decoration: BoxDecoration(
-            color: cs.error,
+            color: AppColors.alert,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.delete_outline_rounded, color: cs.onError, size: 26),
+              Icon(CupertinoIcons.trash, color: AppColors.white, size: 26),
               const SizedBox(height: 4),
               Text(
                 isAr ? 'حذف' : 'Delete',
-                style: TextStyle(
-                  color: cs.onError,
+                style: const TextStyle(
+                  color: AppColors.white,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
@@ -650,10 +655,7 @@ class _ReviewTile extends StatelessWidget {
             ],
           ),
         ),
-        confirmDismiss: (_) async {
-          // Instant dismiss — no dialog needed, user already has to swipe
-          return true;
-        },
+        confirmDismiss: (_) async => true,
         onDismissed: (_) => onDelete!(),
         child: tile,
       );

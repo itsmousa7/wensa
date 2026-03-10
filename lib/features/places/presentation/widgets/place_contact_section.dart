@@ -23,7 +23,7 @@ class PlaceContactSection extends StatelessWidget {
         if (place.phone != null)
           _Chip(
             icon: Icons.phone_outlined,
-            label: place.phone!,
+            label: 'Contact',
             color: const Color(0xFF34C759),
             onTap: () => _launch('tel:${place.phone}'),
           ),
@@ -71,8 +71,7 @@ class _Chip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(14),
@@ -83,9 +82,13 @@ class _Chip extends StatelessWidget {
           children: [
             Icon(icon, size: 16, color: color),
             const SizedBox(width: 7),
-            Text(label,
-                style: tt.labelMedium
-                    ?.copyWith(color: color, fontWeight: FontWeight.w600)),
+            Text(
+              label,
+              style: tt.labelMedium?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),

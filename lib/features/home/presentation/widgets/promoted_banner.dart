@@ -111,71 +111,52 @@ class PromotedBanner extends ConsumerWidget {
 Widget _buildSkeleton(ThemeData theme) => Skeletonizer(
   enabled: true,
   effect: ShimmerEffect(
-    baseColor: theme.colorScheme.surfaceContainer,
-    highlightColor: theme.colorScheme.surfaceContainerHighest,
+    baseColor: AppColors.white, // ← same as hot events
+    highlightColor:
+        theme.colorScheme.surfaceContainerHighest, // ← same as hot events
     duration: const Duration(milliseconds: 1200),
+    begin: Alignment.centerRight,
+    end: Alignment.centerLeft,
   ),
   child: Padding(
     padding: const EdgeInsets.fromLTRB(22, 6, 22, 0),
     child: SizedBox(
       height: 82,
       child: Container(
-        // ← was ClipRRect + Container
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(18), // same radius, no clip layer
+          color: theme
+              .colorScheme
+              .surfaceContainerHigh, // ← card bg is darker so bones show
+          borderRadius: BorderRadius.circular(18),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 18),
         child: Row(
           children: [
-            Container(
-              height: 30,
-              width: 30,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
+            Bone(width: 30, height: 30, borderRadius: BorderRadius.circular(6)),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    height: 14,
+                  Bone(
                     width: 120,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
+                    height: 14,
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   const SizedBox(height: 4),
-                  Container(
-                    height: 12,
+                  Bone(
                     width: 80,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
+                    height: 12,
+                    borderRadius: BorderRadius.circular(6),
                   ),
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Container(
-                height: 12,
-                width: 48,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-              ),
+            Bone(
+              width: 74,
+              height: 28,
+              borderRadius: BorderRadius.circular(12),
             ),
           ],
         ),

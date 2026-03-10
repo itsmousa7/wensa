@@ -1,4 +1,5 @@
 // lib/features/places/presentation/widgets/place_details/place_opening_hours.dart
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_details_helper.dart';
 
@@ -64,16 +65,19 @@ class _PlaceOpeningHoursState extends State<PlaceOpeningHours> {
               const SizedBox(width: 8),
               Text(
                 widget.isAr ? 'أوقات العمل' : 'Opening Hours',
-                style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                style: tt.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: cs.outline,
+                ),
               ),
               const Spacer(),
               AnimatedRotation(
                 turns: _expanded ? 0.5 : 0.0,
                 duration: const Duration(milliseconds: 220),
                 child: Icon(
-                  Icons.keyboard_arrow_down_rounded,
+                  CupertinoIcons.chevron_up,
                   size: 20,
-                  color: cs.onSurface.withValues(alpha: 0.5),
+                  color: cs.outline,
                 ),
               ),
             ],
@@ -111,9 +115,7 @@ class _PlaceOpeningHoursState extends State<PlaceOpeningHours> {
                             fontWeight: isToday
                                 ? FontWeight.w700
                                 : FontWeight.w400,
-                            color: isToday
-                                ? cs.primary
-                                : cs.onSurface.withValues(alpha: 0.65),
+                            color: isToday ? cs.primary : cs.onSurface,
                           ),
                         ),
                       ),
@@ -140,7 +142,7 @@ class _PlaceOpeningHoursState extends State<PlaceOpeningHours> {
       return Text(
         widget.isAr ? 'مغلق' : 'Closed',
         style: tt.bodySmall?.copyWith(
-          color: isToday ? cs.primary : cs.onSurface.withValues(alpha: 0.55),
+          color: isToday ? cs.primary : cs.outline,
           fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
         ),
       );
@@ -159,7 +161,7 @@ class _PlaceOpeningHoursState extends State<PlaceOpeningHours> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
-              '–',
+              ' – ',
               style: TextStyle(
                 color: cs.onSurface.withValues(alpha: 0.4),
                 fontSize: 12,
@@ -203,7 +205,7 @@ class _TimeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final color = highlight ? cs.primary : cs.onSurface.withValues(alpha: 0.55);
+    final color = highlight ? cs.primary : cs.outline;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
