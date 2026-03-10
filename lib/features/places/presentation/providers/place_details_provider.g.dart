@@ -9,17 +9,11 @@ part of 'place_details_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(placeDetails)
+@ProviderFor(PlaceDetails)
 final placeDetailsProvider = PlaceDetailsFamily._();
 
 final class PlaceDetailsProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<PlaceModel>,
-          PlaceModel,
-          FutureOr<PlaceModel>
-        >
-    with $FutureModifier<PlaceModel>, $FutureProvider<PlaceModel> {
+    extends $AsyncNotifierProvider<PlaceDetails, PlaceModel> {
   PlaceDetailsProvider._({
     required PlaceDetailsFamily super.from,
     required String super.argument,
@@ -43,14 +37,7 @@ final class PlaceDetailsProvider
 
   @$internal
   @override
-  $FutureProviderElement<PlaceModel> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<PlaceModel> create(Ref ref) {
-    final argument = this.argument as String;
-    return placeDetails(ref, argument);
-  }
+  PlaceDetails create() => PlaceDetails();
 
   @override
   bool operator ==(Object other) {
@@ -63,10 +50,17 @@ final class PlaceDetailsProvider
   }
 }
 
-String _$placeDetailsHash() => r'1f72d08e3dc77061988f60a75eab91101e25723d';
+String _$placeDetailsHash() => r'947cc6e930c9764f23a98a1960f121675a5a29e7';
 
 final class PlaceDetailsFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<PlaceModel>, String> {
+    with
+        $ClassFamilyOverride<
+          PlaceDetails,
+          AsyncValue<PlaceModel>,
+          PlaceModel,
+          FutureOr<PlaceModel>,
+          String
+        > {
   PlaceDetailsFamily._()
     : super(
         retry: null,
@@ -81,6 +75,27 @@ final class PlaceDetailsFamily extends $Family
 
   @override
   String toString() => r'placeDetailsProvider';
+}
+
+abstract class _$PlaceDetails extends $AsyncNotifier<PlaceModel> {
+  late final _$args = ref.$arg as String;
+  String get placeId => _$args;
+
+  FutureOr<PlaceModel> build(String placeId);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<PlaceModel>, PlaceModel>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<PlaceModel>, PlaceModel>,
+              AsyncValue<PlaceModel>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
 }
 
 @ProviderFor(placeImages)

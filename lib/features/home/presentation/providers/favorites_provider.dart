@@ -1,4 +1,5 @@
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
+import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -40,13 +41,20 @@ class Favorites extends _$Favorites {
     final current = {...(state.value ?? {})};
     final wasLiked = current.contains(itemId);
 
-    // Optimistic update
+    // 1️⃣ Optimistic favorites update (icon)
     if (wasLiked) {
       current.remove(itemId);
     } else {
       current.add(itemId);
     }
     state = AsyncData(current);
+
+    // 2️⃣ Optimistic savesCount update (counter) ← NEW
+    if (itemType == 'place') {
+      ref
+          .read(placeDetailsProvider(itemId).notifier)
+          .patchSavesCount(wasLiked ? -1 : 1);
+    }
 
     try {
       if (!wasLiked) {
@@ -64,7 +72,13 @@ class Favorites extends _$Favorites {
       }
       ref.invalidate(favoritesFeedProvider);
     } catch (_) {
+      // Roll back both on error
       ref.invalidateSelf();
+      if (itemType == 'place') {
+        ref
+            .read(placeDetailsProvider(itemId).notifier)
+            .patchSavesCount(wasLiked ? 1 : -1);
+      } 
     }
   }
 }
