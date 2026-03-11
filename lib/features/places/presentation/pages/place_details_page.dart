@@ -142,7 +142,7 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
                     padding: const EdgeInsets.only(right: 20),
                     child: PlaceAppBarButton(
                       icon: Icon(
-                        color: theme.colorScheme.outline,
+                        color: AppColors.white,
                         _isAr
                             ? CupertinoIcons.chevron_right
                             : CupertinoIcons.chevron_left,

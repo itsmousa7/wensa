@@ -90,193 +90,201 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
         reviewsAsync.value?.any((r) => r.review.userId == currentUserId) ??
         false;
 
-    return Directionality(
-      textDirection: widget.isAr ? TextDirection.rtl : TextDirection.ltr,
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          // ── Transparent dismiss area ───────────────────────────────────
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => Navigator.of(context).pop(),
-              child: const SizedBox.expand(),
-            ),
-          ),
-
-          // ── Sheet card ─────────────────────────────────────────────────
-          Container(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.8,
-            ),
-            decoration: BoxDecoration(
-              color: theme.scaffoldBackgroundColor,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Directionality(
+        textDirection: widget.isAr ? TextDirection.rtl : TextDirection.ltr,
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            // ── Transparent dismiss area ───────────────────────────────────
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => Navigator.of(context).pop(),
+                child: const SizedBox.expand(),
               ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                // ── Handle + Header ────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  child: Column(
-                    children: [
-                      const _DragHandle(), // ← extracted, reusable
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Text(
-                            widget.isAr ? 'التقييمات' : 'Reviews',
-                            style: tt.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          reviewsAsync.when(
-                            data: (r) => _CountBadge(count: r.length),
-                            loading: () => const SizedBox.shrink(),
-                            error: (_, __) => const SizedBox.shrink(),
-                          ),
 
-                          if (isLoading)
-                            Skeletonizer(
-                              enabled: true,
-                              effect: ShimmerEffect(
-                                baseColor: cs.surfaceContainer,
-                                highlightColor: cs.surfaceContainerHighest,
-                                duration: const Duration(milliseconds: 1200),
-                                begin: Alignment.centerRight,
-                                end: Alignment.centerLeft,
+            // ── Sheet card ─────────────────────────────────────────────────
+            Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.8,
+              ),
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  // ── Handle + Header ────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: Column(
+                      children: [
+                        const _DragHandle(), // ← extracted, reusable
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Text(
+                              widget.isAr ? 'التقييمات' : 'Reviews',
+                              style: tt.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
                               ),
-                              child: Bone.circle(size: 20),
                             ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                            const SizedBox(width: 8),
+                            reviewsAsync.when(
+                              data: (r) => _CountBadge(count: r.length),
+                              loading: () => const SizedBox.shrink(),
+                              error: (_, __) => const SizedBox.shrink(),
+                            ),
 
-                Divider(
-                  height: 20,
-                  thickness: 0.5,
-                  color: cs.surfaceContainerHighest,
-                ),
-
-                // ── Reviews list ───────────────────────────────────────
-                Expanded(
-                  child: reviewsAsync.when(
-                    loading: () => const ReviewsSkeleton(),
-                    error: (_, __) => Center(
-                      child: Text(
-                        widget.isAr
-                            ? 'تعذّر تحميل التقييمات'
-                            : 'Could not load reviews',
-                        style: tt.bodyMedium,
-                      ),
+                            if (isLoading)
+                              Skeletonizer(
+                                enabled: true,
+                                effect: ShimmerEffect(
+                                  baseColor: cs.surfaceContainer,
+                                  highlightColor: cs.surfaceContainerHighest,
+                                  duration: const Duration(milliseconds: 1200),
+                                  begin: Alignment.centerRight,
+                                  end: Alignment.centerLeft,
+                                ),
+                                child: Bone.circle(size: 20),
+                              ),
+                          ],
+                        ),
+                      ],
                     ),
-                    data: (reviews) {
-                      if (reviews.isEmpty) {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 32),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.chat_bubble_outline_rounded,
-                                  size: 52,
-                                  color: cs.onSurface.withValues(alpha: 0.2),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  widget.isAr
-                                      ? 'لا توجد تقييمات بعد'
-                                      : 'No reviews yet',
-                                  style: tt.bodyMedium?.copyWith(
-                                    color: cs.onSurface.withValues(alpha: 0.45),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  widget.isAr
-                                      ? 'كن أول من يقيّم هذا المكان'
-                                      : 'Be the first to review',
-                                  style: tt.bodySmall?.copyWith(
-                                    color: cs.onSurface.withValues(alpha: 0.3),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-                      return ListView.separated(
-                        shrinkWrap: true,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 4,
-                        ),
-                        itemCount: reviews.length,
-                        separatorBuilder: (_, __) => Divider(
-                          height: 1,
-                          thickness: 0.4,
-                          color: cs.surfaceContainerHighest,
-                        ),
-                        itemBuilder: (_, i) {
-                          final r = reviews[i];
-                          final isOwn = r.review.userId == currentUserId;
-                          return _ReviewTile(
-                            reviewWithUser: r,
-                            isOwn: isOwn,
-                            isAr: widget.isAr,
-                            onDelete: isOwn
-                                ? () => ref
-                                      .read(
-                                        placeReviewsProvider(
-                                          widget.placeId,
-                                        ).notifier,
-                                      )
-                                      .deleteReview(r.review.id)
-                                : null,
-                          );
-                        },
-                      );
-                    },
                   ),
-                ),
 
-                // ── Add review area ────────────────────────────────────
-                if (currentUserId != null) ...[
                   Divider(
-                    height: 1,
+                    height: 20,
                     thickness: 0.5,
                     color: cs.surfaceContainerHighest,
                   ),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 280),
-                    child: hasReviewed
-                        ? _AlreadyReviewedBanner(
-                            key: const ValueKey('banner'),
-                            isAr: widget.isAr,
-                          )
-                        : _AddReviewInput(
-                            key: const ValueKey('input'),
-                            isAr: widget.isAr,
-                            commentCtrl: _commentCtrl,
-                            selectedRating: _selectedRating,
-                            isLoading: isLoading,
-                            onRatingChanged: (r) =>
-                                setState(() => _selectedRating = r),
-                            onSubmit: isLoading ? null : _submit,
+
+                  // ── Reviews list ───────────────────────────────────────
+                  Expanded(
+                    child: reviewsAsync.when(
+                      loading: () => const ReviewsSkeleton(),
+                      error: (_, __) => Center(
+                        child: Text(
+                          widget.isAr
+                              ? 'تعذّر تحميل التقييمات'
+                              : 'Could not load reviews',
+                          style: tt.bodyMedium,
+                        ),
+                      ),
+                      data: (reviews) {
+                        if (reviews.isEmpty) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 32),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.chat_bubble_outline_rounded,
+                                    size: 52,
+                                    color: cs.onSurface.withValues(alpha: 0.2),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    widget.isAr
+                                        ? 'لا توجد تقييمات بعد'
+                                        : 'No reviews yet',
+                                    style: tt.bodyMedium?.copyWith(
+                                      color: cs.onSurface.withValues(
+                                        alpha: 0.45,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    widget.isAr
+                                        ? 'كن أول من يقيّم هذا المكان'
+                                        : 'Be the first to review',
+                                    style: tt.bodySmall?.copyWith(
+                                      color: cs.onSurface.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 4,
                           ),
+                          itemCount: reviews.length,
+                          separatorBuilder: (_, __) => Divider(
+                            height: 1,
+                            thickness: 0.4,
+                            color: cs.surfaceContainerHighest,
+                          ),
+                          itemBuilder: (_, i) {
+                            final r = reviews[i];
+                            final isOwn = r.review.userId == currentUserId;
+                            return _ReviewTile(
+                              reviewWithUser: r,
+                              isOwn: isOwn,
+                              isAr: widget.isAr,
+                              onDelete: isOwn
+                                  ? () => ref
+                                        .read(
+                                          placeReviewsProvider(
+                                            widget.placeId,
+                                          ).notifier,
+                                        )
+                                        .deleteReview(r.review.id)
+                                  : null,
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ),
+
+                  // ── Add review area ────────────────────────────────────
+                  if (currentUserId != null) ...[
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: cs.surfaceContainerHighest,
+                    ),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 280),
+                      child: hasReviewed
+                          ? _AlreadyReviewedBanner(
+                              key: const ValueKey('banner'),
+                              isAr: widget.isAr,
+                            )
+                          : _AddReviewInput(
+                              key: const ValueKey('input'),
+                              isAr: widget.isAr,
+                              commentCtrl: _commentCtrl,
+                              selectedRating: _selectedRating,
+                              isLoading: isLoading,
+                              onRatingChanged: (r) =>
+                                  setState(() => _selectedRating = r),
+                              onSubmit: isLoading ? null : _submit,
+                            ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -428,71 +436,104 @@ class _AddReviewInput extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       padding: EdgeInsets.fromLTRB(
-        16,
-        14,
-        16,
-        MediaQuery.of(context).viewInsets.bottom + 56,
+        12,
+        10,
+        12,
+        MediaQuery.of(context).viewInsets.bottom + 40,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Interactive stars — reuses _Stars with onTap + large size ──
+          // ── Star rating row ──────────────────────────────────────────
           _Stars(
             rating: selectedRating,
-            size: 36,
-            spacing: 6,
+            size: 32,
+            spacing: 4,
             onTap: onRatingChanged,
           ),
           const SizedBox(height: 10),
+
+          // ── Instagram-style input row ────────────────────────────────
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Pill-shaped field with send button inside
               Expanded(
                 child: TextField(
                   controller: commentCtrl,
                   textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
                   minLines: 1,
-                  maxLines: 3,
+                  maxLines: 4,
                   style: tt.bodyMedium,
                   decoration: InputDecoration(
                     hintText: isAr ? 'أضف تعليقاً...' : 'Add a comment...',
                     hintStyle: tt.bodyMedium?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.35),
+                      color: cs.onSurface.withValues(alpha: 0.4),
+                      fontWeight: FontWeight.bold,
                     ),
                     filled: true,
-                    fillColor: cs.surfaceContainer,
+                    fillColor: cs.surface,
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
+                      horizontal: 16,
                       vertical: 10,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(999),
+                      borderSide: BorderSide(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                      ),
                     ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              GestureDetector(
-                onTap: onSubmit,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: isLoading
-                        ? cs.primary.withValues(alpha: 0.5)
-                        : cs.primary,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(
-                    Icons.send_rounded,
-                    color: cs.onPrimary,
-                    size: 20,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(999),
+                      borderSide: BorderSide(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(999),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: commentCtrl,
+                      builder: (_, value, __) {
+                        final hasText = value.text.trim().isNotEmpty;
+                        if (!hasText) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 5,
+                          ),
+                          child: GestureDetector(
+                            onTap: isLoading ? null : onSubmit,
+                            child: Container(
+                              width: 56, // wider
+                              decoration: BoxDecoration(
+                                color: isLoading
+                                    ? cs.primary.withValues(alpha: 0.5)
+                                    : cs.primary,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.arrow_up,
+                                color: AppColors.white,
+                                size: 24,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -555,6 +596,7 @@ class _ReviewTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // AFTER — stars on their own line below the name
                 Row(
                   children: [
                     Flexible(
@@ -587,11 +629,10 @@ class _ReviewTile extends StatelessWidget {
                         ),
                       ),
                     ],
-                    const Spacer(),
-                    // ── Display stars — reuses _Stars, read-only ─────
-                    _Stars(rating: review.rating),
                   ],
                 ),
+                const SizedBox(height: 4),
+                _Stars(rating: review.rating),
                 const SizedBox(height: 4),
                 if (review.comment?.isNotEmpty == true)
                   Text(

@@ -65,9 +65,13 @@ class _PlaceAppBarButtonState extends ConsumerState<PlaceAppBarButton>
         width: 50,
         height: 50,
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.3),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(54),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+          border: Border.all(
+            color: Theme.of(
+              context,
+            ).colorScheme.outline.withValues(alpha: 0.15),
+          ),
         ),
         child: Center(child: child),
       ),
