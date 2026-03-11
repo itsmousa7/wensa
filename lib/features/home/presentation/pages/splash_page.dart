@@ -87,7 +87,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: AppColors.lightGreenPrimary,
       body: Center(
         child: _hasError
             ? Column(
@@ -122,21 +122,11 @@ class _SplashPageState extends ConsumerState<SplashPage>
                   children: [
                     Text(
                       'ونسة',
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: AppColors.lightGreenPrimary,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.lightGreenPrimary.withValues(
-                          alpha: 0.45,
-                        ),
-                      ),
+                      style: Theme.of(context).textTheme.displayMedium
+                          ?.copyWith(
+                            color: AppColors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ],
                 ),

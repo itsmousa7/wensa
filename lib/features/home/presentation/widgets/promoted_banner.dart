@@ -5,6 +5,7 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
+import 'package:gap/gap.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class PromotedBanner extends ConsumerWidget {
@@ -104,16 +105,11 @@ class PromotedBanner extends ConsumerWidget {
   }
 }
 
-// ─── PromotedBanner._buildSkeleton ───────────────────────────────────────────
-// FIX: ClipRRect creates a new paint layer that breaks Skeletonizer's shimmer.
-//      Replace ClipRRect + Container with a single Container + BoxDecoration.
-
 Widget _buildSkeleton(ThemeData theme) => Skeletonizer(
   enabled: true,
   effect: ShimmerEffect(
-    baseColor: AppColors.white, // ← same as hot events
-    highlightColor:
-        theme.colorScheme.surfaceContainerHighest, // ← same as hot events
+    baseColor: theme.colorScheme.surfaceContainer,
+    highlightColor: theme.colorScheme.surfaceContainerHighest,
     duration: const Duration(milliseconds: 1200),
     begin: Alignment.centerRight,
     end: Alignment.centerLeft,
@@ -122,44 +118,63 @@ Widget _buildSkeleton(ThemeData theme) => Skeletonizer(
     padding: const EdgeInsets.fromLTRB(22, 6, 22, 0),
     child: SizedBox(
       height: 82,
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme
-              .colorScheme
-              .surfaceContainerHigh, // ← card bg is darker so bones show
-          borderRadius: BorderRadius.circular(18),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-        child: Row(
-          children: [
-            Bone(width: 30, height: 30, borderRadius: BorderRadius.circular(6)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
+        alignment: Alignment.centerLeft,
+        children: [
+          // ── Full banner pulse ────────────────────────────
+          Bone(
+            height: 82,
+            width: double.infinity,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          // ── Content overlaid on top ──────────────────────
+          Row(
+            children: [
+              Bone(
+                width: 30,
+                height: 30,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              Row(
                 children: [
-                  Bone(
-                    width: 120,
-                    height: 14,
-                    borderRadius: BorderRadius.circular(6),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Bone(
-                    width: 80,
-                    height: 12,
-                    borderRadius: BorderRadius.circular(6),
+                  Gap(20),
+
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        width: 80,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ),
-            Bone(
-              width: 74,
-              height: 28,
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     ),
   ),

@@ -20,8 +20,8 @@ class ReviewsSkeleton extends StatelessWidget {
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         itemCount: 4,
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
-        itemBuilder: (_, __) => Row(
+        separatorBuilder: (_, _) => const SizedBox(height: 16),
+        itemBuilder: (_, _) => Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Bone.circle(size: 40),

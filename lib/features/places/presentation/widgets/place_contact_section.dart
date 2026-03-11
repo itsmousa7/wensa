@@ -1,5 +1,7 @@
 // lib/features/places/presentation/widgets/place_details/place_contact_section.dart
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/places/domain/models/place_model.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_details_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -22,23 +24,25 @@ class PlaceContactSection extends StatelessWidget {
       children: [
         if (place.phone != null)
           _Chip(
-            icon: Icons.phone_outlined,
+            icon: Image.asset('assets/icons/phone.png'),
             label: 'Contact',
-            color: const Color(0xFF34C759),
+            color: AppColors.success,
             onTap: () => _launch('tel:${place.phone}'),
           ),
         if (place.instagramUrl != null)
           _Chip(
-            icon: Icons.camera_alt_outlined,
+            icon: Image.asset('assets/icons/instagram.png'),
+
             label: 'Instagram',
-            color: const Color(0xFFE1306C),
+            color: AppColors.balance2,
             onTap: () => _launch(instagramUrl(place.instagramUrl!)),
           ),
         if (place.websiteUrl != null)
           _Chip(
-            icon: Icons.language_outlined,
+            icon: Image.asset('assets/icons/internet.png'),
+
             label: isAr ? 'الموقع الإلكتروني' : 'Website',
-            color: const Color(0xFF007AFF),
+            color: AppColors.info,
             onTap: () => _launch(place.websiteUrl!),
           ),
       ],
@@ -60,7 +64,7 @@ class _Chip extends StatelessWidget {
     required this.onTap,
   });
 
-  final IconData icon;
+  final Widget icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
@@ -79,14 +83,15 @@ class _Chip extends StatelessWidget {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+
           children: [
-            Icon(icon, size: 16, color: color),
+            SizedBox(height: 14, child: icon),
             const SizedBox(width: 7),
             Text(
               label,
               style: tt.labelMedium?.copyWith(
                 color: color,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],

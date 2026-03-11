@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
@@ -53,26 +54,27 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   bool get isAr => ref.watch(appLocaleProvider) is ArabicLocale;
 
-  String get _hotEventsLabel   => isAr ? 'الأحداث الساخنة'           : 'Hot Events';
-  String get _categoryLabel    => isAr ? 'تصفح حسب الفئة'            : 'Browse by Category';
-  String get _trendingLabel    => isAr ? 'الأكثر رواجاً هذا الأسبوع' : 'Trending This Week';
-  String get _newOpeningsLabel => isAr ? 'افتتاحات جديدة'             : 'New Openings';
-  String get _allPlacesLabel   => isAr ? 'كل الأماكن'                 : 'All Places';
-  String get _seeAll           => isAr ? 'عرض الكل ›'                 : 'See all ›';
+  String get _hotEventsLabel => isAr ? 'الأحداث الساخنة' : 'Hot Events';
+  String get _categoryLabel => isAr ? 'تصفح حسب الفئة' : 'Browse by Category';
+  String get _trendingLabel =>
+      isAr ? 'الأكثر رواجاً هذا الأسبوع' : 'Trending This Week';
+  String get _newOpeningsLabel => isAr ? 'افتتاحات جديدة' : 'New Openings';
+  String get _allPlacesLabel => isAr ? 'كل الأماكن' : 'All Places';
+  String get _seeAll => isAr ? 'عرض الكل ›' : 'See all ›';
 
   void _goToSeeAll(SeeAllType type) => Navigator.of(context).push(
     CupertinoPageRoute(
       builder: (_) => SeeAllPage(
         type: type,
         titleEn: switch (type) {
-          SeeAllType.trending    => 'Trending This Week',
+          SeeAllType.trending => 'Trending This Week',
           SeeAllType.newOpenings => 'New Openings',
-          SeeAllType.allEvents   => 'All Events',
+          SeeAllType.allEvents => 'All Events',
         },
         titleAr: switch (type) {
-          SeeAllType.trending    => 'الأكثر رواجاً',
+          SeeAllType.trending => 'الأكثر رواجاً',
           SeeAllType.newOpenings => 'افتتاحات جديدة',
-          SeeAllType.allEvents   => 'جميع الأحداث',
+          SeeAllType.allEvents => 'جميع الأحداث',
         },
       ),
     ),
@@ -80,26 +82,29 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme      = Theme.of(context);
+    final theme = Theme.of(context);
     final scrollCtrl = ref.watch(homeScrollControllerProvider);
     final selectedIdx = ref.watch(selectedCategoryProvider);
-    final categories  = ref.watch(categoriesProvider).value;
-    final selectedCat = (selectedIdx != null &&
+    final categories = ref.watch(categoriesProvider).value;
+    final selectedCat =
+        (selectedIdx != null &&
             categories != null &&
             selectedIdx < categories.length)
         ? categories[selectedIdx]
         : null;
 
     // ✅ Watch key providers to detect connectivity error
-    final trendingErr    = ref.watch(trendingFeedProvider).hasError;
+    final trendingErr = ref.watch(trendingFeedProvider).hasError;
     final newOpeningsErr = ref.watch(newOpeningsProvider).hasError;
-    final hotEventsErr   = ref.watch(hotEventsProvider).hasError;
+    final hotEventsErr = ref.watch(hotEventsProvider).hasError;
     final hasNetworkError = trendingErr || newOpeningsErr || hotEventsErr;
 
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+      ),
+    );
 
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
@@ -119,14 +124,18 @@ class _HomePageState extends ConsumerState<HomePage> {
                 refreshIndicatorExtent: 50,
                 onRefresh: _onRefresh,
                 builder: (context, mode, pulledExtent, triggerDistance, _) {
-                  final progress =
-                      (pulledExtent / triggerDistance).clamp(0.0, 1.0);
-                  final loading = mode == RefreshIndicatorMode.refresh ||
+                  final progress = (pulledExtent / triggerDistance).clamp(
+                    0.0,
+                    1.0,
+                  );
+                  final loading =
+                      mode == RefreshIndicatorMode.refresh ||
                       mode == RefreshIndicatorMode.armed;
                   return Center(
                     child: loading
                         ? SizedBox(
-                            width: 20, height: 20,
+                            width: 20,
+                            height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               color: theme.colorScheme.primary,
@@ -137,8 +146,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                             child: Icon(
                               Icons.keyboard_arrow_down_rounded,
                               size: 24,
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.5),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.5,
+                              ),
                             ),
                           ),
                   );
@@ -148,7 +158,6 @@ class _HomePageState extends ConsumerState<HomePage> {
               // ── Fixed top sections ───────────────────────────────────────
               const SliverToBoxAdapter(child: HomeAppBar()),
               SliverToBoxAdapter(child: HomeSearchBar()),
-              SliverToBoxAdapter(child: PromotedBanner()),
 
               // ── Network error state — replaces ALL feed sections ─────────
               if (hasNetworkError) ...[
@@ -168,26 +177,31 @@ class _HomePageState extends ConsumerState<HomePage> {
                         isAr
                             ? 'تحقق من اتصالك بالإنترنت'
                             : 'Check your internet connection',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.5),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),
                       FilledButton.tonal(
                         onPressed: _onRefresh,
-                        child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
+                        child: Text(
+                          isAr ? 'إعادة المحاولة' : 'Retry',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: AppColors.white,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ] else ...[
+                SliverToBoxAdapter(child: PromotedBanner()),
                 // ── Normal feed sections ─────────────────────────────────
-                SliverToBoxAdapter(
-                  child: _sectionTitle(_hotEventsLabel)),
+                SliverToBoxAdapter(child: _sectionTitle(_hotEventsLabel)),
                 const SliverToBoxAdapter(child: HotEventsSection()),
-                SliverToBoxAdapter(
-                  child: _sectionTitle(_categoryLabel)),
+                SliverToBoxAdapter(child: _sectionTitle(_categoryLabel)),
                 SliverToBoxAdapter(child: CategoryBar(isAr: isAr)),
 
                 if (selectedCat == null) ...[
@@ -217,8 +231,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                   ),
 
-                  SliverToBoxAdapter(
-                    child: _sectionTitle(_allPlacesLabel)),
+                  SliverToBoxAdapter(child: _sectionTitle(_allPlacesLabel)),
                   const AllPlacesSection(),
                 ] else ...[
                   SliverToBoxAdapter(
@@ -227,7 +240,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                   ),
                   CategoryFeedSection(
-                    categoryId:     selectedCat.id,
+                    categoryId: selectedCat.id,
                     categoryNameEn: selectedCat.nameEn,
                     categoryNameAr: selectedCat.nameAr,
                   ),
@@ -246,31 +259,30 @@ class _HomePageState extends ConsumerState<HomePage> {
     String title, {
     bool more = false,
     VoidCallback? onMoreTap,
-  }) =>
-      Padding(
-        padding: const EdgeInsets.fromLTRB(22, 20, 22, 12),
-        child: Row(
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-            ),
-            const Spacer(),
-            if (more)
-              GestureDetector(
-                onTap: onMoreTap,
-                child: Text(
-                  _seeAll,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-          ],
+  }) => Padding(
+    padding: const EdgeInsets.fromLTRB(22, 20, 22, 12),
+    child: Row(
+      children: [
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.outline,
+          ),
         ),
-      );
+        const Spacer(),
+        if (more)
+          GestureDetector(
+            onTap: onMoreTap,
+            child: Text(
+              _seeAll,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
 }

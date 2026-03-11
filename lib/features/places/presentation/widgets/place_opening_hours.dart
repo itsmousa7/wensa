@@ -111,10 +111,10 @@ class _PlaceOpeningHoursState extends State<PlaceOpeningHours> {
                         width: 100,
                         child: Text(
                           day,
-                          style: tt.bodySmall?.copyWith(
+                          style: tt.bodyMedium?.copyWith(
                             fontWeight: isToday
-                                ? FontWeight.w700
-                                : FontWeight.w400,
+                                ? FontWeight.bold
+                                : FontWeight.bold,
                             color: isToday ? cs.primary : cs.onSurface,
                           ),
                         ),
@@ -141,9 +141,9 @@ class _PlaceOpeningHoursState extends State<PlaceOpeningHours> {
     if (raw.isEmpty) {
       return Text(
         widget.isAr ? 'مغلق' : 'Closed',
-        style: tt.bodySmall?.copyWith(
+        style: tt.bodyMedium?.copyWith(
           color: isToday ? cs.primary : cs.outline,
-          fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
+          fontWeight: isToday ? FontWeight.bold : FontWeight.bold,
         ),
       );
     }
@@ -215,7 +215,7 @@ class _TimeChip extends StatelessWidget {
         Text(
           time,
           style: tt.bodySmall?.copyWith(
-            fontWeight: highlight ? FontWeight.w700 : FontWeight.w500,
+            fontWeight: highlight ? FontWeight.bold : FontWeight.bold,
             color: color,
           ),
         ),

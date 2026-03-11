@@ -1,12 +1,31 @@
-// lib/features/places/presentation/widgets/place_location_sheet.dart
 import 'dart:io' show Platform;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Public entry-point
+//  URL helpers — single source of truth for every map deep-link
+// ─────────────────────────────────────────────────────────────────────────────
+
+String _googleMapsUrl(double lat, double lng) =>
+    'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
+
+String _wazeUrl(double lat, double lng) =>
+    'https://waze.com/ul?ll=$lat,$lng&navigate=yes';
+
+String _appleMapsUrl(double lat, double lng, String name) =>
+    'https://maps.apple.com/?q=${Uri.encodeComponent(name)}&ll=$lat,$lng';
+
+Future<void> _launch(String url) async {
+  final uri = Uri.parse(url);
+  if (await canLaunchUrl(uri))
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Public entry-point — branches per platform inline (no extra private fns)
 // ─────────────────────────────────────────────────────────────────────────────
 
 void showLocationSheet({
@@ -17,111 +36,74 @@ void showLocationSheet({
   required bool isAr,
 }) {
   if (Platform.isIOS) {
-    _showIosSheet(
+    // ── iOS: CupertinoActionSheet ───────────────────────────────────────
+    void popAndLaunch(String url) {
+      Navigator.pop(context);
+      _launch(url);
+    }
+
+    showCupertinoModalPopup<void>(
       context: context,
-      latitude: latitude,
-      longitude: longitude,
-      placeName: placeName,
-      isAr: isAr,
+      builder: (_) => CupertinoActionSheet(
+        title: Text(isAr ? 'افتح الموقع في' : 'Open location in'),
+        message: Text(placeName),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () =>
+                popAndLaunch(_appleMapsUrl(latitude, longitude, placeName)),
+            child: Text(isAr ? 'خرائط آبل' : 'Apple Maps'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => popAndLaunch(_googleMapsUrl(latitude, longitude)),
+            child: Text(isAr ? 'خرائط جوجل' : 'Google Maps'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => popAndLaunch(_wazeUrl(latitude, longitude)),
+            child: const Text('Waze'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          child: Text(isAr ? 'إلغاء' : 'Cancel'),
+        ),
+      ),
     );
   } else {
-    _showAndroidSheet(
+    // ── Android: Material bottom sheet ─────────────────────────────────
+    showModalBottomSheet<void>(
       context: context,
-      latitude: latitude,
-      longitude: longitude,
-      placeName: placeName,
-      isAr: isAr,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
+      builder: (_) => _AndroidLocationSheet(
+        placeName: placeName,
+        isAr: isAr,
+        apps: [
+          _MapApp(
+            name: isAr ? 'خرائط جوجل' : 'Google Maps',
+            icon: Image.asset('assets/icons/location.png'),
+
+            color: const Color(0xFF4285F4),
+            url: _googleMapsUrl(latitude, longitude), // reuses shared helper
+          ),
+          _MapApp(
+            name: 'Waze',
+            icon: SizedBox(
+              height: 14,
+              child: Image.asset('assets/icons/waze.png'),
+            ),
+            color: const Color(0xFF00C8FF),
+            url: _wazeUrl(latitude, longitude), // reuses shared helper
+          ),
+        ],
+      ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  iOS — CupertinoActionSheet (includes Apple Maps)
+//  Android sheet
 // ─────────────────────────────────────────────────────────────────────────────
-
-void _showIosSheet({
-  required BuildContext context,
-  required double latitude,
-  required double longitude,
-  required String placeName,
-  required bool isAr,
-}) {
-  showCupertinoModalPopup<void>(
-    context: context,
-    builder: (_) => CupertinoActionSheet(
-      title: Text(isAr ? 'افتح الموقع في' : 'Open location in'),
-      message: Text(placeName),
-      actions: [
-        CupertinoActionSheetAction(
-          onPressed: () {
-            Navigator.pop(context);
-            _launch(
-              'https://maps.apple.com/?q=${Uri.encodeComponent(placeName)}&ll=$latitude,$longitude',
-            );
-          },
-          child: Text(isAr ? 'خرائط آبل' : 'Apple Maps'),
-        ),
-        CupertinoActionSheetAction(
-          onPressed: () {
-            Navigator.pop(context);
-            _launch(
-              'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
-            );
-          },
-          child: Text(isAr ? 'خرائط جوجل' : 'Google Maps'),
-        ),
-        CupertinoActionSheetAction(
-          onPressed: () {
-            Navigator.pop(context);
-            _launch('https://waze.com/ul?ll=$latitude,$longitude&navigate=yes');
-          },
-          child: const Text('Waze'),
-        ),
-      ],
-      cancelButton: CupertinoActionSheetAction(
-        onPressed: () => Navigator.pop(context),
-        child: Text(isAr ? 'إلغاء' : 'Cancel'),
-      ),
-    ),
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  Android — Material bottom sheet (no Apple Maps)
-// ─────────────────────────────────────────────────────────────────────────────
-
-void _showAndroidSheet({
-  required BuildContext context,
-  required double latitude,
-  required double longitude,
-  required String placeName,
-  required bool isAr,
-}) {
-  final apps = [
-    _MapApp(
-      name: isAr ? 'خرائط جوجل' : 'Google Maps',
-      icon: Icons.place_outlined,
-      color: const Color(0xFF4285F4),
-      url:
-          'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
-    ),
-    _MapApp(
-      name: 'Waze',
-      icon: Icons.navigation_outlined,
-      color: const Color(0xFF00C8FF),
-      url: 'https://waze.com/ul?ll=$latitude,$longitude&navigate=yes',
-    ),
-  ];
-
-  showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: Colors.transparent,
-    isDismissible: true,
-    enableDrag: true,
-    builder: (ctx) =>
-        _AndroidLocationSheet(apps: apps, placeName: placeName, isAr: isAr),
-  );
-}
 
 class _AndroidLocationSheet extends StatelessWidget {
   const _AndroidLocationSheet({
@@ -153,6 +135,7 @@ class _AndroidLocationSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Drag handle
           Container(
             width: 40,
             height: 4,
@@ -172,11 +155,12 @@ class _AndroidLocationSheet extends StatelessWidget {
           Text(
             placeName,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: cs.onSurface.withValues(alpha: 0.5),
+              color: cs.surfaceContainerLowest,
+              fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
           ...apps.map((app) => _AppTile(app: app)),
           const SizedBox(height: 8),
           TextButton(
@@ -186,11 +170,13 @@ class _AndroidLocationSheet extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
-              backgroundColor: cs.surfaceContainer,
             ),
             child: Text(
               isAr ? 'إلغاء' : 'Cancel',
-              style: TextStyle(color: cs.onSurface),
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: AppColors.alert,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -199,13 +185,20 @@ class _AndroidLocationSheet extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  App tile
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _AppTile extends StatelessWidget {
   const _AppTile({required this.app});
+
   final _MapApp app;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
@@ -222,20 +215,18 @@ class _AppTile extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 42,
-                  height: 42,
+                  height: 24,
                   decoration: BoxDecoration(
-                    color: app.color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(app.icon, color: app.color, size: 22),
+                  child: app.icon,
                 ),
                 const SizedBox(width: 14),
                 Text(
                   app.name,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const Spacer(),
                 Icon(
@@ -252,6 +243,10 @@ class _AppTile extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Data model
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _MapApp {
   const _MapApp({
     required this.name,
@@ -259,15 +254,9 @@ class _MapApp {
     required this.color,
     required this.url,
   });
+
   final String name;
-  final IconData icon;
+  final Widget icon;
   final Color color;
   final String url;
-}
-
-Future<void> _launch(String url) async {
-  final uri = Uri.parse(url);
-  if (await canLaunchUrl(uri)) {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
 }
