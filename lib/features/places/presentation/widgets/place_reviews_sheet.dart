@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +9,7 @@ import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_provider.dart';
 import 'package:future_riverpod/features/places/domain/models/review_with_user_model.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_reviews_provider.dart';
+import 'package:future_riverpod/features/places/presentation/widgets/comment_create_date.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/comment_section_skeleton.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -140,7 +143,7 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
                             reviewsAsync.when(
                               data: (r) => _CountBadge(count: r.length),
                               loading: () => const SizedBox.shrink(),
-                              error: (_, __) => const SizedBox.shrink(),
+                              error: (_, _) => const SizedBox.shrink(),
                             ),
 
                             if (isLoading)
@@ -171,7 +174,7 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
                   Expanded(
                     child: reviewsAsync.when(
                       loading: () => const ReviewsSkeleton(),
-                      error: (_, __) => Center(
+                      error: (_, _) => Center(
                         child: Text(
                           widget.isAr
                               ? 'تعذّر تحميل التقييمات'
@@ -197,20 +200,19 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
                                     widget.isAr
                                         ? 'لا توجد تقييمات بعد'
                                         : 'No reviews yet',
-                                    style: tt.bodyMedium?.copyWith(
-                                      color: cs.onSurface.withValues(
-                                        alpha: 0.45,
-                                      ),
+                                    style: tt.titleMedium?.copyWith(
+                                      color: cs.outline,
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 8),
                                   Text(
                                     widget.isAr
                                         ? 'كن أول من يقيّم هذا المكان'
                                         : 'Be the first to review',
-                                    style: tt.bodySmall?.copyWith(
+                                    style: tt.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
                                       color: cs.onSurface.withValues(
-                                        alpha: 0.3,
+                                        alpha: 0.4,
                                       ),
                                     ),
                                   ),
@@ -226,7 +228,7 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
                             vertical: 4,
                           ),
                           itemCount: reviews.length,
-                          separatorBuilder: (_, __) => Divider(
+                          separatorBuilder: (_, _) => Divider(
                             height: 1,
                             thickness: 0.4,
                             color: cs.surfaceContainerHighest,
@@ -469,7 +471,10 @@ class _AddReviewInput extends StatelessWidget {
                   textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
                   minLines: 1,
                   maxLines: 4,
-                  style: tt.bodyMedium,
+                  style: tt.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: cs.outline,
+                  ),
                   decoration: InputDecoration(
                     hintText: isAr ? 'أضف تعليقاً...' : 'Add a comment...',
                     hintStyle: tt.bodyMedium?.copyWith(
@@ -506,7 +511,7 @@ class _AddReviewInput extends StatelessWidget {
                     ),
                     suffixIcon: ValueListenableBuilder<TextEditingValue>(
                       valueListenable: commentCtrl,
-                      builder: (_, value, __) {
+                      builder: (_, value, _) {
                         final hasText = value.text.trim().isNotEmpty;
                         if (!hasText) return const SizedBox.shrink();
                         return Padding(
@@ -602,9 +607,7 @@ class _ReviewTile extends StatelessWidget {
                     Flexible(
                       child: Text(
                         name.isEmpty ? (isAr ? 'مستخدم' : 'User') : name,
-                        style: tt.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: tt.titleSmall?.copyWith(color: cs.outline),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -637,22 +640,15 @@ class _ReviewTile extends StatelessWidget {
                 if (review.comment?.isNotEmpty == true)
                   Text(
                     review.comment!,
-                    style: tt.bodySmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.75),
-                      height: 1.5,
+                    style: tt.bodyMedium?.copyWith(
+                      color: cs.outline,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                const SizedBox(height: 4),
-                Text(
-                  _formatDate(review.createdAt),
-                  style: tt.labelSmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.35),
-                    fontSize: 10,
-                  ),
-                ),
               ],
             ),
           ),
+          TimeAgo(iso: review.createdAt, isAr: isAr),
         ],
       ),
     );
@@ -692,15 +688,5 @@ class _ReviewTile extends StatelessWidget {
     }
 
     return tile;
-  }
-
-  String _formatDate(String? iso) {
-    if (iso == null) return '';
-    try {
-      final dt = DateTime.parse(iso).toLocal();
-      return '${dt.day}/${dt.month}/${dt.year}';
-    } catch (_) {
-      return '';
-    }
   }
 }

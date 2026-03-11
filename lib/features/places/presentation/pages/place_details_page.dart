@@ -53,7 +53,6 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
     Navigator.of(context).push(
       PageRouteBuilder<void>(
         opaque: false,
-
         pageBuilder: (_, _, _) =>
             PlaceFullscreenViewer(images: images, initialIndex: index),
       ),
@@ -116,7 +115,8 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
               physics: const BouncingScrollPhysics(),
               slivers: [
                 SliverAppBar(
-                  expandedHeight: 380,
+                  // 380px image - 28px radius cap = 352px net image height
+                  expandedHeight: 352,
                   pinned: true,
                   elevation: 0,
                   scrolledUnderElevation: 0,
@@ -127,6 +127,21 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
                   systemOverlayStyle: const SystemUiOverlayStyle(
                     statusBarColor: AppColors.transparent,
                   ),
+
+                  // ── Rounded cap — renders ON TOP of the image ──────────
+                  bottom: PreferredSize(
+                    preferredSize: const Size.fromHeight(28),
+                    child: Container(
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: theme.scaffoldBackgroundColor,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(28),
+                        ),
+                      ),
+                    ),
+                  ),
+
                   title: collapsed
                       ? Text(
                           name,
@@ -139,23 +154,25 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
                       : null,
 
                   leading: Padding(
-                    padding: const EdgeInsets.only(right: 20),
+                    padding: const EdgeInsetsDirectional.only(start: 20),
                     child: PlaceAppBarButton(
                       icon: Icon(
-                        color: AppColors.white,
+                        color: collapsed
+                            ? theme.colorScheme.outline
+                            : AppColors.white,
                         _isAr
                             ? CupertinoIcons.chevron_right
                             : CupertinoIcons.chevron_left,
                       ),
-
                       onTap: () => Navigator.pop(context),
                       collapsed: collapsed,
                     ),
                   ),
                   leadingWidth: 75,
+
                   actions: [
                     Padding(
-                      padding: const EdgeInsets.only(left: 20),
+                      padding: const EdgeInsets.only(left: 20, right: 20),
                       child: PlaceAppBarButton(
                         icon: Icon(
                           isFav
@@ -173,6 +190,7 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
                       ),
                     ),
                   ],
+
                   flexibleSpace: FlexibleSpaceBar(
                     collapseMode: CollapseMode.parallax,
                     background: PlaceImageCarousel(
@@ -191,11 +209,16 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
                     ),
                   ),
                 ),
+
+                // ── Info section — same background, seamless join ────────
                 SliverToBoxAdapter(
-                  child: PlaceInfoSection(
-                    place: place,
-                    placeId: widget.placeId,
-                    isAr: _isAr,
+                  child: Container(
+                    color: theme.scaffoldBackgroundColor,
+                    child: PlaceInfoSection(
+                      place: place,
+                      placeId: widget.placeId,
+                      isAr: _isAr,
+                    ),
                   ),
                 ),
               ],

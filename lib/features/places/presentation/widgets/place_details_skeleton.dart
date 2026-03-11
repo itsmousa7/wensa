@@ -40,7 +40,7 @@ class PlaceDetailsSkeleton extends StatelessWidget {
                         height: 26,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 14),
                       Bone.circle(size: 24),
                     ],
                   ),

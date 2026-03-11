@@ -47,10 +47,9 @@ class PlaceInfoSection extends ConsumerWidget {
     );
 
     // ── Reusable description text style ────────────────────────────────
-    final descStyle = tt.bodyLarge?.copyWith(
-      fontWeight: FontWeight.bold,
+    final descStyle = tt.labelLarge?.copyWith(
       color: cs.outline,
-      height: 1.65,
+      fontWeight: FontWeight.w600,
     );
 
     return Padding(

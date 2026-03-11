@@ -40,16 +40,16 @@ class PlaceImageCarousel extends StatelessWidget {
             child: PageView.builder(
               controller: controller,
               itemCount: images.length,
-              physics:
-                  const PageScrollPhysics(parent: BouncingScrollPhysics()),
+              physics: const PageScrollPhysics(parent: BouncingScrollPhysics()),
               onPageChanged: onPageChanged,
-              itemBuilder: (_, i) => CachedNetworkImage(
-                imageUrl: images[i],
-                fit: BoxFit.cover,
-                placeholder: (_, __) =>
-                    Container(color: cs.surfaceContainer),
-                errorWidget: (_, __, ___) =>
-                    Container(color: cs.surfaceContainer),
+              itemBuilder: (_, i) => ClipRRect(
+                child: CachedNetworkImage(
+                  imageUrl: images[i],
+                  fit: BoxFit.cover,
+                  placeholder: (_, _) => Container(color: cs.surfaceContainer),
+                  errorWidget: (_, _, _) =>
+                      Container(color: cs.surfaceContainer),
+                ),
               ),
             ),
           ),
@@ -75,7 +75,10 @@ class PlaceImageCarousel extends StatelessWidget {
 
         // ── Top gradient ─────────────────────────────────────────────────
         Positioned(
-          top: 0, left: 0, right: 0, height: 100,
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 100,
           child: IgnorePointer(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -105,7 +108,9 @@ class PlaceImageCarousel extends StatelessWidget {
                   filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 5),
+                      horizontal: 12,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.45),
                       borderRadius: BorderRadius.circular(20),
@@ -142,7 +147,9 @@ class PlaceImageCarousel extends StatelessWidget {
         // ── Dot indicators ───────────────────────────────────────────────
         if (images.length > 1 && images.length <= 10)
           Positioned(
-            bottom: 16, left: 0, right: 0,
+            bottom: 16,
+            left: 0,
+            right: 0,
             child: IgnorePointer(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -184,8 +191,9 @@ class PlaceFullscreenViewer extends StatefulWidget {
 }
 
 class _PlaceFullscreenViewerState extends State<PlaceFullscreenViewer> {
-  late final PageController _ctrl =
-      PageController(initialPage: widget.initialIndex);
+  late final PageController _ctrl = PageController(
+    initialPage: widget.initialIndex,
+  );
   late int _index = widget.initialIndex;
 
   @override
@@ -198,60 +206,67 @@ class _PlaceFullscreenViewerState extends State<PlaceFullscreenViewer> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(children: [
-        PageView.builder(
-          controller: _ctrl,
-          itemCount: widget.images.length,
-          onPageChanged: (i) => setState(() => _index = i),
-          itemBuilder: (_, i) => InteractiveViewer(
-            minScale: 1.0,
-            maxScale: 4.0,
-            child: Center(
-              child: CachedNetworkImage(
-                imageUrl: widget.images[i],
-                fit: BoxFit.contain,
-                placeholder: (_, __) => const Center(
-                  child: CircularProgressIndicator(color: Colors.white54),
-                ),
-                errorWidget: (_, __, ___) => const Icon(
-                  Icons.broken_image_outlined,
-                  color: Colors.white54,
-                  size: 64,
+      body: Stack(
+        children: [
+          PageView.builder(
+            controller: _ctrl,
+            itemCount: widget.images.length,
+            onPageChanged: (i) => setState(() => _index = i),
+            itemBuilder: (_, i) => InteractiveViewer(
+              minScale: 1.0,
+              maxScale: 4.0,
+              child: Center(
+                child: CachedNetworkImage(
+                  imageUrl: widget.images[i],
+                  fit: BoxFit.contain,
+                  placeholder: (_, __) => const Center(
+                    child: CircularProgressIndicator(color: Colors.white54),
+                  ),
+                  errorWidget: (_, __, ___) => const Icon(
+                    Icons.broken_image_outlined,
+                    color: Colors.white54,
+                    size: 64,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
 
-        // Close button
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 8,
-          right: 16,
-          child: GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.close_rounded,
-                  color: Colors.white, size: 18),
-            ),
-          ),
-        ),
-
-        if (widget.images.length > 1)
+          // Close button
           Positioned(
-            bottom: MediaQuery.of(context).padding.bottom + 20,
-            left: 0, right: 0,
-            child: Text(
-              '${_index + 1} / ${widget.images.length}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
+            top: MediaQuery.of(context).padding.top + 8,
+            right: 16,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.close_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
             ),
           ),
-      ]),
+
+          if (widget.images.length > 1)
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 20,
+              left: 0,
+              right: 0,
+              child: Text(
+                '${_index + 1} / ${widget.images.length}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
