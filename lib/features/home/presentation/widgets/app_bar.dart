@@ -7,15 +7,6 @@ import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/user_profile_provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Helper — يكشف إذا كان النص يحتوي على حروف عربية
-//
-//  نستخدمه لتحديد فونت الاسم بشكل مستقل عن لغة التطبيق
-//
-//  مثال:
-//    لغة التطبيق = English  +  اسم المستخدم = "محمد"  → يستخدم Zain (عربي)
-//    لغة التطبيق = العربية  +  اسم المستخدم = "John"   → يستخدم Roboto (إنجليزي)
-// ─────────────────────────────────────────────────────────────────────────────
 bool _isArabicText(String text) => RegExp(r'[\u0600-\u06FF]').hasMatch(text);
 
 class HomeAppBar extends ConsumerWidget {
@@ -27,7 +18,7 @@ class HomeAppBar extends ConsumerWidget {
     final userAsync = ref.watch(userProfileProvider);
     final theme = Theme.of(context);
 
-    // TextTheme بناءً على لغة التطبيق — للـ UI العام (greeting، labels)
+    
     final uiLocale = isAr ? 'ar' : 'en';
     final textTheme = AppTypography.getTextTheme(uiLocale, context);
 
@@ -36,11 +27,11 @@ class HomeAppBar extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ── Greeting + Username ──────────────────────────────────────────
+          
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // "مرحباً،" / "Hello," — دائماً بفونت لغة التطبيق
+              
               Text(
                 isAr ? 'مرحباً،' : 'Hello,',
                 style: textTheme.bodyMedium?.copyWith(
@@ -50,9 +41,9 @@ class HomeAppBar extends ConsumerWidget {
 
               const SizedBox(height: 2),
 
-              // ── Username ──────────────────────────────────────────────────
+              
               userAsync.when(
-                // ✅ Skeleton
+                
                 loading: () => Skeletonizer(
                   enabled: true,
                   effect: ShimmerEffect(
@@ -60,13 +51,10 @@ class HomeAppBar extends ConsumerWidget {
                     highlightColor: theme.colorScheme.surfaceContainerHighest,
                     duration: const Duration(milliseconds: 1000),
                   ),
-                  child: Container(
+                  child: Bone(
                     width: 130,
                     height: 20,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainer,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                 ),
 
@@ -80,10 +68,10 @@ class HomeAppBar extends ConsumerWidget {
                 data: (users) {
                   final firstName = users.first.firstName;
 
-                  // ✅ نكشف لغة الاسم نفسه — مستقل عن لغة التطبيق
+                  
                   final nameLocale = _isArabicText(firstName) ? 'ar' : 'en';
 
-                  // TextTheme بناءً على لغة الاسم (مو لغة التطبيق)
+                  
                   final nameTT = AppTypography.getTextTheme(
                     nameLocale,
                     context,
@@ -93,8 +81,7 @@ class HomeAppBar extends ConsumerWidget {
                     '$firstName 👋',
                     style: nameTT.titleMedium?.copyWith(
                       color: theme.colorScheme.primary,
-                      // titleMedium = 16px w600
-                      // Zain إذا الاسم عربي ← Roboto إذا الاسم إنجليزي
+
                     ),
                   );
                 },
@@ -102,7 +89,7 @@ class HomeAppBar extends ConsumerWidget {
             ],
           ),
           Spacer(),
-          // ── Bell ──────────────────────────────────────────────────────────
+          
           Stack(
             children: [
               Container(

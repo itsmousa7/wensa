@@ -7,10 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/features/home/presentation/providers/all_events_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_scroll_controller.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/all_events_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/all_places_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/app_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/category_bar.dart';
@@ -47,6 +49,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.invalidate(categoriesProvider);
     ref.invalidate(allPlacesFeedProvider);
     ref.invalidate(favoritesFeedProvider);
+    ref.invalidate(allEventsProvider);
 
     await Future.delayed(const Duration(milliseconds: 1200));
     if (mounted) setState(() => _isRefreshing = false);
@@ -60,6 +63,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       isAr ? 'الأكثر رواجاً هذا الأسبوع' : 'Trending This Week';
   String get _newOpeningsLabel => isAr ? 'افتتاحات جديدة' : 'New Openings';
   String get _allPlacesLabel => isAr ? 'كل الأماكن' : 'All Places';
+  String get _allEventsLabel => isAr ? 'كل الاحداث' : 'All Events';
   String get _seeAll => isAr ? 'عرض الكل ›' : 'See all ›';
 
   void _goToSeeAll(SeeAllType type) => Navigator.of(context).push(
@@ -74,7 +78,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         titleAr: switch (type) {
           SeeAllType.trending => 'الأكثر رواجاً',
           SeeAllType.newOpenings => 'افتتاحات جديدة',
-          SeeAllType.allEvents => 'جميع الأحداث',
+          SeeAllType.allEvents => 'كل الأحداث',
         },
       ),
     ),
@@ -230,8 +234,16 @@ class _HomePageState extends ConsumerState<HomePage> {
                       onViewAll: () => _goToSeeAll(SeeAllType.newOpenings),
                     ),
                   ),
+                  SliverToBoxAdapter(child: _sectionTitle(_allEventsLabel)),
+
+                  SliverToBoxAdapter(
+                    child: AllEventsSection(
+                      onViewAll: () => _goToSeeAll(SeeAllType.allEvents),
+                    ),
+                  ),
 
                   SliverToBoxAdapter(child: _sectionTitle(_allPlacesLabel)),
+
                   const AllPlacesSection(),
                 ] else ...[
                   SliverToBoxAdapter(

@@ -22,7 +22,7 @@ class TrendingFeedSection extends ConsumerWidget {
       skipLoadingOnRefresh: false,
       loading: () => const BuildCardRowSkeleton(),
       // ✅ Silent fail — home_page shows the centered error instead
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (items) => SizedBox(
         height: 210,
         child: ListView.separated(
@@ -30,7 +30,7 @@ class TrendingFeedSection extends ConsumerWidget {
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 22),
           itemCount: items.length + (onViewAll != null ? 1 : 0),
-          separatorBuilder: (_, __) => const SizedBox(width: 14),
+          separatorBuilder: (_, _) => const SizedBox(width: 14),
           itemBuilder: (_, i) {
             if (onViewAll != null && i == items.length) {
               return ViewAllCard(isAr: isAr, onTap: onViewAll!);

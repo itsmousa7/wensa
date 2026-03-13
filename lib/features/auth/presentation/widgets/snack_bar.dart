@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 
 SnackBar snack(
   BuildContext context, {
@@ -7,7 +8,9 @@ SnackBar snack(
 }) => SnackBar(
   content: Text(
     message,
-    style: Theme.of(context).textTheme.bodyMedium,
+    style: Theme.of(
+      context,
+    ).textTheme.titleMedium?.copyWith(color: AppColors.white),
   ),
   backgroundColor: isError
       ? Theme.of(context).colorScheme.error

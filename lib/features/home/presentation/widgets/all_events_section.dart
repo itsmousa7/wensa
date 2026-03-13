@@ -22,6 +22,7 @@ class AllEventsSection extends ConsumerWidget {
 
     return eventsAsync.when(
       skipLoadingOnRefresh: false,
+
       loading: () => const BuildCardRowSkeleton(),
       error: (e, _) => buildErrorWidget(e.toString()),
       data: (allItems) {

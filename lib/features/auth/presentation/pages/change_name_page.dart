@@ -5,6 +5,7 @@ import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/core/utils/error_dialog.dart';
 import 'package:future_riverpod/features/auth/domain/models/custom_error.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_repository_provider.dart';
+import 'package:future_riverpod/features/auth/presentation/providers/user_profile_provider.dart';
 import 'package:future_riverpod/features/auth/presentation/widgets/app_button.dart';
 import 'package:future_riverpod/features/auth/presentation/widgets/app_text_field.dart';
 import 'package:future_riverpod/features/auth/presentation/widgets/snack_bar.dart';
@@ -43,12 +44,13 @@ class _ChangeNamePageState extends ConsumerState<ChangeNamePage> {
             firstName: _firstNameController.text.trim(),
             secondName: _secondNameController.text.trim(),
           );
+      await ref.read(userProfileProvider.notifier).refresh();
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        snack(context, message: context.tr('name_updated')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(snack(context, message: context.tr('name_updated')));
 
       context.goNamed(RouteNames.profile);
     } catch (e) {

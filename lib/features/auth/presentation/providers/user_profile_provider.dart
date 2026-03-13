@@ -4,7 +4,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'user_profile_provider.g.dart';
 
-@Riverpod(keepAlive: true) // only one, not two
 class UserProfile extends _$UserProfile {
   @override
   FutureOr<List<UserModel>> build() async {
@@ -12,7 +11,11 @@ class UserProfile extends _$UserProfile {
   }
 
   Future<List<UserModel>> _fetch() async {
-    final response = await supabase.from('app_users').select();
+    final userId = supabase.auth.currentUser?.id;
+    final response = await supabase
+        .from('app_users')
+        .select()
+        .eq('id', userId!);
     return response.map(UserModel.fromJson).toList();
   }
 
