@@ -135,8 +135,9 @@ class FeedListSection extends ConsumerWidget {
               child: Text(
                 isAr ? '— لقد وصلت للنهاية —' : '— You\'ve reached the end —',
                 style: tt.labelLarge?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.4),
-                  fontWeight: FontWeight.w600,
+                  color: cs.onTertiary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
               ),
             ),

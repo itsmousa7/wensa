@@ -22,6 +22,8 @@ class AppColors {
   static const Color shadegrey2 = Color(0xFF303030);
   static const Color fieldhover = Color(0xFFf0f5f7);
   static const Color blackground = Color(0xFF181818);
+  static const Color lightGraySecondary = Color(0xFFA8A8A8);
+  static const Color darkGraySecondary = Color(0xFF737373);
 
   /// Primary background color for light theme
   static const Color lightPrimary = Color(0xFFF8F8F8);

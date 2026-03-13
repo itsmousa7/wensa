@@ -35,6 +35,7 @@ class AppTheme {
         onErrorContainer: AppColors.black,
         surfaceContainer: AppColors.lightTextField,
         surfaceContainerLowest: AppColors.disableGray,
+        onTertiary: AppColors.lightGraySecondary,
       ),
 
       // Scaffold Background
@@ -369,6 +370,7 @@ class AppTheme {
         onErrorContainer: AppColors.white,
         surfaceContainer: AppColors.darkPrimary,
         surfaceContainerHighest: AppColors.darkSecondary,
+        onTertiary: AppColors.darkGraySecondary,
       ),
 
       // Scaffold Background

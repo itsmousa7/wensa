@@ -77,7 +77,7 @@ class CategoryBar extends ConsumerWidget {
                     style: tt.labelLarge?.copyWith(
                       color: isActive
                           ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          : theme.colorScheme.outline,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

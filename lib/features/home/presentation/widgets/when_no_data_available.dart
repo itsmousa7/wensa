@@ -127,8 +127,9 @@ class CategoryFeedSection extends ConsumerWidget {
             child: Center(
               child: Text(
                 isAr ? '— لقد وصلت للنهاية —' : '— You\'ve reached the end —',
-                style: tt.labelSmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.9),
+                style: tt.labelMedium?.copyWith(
+                  color: cs.onTertiary,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
