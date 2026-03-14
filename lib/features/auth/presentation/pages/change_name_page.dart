@@ -44,7 +44,7 @@ class _ChangeNamePageState extends ConsumerState<ChangeNamePage> {
             firstName: _firstNameController.text.trim(),
             secondName: _secondNameController.text.trim(),
           );
-      await ref.read(userProfileProvider.notifier).refresh();
+      ref.invalidate(profileProvider);
 
       if (!mounted) return;
 

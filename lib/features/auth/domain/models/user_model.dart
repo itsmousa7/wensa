@@ -5,6 +5,9 @@ part 'user_model.g.dart';
 
 @freezed
 abstract class UserModel with _$UserModel {
+
+  const UserModel._();
+
   const factory UserModel({
     @Default('') String id,
     @Default('') String firstName,
@@ -28,4 +31,16 @@ abstract class UserModel with _$UserModel {
     createdAt: json['created_at'],
     updatedAt: json['updated_at'],
   );
+
+  // ── Computed helpers ──────────────────────────────────────────────────────
+
+  /// "Ahmed Al-Rawi" — used in the profile header
+  String get fullName => '$firstName $secondName'.trim();
+
+  /// "AA" — used as the default avatar fallback
+  String get initials {
+    final f = firstName.isNotEmpty ? firstName[0].toUpperCase() : '';
+    final s = secondName.isNotEmpty ? secondName[0].toUpperCase() : '';
+    return '$f$s';
+  }
 }

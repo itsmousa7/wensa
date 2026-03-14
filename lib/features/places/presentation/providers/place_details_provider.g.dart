@@ -50,7 +50,7 @@ final class PlaceDetailsProvider
   }
 }
 
-String _$placeDetailsHash() => r'947cc6e930c9764f23a98a1960f121675a5a29e7';
+String _$placeDetailsHash() => r'737de5ffca3a3614a5ab11f08ff774470bb919d9';
 
 final class PlaceDetailsFamily extends $Family
     with

@@ -5,7 +5,6 @@ import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_name_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_password_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/forgot_password_page.dart';
-import 'package:future_riverpod/features/auth/presentation/pages/home_test.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/profile_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/signin_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/signup_page.dart';
@@ -77,11 +76,11 @@ GoRouter router(Ref ref) {
         name: RouteNames.changeName,
         builder: (_, __) => const ChangeNamePage(),
       ),
-      GoRoute(
-        path: '/test',
-        name: RouteNames.test,
-        builder: (_, __) => const HomeTest(),
-      ),
+      // GoRoute(
+      //   path: '/test',
+      //   name: RouteNames.test,
+      //   builder: (_, __) => const HomeTest(),
+      // ),
       GoRoute(
         path: '/changePassword',
         name: RouteNames.changePassword,

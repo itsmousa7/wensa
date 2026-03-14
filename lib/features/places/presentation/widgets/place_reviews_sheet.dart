@@ -116,7 +116,7 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
                 maxHeight: MediaQuery.of(context).size.height * 0.8,
               ),
               decoration: BoxDecoration(
-                color: theme.scaffoldBackgroundColor,
+                color: theme.colorScheme.surfaceContainer,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(28),
                 ),

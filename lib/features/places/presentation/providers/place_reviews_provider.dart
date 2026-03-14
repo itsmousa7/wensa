@@ -1,6 +1,6 @@
 // lib/features/places/presentation/providers/place_reviews_provider.dart
 
-
+import 'package:future_riverpod/features/auth/presentation/providers/user_profile_provider.dart';
 import 'package:future_riverpod/features/places/domain/models/review_with_user_model.dart';
 import 'package:future_riverpod/features/places/domain/repositories/place_reviews_repository.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
@@ -36,6 +36,7 @@ class PlaceReviewsNotifier extends _$PlaceReviewsNotifier {
       // Invalidate place cache so reviews_count refreshes on the details page.
       // The DB trigger already updated the counter; invalidating forces a re-fetch.
       ref.invalidate(placeDetailsProvider(placeId));
+      ref.invalidate(userReviewsCountProvider);
       return ref.read(placeReviewsRepositoryProvider).fetchReviews(placeId);
     });
   }
@@ -45,6 +46,7 @@ class PlaceReviewsNotifier extends _$PlaceReviewsNotifier {
     state = await AsyncValue.guard(() async {
       await ref.read(placeReviewsRepositoryProvider).deleteReview(reviewId);
       ref.invalidate(placeDetailsProvider(placeId));
+      ref.invalidate(userReviewsCountProvider);
       return ref.read(placeReviewsRepositoryProvider).fetchReviews(placeId);
     });
   }

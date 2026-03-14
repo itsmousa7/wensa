@@ -216,8 +216,8 @@ return $default(_that.id,_that.firstName,_that.secondName,_that.email,_that.phon
 /// @nodoc
 @JsonSerializable()
 
-class _UserModel implements UserModel {
-  const _UserModel({this.id = '', this.firstName = '', this.secondName = '', this.email = '', this.phone, this.avatarUrl, this.city, this.createdAt, this.updatedAt});
+class _UserModel extends UserModel {
+  const _UserModel({this.id = '', this.firstName = '', this.secondName = '', this.email = '', this.phone, this.avatarUrl, this.city, this.createdAt, this.updatedAt}): super._();
   factory _UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
 
 @override@JsonKey() final  String id;

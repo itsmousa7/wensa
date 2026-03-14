@@ -15,10 +15,9 @@ class HomeAppBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
-    final userAsync = ref.watch(userProfileProvider);
+    final userAsync = ref.watch(profileProvider);
     final theme = Theme.of(context);
 
-    
     final uiLocale = isAr ? 'ar' : 'en';
     final textTheme = AppTypography.getTextTheme(uiLocale, context);
 
@@ -27,11 +26,9 @@ class HomeAppBar extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              
               Text(
                 isAr ? 'مرحباً،' : 'Hello,',
                 style: textTheme.bodyMedium?.copyWith(
@@ -41,9 +38,7 @@ class HomeAppBar extends ConsumerWidget {
 
               const SizedBox(height: 2),
 
-              
               userAsync.when(
-                
                 loading: () => Skeletonizer(
                   enabled: true,
                   effect: ShimmerEffect(
@@ -66,12 +61,10 @@ class HomeAppBar extends ConsumerWidget {
                 ),
 
                 data: (users) {
-                  final firstName = users.first.firstName;
+                  final firstName = users.firstName;
 
-                  
                   final nameLocale = _isArabicText(firstName) ? 'ar' : 'en';
 
-                  
                   final nameTT = AppTypography.getTextTheme(
                     nameLocale,
                     context,
@@ -81,7 +74,6 @@ class HomeAppBar extends ConsumerWidget {
                     '$firstName 👋',
                     style: nameTT.titleMedium?.copyWith(
                       color: theme.colorScheme.primary,
-
                     ),
                   );
                 },
@@ -89,7 +81,7 @@ class HomeAppBar extends ConsumerWidget {
             ],
           ),
           Spacer(),
-          
+
           Stack(
             children: [
               Container(

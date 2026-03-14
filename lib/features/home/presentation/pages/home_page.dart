@@ -132,9 +132,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     0.0,
                     1.0,
                   );
-                  final loading =
-                      mode == RefreshIndicatorMode.refresh ||
-                      mode == RefreshIndicatorMode.armed;
+                  final loading = mode == RefreshIndicatorMode.armed;
                   return Center(
                     child: loading
                         ? SizedBox(
