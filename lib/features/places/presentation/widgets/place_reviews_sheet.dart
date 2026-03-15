@@ -471,6 +471,7 @@ class _AddReviewInput extends StatelessWidget {
                   textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
                   minLines: 1,
                   maxLines: 4,
+                  autofocus: true,
                   style: tt.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: cs.outline,
