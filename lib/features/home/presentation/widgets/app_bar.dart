@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
-import 'package:future_riverpod/features/auth/presentation/providers/user_profile_provider.dart';
+import 'package:future_riverpod/features/profile/presentation/providers/user_profile_provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 bool _isArabicText(String text) => RegExp(r'[\u0600-\u06FF]').hasMatch(text);

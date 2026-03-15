@@ -78,7 +78,7 @@ class Favorites extends _$Favorites {
         ref
             .read(placeDetailsProvider(itemId).notifier)
             .patchSavesCount(wasLiked ? 1 : -1);
-      } 
+      }
     }
   }
 }

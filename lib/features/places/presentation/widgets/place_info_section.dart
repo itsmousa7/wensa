@@ -136,6 +136,7 @@ class PlaceInfoSection extends ConsumerWidget {
                 icon: CupertinoIcons.eye,
                 value: compactNumber(place.viewCount),
                 label: isAr ? 'مشاهدة' : 'Views',
+                textColor: cs.onTertiary,
               ),
               const SizedBox(width: 10),
               PlaceStatisticChip(
@@ -143,6 +144,7 @@ class PlaceInfoSection extends ConsumerWidget {
                 value: compactNumber(place.savesCount),
                 label: isAr ? 'إعجاب' : 'Likes',
                 accentColor: AppColors.alert,
+                textColor: cs.errorContainer,
               ),
               const SizedBox(width: 10),
               GestureDetector(
@@ -157,6 +159,7 @@ class PlaceInfoSection extends ConsumerWidget {
                   value: compactNumber(place.reviewsCount),
                   label: isAr ? 'تقييم' : 'Reviews',
                   highlighted: true,
+                  textColor: cs.secondary,
                 ),
               ),
             ],

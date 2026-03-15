@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
 
 class PlaceStatisticChip extends StatelessWidget {
   const PlaceStatisticChip({
@@ -8,6 +9,7 @@ class PlaceStatisticChip extends StatelessWidget {
     required this.label,
     this.highlighted = false,
     this.accentColor,
+    required this.textColor,
   });
 
   final IconData icon;
@@ -15,6 +17,7 @@ class PlaceStatisticChip extends StatelessWidget {
   final String label;
   final bool highlighted;
   final Color? accentColor;
+  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -36,30 +39,25 @@ class PlaceStatisticChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
-      child: Row(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 8),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Text(
+            value,
+            style: tt.labelLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+
+          Row(
             children: [
-              Text(
-                value,
-                style: tt.labelLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
+              Icon(icon, size: 16, color: color),
+              Gap(10),
               Text(
                 label,
-                style: tt.titleLarge?.copyWith(
-                  color: cs.onSurface,
-                  fontSize: 12,
-                ),
+                style: tt.titleMedium?.copyWith(color: textColor, fontSize: 12),
               ),
             ],
           ),

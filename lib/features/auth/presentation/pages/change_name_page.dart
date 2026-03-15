@@ -5,7 +5,7 @@ import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/core/utils/error_dialog.dart';
 import 'package:future_riverpod/features/auth/domain/models/custom_error.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_repository_provider.dart';
-import 'package:future_riverpod/features/auth/presentation/providers/user_profile_provider.dart';
+import 'package:future_riverpod/features/profile/presentation/providers/user_profile_provider.dart';
 import 'package:future_riverpod/features/auth/presentation/widgets/app_button.dart';
 import 'package:future_riverpod/features/auth/presentation/widgets/app_text_field.dart';
 import 'package:future_riverpod/features/auth/presentation/widgets/snack_bar.dart';

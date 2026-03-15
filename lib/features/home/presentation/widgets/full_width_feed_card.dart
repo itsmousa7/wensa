@@ -6,7 +6,7 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
-import 'package:future_riverpod/features/home/presentation/providers/favorites_provider.dart';
+import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/wensa_badge.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';

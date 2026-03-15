@@ -2,12 +2,13 @@
 
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/auth/domain/models/user_model.dart';
-import 'package:future_riverpod/features/auth/presentation/providers/user_profile_provider.dart';
+import 'package:future_riverpod/features/profile/presentation/providers/user_profile_provider.dart';
+import 'package:future_riverpod/features/profile/presentation/widgets/user_avatar.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -234,19 +235,10 @@ class _ProfileAvatarState extends ConsumerState<ProfileAvatar> {
                 ),
                 color: cs.primary.withValues(alpha: 0.1),
               ),
-              child: ClipOval(
-                child: _uploading
-                    ? _UploadingOverlay(cs: cs)
-                    : widget.user.avatarUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: widget.user.avatarUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) =>
-                            _InitialsView(user: widget.user, cs: cs),
-                        errorWidget: (_, __, ___) =>
-                            _InitialsView(user: widget.user, cs: cs),
-                      )
-                    : _InitialsView(user: widget.user, cs: cs),
+              child: UserAvatar(
+                avatarUrl: widget.user.avatarUrl,
+                initials: widget.user.initials,
+                radius: photoRadius,
               ),
             ),
           ),
@@ -268,7 +260,7 @@ class _ProfileAvatarState extends ConsumerState<ProfileAvatar> {
               ),
               child: const Icon(
                 Icons.edit_rounded,
-                color: Colors.white,
+                color: AppColors.white,
                 size: 14,
               ),
             ),
@@ -277,42 +269,6 @@ class _ProfileAvatarState extends ConsumerState<ProfileAvatar> {
       ),
     );
   }
-}
-
-// ── Sub-widgets ───────────────────────────────────────────────────────────────
-
-class _InitialsView extends StatelessWidget {
-  const _InitialsView({required this.user, required this.cs});
-  final UserModel user;
-  final ColorScheme cs;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    color: cs.primary.withValues(alpha: 0.1),
-    child: Center(
-      child: Text(
-        user.initials,
-        style: TextStyle(
-          fontSize: 36,
-          fontWeight: FontWeight.w700,
-          color: cs.primary,
-        ),
-      ),
-    ),
-  );
-}
-
-class _UploadingOverlay extends StatelessWidget {
-  const _UploadingOverlay({required this.cs});
-  final ColorScheme cs;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    color: cs.onSurface.withValues(alpha: 0.12),
-    child: Center(
-      child: CircularProgressIndicator(color: cs.primary, strokeWidth: 2.5),
-    ),
-  );
 }
 
 class _SheetOption extends StatelessWidget {

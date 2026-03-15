@@ -9,7 +9,7 @@ import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/home/presentation/providers/all_events_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
-import 'package:future_riverpod/features/home/presentation/providers/favorites_provider.dart';
+import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_scroll_controller.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/all_events_section.dart';

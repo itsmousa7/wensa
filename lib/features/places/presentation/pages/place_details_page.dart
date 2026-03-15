@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
-import 'package:future_riverpod/features/home/presentation/providers/favorites_provider.dart';
+import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_app_bar_state.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_appbar_button.dart';
