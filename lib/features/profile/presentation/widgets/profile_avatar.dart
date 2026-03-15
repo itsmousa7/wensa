@@ -22,7 +22,7 @@ class ProfileAvatar extends ConsumerStatefulWidget {
 }
 
 class _ProfileAvatarState extends ConsumerState<ProfileAvatar> {
-  bool _uploading = false;
+  bool uploading = false;
 
   // ── Pick → Crop → Upload ──────────────────────────────────────────────────
 
@@ -68,17 +68,17 @@ class _ProfileAvatarState extends ConsumerState<ProfileAvatar> {
 
     if (cropped == null || !mounted) return;
 
-    setState(() => _uploading = true);
+    setState(() => uploading = true);
     await ref.read(profileProvider.notifier).uploadAvatar(File(cropped.path));
-    if (mounted) setState(() => _uploading = false);
+    if (mounted) setState(() => uploading = false);
   }
 
   // ── Delete ────────────────────────────────────────────────────────────────
 
   Future<void> _delete() async {
-    setState(() => _uploading = true);
+    setState(() => uploading = true);
     await ref.read(profileProvider.notifier).deleteAvatar();
-    if (mounted) setState(() => _uploading = false);
+    if (mounted) setState(() => uploading = false);
   }
 
   // ── Sheet routing ─────────────────────────────────────────────────────────
