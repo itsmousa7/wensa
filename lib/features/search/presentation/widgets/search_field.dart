@@ -34,6 +34,7 @@ class SearchField extends StatelessWidget {
         controller: controller,
         focusNode: focusNode,
         onChanged: onChanged,
+        autofocus: true,
         textAlignVertical: TextAlignVertical.center,
         style: tt.bodyMedium?.copyWith(color: cs.outline),
         decoration: InputDecoration(

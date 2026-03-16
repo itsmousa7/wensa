@@ -20,6 +20,15 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   final _focusNode = FocusNode();
 
   @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).requestFocus(_focusNode);
+    });
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     _focusNode.dispose();
@@ -55,6 +64,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             title: Padding(
               padding: const EdgeInsets.only(right: 16),
               child: SearchField(
+                
                 controller: _controller,
                 focusNode: _focusNode,
                 isAr: isAr,

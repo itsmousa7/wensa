@@ -14,7 +14,7 @@ class NavShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
     final homeScroll = ref.read(homeScrollControllerProvider);
-
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       // ✅ Scaffold بدون bottomNavigationBar نهائياً
@@ -27,8 +27,9 @@ class NavShell extends ConsumerWidget {
             navigationShell,
 
             // ── Layer 2: الـ BottomBar فوق كل شيء ───────────────────
-            Positioned(
-              bottom: -5,
+            AnimatedPositioned(
+              duration: Duration(microseconds: 250),
+              bottom: bottomInset > 0 ? -100 : 10,
               left: 0,
               right: 0,
               child: Material(
