@@ -1,51 +1,62 @@
+import 'dart:io';
 import 'dart:ui';
 
+import 'package:cupertino_native/cupertino_native.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+
+// ── Nav items (unchanged) ─────────────────────────────────────────────────────
 
 class NavItem {
   final IconData icon;
   final IconData activeIcon;
   final String labelEn;
   final String labelAr;
+  final String sfSymbol; // ← SF Symbol name for iOS liquid glass
 
   const NavItem({
     required this.icon,
     required this.activeIcon,
     required this.labelEn,
     required this.labelAr,
+    required this.sfSymbol,
   });
 }
 
-// ✅ Map → Favorites (index 2)
 const kNavItems = [
   NavItem(
     icon: CupertinoIcons.home,
     activeIcon: CupertinoIcons.house_fill,
     labelEn: 'Home',
     labelAr: 'الرئيسية',
+    sfSymbol: 'house.fill',
   ),
   NavItem(
     icon: CupertinoIcons.search,
     activeIcon: CupertinoIcons.search,
     labelEn: 'Search',
     labelAr: 'بحث',
+    sfSymbol: 'magnifyingglass',
   ),
   NavItem(
-    icon: CupertinoIcons.heart, // ← was map
-    activeIcon: CupertinoIcons.heart_fill, // ← was map
-    labelEn: 'Favorites', // ← was Map
-    labelAr: 'المفضلة', // ← was الخريطة
+    icon: CupertinoIcons.heart,
+    activeIcon: CupertinoIcons.heart_fill,
+    labelEn: 'Favorites',
+    labelAr: 'المفضلة',
+    sfSymbol: 'heart.fill',
   ),
   NavItem(
     icon: CupertinoIcons.person,
     activeIcon: CupertinoIcons.person_fill,
     labelEn: 'Profile',
     labelAr: 'حسابي',
+    sfSymbol: 'person.fill',
   ),
 ];
+
+// ── Public entry point — routes to platform-correct bar ──────────────────────
 
 class BottomBar extends StatelessWidget {
   final int currentIndex;
@@ -58,6 +69,71 @@ class BottomBar extends StatelessWidget {
     required this.onTap,
     this.isAr = false,
   });
+
+  @override
+  Widget build(BuildContext context) {
+    if (Platform.isIOS) {
+      return _LiquidGlassBar(
+        currentIndex: currentIndex,
+        onTap: onTap,
+        isAr: isAr,
+      );
+    }
+    return _MaterialBar(currentIndex: currentIndex, onTap: onTap, isAr: isAr);
+  }
+}
+
+// ── iOS — Liquid Glass CNTabBar ───────────────────────────────────────────────
+
+class _LiquidGlassBar extends StatelessWidget {
+  const _LiquidGlassBar({
+    required this.currentIndex,
+    required this.onTap,
+    required this.isAr,
+  });
+
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final bool isAr;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Directionality(
+      // CNTabBar is always LTR internally — we flip labels manually
+      textDirection: TextDirection.ltr,
+      child: CNTabBar(
+        currentIndex: currentIndex,
+        tint: cs.primary,
+
+        height: 85,
+        onTap: onTap,
+        items: kNavItems
+            .map(
+              (item) => CNTabBarItem(
+                label: isAr ? item.labelAr : item.labelEn,
+                icon: CNSymbol(item.sfSymbol),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+}
+
+// ── Android — existing Material floating bar (unchanged) ─────────────────────
+
+class _MaterialBar extends StatelessWidget {
+  const _MaterialBar({
+    required this.currentIndex,
+    required this.onTap,
+    required this.isAr,
+  });
+
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final bool isAr;
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +195,7 @@ class BottomBar extends StatelessWidget {
                   height: barHeight,
                   child: Stack(
                     children: [
-                      // Sliding pill indicator
+                      // Sliding pill
                       AnimatedPositioned(
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeInOutCubic,

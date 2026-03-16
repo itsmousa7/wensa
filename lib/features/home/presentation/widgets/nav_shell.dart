@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
@@ -15,47 +17,49 @@ class NavShell extends ConsumerWidget {
     final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
     final homeScroll = ref.read(homeScrollControllerProvider);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final keyboardOpen = bottomInset > 0;
+
+    void handleTap(int index) {
+      if (index == 0 && navigationShell.currentIndex == 0) {
+        if (homeScroll.hasClients) {
+          homeScroll.animateTo(
+            0,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOutCubic,
+          );
+        }
+        return;
+      }
+      navigationShell.goBranch(
+        index,
+        initialLocation: index == navigationShell.currentIndex,
+      );
+    }
+
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
-      // ✅ Scaffold بدون bottomNavigationBar نهائياً
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        // ✅ Stack يجعل الـ BottomBar يطفو فوق المحتوى
         body: Stack(
           children: [
-            // ── Layer 1: الصفحات ─────────────────────────────────────
+            // ── Pages ────────────────────────────────────────────────────
             navigationShell,
 
-            // ── Layer 2: الـ BottomBar فوق كل شيء ───────────────────
-            AnimatedPositioned(
-              duration: Duration(microseconds: 250),
-              bottom: bottomInset > 0 ? -100 : 10,
-              left: 0,
-              right: 0,
-              child: Material(
-                type: MaterialType.transparency,
-                child: BottomBar(
-                  currentIndex: navigationShell.currentIndex,
-                  isAr: isAr,
-                  onTap: (index) {
-                    if (index == 0 && navigationShell.currentIndex == 0) {
-                      if (homeScroll.hasClients) {
-                        homeScroll.animateTo(
-                          0,
-                          duration: const Duration(milliseconds: 400),
-                          curve: Curves.easeInOutCubic,
-                        );
-                      }
-                      return;
-                    }
-                    navigationShell.goBranch(
-                      index,
-                      initialLocation: index == navigationShell.currentIndex,
-                    );
-                  },
+            // ── Bottom bar — hidden when keyboard is open ─────────────────
+            if (!keyboardOpen)
+              Positioned(
+                bottom: Platform.isIOS ? 0 : 10, // CNTabBar has its own inset
+                left: 0,
+                right: 0,
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: BottomBar(
+                    currentIndex: navigationShell.currentIndex,
+                    isAr: isAr,
+                    onTap: handleTap,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),

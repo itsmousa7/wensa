@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:cupertino_native/cupertino_native.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,20 +18,16 @@ import 'package:future_riverpod/features/profile/presentation/widgets/settings_c
 import 'package:future_riverpod/features/profile/presentation/widgets/sign_out_button.dart';
 import 'package:go_router/go_router.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Main content — rendered when profile data is available
-// ─────────────────────────────────────────────────────────────────────────────
-
 class ProfileContent extends ConsumerWidget {
   const ProfileContent({super.key, required this.user, required this.isAr});
 
-  final dynamic user; // AppUserModel
+  final dynamic user;
   final bool isAr;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+
     final isDark = ref.watch(appThemeProvider) is DarkTheme;
     final favoritesCount = ref.watch(favoritesProvider).value?.length ?? 0;
     final reviewsCountAsync = ref.watch(userReviewsCountProvider);
@@ -60,7 +59,6 @@ class ProfileContent extends ConsumerWidget {
                       accentColor: AppColors.alert,
                       textColor: cs.errorContainer,
                     ),
-
                     const SizedBox(width: 12),
                     PlaceStatisticChip(
                       icon: Icons.star_border,
@@ -78,28 +76,28 @@ class ProfileContent extends ConsumerWidget {
                 const SizedBox(height: 10),
                 SettingsCard(
                   children: [
-                    SwitchListTile.adaptive(
-                      value: isDark,
-                      onChanged: (_) =>
-                          ref.read(appThemeProvider.notifier).toggle(),
-
-                      activeTrackColor: cs.primary,
-                      title: Text(
-                        isAr ? 'الوضع الداكن' : 'Dark Mode',
-                        style: tt.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: cs.outline,
-                        ),
-                      ),
-                      secondary: SettingIcon(
-                        icon: isDark
-                            ? CupertinoIcons.moon_fill
-                            : CupertinoIcons.sun_max_fill,
-                        color: cs.primary,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
+                    SettingsTile(
+                      icon: isDark
+                          ? CupertinoIcons.moon_fill
+                          : CupertinoIcons.sun_max_fill,
+                      iconColor: cs.primary,
+                      title: isAr ? 'الوضع الداكن' : 'Dark Mode',
+                      trailing: Transform.scale(
+                        scaleX: isAr ? -1 : 1,
+                        child: Platform.isIOS
+                            ? CNSwitch(
+                                value: isDark,
+                                onChanged: (_) => ref
+                                    .read(appThemeProvider.notifier)
+                                    .toggle(),
+                              )
+                            : Switch.adaptive(
+                                value: isDark,
+                                onChanged: (_) => ref
+                                    .read(appThemeProvider.notifier)
+                                    .toggle(),
+                                activeTrackColor: cs.primary,
+                              ),
                       ),
                     ),
                   ],
@@ -115,15 +113,27 @@ class ProfileContent extends ConsumerWidget {
                       icon: Icons.language_rounded,
                       iconColor: cs.primary,
                       title: isAr ? 'اللغة العربية' : 'Arabic',
-                      trailing: Switch.adaptive(
-                        value: isAr,
-                        onChanged: (_) =>
-                            ref.read(appLocaleProvider.notifier).toggle(),
-                        activeTrackColor: cs.primary,
+                      trailing: Transform.scale(
+                        scaleX: isAr ? -1 : 1,
+                        child: Platform.isIOS
+                            ? CNSwitch(
+                                value: isAr,
+                                onChanged: (_) => ref
+                                    .read(appLocaleProvider.notifier)
+                                    .toggle(),
+                              )
+                            : Switch.adaptive(
+                                value: isAr,
+                                onChanged: (_) => ref
+                                    .read(appLocaleProvider.notifier)
+                                    .toggle(),
+                                activeTrackColor: cs.primary,
+                              ),
                       ),
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 16),
 
                 // ── Account ────────────────────────────────────────────────

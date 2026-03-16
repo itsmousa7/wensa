@@ -152,23 +152,25 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
                           overflow: TextOverflow.ellipsis,
                         )
                       : null,
-
+                  leadingWidth: 70,
+                  toolbarHeight: 50,
                   leading: Padding(
                     padding: const EdgeInsetsDirectional.only(start: 20),
                     child: PlaceAppBarButton(
                       icon: Icon(
-                        color: collapsed
-                            ? theme.colorScheme.outline
-                            : AppColors.white,
                         _isAr
                             ? CupertinoIcons.chevron_right
                             : CupertinoIcons.chevron_left,
+                        color: collapsed
+                            ? theme.colorScheme.outline
+                            : AppColors.white,
                       ),
                       onTap: () => Navigator.pop(context),
                       collapsed: collapsed,
+                      // ← chevron direction matches RTL/LTR
+                      sfSymbol: _isAr ? 'chevron.right' : 'chevron.left',
                     ),
                   ),
-                  leadingWidth: 75,
 
                   actions: [
                     Padding(
@@ -180,13 +182,17 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
                               : CupertinoIcons.heart,
                           color: isFav
                               ? AppColors.alert
-                              : (collapsed ? cs.onSurface : AppColors.white),
+                              : (collapsed
+                                    ? cs.onSurface
+                                    : AppColors.lightRedSecondary),
                         ),
                         onTap: () => ref
                             .read(favoritesProvider.notifier)
                             .toggle(place.id, itemType: 'place'),
                         collapsed: collapsed,
                         animate: true,
+                        // ← symbol switches based on current favorite state
+                        sfSymbol: isFav ? 'heart.fill' : 'heart',
                       ),
                     ),
                   ],

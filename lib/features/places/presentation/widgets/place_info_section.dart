@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/places/domain/models/place_model.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_app_bar_state.dart';
@@ -72,7 +73,7 @@ class PlaceInfoSection extends ConsumerWidget {
                 const Gap(15),
                 SizedBox(
                   height: 20,
-                  child: Image.asset('assets/icons/verify.png'),
+                  child: SvgPicture.asset('assets/icons/verify.svg'),
                 ),
               ],
             ],
@@ -102,7 +103,7 @@ class PlaceInfoSection extends ConsumerWidget {
                   children: [
                     SizedBox(
                       height: 14,
-                      child: Image.asset('assets/icons/location.png'),
+                      child: SvgPicture.asset('assets/icons/location.svg'),
                     ),
                     const SizedBox(width: 6),
                     Text(
