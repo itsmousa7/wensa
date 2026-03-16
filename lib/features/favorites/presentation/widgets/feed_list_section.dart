@@ -5,6 +5,7 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/full_width_feed_card.dart';
+import 'package:future_riverpod/features/profile/presentation/widgets/profile_error.dart';
 import 'package:lottie/lottie.dart';
 
 class FeedListSection extends ConsumerWidget {
@@ -50,28 +51,7 @@ class FeedListSection extends ConsumerWidget {
 
     // ── Error ──────────────────────────────────────────────────────────────
     if (feed.hasError) {
-      return SliverFillRemaining(
-        hasScrollBody: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                height: 200,
-                child: Lottie.asset('assets/lottie/animation/no_internet.json'),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                isAr ? 'تعذّر تحميل البيانات' : 'Failed to load',
-                style: tt.bodyMedium?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.4),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+      return GlobalErrorWidget(cs: cs, isAr: isAr, tt: tt);
     }
 
     // ── Empty ──────────────────────────────────────────────────────────────

@@ -32,7 +32,7 @@ class SignOutButton extends ConsumerWidget {
             const SizedBox(width: 8),
             Text(
               isAr ? 'تسجيل الخروج' : 'Sign Out',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: AppColors.alert,
                 fontWeight: FontWeight.w700,
               ),

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
@@ -169,7 +170,7 @@ class FeedCard extends ConsumerWidget {
                         SizedBox(
                           height: 14,
                           width: 14,
-                          child: Image.asset('assets/icons/verify.png'),
+                          child: SvgPicture.asset('assets/icons/verify.svg'),
                         ),
                       ],
                     ],
@@ -180,7 +181,7 @@ class FeedCard extends ConsumerWidget {
                       SizedBox(
                         height: 12,
                         child: itemType == 'place'
-                            ? Image.asset('assets/icons/location.png')
+                            ? SvgPicture.asset('assets/icons/location.svg')
                             : Image.asset('assets/icons/calendar.png'),
                       ),
                       const Gap(6),

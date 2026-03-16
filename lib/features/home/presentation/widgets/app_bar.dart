@@ -7,8 +7,6 @@ import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/features/profile/presentation/providers/user_profile_provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-bool _isArabicText(String text) => RegExp(r'[\u0600-\u06FF]').hasMatch(text);
-
 class HomeAppBar extends ConsumerWidget {
   const HomeAppBar({super.key});
 
@@ -63,12 +61,7 @@ class HomeAppBar extends ConsumerWidget {
                 data: (users) {
                   final firstName = users.firstName;
 
-                  final nameLocale = _isArabicText(firstName) ? 'ar' : 'en';
-
-                  final nameTT = AppTypography.getTextTheme(
-                    nameLocale,
-                    context,
-                  );
+                  final nameTT = AppTypography.getTextTheme(firstName, context);
 
                   return Text(
                     '$firstName 👋',

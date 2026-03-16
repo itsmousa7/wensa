@@ -5,10 +5,10 @@ import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/core/utils/error_dialog.dart';
 import 'package:future_riverpod/features/auth/domain/models/custom_error.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_repository_provider.dart';
-import 'package:future_riverpod/features/profile/presentation/providers/user_profile_provider.dart';
 import 'package:future_riverpod/features/auth/presentation/widgets/app_button.dart';
 import 'package:future_riverpod/features/auth/presentation/widgets/app_text_field.dart';
 import 'package:future_riverpod/features/auth/presentation/widgets/snack_bar.dart';
+import 'package:future_riverpod/features/profile/presentation/providers/user_profile_provider.dart';
 import 'package:go_router/go_router.dart';
 
 class ChangeNamePage extends ConsumerStatefulWidget {
@@ -65,11 +65,12 @@ class _ChangeNamePageState extends ConsumerState<ChangeNamePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => context.goNamed(RouteNames.profile),
-          icon: const Icon(Icons.arrow_back_outlined),
+        title: Text(
+          context.tr('change_name'),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.outline,
+          ),
         ),
-        title: Text(context.tr('change_name')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

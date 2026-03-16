@@ -1,12 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
-import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
+import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/wensa_badge.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
@@ -119,7 +120,7 @@ class FullWidthFeedCard extends ConsumerWidget {
                       SizedBox(
                         height: 16,
                         width: 16,
-                        child: Image.asset('assets/icons/verify.png'),
+                        child: SvgPicture.asset('assets/icons/verify.svg'),
                       ),
                     ],
                   ],
@@ -132,7 +133,7 @@ class FullWidthFeedCard extends ConsumerWidget {
                     children: [
                       SizedBox(
                         height: 10,
-                        child: Image.asset('assets/icons/location.png'),
+                        child: SvgPicture.asset('assets/icons/location.svg'),
                       ),
                       const Gap(4),
                       Text(

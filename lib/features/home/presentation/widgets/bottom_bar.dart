@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
@@ -21,26 +22,26 @@ class NavItem {
 // ✅ Map → Favorites (index 2)
 const kNavItems = [
   NavItem(
-    icon: Icons.home_outlined,
-    activeIcon: Icons.home_rounded,
+    icon: CupertinoIcons.home,
+    activeIcon: CupertinoIcons.house_fill,
     labelEn: 'Home',
     labelAr: 'الرئيسية',
   ),
   NavItem(
-    icon: Icons.explore_outlined,
-    activeIcon: Icons.explore_rounded,
-    labelEn: 'Explore',
-    labelAr: 'استكشف',
+    icon: CupertinoIcons.search,
+    activeIcon: CupertinoIcons.search,
+    labelEn: 'Search',
+    labelAr: 'بحث',
   ),
   NavItem(
-    icon: Icons.favorite_border_rounded, // ← was map
-    activeIcon: Icons.favorite_rounded, // ← was map
+    icon: CupertinoIcons.heart, // ← was map
+    activeIcon: CupertinoIcons.heart_fill, // ← was map
     labelEn: 'Favorites', // ← was Map
     labelAr: 'المفضلة', // ← was الخريطة
   ),
   NavItem(
-    icon: Icons.person_outline_rounded,
-    activeIcon: Icons.person_rounded,
+    icon: CupertinoIcons.person,
+    activeIcon: CupertinoIcons.person_fill,
     labelEn: 'Profile',
     labelAr: 'حسابي',
   ),
@@ -117,7 +118,6 @@ class BottomBar extends StatelessWidget {
                   width: totalWidth,
                   height: barHeight,
                   child: Stack(
-                    clipBehavior: Clip.hardEdge,
                     children: [
                       // Sliding pill indicator
                       AnimatedPositioned(

@@ -6,10 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
-import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/all_events_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
-import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_scroll_controller.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/all_events_section.dart';
@@ -23,7 +22,7 @@ import 'package:future_riverpod/features/home/presentation/widgets/promoted_bann
 import 'package:future_riverpod/features/home/presentation/widgets/see_all_page.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/trending_feed_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/when_no_data_available.dart';
-import 'package:lottie/lottie.dart';
+import 'package:future_riverpod/features/profile/presentation/widgets/profile_error.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -86,7 +85,8 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final scrollCtrl = ref.watch(homeScrollControllerProvider);
     final selectedIdx = ref.watch(selectedCategoryProvider);
     final categories = ref.watch(categoriesProvider).value;
@@ -113,7 +113,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
           bottom: false,
           child: CustomScrollView(
@@ -140,7 +140,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: theme.colorScheme.primary,
+                              color: cs.primary,
                             ),
                           )
                         : Opacity(
@@ -148,9 +148,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                             child: Icon(
                               Icons.keyboard_arrow_down_rounded,
                               size: 24,
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.5,
-                              ),
+                              color: cs.onSurface.withValues(alpha: 0.5),
                             ),
                           ),
                   );
@@ -163,41 +161,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
               // ── Network error state — replaces ALL feed sections ─────────
               if (hasNetworkError) ...[
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        height: 240,
-                        child: Lottie.asset(
-                          'assets/lottie/animation/no_internet.json',
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        isAr
-                            ? 'تحقق من اتصالك بالإنترنت'
-                            : 'Check your internet connection',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.5,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      FilledButton.tonal(
-                        onPressed: _onRefresh,
-                        child: Text(
-                          isAr ? 'إعادة المحاولة' : 'Retry',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: AppColors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                GlobalErrorWidget(cs: cs, isAr: isAr, tt: tt),
               ] else ...[
                 SliverToBoxAdapter(child: PromotedBanner()),
                 // ── Normal feed sections ─────────────────────────────────

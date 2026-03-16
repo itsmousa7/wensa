@@ -110,6 +110,7 @@ class _SigninPageState extends ConsumerState<SigninPage> {
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
+          backgroundColor: theme.scaffoldBackgroundColor,
           actions: [
             AppButton.icon(
               onPressed: () => ref.read(appThemeProvider.notifier).toggle(),

@@ -5,7 +5,6 @@ import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_name_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_password_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/forgot_password_page.dart';
-import 'package:future_riverpod/features/profile/presentation/pages/profile_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/signin_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/signup_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/verify_email_page.dart';
@@ -15,6 +14,8 @@ import 'package:future_riverpod/features/home/presentation/pages/home_page.dart'
 import 'package:future_riverpod/features/home/presentation/pages/splash_page.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/nav_shell.dart';
 import 'package:future_riverpod/features/places/presentation/pages/place_details_page.dart';
+import 'package:future_riverpod/features/profile/presentation/pages/profile_page.dart';
+import 'package:future_riverpod/features/search/presentation/pages/search_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -28,13 +29,6 @@ class SupabaseReady extends _$SupabaseReady {
   void setReady() => state = true;
 }
 
-class _ExplorePage extends StatelessWidget {
-  const _ExplorePage();
-  @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: Center(child: Text('Explore — coming soon')));
-}
-
 @Riverpod(keepAlive: true)
 GoRouter router(Ref ref) {
   return GoRouter(
@@ -46,22 +40,22 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: '/splash',
         name: RouteNames.splash,
-        builder: (_, __) => const SplashPage(),
+        builder: (_, _) => const SplashPage(),
       ),
       GoRoute(
         path: '/signin',
         name: RouteNames.signin,
-        builder: (_, __) => const SigninPage(),
+        builder: (_, _) => const SigninPage(),
       ),
       GoRoute(
         path: '/signup',
         name: RouteNames.signup,
-        builder: (_, __) => const SignupPage(),
+        builder: (_, _) => const SignupPage(),
       ),
       GoRoute(
         path: '/forgot-password',
         name: RouteNames.forgotPassword,
-        builder: (_, __) => const ForgotPasswordPage(),
+        builder: (_, _) => const ForgotPasswordPage(),
       ),
       GoRoute(
         path: '/verify-email',
@@ -74,13 +68,9 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: '/changeName',
         name: RouteNames.changeName,
-        builder: (_, __) => const ChangeNamePage(),
+        builder: (_, _) => const ChangeNamePage(),
       ),
-      // GoRoute(
-      //   path: '/test',
-      //   name: RouteNames.test,
-      //   builder: (_, __) => const HomeTest(),
-      // ),
+
       GoRoute(
         path: '/changePassword',
         name: RouteNames.changePassword,
@@ -96,23 +86,23 @@ GoRouter router(Ref ref) {
             PlaceDetailsPage(placeId: s.uri.queryParameters['placeId'] ?? ''),
       ),
       StatefulShellRoute.indexedStack(
-        builder: (_, __, shell) => NavShell(navigationShell: shell),
+        builder: (_, _, shell) => NavShell(navigationShell: shell),
         branches: [
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: '/home',
                 name: RouteNames.home,
-                builder: (_, __) => const HomePage(),
+                builder: (_, _) => const HomePage(),
               ),
             ],
           ),
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/explore',
-                name: 'explore',
-                builder: (_, __) => const _ExplorePage(),
+                path: '/search',
+                name: RouteNames.search,
+                builder: (_, _) => const SearchPage(),
               ),
             ],
           ),
@@ -121,7 +111,7 @@ GoRouter router(Ref ref) {
               GoRoute(
                 path: '/favorites',
                 name: RouteNames.favorites,
-                builder: (_, __) => const FavoritesPage(),
+                builder: (_, _) => const FavoritesPage(),
               ),
             ],
           ),
@@ -130,7 +120,7 @@ GoRouter router(Ref ref) {
               GoRoute(
                 path: '/profile',
                 name: RouteNames.profile,
-                builder: (_, __) => const ProfilePage(),
+                builder: (_, _) => const ProfilePage(),
               ),
             ],
           ),

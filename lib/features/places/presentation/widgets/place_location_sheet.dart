@@ -20,8 +20,9 @@ String _appleMapsUrl(double lat, double lng, String name) =>
 
 Future<void> _launch(String url) async {
   final uri = Uri.parse(url);
-  if (await canLaunchUrl(uri))
+  if (await canLaunchUrl(uri)) {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -55,7 +56,7 @@ void showLocationSheet({
           ),
           CupertinoActionSheetAction(
             onPressed: () => popAndLaunch(_googleMapsUrl(latitude, longitude)),
-            child: Text(isAr ? 'خرائط جوجل' : 'Google Maps'),
+            child: Text(isAr ? 'خرائط كوكل' : 'Google Maps'),
           ),
           CupertinoActionSheetAction(
             onPressed: () => popAndLaunch(_wazeUrl(latitude, longitude)),

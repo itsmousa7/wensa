@@ -42,9 +42,9 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        snack(context, message: context.tr('password_updated')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(snack(context, message: context.tr('password_updated')));
 
       if (widget.fromForgotPassword) {
         // Sign out first so the router doesn't redirect to /home
@@ -66,11 +66,12 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => context.goNamed(RouteNames.profile),
-          icon: const Icon(Icons.arrow_back_outlined),
+        title: Text(
+          context.tr('change_password'),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.outline,
+          ),
         ),
-        title: Text(context.tr('change_password')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

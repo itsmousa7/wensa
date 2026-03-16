@@ -4,36 +4,36 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTypography {
   AppTypography._();
 
-  // ── Font families ──────────────────────────────────────────────────────────
   static const String _roboto = 'Roboto';
-  static const String _graphikBold = 'Graphik-Bold'; // Arabic titles
-  static const String _graphikLight = 'Graphik-Light'; // Arabic body
+  static const String _graphikBold = 'Graphik-Bold';
+  static const String _graphikLight = 'Graphik-Light';
 
-  /// Title font: Graphik-Bold (ar) | Roboto (en)
+  // Arabic fonts are always in the fallback so Arabic characters render
+  // correctly even when the app language is English.
+  static const List<String> _titleFallback = [_graphikBold, _graphikLight];
+  static const List<String> _bodyFallback = [_graphikLight, _graphikBold];
+
   static String getTitleFontFamily(String languageCode) =>
       languageCode == 'ar' ? _graphikBold : _roboto;
 
-  /// Body font: Graphik-Light (ar) | Roboto (en)
   static String getBodyFontFamily(String languageCode) =>
       languageCode == 'ar' ? _graphikLight : _roboto;
 
-  // ── Main TextTheme ─────────────────────────────────────────────────────────
   static TextTheme getTextTheme(String languageCode, BuildContext context) {
     final titleFont = getTitleFontFamily(languageCode);
     final bodyFont = getBodyFontFamily(languageCode);
-
-    // Base theme — Roboto for both (we override fontFamily per style below)
     final base = GoogleFonts.robotoTextTheme();
     final textColor = Theme.of(context).colorScheme.onSurface;
 
     return base.copyWith(
-      // ── Display — Graphik-Bold (ar) / Roboto (en) ─────────────────────────
+      // ── Display ───────────────────────────────────────────────────────────
       displayLarge: base.displayLarge?.copyWith(
         fontSize: 57,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.25,
         color: textColor,
         fontFamily: titleFont,
+        fontFamilyFallback: _titleFallback,
       ),
       displayMedium: base.displayMedium?.copyWith(
         fontSize: 45,
@@ -41,6 +41,7 @@ class AppTypography {
         letterSpacing: 0,
         color: textColor,
         fontFamily: titleFont,
+        fontFamilyFallback: _titleFallback,
       ),
       displaySmall: base.displaySmall?.copyWith(
         fontSize: 36,
@@ -48,15 +49,17 @@ class AppTypography {
         letterSpacing: 0,
         color: textColor,
         fontFamily: titleFont,
+        fontFamilyFallback: _titleFallback,
       ),
 
-      // ── Headline — Graphik-Bold (ar) / Roboto (en) ────────────────────────
+      // ── Headline ──────────────────────────────────────────────────────────
       headlineLarge: base.headlineLarge?.copyWith(
         fontSize: 32,
         fontWeight: FontWeight.w600,
         letterSpacing: 0,
         color: textColor,
         fontFamily: titleFont,
+        fontFamilyFallback: _titleFallback,
       ),
       headlineMedium: base.headlineMedium?.copyWith(
         fontSize: 28,
@@ -64,6 +67,7 @@ class AppTypography {
         letterSpacing: 0,
         color: textColor,
         fontFamily: titleFont,
+        fontFamilyFallback: _titleFallback,
       ),
       headlineSmall: base.headlineSmall?.copyWith(
         fontSize: 24,
@@ -71,15 +75,17 @@ class AppTypography {
         letterSpacing: 0,
         color: textColor,
         fontFamily: titleFont,
+        fontFamilyFallback: _titleFallback,
       ),
 
-      // ── Title — Graphik-Bold (ar) / Roboto (en) ───────────────────────────
+      // ── Title ─────────────────────────────────────────────────────────────
       titleLarge: base.titleLarge?.copyWith(
         fontSize: 22,
         fontWeight: FontWeight.w500,
         letterSpacing: 0,
         color: textColor,
         fontFamily: titleFont,
+        fontFamilyFallback: _titleFallback,
       ),
       titleMedium: base.titleMedium?.copyWith(
         fontSize: 16,
@@ -87,6 +93,7 @@ class AppTypography {
         letterSpacing: 0.15,
         color: textColor,
         fontFamily: titleFont,
+        fontFamilyFallback: _titleFallback,
       ),
       titleSmall: base.titleSmall?.copyWith(
         fontSize: 14,
@@ -94,15 +101,17 @@ class AppTypography {
         letterSpacing: 0.1,
         color: textColor,
         fontFamily: titleFont,
+        fontFamilyFallback: _titleFallback,
       ),
 
-      // ── Body — Graphik-Light (ar) / Roboto (en) ───────────────────────────
+      // ── Body ──────────────────────────────────────────────────────────────
       bodyLarge: base.bodyLarge?.copyWith(
         fontSize: 16,
         fontWeight: FontWeight.w400,
         letterSpacing: 0.5,
         color: textColor,
         fontFamily: bodyFont,
+        fontFamilyFallback: _bodyFallback,
       ),
       bodyMedium: base.bodyMedium?.copyWith(
         fontSize: 14,
@@ -110,6 +119,7 @@ class AppTypography {
         letterSpacing: 0.25,
         color: textColor,
         fontFamily: bodyFont,
+        fontFamilyFallback: _bodyFallback,
       ),
       bodySmall: base.bodySmall?.copyWith(
         fontSize: 12,
@@ -117,15 +127,17 @@ class AppTypography {
         letterSpacing: 0.4,
         color: textColor,
         fontFamily: bodyFont,
+        fontFamilyFallback: _bodyFallback,
       ),
 
-      // ── Label — Graphik-Light (ar) / Roboto (en) ──────────────────────────
+      // ── Label ─────────────────────────────────────────────────────────────
       labelLarge: base.labelLarge?.copyWith(
         fontSize: 14,
         fontWeight: FontWeight.w400,
         letterSpacing: 0.1,
         color: textColor,
         fontFamily: bodyFont,
+        fontFamilyFallback: _bodyFallback,
       ),
       labelMedium: base.labelMedium?.copyWith(
         fontSize: 12,
@@ -133,6 +145,7 @@ class AppTypography {
         letterSpacing: 0.5,
         color: textColor,
         fontFamily: bodyFont,
+        fontFamilyFallback: _bodyFallback,
       ),
       labelSmall: base.labelSmall?.copyWith(
         fontSize: 11,
@@ -140,6 +153,7 @@ class AppTypography {
         letterSpacing: 0.5,
         color: textColor,
         fontFamily: bodyFont,
+        fontFamilyFallback: _bodyFallback,
       ),
     );
   }
@@ -155,6 +169,7 @@ class AppTypography {
     letterSpacing: 0.5,
     color: Theme.of(context).colorScheme.onPrimary,
     fontFamily: getBodyFontFamily(languageCode),
+    fontFamilyFallback: _bodyFallback,
   );
 
   static TextStyle input({
@@ -166,6 +181,7 @@ class AppTypography {
     letterSpacing: 0.15,
     color: Theme.of(context).colorScheme.onSurface,
     fontFamily: getBodyFontFamily(languageCode),
+    fontFamilyFallback: _bodyFallback,
   );
 
   static TextStyle hint({
@@ -177,6 +193,7 @@ class AppTypography {
     letterSpacing: 0.15,
     color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
     fontFamily: getBodyFontFamily(languageCode),
+    fontFamilyFallback: _bodyFallback,
   );
 
   static TextStyle error({
@@ -188,6 +205,7 @@ class AppTypography {
     letterSpacing: 0.4,
     color: Theme.of(context).colorScheme.error,
     fontFamily: getBodyFontFamily(languageCode),
+    fontFamilyFallback: _bodyFallback,
   );
 
   static TextStyle caption({
@@ -199,6 +217,7 @@ class AppTypography {
     letterSpacing: 0.4,
     color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
     fontFamily: getBodyFontFamily(languageCode),
+    fontFamilyFallback: _bodyFallback,
   );
 
   static TextStyle link({
@@ -211,5 +230,6 @@ class AppTypography {
     color: Theme.of(context).colorScheme.primary,
     decoration: TextDecoration.underline,
     fontFamily: getBodyFontFamily(languageCode),
+    fontFamilyFallback: _bodyFallback,
   );
 }

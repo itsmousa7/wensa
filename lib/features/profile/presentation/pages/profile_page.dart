@@ -23,7 +23,7 @@ class ProfilePage extends ConsumerWidget {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: profileAsync.when(
           loading: () => const ProfileSkeleton(),
-          error: (e, _) => ProfileError(message: e.toString()),
+          error: (e, _) => ProfileError(isAr: isAr),
           data: (user) => ProfileContent(user: user, isAr: isAr),
         ),
       ),

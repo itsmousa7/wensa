@@ -6,7 +6,7 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/features/home/presentation/providers/all_events_provider.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
-import 'package:future_riverpod/features/home/presentation/widgets/feed_list_section.dart';
+import 'package:future_riverpod/features/favorites/presentation/widgets/feed_list_section.dart';
 
 // SeeAllType lives in favorites_provider.dart — do NOT redefine it here.
 // Just add allEvents to the enum there (see favorites_provider snippet).

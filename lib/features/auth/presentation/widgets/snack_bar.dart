@@ -10,7 +10,7 @@ SnackBar snack(
     message,
     style: Theme.of(
       context,
-    ).textTheme.titleMedium?.copyWith(color: AppColors.white),
+    ).textTheme.bodyMedium?.copyWith(color: AppColors.white),
   ),
   backgroundColor: isError
       ? Theme.of(context).colorScheme.error

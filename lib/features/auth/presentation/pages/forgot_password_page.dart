@@ -86,7 +86,12 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.tr('forgot_password_title')),
+        title: Text(
+          context.tr('forgot_password_title'),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.outline,
+          ),
+        ),
       ),
       body: Center(
         child: Form(
@@ -100,7 +105,9 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                 Text(
                   context.tr('enter_email_reset'),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 AppTextField.email(
