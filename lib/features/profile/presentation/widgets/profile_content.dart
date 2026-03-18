@@ -57,7 +57,7 @@ class ProfileContent extends ConsumerWidget {
                       value: '$favoritesCount',
                       label: isAr ? 'الاعجابات' : 'Likes',
                       accentColor: AppColors.alert,
-                      textColor: cs.errorContainer,
+                      textColor: AppColors.alert,
                     ),
                     const SizedBox(width: 12),
                     PlaceStatisticChip(
@@ -65,7 +65,8 @@ class ProfileContent extends ConsumerWidget {
                       value: '${reviewsCountAsync.value}',
                       label: isAr ? 'التقييمات' : 'Reviews',
                       highlighted: true,
-                      textColor: cs.secondary,
+                      textColor: cs.primary,
+                      accentColor: cs.primary,
                     ),
                   ],
                 ),

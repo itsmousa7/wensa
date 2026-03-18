@@ -41,7 +41,10 @@ class FullWidthFeedCard extends ConsumerWidget {
                   RouteNames.placeDetails,
                   queryParameters: {'placeId': item.id},
                 )
-              : null),
+              : () => context.pushNamed(
+                  RouteNames.eventDetails,
+                  queryParameters: {'eventId': item.id},
+                )),
       onDoubleTap: () => ref
           .read(favoritesProvider.notifier)
           .toggle(item.id, itemType: item.type),

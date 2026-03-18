@@ -29,7 +29,7 @@ class HomeAppBar extends ConsumerWidget {
             children: [
               Text(
                 isAr ? 'مرحباً،' : 'Hello,',
-                style: textTheme.bodyMedium?.copyWith(
+                style: textTheme.titleSmall?.copyWith(
                   color: theme.colorScheme.onSurface,
                 ),
               ),

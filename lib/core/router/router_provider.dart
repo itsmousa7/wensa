@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:future_riverpod/bottom_bar/widgets/nav_shell.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_name_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_password_page.dart';
@@ -9,10 +10,10 @@ import 'package:future_riverpod/features/auth/presentation/pages/signin_page.dar
 import 'package:future_riverpod/features/auth/presentation/pages/signup_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/verify_email_page.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_provider.dart';
+import 'package:future_riverpod/features/events/presentation/pages/event_details_page.dart';
 import 'package:future_riverpod/features/favorites/presentation/pages/favorites_page.dart';
 import 'package:future_riverpod/features/home/presentation/pages/home_page.dart';
 import 'package:future_riverpod/features/home/presentation/pages/splash_page.dart';
-import 'package:future_riverpod/features/home/presentation/widgets/nav_shell.dart';
 import 'package:future_riverpod/features/places/presentation/pages/place_details_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/profile_page.dart';
 import 'package:future_riverpod/features/search/presentation/pages/search_page.dart';
@@ -21,7 +22,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'router_provider.g.dart';
 
-// ✅ Tracks Supabase init state
 @riverpod
 class SupabaseReady extends _$SupabaseReady {
   @override
@@ -37,6 +37,7 @@ GoRouter router(Ref ref) {
     redirect: (_, state) => _redirect(ref, state),
     refreshListenable: _RouterNotifier(ref),
     routes: [
+      // ── Unauthenticated ───────────────────────────────────────────────────
       GoRoute(
         path: '/splash',
         name: RouteNames.splash,
@@ -70,7 +71,6 @@ GoRouter router(Ref ref) {
         name: RouteNames.changeName,
         builder: (_, _) => const ChangeNamePage(),
       ),
-
       GoRoute(
         path: '/changePassword',
         name: RouteNames.changePassword,
@@ -78,13 +78,26 @@ GoRouter router(Ref ref) {
           fromForgotPassword: s.uri.queryParameters['from'] == 'forgot',
         ),
       ),
-      // ✅ Place details — receives placeId as query param
+
+      // ── Detail pages (pushed on top of the shell) ─────────────────────────
       GoRoute(
         path: '/placeDetails',
         name: RouteNames.placeDetails,
         builder: (_, s) =>
             PlaceDetailsPage(placeId: s.uri.queryParameters['placeId'] ?? ''),
       ),
+      GoRoute(
+        path: '/eventDetails',
+        name: RouteNames.eventDetails,
+        builder: (_, s) =>
+            EventDetailsPage(eventId: s.uri.queryParameters['eventId'] ?? ''),
+      ),
+
+      // ── Shell — 4 persistent branches ─────────────────────────────────────
+      // branch 0 = Home
+      // branch 1 = Search   ← Android tab; iOS pushes search as a route instead
+      // branch 2 = Favorites
+      // branch 3 = Profile
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => NavShell(navigationShell: shell),
         branches: [
@@ -145,9 +158,18 @@ String? _redirect(Ref ref, GoRouterState state) {
     '/verify-email',
   ].any(path.startsWith);
 
-  // Place details is accessible while authenticated
-  if (path.startsWith('/placeDetails')) {
-    return (isAuth && isVerified) ? null : '/signin';
+  for (final guarded in [
+    '/placeDetails',
+    '/eventDetails',
+    '/home',
+    '/search',
+    '/favorites',
+    '/profile',
+    '/changeName',
+  ]) {
+    if (path.startsWith(guarded)) {
+      return (isAuth && isVerified) ? null : '/signin';
+    }
   }
 
   if (path.startsWith('/changePassword')) {

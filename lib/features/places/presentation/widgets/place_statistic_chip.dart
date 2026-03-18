@@ -23,11 +23,9 @@ class PlaceStatisticChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final color =
-        accentColor ??
-        (highlighted ? cs.primary : cs.onSurface.withValues(alpha: 0.5));
+    final color = accentColor ?? (cs.primary);
     final bg = accentColor != null
-        ? accentColor!.withValues(alpha: 0.08)
+        ? accentColor!.withValues(alpha: 0.1)
         : highlighted
         ? cs.primary.withValues(alpha: 0.08)
         : cs.surfaceContainer;

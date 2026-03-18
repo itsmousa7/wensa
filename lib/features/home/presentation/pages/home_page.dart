@@ -161,7 +161,24 @@ class _HomePageState extends ConsumerState<HomePage> {
 
               // ── Network error state — replaces ALL feed sections ─────────
               if (hasNetworkError) ...[
-                GlobalErrorWidget(cs: cs, isAr: isAr, tt: tt),
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: GlobalErrorWidget(
+                    cs: cs,
+                    isAr: isAr,
+                    tt: tt,
+                    onTap: () {
+                      ref.invalidate(hotEventsProvider);
+                      ref.invalidate(trendingFeedProvider);
+                      ref.invalidate(newOpeningsProvider);
+                      ref.invalidate(promotedBannersProvider);
+                      ref.invalidate(categoriesProvider);
+                      ref.invalidate(allPlacesFeedProvider);
+                      ref.invalidate(favoritesFeedProvider);
+                      ref.invalidate(allEventsProvider);
+                    },
+                  ),
+                ),
               ] else ...[
                 SliverToBoxAdapter(child: PromotedBanner()),
                 // ── Normal feed sections ─────────────────────────────────
@@ -196,7 +213,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                       onViewAll: () => _goToSeeAll(SeeAllType.newOpenings),
                     ),
                   ),
-                  SliverToBoxAdapter(child: _sectionTitle(_allEventsLabel)),
+                  SliverToBoxAdapter(
+                    child: _sectionTitle(
+                      _allEventsLabel,
+                      more: true,
+                      onMoreTap: () => _goToSeeAll(SeeAllType.allEvents),
+                    ),
+                  ),
 
                   SliverToBoxAdapter(
                     child: AllEventsSection(

@@ -7,14 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 
-// ── Nav items (unchanged) ─────────────────────────────────────────────────────
+// ── Nav items ─────────────────────────────────────────────────────────────────
 
 class NavItem {
   final IconData icon;
   final IconData activeIcon;
   final String labelEn;
   final String labelAr;
-  final String sfSymbol; // ← SF Symbol name for iOS liquid glass
+  final String sfSymbol;
 
   const NavItem({
     required this.icon,
@@ -25,7 +25,35 @@ class NavItem {
   });
 }
 
+// iOS — 3 tabs (search lives as a separate CNButton in IosNavShell)
+// Indices map directly to shell branches: 0=Home | 1=Favorites | 2=Profile
 const kNavItems = [
+  NavItem(
+    icon: CupertinoIcons.home,
+    activeIcon: CupertinoIcons.house_fill,
+    labelEn: 'Home',
+    labelAr: 'الرئيسية',
+    sfSymbol: 'house.fill',
+  ),
+  NavItem(
+    icon: CupertinoIcons.heart,
+    activeIcon: CupertinoIcons.heart_fill,
+    labelEn: 'Favorites',
+    labelAr: 'المفضلة',
+    sfSymbol: 'heart.fill',
+  ),
+  NavItem(
+    icon: CupertinoIcons.person,
+    activeIcon: CupertinoIcons.person_fill,
+    labelEn: 'Profile',
+    labelAr: 'حسابي',
+    sfSymbol: 'person.fill',
+  ),
+];
+
+// Android — 4 visual tabs; Search (index 1) is a push route, not a shell branch.
+// Bar index → shell branch: 0→0, 1→push, 2→1, 3→2
+const kAndroidNavItems = [
   NavItem(
     icon: CupertinoIcons.home,
     activeIcon: CupertinoIcons.house_fill,
@@ -56,7 +84,7 @@ const kNavItems = [
   ),
 ];
 
-// ── Public entry point — routes to platform-correct bar ──────────────────────
+// ── Public entry point ────────────────────────────────────────────────────────
 
 class BottomBar extends StatelessWidget {
   final int currentIndex;
@@ -99,30 +127,52 @@ class _LiquidGlassBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final itemCount = kNavItems.length;
 
     return Directionality(
-      // CNTabBar is always LTR internally — we flip labels manually
       textDirection: TextDirection.ltr,
-      child: CNTabBar(
-        currentIndex: currentIndex,
-        tint: cs.primary,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tabWidth = constraints.maxWidth / itemCount;
 
-        height: 85,
-        onTap: onTap,
-        items: kNavItems
-            .map(
-              (item) => CNTabBarItem(
-                label: isAr ? item.labelAr : item.labelEn,
-                icon: CNSymbol(item.sfSymbol),
+          return Stack(
+            children: [
+              // Native CNTabBar
+              CNTabBar(
+                currentIndex: currentIndex,
+                tint: cs.primary,
+                height: 85,
+                onTap: onTap,
+                items: kNavItems
+                    .map(
+                      (item) => CNTabBarItem(
+                        label: isAr ? item.labelAr : item.labelEn,
+                        icon: CNSymbol(item.sfSymbol),
+                      ),
+                    )
+                    .toList(),
               ),
-            )
-            .toList(),
+
+              // Transparent overlay on the active tab so re-tapping always fires.
+              Positioned(
+                left: currentIndex * tabWidth,
+                top: 0,
+                bottom: 0,
+                width: tabWidth,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onTap(currentIndex),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-// ── Android — existing Material floating bar (unchanged) ─────────────────────
+// ── Android — Material floating bar ──────────────────────────────────────────
 
 class _MaterialBar extends StatelessWidget {
   const _MaterialBar({
@@ -153,6 +203,8 @@ class _MaterialBar extends StatelessWidget {
     const double paddingTop = 10;
     const double paddingHorizontal = 16;
 
+    final items = kAndroidNavItems;
+
     return Padding(
       padding: const EdgeInsets.only(
         left: paddingHorizontal,
@@ -163,7 +215,7 @@ class _MaterialBar extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final totalWidth = constraints.maxWidth - 2;
-          final itemWidth = totalWidth / kNavItems.length;
+          final itemWidth = totalWidth / items.length;
           final pillWidth = itemWidth - 6;
           final pillOffset =
               currentIndex * itemWidth + (itemWidth - pillWidth) / 2;
@@ -195,7 +247,7 @@ class _MaterialBar extends StatelessWidget {
                   height: barHeight,
                   child: Stack(
                     children: [
-                      // Sliding pill
+                      // Sliding pill — highlights the active tab
                       AnimatedPositioned(
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeInOutCubic,
@@ -215,8 +267,8 @@ class _MaterialBar extends StatelessWidget {
                       // Tab items
                       Positioned.fill(
                         child: Row(
-                          children: List.generate(kNavItems.length, (i) {
-                            final item = kNavItems[i];
+                          children: List.generate(items.length, (i) {
+                            final item = items[i];
                             final isActive = i == currentIndex;
                             final label = isAr ? item.labelAr : item.labelEn;
                             final fontFamily = AppTypography.getBodyFontFamily(

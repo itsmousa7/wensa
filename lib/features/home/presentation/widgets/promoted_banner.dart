@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class PromotedBanner extends ConsumerWidget {
@@ -28,7 +30,12 @@ class PromotedBanner extends ConsumerWidget {
         return Padding(
           padding: const EdgeInsets.fromLTRB(22, 6, 22, 0),
           child: GestureDetector(
-            onTap: () {},
+            onTap: banner.placeId != null
+                ? () => context.pushNamed(
+                    RouteNames.placeDetails,
+                    queryParameters: {'placeId': banner.placeId!},
+                  )
+                : null,
             child: SizedBox(
               height: 82,
 

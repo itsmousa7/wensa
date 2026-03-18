@@ -69,7 +69,10 @@ class FeedCard extends ConsumerWidget {
                   RouteNames.placeDetails,
                   queryParameters: {'placeId': placeId},
                 )
-              : null),
+              : () => context.pushNamed(
+                  RouteNames.eventDetails,
+                  queryParameters: {'eventId': placeId},
+                )),
       onDoubleTap: () => ref
           .read(favoritesProvider.notifier)
           .toggle(placeId, itemType: itemType),

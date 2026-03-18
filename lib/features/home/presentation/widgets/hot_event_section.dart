@@ -7,9 +7,11 @@ import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/new_opening_badge.dart';
-import 'package:future_riverpod/features/places/domain/models/event_model.dart';
+import 'package:future_riverpod/features/events/domain/models/event_model.dart';
+import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 const _kOrange = Color(0xFFFF5E2C);
@@ -295,7 +297,10 @@ class _HeroEventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => context.pushNamed(
+        RouteNames.eventDetails,
+        queryParameters: {'eventId': event.id},
+      ),
       child: Stack(
         children: [
           Positioned.fill(
@@ -428,7 +433,10 @@ class _SmallEventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => context.pushNamed(
+        RouteNames.eventDetails,
+        queryParameters: {'eventId': event.id},
+      ),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),

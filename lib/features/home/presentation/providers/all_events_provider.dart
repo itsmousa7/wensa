@@ -1,5 +1,5 @@
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
-import 'package:future_riverpod/features/places/domain/models/event_model.dart';
+import 'package:future_riverpod/features/events/domain/models/event_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

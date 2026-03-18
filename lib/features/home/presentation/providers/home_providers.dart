@@ -1,9 +1,9 @@
 import 'package:future_riverpod/features/home/domain/repositories/home_repository.dart';
 import 'package:future_riverpod/features/home/models/category_model.dart';
 import 'package:future_riverpod/features/home/models/promoted_banner.dart';
-import 'package:future_riverpod/features/places/domain/models/event_model.dart';
+import 'package:future_riverpod/features/events/domain/models/event_model.dart';
 import 'package:future_riverpod/features/places/domain/models/place_model.dart';
-import 'package:future_riverpod/features/places/domain/models/trending_feed_item_model.dart';
+import 'package:future_riverpod/features/home/models/trending_feed_item_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

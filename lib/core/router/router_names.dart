@@ -12,4 +12,5 @@ class RouteNames {
   static const search = 'search';
   static const favorites = 'favorites';
   static const placeDetails = 'placeDetails';
+  static const eventDetails = 'eventDetails';
 }

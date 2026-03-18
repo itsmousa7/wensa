@@ -1,3 +1,4 @@
+import 'package:future_riverpod/features/events/presentation/providers/event_details_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -54,6 +55,10 @@ class Favorites extends _$Favorites {
       ref
           .read(placeDetailsProvider(itemId).notifier)
           .patchSavesCount(wasLiked ? -1 : 1);
+    } else if (itemType == 'event') {
+      ref
+          .read(eventDetailsProvider(itemId).notifier)
+          .patchSavesCount(wasLiked ? -1 : 1);
     }
 
     try {
@@ -77,6 +82,10 @@ class Favorites extends _$Favorites {
       if (itemType == 'place') {
         ref
             .read(placeDetailsProvider(itemId).notifier)
+            .patchSavesCount(wasLiked ? 1 : -1);
+      } else if (itemType == 'event') {
+        ref
+            .read(eventDetailsProvider(itemId).notifier)
             .patchSavesCount(wasLiked ? 1 : -1);
       }
     }

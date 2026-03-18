@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -82,7 +83,7 @@ void showLocationSheet({
         apps: [
           _MapApp(
             name: isAr ? 'خرائط جوجل' : 'Google Maps',
-            icon: Image.asset('assets/icons/location.png'),
+            icon: SvgPicture.asset('assets/icons/location.svg'),
 
             color: const Color(0xFF4285F4),
             url: _googleMapsUrl(latitude, longitude), // reuses shared helper
@@ -91,7 +92,7 @@ void showLocationSheet({
             name: 'Waze',
             icon: SizedBox(
               height: 14,
-              child: Image.asset('assets/icons/waze.png'),
+              child: SvgPicture.asset('assets/icons/waze.svg'),
             ),
             color: const Color(0xFF00C8FF),
             url: _wazeUrl(latitude, longitude), // reuses shared helper

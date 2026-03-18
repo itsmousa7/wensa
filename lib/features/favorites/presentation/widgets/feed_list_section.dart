@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/full_width_feed_card.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/profile_error.dart';
@@ -51,7 +52,15 @@ class FeedListSection extends ConsumerWidget {
 
     // ── Error ──────────────────────────────────────────────────────────────
     if (feed.hasError) {
-      return GlobalErrorWidget(cs: cs, isAr: isAr, tt: tt);
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: GlobalErrorWidget(
+          cs: cs,
+          isAr: isAr,
+          tt: tt,
+          onTap: () => ref.invalidate(favoritesProvider),
+        ),
+      );
     }
 
     // ── Empty ──────────────────────────────────────────────────────────────
