@@ -11,6 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/constants/theme/theme_provider.dart';
+import 'package:future_riverpod/core/constants/theme/theme_state.dart';
 import 'package:future_riverpod/core/widgets/detail_error_page.dart';
 import 'package:future_riverpod/features/events/presentation/providers/event_app_bar_state.dart';
 import 'package:future_riverpod/features/events/presentation/providers/event_details_provider.dart';
@@ -69,7 +71,13 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
+    final themeState = ref.watch(appThemeProvider);
+    final isDark = switch (themeState) {
+      DarkTheme() => true,
+      LightTheme() => false,
+      SystemTheme() =>
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+    };
     final state = ref.watch(eventAppbarStateProvider(widget.eventId));
     final eventAsync = ref.watch(eventDetailsProvider(widget.eventId));
     final collapsed = state.appBarCollapsed;

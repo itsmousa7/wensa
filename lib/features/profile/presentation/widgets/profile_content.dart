@@ -27,8 +27,13 @@ class ProfileContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-
-    final isDark = ref.watch(appThemeProvider) is DarkTheme;
+    final themeState = ref.watch(appThemeProvider);
+    final isDark = switch (themeState) {
+      DarkTheme() => true,
+      LightTheme() => false,
+      SystemTheme() =>
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+    };
     final favoritesCount = ref.watch(favoritesProvider).value?.length ?? 0;
     final reviewsCountAsync = ref.watch(userReviewsCountProvider);
 
