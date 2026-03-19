@@ -41,7 +41,6 @@ class ThemeSettingsPage extends ConsumerWidget {
             ),
             child: Column(
               children: [
-                // ── Follow Device ──────────────────────────────────────────
                 _ThemeRadioTile(
                   icon: Icons.brightness_auto_rounded,
                   title: isAr ? 'تتبع مظهر الجهاز' : 'Follow Device',
