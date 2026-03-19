@@ -28,12 +28,21 @@ class ProfileContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final themeState = ref.watch(appThemeProvider);
+
+    // Resolve current visual label to show as subtitle on the tile
     final isDark = switch (themeState) {
       DarkTheme() => true,
       LightTheme() => false,
       SystemTheme() =>
         MediaQuery.platformBrightnessOf(context) == Brightness.dark,
     };
+
+    final themeSubtitle = switch (themeState) {
+      SystemTheme() => isAr ? 'تتبع مظهر الجهاز' : 'Follow Device',
+      LightTheme() => isAr ? 'الوضع الفاتح' : 'Light',
+      DarkTheme() => isAr ? 'الوضع الداكن' : 'Dark',
+    };
+
     final favoritesCount = ref.watch(favoritesProvider).value?.length ?? 0;
     final reviewsCountAsync = ref.watch(userReviewsCountProvider);
 
@@ -87,24 +96,13 @@ class ProfileContent extends ConsumerWidget {
                           ? CupertinoIcons.moon_fill
                           : CupertinoIcons.sun_max_fill,
                       iconColor: cs.primary,
-                      title: isAr ? 'الوضع الداكن' : 'Dark Mode',
-                      trailing: Transform.scale(
-                        scaleX: isAr ? -1 : 1,
-                        child: Platform.isIOS
-                            ? CNSwitch(
-                                value: isDark,
-                                onChanged: (_) => ref
-                                    .read(appThemeProvider.notifier)
-                                    .toggle(),
-                              )
-                            : Switch.adaptive(
-                                value: isDark,
-                                onChanged: (_) => ref
-                                    .read(appThemeProvider.notifier)
-                                    .toggle(),
-                                activeTrackColor: cs.primary,
-                              ),
+                      title: isAr ? 'المظهر' : 'Appearance',
+                      subtitle: themeSubtitle,
+                      onTap: () => context.pushNamed(
+                        RouteNames.themeSettings,
+                        extra: isAr,
                       ),
+                      showChevron: true,
                     ),
                   ],
                 ),
@@ -139,7 +137,6 @@ class ProfileContent extends ConsumerWidget {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 16),
 
                 // ── Account ────────────────────────────────────────────────

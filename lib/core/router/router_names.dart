@@ -13,4 +13,5 @@ class RouteNames {
   static const favorites = 'favorites';
   static const placeDetails = 'placeDetails';
   static const eventDetails = 'eventDetails';
+  static const themeSettings = 'theme-settings';
 }

@@ -16,6 +16,7 @@ import 'package:future_riverpod/features/home/presentation/pages/home_page.dart'
 import 'package:future_riverpod/features/home/presentation/pages/splash_page.dart';
 import 'package:future_riverpod/features/places/presentation/pages/place_details_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/profile_page.dart';
+import 'package:future_riverpod/features/profile/presentation/widgets/theme_settings_page.dart';
 import 'package:future_riverpod/features/search/presentation/pages/search_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -93,11 +94,14 @@ GoRouter router(Ref ref) {
             EventDetailsPage(eventId: s.uri.queryParameters['eventId'] ?? ''),
       ),
 
+      // ── Theme settings ────────────────────────────────────────────────────
+      GoRoute(
+        path: '/theme-settings', // ← must start with /
+        name: RouteNames.themeSettings,
+        builder: (_, s) => ThemeSettingsPage(isAr: s.extra as bool),
+      ),
+
       // ── Shell — 4 persistent branches ─────────────────────────────────────
-      // branch 0 = Home
-      // branch 1 = Search   ← Android tab; iOS pushes search as a route instead
-      // branch 2 = Favorites
-      // branch 3 = Profile
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => NavShell(navigationShell: shell),
         branches: [
@@ -166,6 +170,7 @@ String? _redirect(Ref ref, GoRouterState state) {
     '/favorites',
     '/profile',
     '/changeName',
+    '/theme-settings',
   ]) {
     if (path.startsWith(guarded)) {
       return (isAuth && isVerified) ? null : '/signin';

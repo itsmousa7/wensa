@@ -36,6 +36,7 @@ class _SigninPageState extends ConsumerState<SigninPage> {
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -74,10 +75,17 @@ class _SigninPageState extends ConsumerState<SigninPage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentTheme = ref.watch(appThemeProvider);
+    final themeState = ref.watch(appThemeProvider);
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
     final theme = Theme.of(context);
+
+    final isDark = switch (themeState) {
+      DarkTheme() => true,
+      LightTheme() => false,
+      SystemTheme() =>
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+    };
 
     ref.listen(signinProvider, (prev, next) {
       listenAsyncProvider(
@@ -115,8 +123,9 @@ class _SigninPageState extends ConsumerState<SigninPage> {
           backgroundColor: theme.scaffoldBackgroundColor,
           actions: [
             AppButton.icon(
-              onPressed: () => ref.read(appThemeProvider.notifier).toggle(),
-              icon: Icon(switch (currentTheme) {
+              onPressed: () =>
+                  ref.read(appThemeProvider.notifier).toggle(isDark),
+              icon: Icon(switch (themeState) {
                 LightTheme() => CupertinoIcons.sun_max,
                 DarkTheme() => CupertinoIcons.moon,
                 SystemTheme() =>

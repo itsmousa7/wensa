@@ -24,6 +24,7 @@ class SettingsTile extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.title,
+    this.subtitle,
     this.onTap,
     this.trailing,
     this.showChevron = false,
@@ -32,6 +33,7 @@ class SettingsTile extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String title;
+  final String? subtitle;
   final VoidCallback? onTap;
   final Widget? trailing;
   final bool showChevron;
@@ -51,12 +53,27 @@ class SettingsTile extends StatelessWidget {
             SettingIcon(icon: icon, color: iconColor),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(
-                title,
-                style: tt.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: cs.outline,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: tt.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: cs.outline,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: tt.bodySmall?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.45),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             ?trailing,
