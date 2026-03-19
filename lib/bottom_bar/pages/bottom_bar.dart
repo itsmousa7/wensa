@@ -153,14 +153,20 @@ class _LiquidGlassBar extends StatelessWidget {
                     .toList(),
               ),
 
-              // Transparent overlay on the active tab so re-tapping always fires.
+              // Transparent overlay on the active tab so re-tapping always
+              // fires (CNTabBar doesn't fire onTap when the tab is already
+              // selected). Uses translucent — NOT opaque — so that swipe/drag
+              // gestures are NOT consumed here and can still reach the native
+              // CNTabBar underneath. With opaque, any swipe starting on the
+              // active tab was silently swallowed (no drag handler declared),
+              // so the liquid glass slide gesture was broken.
               Positioned(
                 left: currentIndex * tabWidth,
                 top: 0,
                 bottom: 0,
                 width: tabWidth,
                 child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
+                  behavior: HitTestBehavior.translucent,
                   onTap: () => onTap(currentIndex),
                 ),
               ),

@@ -94,35 +94,39 @@ class IosNavShell extends ConsumerWidget {
                 bottom: 0,
                 left: 0,
                 right: 0,
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      // CNTabBar (3 tabs — Search is excluded)
-                      Expanded(
-                        child: BottomBar(
-                          currentIndex: barIndex,
-                          isAr: isAr,
-                          onTap: (i) => _handleTap(i, ref, context),
-                        ),
+                // ⚠️ No Material wrapper here.
+                // Material(type: MaterialType.transparency) still creates a
+                // Flutter hit-test surface that intercepts pointer events before
+                // they reach the native CNTabBar (UiKitView). Taps survive
+                // because they resolve instantly, but swipe/drag gestures are
+                // absorbed by Flutter's gesture arena and the native view never
+                // receives them — killing the liquid glass slide behaviour.
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    // CNTabBar (3 tabs — Search is excluded)
+                    Expanded(
+                      child: BottomBar(
+                        currentIndex: barIndex,
+                        isAr: isAr,
+                        onTap: (i) => _handleTap(i, ref, context),
                       ),
+                    ),
 
-                      // Search: pushed as a route on iOS
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          right: 32,
-                          bottom: 25,
-                          left: 32,
-                        ),
-                        child: CNButton.icon(
-                          icon: const CNSymbol('magnifyingglass'),
-                          onPressed: () => context.pushNamed(RouteNames.search),
-                          size: 60,
-                        ),
+                    // Search: pushed as a route on iOS
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        right: 32,
+                        bottom: 25,
+                        left: 32,
                       ),
-                    ],
-                  ),
+                      child: CNButton.icon(
+                        icon: const CNSymbol('magnifyingglass'),
+                        onPressed: () => context.pushNamed(RouteNames.search),
+                        size: 60,
+                      ),
+                    ),
+                  ],
                 ),
               ),
           ],
