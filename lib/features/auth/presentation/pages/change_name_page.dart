@@ -25,10 +25,16 @@ class _ChangeNamePageState extends ConsumerState<ChangeNamePage> {
   final _secondNameController = TextEditingController();
   bool _isLoading = false;
 
+  // First Name ➜ Second Name ✓
+  final _firstNameFocus = FocusNode();
+  final _secondNameFocus = FocusNode();
+
   @override
   void dispose() {
     _firstNameController.dispose();
     _secondNameController.dispose();
+    _firstNameFocus.dispose();
+    _secondNameFocus.dispose();
     super.dispose();
   }
 
@@ -78,11 +84,12 @@ class _ChangeNamePageState extends ConsumerState<ChangeNamePage> {
           key: _formKey,
           child: Column(
             children: [
-              AppTextField(
+              AppTextField.name(
                 controller: _firstNameController,
-
                 enabled: !_isLoading,
                 hint: context.tr('new_first_name'),
+                focusNode: _firstNameFocus,
+                nextFocusNode: _secondNameFocus, // ➜ Second Name
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return context.tr('enter_new_name');
@@ -92,11 +99,12 @@ class _ChangeNamePageState extends ConsumerState<ChangeNamePage> {
                 },
               ),
               const SizedBox(height: 20),
-              AppTextField(
+              AppTextField.name(
                 controller: _secondNameController,
-
                 enabled: !_isLoading,
                 hint: context.tr('new_second_name'),
+                focusNode: _secondNameFocus,
+                // no nextFocusNode → Done key dismisses keyboard ✓
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return context.tr('enter_second_name_field');

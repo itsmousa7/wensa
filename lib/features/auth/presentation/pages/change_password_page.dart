@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 class ChangePasswordPage extends ConsumerStatefulWidget {
   const ChangePasswordPage({super.key, this.fromForgotPassword = false});
   final bool fromForgotPassword;
+
   @override
   ConsumerState<ChangePasswordPage> createState() => _ChangePasswordPageState();
 }
@@ -23,10 +24,16 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
+  // New Password ➜ Confirm Password ✓
+  final _newPasswordFocus     = FocusNode();
+  final _confirmPasswordFocus = FocusNode();
+
   @override
   void dispose() {
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
+    _newPasswordFocus.dispose();
+    _confirmPasswordFocus.dispose();
     super.dispose();
   }
 
@@ -42,12 +49,10 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(snack(context, message: context.tr('password_updated')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(snack(context, message: context.tr('password_updated')));
 
       if (widget.fromForgotPassword) {
-        // Sign out first so the router doesn't redirect to /home
         await ref.read(authRepositoryProvider).signOut();
         if (!mounted) return;
         context.goNamed(RouteNames.signin);
@@ -83,6 +88,9 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
                 controller: _newPasswordController,
                 enabled: !_isLoading,
                 hint: context.tr('new_password'),
+                focusNode: _newPasswordFocus,
+                nextFocusNode: _confirmPasswordFocus, // ➜ Confirm Password
+                textInputAction: TextInputAction.next,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return context.tr('enter_new_password');
@@ -96,6 +104,8 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
                 controller: _confirmPasswordController,
                 enabled: !_isLoading,
                 hint: context.tr('confirm_password'),
+                focusNode: _confirmPasswordFocus,
+                // no nextFocusNode → Done key dismisses keyboard ✓
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return context.tr('confirm_your_password');

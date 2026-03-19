@@ -26,12 +26,22 @@ class _SignupPageState extends ConsumerState<SignupPage> {
   final _formKey = GlobalKey<FormState>();
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
+  // Full focus chain: First Name ➜ Second Name ➜ Email ➜ Password ✓
+  final _firstNameFocus = FocusNode();
+  final _secondNameFocus = FocusNode();
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+
   @override
   void dispose() {
     _firstNameController.dispose();
     _secondNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _firstNameFocus.dispose();
+    _secondNameFocus.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
@@ -45,7 +55,6 @@ class _SignupPageState extends ConsumerState<SignupPage> {
 
     final email = _emailController.text.trim();
 
-    // Wait for signup to complete
     await ref
         .read(signupProvider.notifier)
         .signup(
@@ -55,7 +64,6 @@ class _SignupPageState extends ConsumerState<SignupPage> {
           password: _passwordController.text.trim(),
         );
 
-    // Only navigate if signup was successful (no error)
     if (!mounted) return;
 
     final signupState = ref.read(signupProvider);
@@ -110,10 +118,12 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
-                        child: AppTextField(
+                        child: AppTextField.name(
                           hint: context.tr('first_name'),
                           controller: _firstNameController,
                           enabled: !isLoading,
+                          focusNode: _firstNameFocus,
+                          nextFocusNode: _secondNameFocus, // ➜ Second Name
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return context.tr('enter_first_name');
@@ -127,11 +137,12 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                       ),
                       const Gap(10),
                       Expanded(
-                        child: AppTextField(
+                        child: AppTextField.name(
                           hint: context.tr('second_name'),
                           controller: _secondNameController,
                           enabled: !isLoading,
-
+                          focusNode: _secondNameFocus,
+                          nextFocusNode: _emailFocus, // ➜ Email
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return context.tr('enter_second_name');
@@ -147,6 +158,8 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   ),
                   const Gap(30),
                   AppTextField.email(
+                    focusNode: _emailFocus,
+                    nextFocusNode: _passwordFocus, // ➜ Password
                     hint: context.tr('email'),
                     controller: _emailController,
                     enabled: !isLoading,
@@ -162,6 +175,8 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   ),
                   const Gap(30),
                   AppTextField.password(
+                    focusNode: _passwordFocus,
+                    // no nextFocusNode → Done key dismisses keyboard ✓
                     hint: context.tr('password'),
                     controller: _passwordController,
                     enabled: !isLoading,
@@ -176,7 +191,6 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     },
                   ),
                   const Gap(50),
-
                   AppButton.filled(
                     onPressed: isLoading ? null : _submit,
                     label: context.tr('sign_up'),

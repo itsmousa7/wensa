@@ -34,6 +34,8 @@ class _SigninPageState extends ConsumerState<SigninPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
   @override
   void dispose() {
     _emailController.dispose();
@@ -153,6 +155,8 @@ class _SigninPageState extends ConsumerState<SigninPage> {
 
                     const Gap(AppSpacing.xl),
                     AppTextField.email(
+                      focusNode: _emailFocus,
+                      nextFocusNode: _passwordFocus,
                       controller: _emailController,
                       enabled: !isLoading,
                       hint: context.tr('email'),
@@ -169,6 +173,7 @@ class _SigninPageState extends ConsumerState<SigninPage> {
                     ),
                     const Gap(AppSpacing.mlg),
                     AppTextField.password(
+                      focusNode: _passwordFocus,
                       hint: context.tr('password'),
                       controller: _passwordController,
                       enabled: !isLoading,
