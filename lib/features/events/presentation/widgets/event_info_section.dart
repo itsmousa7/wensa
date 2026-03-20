@@ -109,9 +109,9 @@ class EventInfoSection extends ConsumerWidget {
                     const SizedBox(width: 6),
                     Text(
                       event.city!,
-                      style: tt.bodySmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.75),
-                        fontWeight: FontWeight.bold,
+                      style: tt.titleSmall?.copyWith(
+                        color: cs.outline,
+                        fontSize: 12,
                       ),
                     ),
                     // Arrow icon shown only when location is tappable

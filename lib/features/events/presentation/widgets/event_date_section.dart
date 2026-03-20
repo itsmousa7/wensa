@@ -123,7 +123,7 @@ class _SingleDayBody extends StatelessWidget {
         // Date row
         _LtrText(
           date.dateStr,
-          style: tt.labelMedium?.copyWith(
+          style: tt.labelLarge?.copyWith(
             color: cs.primary,
             fontWeight: FontWeight.bold,
           ),
@@ -135,23 +135,20 @@ class _SingleDayBody extends StatelessWidget {
           children: [
             _LtrText(
               startTime,
-              style: tt.labelSmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.7),
+              style: tt.labelMedium?.copyWith(
+                color: cs.outline,
                 fontWeight: FontWeight.w600,
+                fontSize: 12,
               ),
             ),
             if (endTime != null) ...[
-              Text(
-                '  –  ',
-                style: tt.labelSmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.35),
-                ),
-              ),
+              Text('  –  ', style: tt.titleMedium?.copyWith(color: cs.outline)),
               _LtrText(
                 endTime,
-                style: tt.labelSmall?.copyWith(
-                  color: cs.onSurface.withValues(alpha: 0.7),
+                style: tt.labelMedium?.copyWith(
+                  color: cs.outline,
                   fontWeight: FontWeight.w600,
+                  fontSize: 12,
                 ),
               ),
             ],
@@ -233,7 +230,7 @@ class _DateRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final labelStyle = tt.labelSmall?.copyWith(
-      color: cs.onSurface.withValues(alpha: 0.55),
+      color: cs.outline.withValues(alpha: 0.55),
       fontWeight: FontWeight.w600,
     );
     final dateStyle = tt.labelMedium?.copyWith(
@@ -241,7 +238,7 @@ class _DateRow extends StatelessWidget {
       fontWeight: FontWeight.bold,
     );
     final timeStyle = tt.labelSmall?.copyWith(
-      color: cs.onSurface.withValues(alpha: 0.65),
+      color: cs.outline.withValues(alpha: 0.65),
       fontWeight: FontWeight.w600,
     );
 

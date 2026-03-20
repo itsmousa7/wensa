@@ -8,9 +8,8 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
-import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
-import 'package:future_riverpod/features/home/presentation/widgets/new_opening_badge.dart';
 import 'package:future_riverpod/features/events/domain/models/event_model.dart';
+import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -296,6 +295,7 @@ class _HeroEventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () => context.pushNamed(
         RouteNames.eventDetails,
@@ -334,18 +334,7 @@ class _HeroEventCard extends StatelessWidget {
               ),
             ),
           ),
-          // Hot badge
-          Positioned(
-            top: 12,
-            left: isAr ? null : 12,
-            right: isAr ? 12 : null,
-            child: feedBadge(
-              isAr: isAr,
-              context: context,
-              color: AppColors.headline,
-              text: isAr ? '🔥 رائج' : '🔥 Hot',
-            ),
-          ),
+
           // Content
           Positioned(
             bottom: 0,
@@ -359,7 +348,7 @@ class _HeroEventCard extends StatelessWidget {
                   Text(
                     isAr ? event.titleAr : event.titleEn,
                     style: tt.titleLarge?.copyWith(
-                      color: _kText,
+                      color: AppColors.white,
                       letterSpacing: -0.3,
                     ),
                   ),
@@ -368,13 +357,19 @@ class _HeroEventCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '📅 ${_formatDate(event.startDate)}',
-                        style: tt.bodySmall?.copyWith(color: Colors.white70),
+                        _formatDate(event.startDate),
+                        style: tt.titleSmall?.copyWith(
+                          color: cs.onTertiary,
+                          fontSize: 12,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '📍 ${event.city ?? ''}',
-                        style: tt.bodySmall?.copyWith(color: Colors.white70),
+                        event.city ?? '',
+                        style: tt.titleSmall?.copyWith(
+                          color: cs.onTertiary,
+                          fontSize: 12,
+                        ),
                       ),
 
                       Spacer(),
@@ -399,7 +394,7 @@ class _HeroEventCard extends StatelessWidget {
                           child: Text(
                             isAr ? 'احجز الآن' : 'Book Now',
                             style: tt.labelMedium?.copyWith(
-                              color: _kText,
+                              color: AppColors.white,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -432,6 +427,7 @@ class _SmallEventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () => context.pushNamed(
         RouteNames.eventDetails,
@@ -491,7 +487,11 @@ class _SmallEventCard extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       '${_formatDate(event.startDate)} · ${event.city ?? ''}',
-                      style: tt.bodySmall?.copyWith(color: Colors.white60),
+                      style: tt.titleSmall?.copyWith(
+                        color: cs.onTertiary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 10,
+                      ),
                     ),
                   ],
                 ),

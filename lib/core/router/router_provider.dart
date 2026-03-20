@@ -117,15 +117,6 @@ GoRouter router(Ref ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/search',
-                name: RouteNames.search,
-                builder: (_, _) => const SearchPage(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
                 path: '/favorites',
                 name: RouteNames.favorites,
                 builder: (_, _) => const FavoritesPage(),
@@ -142,6 +133,13 @@ GoRouter router(Ref ref) {
             ],
           ),
         ],
+      ),
+
+      // /search stays here as a sibling of the shell — correct
+      GoRoute(
+        path: '/search',
+        name: RouteNames.search,
+        builder: (_, _) => const SearchPage(),
       ),
     ],
   );

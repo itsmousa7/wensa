@@ -46,34 +46,18 @@ class _IosSearchPageState extends ConsumerState<IosSearchPage> {
     final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
     final search = ref.watch(searchProvider);
 
-    final padding = MediaQuery.of(context).padding; // safe area
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-    final barBottom = keyboardHeight > 0 ? keyboardHeight : padding.bottom;
-
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: Stack(
-          children: [
-            // ── Results — respect top safe area and bottom bar ─────────
-            Positioned(
-              top: padding.top, // ← pushes content below status bar
-              left: 0,
-              right: 0,
-              bottom: barBottom + IosFloatingSearchBar.totalHeight,
-              child: SearchBody(search: search, isAr: isAr),
-            ),
-
-            // ── Floating search bar rides the keyboard ─────────────────
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 60),
-              curve: Curves.easeOut,
-              left: 0,
-              right: 0,
-              bottom: barBottom,
-              child: IosFloatingSearchBar(
+        resizeToAvoidBottomInset: true,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              Expanded(
+                child: SearchBody(search: search, isAr: isAr),
+              ),
+              IosFloatingSearchBar(
                 controller: _controller,
                 focusNode: _focusNode,
                 isAr: isAr,
@@ -81,8 +65,9 @@ class _IosSearchPageState extends ConsumerState<IosSearchPage> {
                 onChanged: _onChanged,
                 onClearText: _clearText,
               ),
-            ),
-          ],
+              SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );

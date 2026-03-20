@@ -52,7 +52,6 @@ class EventTicketSection extends StatelessWidget {
         _Chip(
           label: priceLabel,
           color: ticketPrice == 0 ? AppColors.success : cs.primary,
-          icon: CupertinoIcons.money_dollar,
         ),
 
         // ── Buy button ─────────────────────────────────────────────────
@@ -79,20 +78,20 @@ class _Chip extends StatelessWidget {
   const _Chip({
     required this.label,
     required this.color,
-    required this.icon,
+    this.icon,
     this.onTap,
   });
 
   final String label;
   final Color color;
-  final IconData icon;
+  final IconData? icon;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     final container = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(14),
@@ -101,7 +100,7 @@ class _Chip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: color),
+          icon == null ? SizedBox.shrink() : Icon(icon, size: 16, color: color),
           const SizedBox(width: 7),
           Text(
             label,

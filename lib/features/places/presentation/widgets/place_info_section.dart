@@ -137,7 +137,8 @@ class PlaceInfoSection extends ConsumerWidget {
                 icon: CupertinoIcons.eye,
                 value: compactNumber(place.viewCount),
                 label: isAr ? 'مشاهدة' : 'Views',
-                textColor: cs.onTertiary,
+                textColor: cs.secondary,
+                accentColor: cs.primary,
               ),
               const SizedBox(width: 10),
               PlaceStatisticChip(
@@ -165,35 +166,6 @@ class PlaceInfoSection extends ConsumerWidget {
               ),
             ],
           ),
-
-          // ── Price range ───────────────────────────────────────────────
-          if (place.priceRange != null) ...[
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Text(
-                  isAr ? 'نطاق السعر:' : 'Price range:',
-                  style: tt.bodyMedium?.copyWith(
-                    color: cs.outline,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ...List.generate(
-                  4,
-                  (i) => Text(
-                    '\$',
-                    style: tt.bodyMedium?.copyWith(
-                      color: i < (place.priceRange ?? 0)
-                          ? AppColors.lightGreenSecondary
-                          : cs.onSurface.withValues(alpha: 0.2),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
 
           // ── Tags ──────────────────────────────────────────────────────
           tagsAsync.when(

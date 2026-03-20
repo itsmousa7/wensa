@@ -36,7 +36,10 @@ class SearchField extends StatelessWidget {
         onChanged: onChanged,
         autofocus: true,
         textAlignVertical: TextAlignVertical.center,
-        style: tt.bodyMedium?.copyWith(color: cs.outline),
+        style: tt.bodyMedium?.copyWith(
+          color: cs.outline,
+          fontWeight: FontWeight.w600,
+        ),
         decoration: InputDecoration(
           fillColor: cs.surfaceContainer,
           enabledBorder: OutlineInputBorder(
