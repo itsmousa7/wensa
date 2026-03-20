@@ -29,17 +29,14 @@ import 'package:go_router/go_router.dart';
 
 /// iOS bar index (0-2) → shell branch index (0,2,3).
 /// Branch 1 (Search) is never a destination for the tab bar.
-const _barToBranch = [0, 2, 3];
+const _barToBranch = [0, 1, 2];
 
-/// Shell branch index → iOS bar index.
-/// Branch 1 (Search) has no bar equivalent — returns -1 (should never happen).
 int _branchToBar(int branch) {
   return switch (branch) {
     0 => 0,
-    2 => 1,
-    3 => 2,
-    _ =>
-      0, // fallback: highlight Home (e.g. if Search branch is somehow active)
+    1 => 1,
+    2 => 2,
+    _ => 0,
   };
 }
 
