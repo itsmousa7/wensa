@@ -18,7 +18,7 @@ import 'package:cupertino_native/components/button.dart';
 import 'package:cupertino_native/style/sf_symbol.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:future_riverpod/bottom_bar/pages/bottom_bar.dart';
+import 'package:future_riverpod/features/bottom_bar/pages/bottom_bar.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';

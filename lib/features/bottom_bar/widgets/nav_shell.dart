@@ -7,8 +7,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:future_riverpod/bottom_bar/widgets/android_nav_shell.dart';
-import 'package:future_riverpod/bottom_bar/widgets/ios_nav_shell.dart';
+import 'package:future_riverpod/features/bottom_bar/widgets/android_nav_shell.dart';
+import 'package:future_riverpod/features/bottom_bar/widgets/ios_nav_shell.dart';
 import 'package:go_router/go_router.dart';
 
 class NavShell extends ConsumerWidget {
