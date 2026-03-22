@@ -13,7 +13,6 @@ class CategoryBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categoriesAsync = ref.watch(categoriesProvider);
-    // ✅ BUG 1 FIX: int? — null يعني لا فئة مختارة
     final selectedIndex = ref.watch(selectedCategoryProvider);
     final theme = Theme.of(context);
     final tt = AppTypography.getTextTheme(isAr ? 'ar' : 'en', context);
@@ -31,13 +30,11 @@ class CategoryBar extends ConsumerWidget {
           itemCount: cats.length,
           separatorBuilder: (_, _) => const SizedBox(width: 12),
           itemBuilder: (_, i) {
-            // ✅ BUG 1 FIX: null-safe — لو selectedIndex = null كل الفئات inactive
             final isActive = selectedIndex == i;
             final cat = cats[i];
 
             return GestureDetector(
               onTap: () {
-                // نفس الفئة مرة ثانية → deselect (يرجع null)
                 ref.read(selectedCategoryProvider.notifier).select(i);
               },
               child: Column(
@@ -47,7 +44,6 @@ class CategoryBar extends ConsumerWidget {
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      // ✅ BUG 5: theme colors
                       color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
@@ -68,12 +64,18 @@ class CategoryBar extends ConsumerWidget {
                             ]
                           : [],
                     ),
-                    child: Center(child: _categoryIcon(cat.nameEn)),
+                    // PERFORMANCE FIX: only animate the selected item.
+                    // Previously every visible category ran its Lottie
+                    // animation simultaneously — typically 6 animations × 30fps
+                    // = a significant per-frame cost on low-end Android devices.
+                    // Non-selected items show a static first frame instead.
+                    child: Center(
+                      child: _categoryIcon(cat.nameEn, animate: isActive),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     isAr ? cat.nameAr : cat.nameEn,
-                    // ✅ BUG 5: AppTypography
                     style: tt.labelLarge?.copyWith(
                       color: isActive
                           ? theme.colorScheme.primary
@@ -90,11 +92,6 @@ class CategoryBar extends ConsumerWidget {
     );
   }
 }
-
-// ─── CategoryBar._buildSkeleton ──────────────────────────────────────────────
-// FIX: ListView inside Skeletonizer must use NeverScrollableScrollPhysics.
-//      Without it the scrollable viewport creates its own layer and the shimmer
-//      can't paint over it — exactly what HotEventsSection already does correctly.
 
 Widget _buildSkeleton(ThemeData theme) => Skeletonizer(
   enabled: true,
@@ -123,72 +120,49 @@ Widget _buildSkeleton(ThemeData theme) => Skeletonizer(
     ),
   ),
 );
-Widget _categoryIcon(String nameEn) {
+
+// PERFORMANCE FIX: added `animate` parameter.
+// When animate: false the Lottie widget renders only the first frame
+// (frameRate: FrameRate.max is kept on active items so they look snappy).
+Widget _categoryIcon(String nameEn, {bool animate = true}) {
+  String? asset;
   switch (nameEn) {
     case 'Sports':
-      return Lottie.asset(
-        'assets/lottie/categories/gym.json',
-        width: 42,
-        height: 42,
-        fit: BoxFit.contain,
-        repeat: true,
-      );
-
+      asset = 'assets/lottie/categories/gym.json';
+      break;
     case 'Restaurants':
-      return Lottie.asset(
-        'assets/lottie/categories/food.json',
-        width: 42,
-        height: 42,
-        fit: BoxFit.contain,
-        repeat: true,
-      );
-
+      asset = 'assets/lottie/categories/food.json';
+      break;
     case 'Music':
-      return Lottie.asset(
-        'assets/lottie/categories/music.json',
-        width: 42,
-        height: 42,
-        fit: BoxFit.contain,
-        repeat: true,
-      );
-
+      asset = 'assets/lottie/categories/music.json';
+      break;
     case 'Malls':
-      return Lottie.asset(
-        'assets/lottie/categories/mall.json',
-        width: 42,
-        height: 42,
-        fit: BoxFit.contain,
-        repeat: true,
-      );
-
+      asset = 'assets/lottie/categories/mall.json';
+      break;
     case 'Cafes':
-      return Lottie.asset(
-        'assets/lottie/categories/cafe.json',
-        width: 42,
-        height: 42,
-        fit: BoxFit.contain,
-        repeat: true,
-      );
-
+      asset = 'assets/lottie/categories/cafe.json';
+      break;
     case 'Cinema':
-      return Lottie.asset(
-        'assets/lottie/categories/movie.json',
-        width: 42,
-        height: 42,
-        fit: BoxFit.contain,
-        repeat: true,
-      );
-
+      asset = 'assets/lottie/categories/movie.json';
+      break;
     case 'Festivals':
-      return Lottie.asset(
-        'assets/lottie/categories/festival.json',
-        width: 42,
-        height: 42,
-        fit: BoxFit.contain,
-        repeat: true,
-      );
-
-    default:
-      return const Icon(CupertinoIcons.location);
+      asset = 'assets/lottie/categories/festival.json';
+      break;
   }
+
+  if (asset == null) {
+    return const Icon(CupertinoIcons.location);
+  }
+
+  return Lottie.asset(
+    asset,
+    width: 42,
+    height: 42,
+    fit: BoxFit.contain,
+    // When not selected: animate: false freezes on frame 0 with no loop.
+    // FrameRate(0) is NOT valid (asserts framesPerSecond > 0) — don't use it.
+    repeat: animate,
+    animate: animate,
+    frameRate: animate ? FrameRate.max : FrameRate.composition,
+  );
 }

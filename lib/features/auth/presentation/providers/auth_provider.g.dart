@@ -9,50 +9,51 @@ part of 'auth_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(AuthState)
-final authStateProvider = AuthStateProvider._();
+@ProviderFor(CurrentUser)
+final currentUserProvider = CurrentUserProvider._();
 
-final class AuthStateProvider extends $NotifierProvider<AuthState, User?> {
-  AuthStateProvider._()
+final class CurrentUserProvider
+    extends $NotifierProvider<CurrentUser, supa.User?> {
+  CurrentUserProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'authStateProvider',
+        name: r'currentUserProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$authStateHash();
+  String debugGetCreateSourceHash() => _$currentUserHash();
 
   @$internal
   @override
-  AuthState create() => AuthState();
+  CurrentUser create() => CurrentUser();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(User? value) {
+  Override overrideWithValue(supa.User? value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<User?>(value),
+      providerOverride: $SyncValueProvider<supa.User?>(value),
     );
   }
 }
 
-String _$authStateHash() => r'07d1ab5c96eb3709517b3740db0c39a5bab80879';
+String _$currentUserHash() => r'eb811900788f4f2bc12ae77332196889a393685c';
 
-abstract class _$AuthState extends $Notifier<User?> {
-  User? build();
+abstract class _$CurrentUser extends $Notifier<supa.User?> {
+  supa.User? build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<User?, User?>;
+    final ref = this.ref as $Ref<supa.User?, supa.User?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<User?, User?>,
-              User?,
+              AnyNotifier<supa.User?, supa.User?>,
+              supa.User?,
               Object?,
               Object?
             >;
@@ -99,7 +100,7 @@ final class IsAuthenticatedProvider
   }
 }
 
-String _$isAuthenticatedHash() => r'bee7f5b612a737a5a90b62634d2515ac09106139';
+String _$isAuthenticatedHash() => r'6d67d64c22072310457fc0024272859f112c0be2';
 
 @ProviderFor(isEmailVerified)
 final isEmailVerifiedProvider = IsEmailVerifiedProvider._();
@@ -140,4 +141,4 @@ final class IsEmailVerifiedProvider
   }
 }
 
-String _$isEmailVerifiedHash() => r'c9ab7c60f9592d7b392c0360397fde0db4f1a47f';
+String _$isEmailVerifiedHash() => r'9fcce6e284e7193177858e29bd681cbef1aa9c0d';

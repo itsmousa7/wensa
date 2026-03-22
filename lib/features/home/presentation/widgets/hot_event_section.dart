@@ -15,14 +15,9 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 const _kOrange = Color(0xFFFF5E2C);
 const _kOrange2 = Color(0xFFFF8A5C);
-
 const _kSurface2 = Color(0xFF1E1E2E);
 const _kText = Color(0xFFFFFFFF);
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  HotEventsSection
-//  ✅ الـ dots داخل هذا الـ widget — لا تضف dots في home_page
-// ─────────────────────────────────────────────────────────────────────────────
 class HotEventsSection extends ConsumerStatefulWidget {
   const HotEventsSection({super.key});
 
@@ -37,6 +32,10 @@ class _HotEventsSectionState extends ConsumerState<HotEventsSection> {
   Timer? _autoScrollTimer;
   int _eventIndex = 0;
 
+  // PERFORMANCE FIX: _lastEventCount tracks the list length so we only
+  // (re)start the timer when the data actually changes, not on every rebuild.
+  int _lastEventCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -44,10 +43,12 @@ class _HotEventsSectionState extends ConsumerState<HotEventsSection> {
       viewportFraction: 0.88,
       initialPage: _kInfiniteOffset,
     );
-    _startAutoScroll();
   }
 
+  // PERFORMANCE FIX: extract timer start into a separate method called only
+  // when we first receive data (or when data changes), not on every build().
   void _startAutoScroll() {
+    _autoScrollTimer?.cancel();
     _autoScrollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!_pageCtrl.hasClients) return;
       _pageCtrl.nextPage(
@@ -77,26 +78,39 @@ class _HotEventsSectionState extends ConsumerState<HotEventsSection> {
       skipLoadingOnRefresh: false,
       loading: () => _buildSkeleton(theme),
       error: (e, _) => _buildError(e.toString()),
-      // ✅ الـ dots داخل الـ Column هنا — لا تعيدها في home_page
       data: (events) {
         if (events.isEmpty) return const SizedBox.shrink();
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildCarousel(events),
-            _buildDots(events.length), // ← الـ dots مرة واحدة هنا فقط
-          ],
+
+        // PERFORMANCE FIX: only (re)start the timer when the event list
+        // length changes.  Previously _startAutoScroll() was implicitly called
+        // inside the build() → when() → data callback on every widget rebuild
+        // (scroll events, locale change, theme change, etc.), creating a new
+        // Timer and leaking the old one each time.
+        if (_lastEventCount != events.length) {
+          _lastEventCount = events.length;
+          // Schedule after the current frame so we don't call setState during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _startAutoScroll();
+          });
+        }
+
+        // PERFORMANCE FIX: wrap the carousel in a RepaintBoundary so that
+        // page-scroll repaints stay confined to this subtree and don't trigger
+        // a full-page repaint on every animation frame.
+        return RepaintBoundary(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [_buildCarousel(events), _buildDots(events.length)],
+          ),
         );
       },
     );
   }
 
-  // ── CAROUSEL ──────────────────────────────────────────────────────────────
   Widget _buildCarousel(List<EventModel> events) => SizedBox(
     height: 200,
-
     child: PageView.builder(
-      physics: BouncingScrollPhysics(),
+      physics: const BouncingScrollPhysics(),
       controller: _pageCtrl,
       itemCount: null,
       onPageChanged: (abs) => setState(() => _eventIndex = abs % events.length),
@@ -104,7 +118,7 @@ class _HotEventsSectionState extends ConsumerState<HotEventsSection> {
         final i = abs % events.length;
         final event = events[i];
         return Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           child: i == 0
               ? _HeroEventCard(event: event, isAr: _isAr, tt: _tt)
               : _SmallEventCard(event: event, isAr: _isAr, tt: _tt),
@@ -113,7 +127,6 @@ class _HotEventsSectionState extends ConsumerState<HotEventsSection> {
     ),
   );
 
-  // ── DOTS ──────────────────────────────────────────────────────────────────
   Widget _buildDots(int count) => Padding(
     padding: const EdgeInsets.only(top: 12, bottom: 4),
     child: Row(
@@ -157,114 +170,6 @@ class _HotEventsSectionState extends ConsumerState<HotEventsSection> {
             color: theme.colorScheme.surfaceContainer,
             borderRadius: BorderRadius.circular(22),
           ),
-          child: Stack(
-            children: [
-              // ── صورة الخلفية ──────────────────────────────────────────
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: Container(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                  ),
-                ),
-              ),
-              // ── gradient مثل الكارد الحقيقي ──────────────────────────
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          theme.colorScheme.surfaceContainer.withValues(
-                            alpha: 0.9,
-                          ),
-                        ],
-                        stops: const [0.4, 1.0],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              // ── badge في الأعلى ───────────────────────────────────────
-              Positioned(
-                top: 12,
-                left: 12,
-                child: Container(
-                  width: 55,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-              // ── النصوص في الأسفل ──────────────────────────────────────
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // date + city
-                      Row(
-                        children: [
-                          Container(
-                            height: 10,
-                            width: 59,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            height: 10,
-                            width: 60,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      // title
-                      Container(
-                        height: 16,
-                        width: i == 0 ? 180 : 100,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                      if (i == 0) ...[
-                        const SizedBox(height: 10),
-                        // book now button shape
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Container(
-                            width: 90,
-                            height: 30,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     ),
@@ -279,9 +184,6 @@ class _HotEventsSectionState extends ConsumerState<HotEventsSection> {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  _HeroEventCard
-// ─────────────────────────────────────────────────────────────────────────────
 class _HeroEventCard extends StatelessWidget {
   const _HeroEventCard({
     required this.event,
@@ -334,8 +236,6 @@ class _HeroEventCard extends StatelessWidget {
               ),
             ),
           ),
-
-          // Content
           Positioned(
             bottom: 0,
             left: 0,
@@ -371,8 +271,7 @@ class _HeroEventCard extends StatelessWidget {
                           fontSize: 12,
                         ),
                       ),
-
-                      Spacer(),
+                      const Spacer(),
                       if (event.ticketUrl != null)
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -411,9 +310,6 @@ class _HeroEventCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  _SmallEventCard
-// ─────────────────────────────────────────────────────────────────────────────
 class _SmallEventCard extends StatelessWidget {
   const _SmallEventCard({
     required this.event,

@@ -16,6 +16,7 @@ class HomeAppBar extends ConsumerWidget {
     final userAsync = ref.watch(profileProvider);
     final theme = Theme.of(context);
 
+    // BUG FIX: use the actual locale, not the user's first name
     final uiLocale = isAr ? 'ar' : 'en';
     final textTheme = AppTypography.getTextTheme(uiLocale, context);
 
@@ -51,21 +52,13 @@ class HomeAppBar extends ConsumerWidget {
                   ),
                 ),
 
-                error: (_, _) => Text(
-                  '',
-                  style: textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
+                error: (_, _) => const SizedBox.shrink(),
 
-                data: (users) {
-                  final firstName = users.firstName;
-
-                  final nameTT = AppTypography.getTextTheme(firstName, context);
-
+                data: (user) {
+                  // BUG FIX: pass uiLocale ('en'/'ar'), not user.firstName
                   return Text(
-                    '$firstName 👋',
-                    style: nameTT.titleMedium?.copyWith(
+                    '${user.firstName} 👋',
+                    style: textTheme.titleMedium?.copyWith(
                       color: theme.colorScheme.primary,
                     ),
                   );
@@ -73,7 +66,7 @@ class HomeAppBar extends ConsumerWidget {
               ),
             ],
           ),
-          Spacer(),
+          const Spacer(),
 
           Stack(
             children: [

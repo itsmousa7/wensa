@@ -59,7 +59,7 @@ class EventAppbarState extends _$EventAppbarState {
   void setImageIndex(int i) => state = state.copyWith(currentImageIndex: i);
 
   void recordView() {
-    final userId = ref.read(authStateProvider)?.id;
+    final userId = ref.read(currentUserProvider)?.id;
     if (userId == null) return;
     ref.read(eventsRepositoryProvider).recordView(eventId, userId).ignore();
   }

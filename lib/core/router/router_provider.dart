@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:future_riverpod/features/bottom_bar/widgets/nav_shell.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_name_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_password_page.dart';
@@ -10,13 +9,14 @@ import 'package:future_riverpod/features/auth/presentation/pages/signin_page.dar
 import 'package:future_riverpod/features/auth/presentation/pages/signup_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/verify_email_page.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_provider.dart';
+import 'package:future_riverpod/features/bottom_bar/widgets/nav_shell.dart';
 import 'package:future_riverpod/features/events/presentation/pages/event_details_page.dart';
 import 'package:future_riverpod/features/favorites/presentation/pages/favorites_page.dart';
 import 'package:future_riverpod/features/home/presentation/pages/home_page.dart';
 import 'package:future_riverpod/features/home/presentation/pages/splash_page.dart';
 import 'package:future_riverpod/features/places/presentation/pages/place_details_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/profile_page.dart';
-import 'package:future_riverpod/features/profile/presentation/widgets/theme_settings_page.dart';
+import 'package:future_riverpod/features/profile/presentation/pages/theme_settings_page.dart';
 import 'package:future_riverpod/features/search/presentation/pages/search_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -38,7 +38,6 @@ GoRouter router(Ref ref) {
     redirect: (_, state) => _redirect(ref, state),
     refreshListenable: _RouterNotifier(ref),
     routes: [
-      // ── Unauthenticated ───────────────────────────────────────────────────
       GoRoute(
         path: '/splash',
         name: RouteNames.splash,
@@ -79,8 +78,6 @@ GoRouter router(Ref ref) {
           fromForgotPassword: s.uri.queryParameters['from'] == 'forgot',
         ),
       ),
-
-      // ── Detail pages (pushed on top of the shell) ─────────────────────────
       GoRoute(
         path: '/placeDetails',
         name: RouteNames.placeDetails,
@@ -93,15 +90,11 @@ GoRouter router(Ref ref) {
         builder: (_, s) =>
             EventDetailsPage(eventId: s.uri.queryParameters['eventId'] ?? ''),
       ),
-
-      // ── Theme settings ────────────────────────────────────────────────────
       GoRoute(
-        path: '/theme-settings', // ← must start with /
+        path: '/theme-settings',
         name: RouteNames.themeSettings,
         builder: (_, s) => ThemeSettingsPage(isAr: s.extra as bool),
       ),
-
-      // ── Shell — 4 persistent branches ─────────────────────────────────────
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => NavShell(navigationShell: shell),
         branches: [
@@ -134,8 +127,6 @@ GoRouter router(Ref ref) {
           ),
         ],
       ),
-
-      // /search stays here as a sibling of the shell — correct
       GoRoute(
         path: '/search',
         name: RouteNames.search,
@@ -196,12 +187,35 @@ class _RouterNotifier extends ChangeNotifier {
   Timer? _debounce;
 
   _RouterNotifier(Ref ref) {
+    // FIX: The original code had a NESTED ref.listen:
+    //
+    //   ref.listen(supabaseReadyProvider, (_, isReady) {
+    //     if (!isReady) return;
+    //     _notify();
+    //     ref.listen(authStateProvider, ...);  ← nested, registered late
+    //   });
+    //
+    // The nested ref.listen on authStateProvider was only registered AFTER
+    // supabaseReadyProvider first became true. If supabaseReadyProvider fired
+    // before authStateProvider was built, the auth listener was set up
+    // during a provider-callback context, which is fragile and can cause
+    // the auth listener to miss events or fire at unexpected times,
+    // contributing to the cascade of state changes.
+    //
+    // FIX: Register both listeners up front, side by side.
+    // - The supabaseReady listener gates the first notify (same as before).
+    // - The authState listener is always registered but only notifies when
+    //   Supabase is already ready, preventing spurious redirects on startup.
+
     ref.listen(supabaseReadyProvider, (_, isReady) {
-      if (!isReady) return;
-      _notify();
-      ref.listen(authStateProvider, (prev, next) {
-        if (prev != next) _notify();
-      });
+      if (isReady) _notify();
+    });
+
+    ref.listen(currentUserProvider, (prev, next) {
+      // Only notify GoRouter after Supabase is ready — prevents a redirect
+      // attempt while still on the splash screen.
+      if (!ref.read(supabaseReadyProvider)) return;
+      if (prev != next) _notify();
     });
   }
 

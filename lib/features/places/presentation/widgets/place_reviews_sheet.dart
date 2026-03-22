@@ -64,7 +64,7 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
   }
 
   Future<void> _submit() async {
-    final userId = ref.read(authStateProvider)?.id;
+    final userId = ref.read(currentUserProvider)?.id;
     if (userId == null) return;
     FocusScope.of(context).unfocus();
     // Single trim — reused for both the null-check and the value
@@ -86,7 +86,7 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
     final cs = theme.colorScheme;
     final tt = AppTypography.getTextTheme(widget.isAr ? 'ar' : 'en', context);
     final reviewsAsync = ref.watch(placeReviewsProvider(widget.placeId));
-    final currentUserId = ref.watch(authStateProvider)?.id;
+    final currentUserId = ref.watch(currentUserProvider)?.id;
     final isLoading = reviewsAsync.isLoading;
 
     final hasReviewed =
