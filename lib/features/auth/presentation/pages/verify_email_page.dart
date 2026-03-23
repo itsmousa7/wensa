@@ -14,7 +14,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class VerifyEmailPage extends ConsumerStatefulWidget {
   final String? email;
-  final String? type; // 'signup' or 'recovery'
+  final String? type;
 
   const VerifyEmailPage({super.key, this.email, this.type});
 
@@ -31,9 +31,6 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
   Timer? _resendTimer;
   bool _isVerifying = false;
 
-  // FIXED: Use correct OTP type for password recovery
-  // OtpType.recovery matches resetPasswordForEmail
-  // OtpType.signup matches signUp
   OtpType get otpType => isRecovery ? OtpType.recovery : OtpType.signup;
   bool get isRecovery => widget.type == 'recovery';
 
@@ -85,15 +82,14 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
 
     if (email == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          snack(context, message: context.tr('no_email_found')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(snack(context, message: context.tr('no_email_found')));
       }
       return;
     }
 
     try {
-      // FIXED: Resend OTP using signInWithOtp for recovery
       if (isRecovery) {
         await Supabase.instance.client.auth.signInWithOtp(
           email: email,
@@ -139,21 +135,19 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
 
     if (email == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          snack(context, message: 'No email found'),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(snack(context, message: 'No email found'));
         setState(() => _isVerifying = false);
       }
       return;
     }
 
     try {
-      // FIXED: Verify OTP with correct type
       final response = await Supabase.instance.client.auth.verifyOTP(
         email: email,
         token: token,
-        type:
-            otpType, // Uses OtpType.email for recovery, OtpType.signup for signup
+        type: otpType,
       );
 
       if (response.session == null) {
@@ -173,7 +167,6 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
         ),
       );
 
-      // Navigate based on type
       if (isRecovery) {
         context.goNamed(
           RouteNames.changePassword,
@@ -205,7 +198,6 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
       if (isRecovery) {
         context.goNamed(RouteNames.signin);
       } else {
-        // For signup, sign out and go to sign in
         final repository = ref.read(authRepositoryProvider);
         await repository.signOut();
         if (mounted) {
@@ -248,10 +240,7 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
               style: theme.textTheme.headlineLarge,
             ),
             const SizedBox(height: 8),
-            Text(
-              context.tr('enter_code'),
-              style: theme.textTheme.titleSmall,
-            ),
+            Text(context.tr('enter_code'), style: theme.textTheme.titleSmall),
             Text(
               displayEmail,
               style: TextStyle(

@@ -24,7 +24,6 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
-  // New Password ➜ Confirm Password ✓
   final _newPasswordFocus     = FocusNode();
   final _confirmPasswordFocus = FocusNode();
 
@@ -89,7 +88,7 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
                 enabled: !_isLoading,
                 hint: context.tr('new_password'),
                 focusNode: _newPasswordFocus,
-                nextFocusNode: _confirmPasswordFocus, // ➜ Confirm Password
+                nextFocusNode: _confirmPasswordFocus, 
                 textInputAction: TextInputAction.next,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -105,7 +104,7 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
                 enabled: !_isLoading,
                 hint: context.tr('confirm_password'),
                 focusNode: _confirmPasswordFocus,
-                // no nextFocusNode → Done key dismisses keyboard ✓
+                
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return context.tr('confirm_your_password');

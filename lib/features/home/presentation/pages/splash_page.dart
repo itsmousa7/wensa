@@ -41,6 +41,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
     _navigate();
   }
 
+
   @override
   void dispose() {
     _ctrl.dispose();

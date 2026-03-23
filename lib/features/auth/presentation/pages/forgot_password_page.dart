@@ -41,18 +41,6 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
       final email = _emailController.text.trim();
       final repo = ref.read(authRepositoryProvider);
 
-      // Check if email exists first
-      // final exists = await repo.emailExists(email: email);
-      // if (!exists) {
-      //   if (!mounted) return;
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     const SnackBar(content: Text('No account found with this email')),
-      //   );
-      //   setState(() => isLoading = false);
-      //   return;
-      // }
-
-      // Send OTP (now correctly uses signInWithOtp)
       await repo.resetPasswordRequest(email: email);
 
       if (!mounted) return;

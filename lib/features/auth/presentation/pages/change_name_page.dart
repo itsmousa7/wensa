@@ -25,7 +25,6 @@ class _ChangeNamePageState extends ConsumerState<ChangeNamePage> {
   final _secondNameController = TextEditingController();
   bool _isLoading = false;
 
-  // First Name ➜ Second Name ✓
   final _firstNameFocus = FocusNode();
   final _secondNameFocus = FocusNode();
 
@@ -89,7 +88,7 @@ class _ChangeNamePageState extends ConsumerState<ChangeNamePage> {
                 enabled: !_isLoading,
                 hint: context.tr('new_first_name'),
                 focusNode: _firstNameFocus,
-                nextFocusNode: _secondNameFocus, // ➜ Second Name
+                nextFocusNode: _secondNameFocus,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return context.tr('enter_new_name');
@@ -104,7 +103,7 @@ class _ChangeNamePageState extends ConsumerState<ChangeNamePage> {
                 enabled: !_isLoading,
                 hint: context.tr('new_second_name'),
                 focusNode: _secondNameFocus,
-                // no nextFocusNode → Done key dismisses keyboard ✓
+
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return context.tr('enter_second_name_field');

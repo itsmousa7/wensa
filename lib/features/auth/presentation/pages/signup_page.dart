@@ -26,7 +26,6 @@ class _SignupPageState extends ConsumerState<SignupPage> {
   final _formKey = GlobalKey<FormState>();
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
-  // Full focus chain: First Name ➜ Second Name ➜ Email ➜ Password ✓
   final _firstNameFocus = FocusNode();
   final _secondNameFocus = FocusNode();
   final _emailFocus = FocusNode();
@@ -123,7 +122,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                           controller: _firstNameController,
                           enabled: !isLoading,
                           focusNode: _firstNameFocus,
-                          nextFocusNode: _secondNameFocus, // ➜ Second Name
+                          nextFocusNode: _secondNameFocus,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return context.tr('enter_first_name');
@@ -142,7 +141,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                           controller: _secondNameController,
                           enabled: !isLoading,
                           focusNode: _secondNameFocus,
-                          nextFocusNode: _emailFocus, // ➜ Email
+                          nextFocusNode: _emailFocus,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return context.tr('enter_second_name');
@@ -159,7 +158,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   const Gap(30),
                   AppTextField.email(
                     focusNode: _emailFocus,
-                    nextFocusNode: _passwordFocus, // ➜ Password
+                    nextFocusNode: _passwordFocus,
                     hint: context.tr('email'),
                     controller: _emailController,
                     enabled: !isLoading,
@@ -176,7 +175,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   const Gap(30),
                   AppTextField.password(
                     focusNode: _passwordFocus,
-                    // no nextFocusNode → Done key dismisses keyboard ✓
+
                     hint: context.tr('password'),
                     controller: _passwordController,
                     enabled: !isLoading,

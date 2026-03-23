@@ -65,7 +65,7 @@ class _SigninPageState extends ConsumerState<SigninPage> {
 
       context.goNamed(
         RouteNames.verifyEmail,
-        queryParameters: {'email': email}, // was: extra: email
+        queryParameters: {'email': email}, 
       );
     } catch (e) {
       if (!mounted) return;
@@ -138,8 +138,8 @@ class _SigninPageState extends ConsumerState<SigninPage> {
             IconButton(
               onPressed: () => ref.read(appLocaleProvider.notifier).toggle(),
               icon: Icon(switch (ref.watch(appLocaleProvider)) {
-                ArabicLocale() => Icons.language, // showing AR → tap for EN
-                _ => Icons.language_outlined, // showing EN → tap for AR
+                ArabicLocale() => Icons.language, 
+                _ => Icons.language_outlined, 
               }),
             ),
           ],
@@ -238,7 +238,7 @@ class _SigninPageState extends ConsumerState<SigninPage> {
                         await ref
                             .read(googleAuthProvider.notifier)
                             .signInWithGoogle();
-                        // Don't navigate manually — GoRouterRefreshNotifier handles it
+                        
                       },
                       color: theme.colorScheme.outline,
                       icon: SvgPicture.asset(

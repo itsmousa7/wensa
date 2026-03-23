@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/core/constants/supabase_constants.dart';
 import 'package:future_riverpod/core/constants/theme/app_theme.dart';
 import 'package:future_riverpod/core/constants/theme/theme_provider.dart'
     hide AppTheme;
@@ -12,13 +14,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await dotenv.load(fileName: ".env");
   await Supabase.initialize(
-    url: 'https://qvozjwlkzordudkhamcu.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
-        '.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2b3pqd2xrem9yZHVka2hhbWN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwOTA4MzksImV4cCI6MjA4NjY2NjgzOX0'
-        '.VYsaJ7TST2PuHQFmalwRuENxpeUGylkHI59YiRyjxzc',
+    url: SupabaseConfig.url,
+    anonKey: SupabaseConfig.anonKey,
     realtimeClientOptions: const RealtimeClientOptions(eventsPerSecond: 2),
     authOptions: const FlutterAuthClientOptions(
       authFlowType: AuthFlowType.pkce,
