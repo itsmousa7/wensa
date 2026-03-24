@@ -219,10 +219,10 @@ class _PlaceFullscreenViewerState extends State<PlaceFullscreenViewer> {
                 child: CachedNetworkImage(
                   imageUrl: widget.images[i],
                   fit: BoxFit.contain,
-                  placeholder: (_, __) => const Center(
+                  placeholder: (_, _) => const Center(
                     child: CircularProgressIndicator(color: Colors.white54),
                   ),
-                  errorWidget: (_, __, ___) => const Icon(
+                  errorWidget: (_, _, _) => const Icon(
                     Icons.broken_image_outlined,
                     color: Colors.white54,
                     size: 64,

@@ -1,72 +1,76 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/core/constants/supabase_constants.dart';
 import 'package:future_riverpod/core/constants/theme/app_theme.dart';
 import 'package:future_riverpod/core/constants/theme/theme_provider.dart'
     hide AppTheme;
 import 'package:future_riverpod/core/constants/theme/theme_state.dart';
 import 'package:future_riverpod/core/router/router_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
+  await dotenv.load(fileName: ".env");
+  await Supabase.initialize(
+    url: SupabaseConfig.url,
+    anonKey: SupabaseConfig.anonKey,
+    realtimeClientOptions: const RealtimeClientOptions(eventsPerSecond: 2),
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.pkce,
+      autoRefreshToken: true,
     ),
   );
 
-  // ✅ runApp immediately — no awaits blocking the UI
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]).then((_) => runApp(const ProviderScope(child: MyApp())));
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
+  static Locale? _toLocale(LocaleState state) => switch (state) {
+    EnglishLocale() => const Locale('en'),
+    ArabicLocale() => const Locale('ar'),
+    SystemLocale() => null,
+  };
+
+  static String _toLangCode(LocaleState state) => switch (state) {
+    ArabicLocale() => 'ar',
+    _ => 'en',
+  };
+
+  // FIX: was hardcoded to ThemeMode.system — dark mode never applied.
+  // Now reads appThemeProvider and maps ThemeState → ThemeMode.
+  static ThemeMode _toThemeMode(ThemeState state) => switch (state) {
+    LightTheme() => ThemeMode.light,
+    DarkTheme() => ThemeMode.dark,
+    SystemTheme() => ThemeMode.system,
+  };
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final locale = ref.watch(appLocaleProvider);
     final themeState = ref.watch(appThemeProvider);
-    final localeState = ref.watch(appLocaleProvider);
-
-    final locale = switch (localeState) {
-      EnglishLocale() => const Locale('en'),
-      ArabicLocale() => const Locale('ar'),
-      SystemLocale() => null,
-    };
-
-    final languageCode = switch (localeState) {
-      ArabicLocale() => 'ar',
-      _ => 'en',
-    };
+    final langCode = _toLangCode(locale);
+    final themeMode = _toThemeMode(themeState);
 
     return MaterialApp.router(
-      title: 'Wensa',
       debugShowCheckedModeBanner: false,
-      locale: locale,
+      routerConfig: router,
+      theme: AppTheme.lightTheme(languageCode: langCode, context: context),
+      darkTheme: AppTheme.darkTheme(languageCode: langCode, context: context),
+      themeMode: themeMode,
+      locale: _toLocale(locale),
       supportedLocales: const [Locale('en'), Locale('ar')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      theme: AppTheme.lightTheme(languageCode: languageCode, context: context),
-      darkTheme: AppTheme.darkTheme(
-        languageCode: languageCode,
-        context: context,
-      ),
-      themeMode: switch (themeState) {
-        LightTheme() => ThemeMode.light,
-        DarkTheme() => ThemeMode.dark,
-        SystemTheme() => ThemeMode.system,
-      },
-      routerConfig: router,
     );
   }
 }

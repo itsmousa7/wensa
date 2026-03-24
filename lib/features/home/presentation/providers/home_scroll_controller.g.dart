@@ -26,7 +26,7 @@ final class HomeScrollControllerProvider
         argument: null,
         retry: null,
         name: r'homeScrollControllerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -54,4 +54,4 @@ final class HomeScrollControllerProvider
 }
 
 String _$homeScrollControllerHash() =>
-    r'29eafadba32fc6ee8c58e0c49dee700974f586f7';
+    r'2c0f0239c973665bf060af6cccf96bede8c9b47a';

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/home/presentation/providers/all_events_provider.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/build_card_row_skeleton.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/build_error_widget.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/feed_card.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/view_all_card.dart';
+import 'package:go_router/go_router.dart';
 
 class AllEventsSection extends ConsumerWidget {
   const AllEventsSection({super.key, required this.onViewAll});
@@ -67,9 +69,10 @@ class AllEventsSection extends ConsumerWidget {
                 subtitleAr: event.city,
                 badge: FeedCardBadge.event,
                 itemType: 'event',
-                onTap: () {
-                  /* TODO: Navigate to event detail */
-                },
+                onTap: () => context.pushNamed(
+                  RouteNames.eventDetails,
+                  queryParameters: {'eventId': event.id},
+                ),
               );
             },
           ),

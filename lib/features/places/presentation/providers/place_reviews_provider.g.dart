@@ -60,7 +60,7 @@ final class PlaceReviewsNotifierProvider
 }
 
 String _$placeReviewsNotifierHash() =>
-    r'b9a026c6c028d4ed6ac2e8bd9ee4ccaeb40409ec';
+    r'd6f06a0b5e8c1bcb0cc2886d0878a587ad4a9f0c';
 
 /// Family AsyncNotifier — one instance per placeId.
 /// Exposes [addReview] and [deleteReview]; both use AsyncValue.guard so the

@@ -9,6 +9,9 @@ class RouteNames {
   static const verifyEmail = 'otpPage';
   static const splash = 'splash';
   static const profile = 'profile';
+  static const search = 'search';
   static const favorites = 'favorites';
   static const placeDetails = 'placeDetails';
+  static const eventDetails = 'eventDetails';
+  static const themeSettings = 'theme-settings';
 }

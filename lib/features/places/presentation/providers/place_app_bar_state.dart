@@ -53,7 +53,7 @@ class PlaceAppbarState extends _$PlaceAppbarState {
   void setImageIndex(int i) => state = state.copyWith(currentImageIndex: i);
 
   void recordView() {
-    final userId = ref.read(authStateProvider)?.id;
+    final userId = ref.read(currentUserProvider)?.id;
     if (userId == null) return;
     ref
         .read(placeDetailsRepositoryProvider)

@@ -21,6 +21,11 @@ class AppTextField extends StatefulWidget {
   final Function(String)? onSubmitted;
   final List<TextInputFormatter>? inputFormatters;
   final FocusNode? focusNode;
+
+  /// When provided, pressing the keyboard "Next" action will automatically
+  /// move focus to this node — no wiring needed in the parent.
+  final FocusNode? nextFocusNode;
+
   final TextCapitalization textCapitalization;
   final String? helperText;
   final String? errorText;
@@ -44,11 +49,11 @@ class AppTextField extends StatefulWidget {
     this.onSubmitted,
     this.inputFormatters,
     this.focusNode,
+    this.nextFocusNode,
     this.textCapitalization = TextCapitalization.none,
     this.helperText,
     this.errorText,
     this.showPasswordToggle = false,
-
     super.key,
   });
 
@@ -60,12 +65,12 @@ class AppTextField extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.focusNode,
+    this.nextFocusNode, // pass the password field's FocusNode here
     this.enabled = true,
-
     super.key,
   }) : obscureText = false,
        keyboardType = TextInputType.emailAddress,
-       textInputAction = TextInputAction.next,
+       textInputAction = TextInputAction.next, // shows ➜ arrow, not ✓
        maxLines = 1,
        maxLength = null,
        readOnly = false,
@@ -78,7 +83,7 @@ class AppTextField extends StatefulWidget {
        errorText = null,
        showPasswordToggle = false;
 
-  /// Password text field with toggle visibility
+  /// Password text field — Done dismisses the keyboard
   const AppTextField.password({
     this.hint = 'Password',
     this.controller,
@@ -86,9 +91,10 @@ class AppTextField extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.focusNode,
+    this.nextFocusNode, // set to the next field's FocusNode if password isn't last
     this.enabled = true,
-    this.textInputAction = TextInputAction.done,
-
+    this.textInputAction =
+        TextInputAction.done, // shows ✓ / Done — dismisses keyboard
     super.key,
   }) : obscureText = true,
        keyboardType = TextInputType.visiblePassword,
@@ -104,6 +110,32 @@ class AppTextField extends StatefulWidget {
        errorText = null,
        showPasswordToggle = true;
 
+  /// Name text field (first or last)
+  const AppTextField.name({
+    this.hint = 'Name',
+    this.controller,
+    this.validator,
+    this.onChanged,
+    this.onSubmitted,
+    this.focusNode,
+    this.nextFocusNode,
+    this.enabled = true,
+    super.key,
+  }) : obscureText = false,
+       keyboardType = TextInputType.name,
+       textInputAction = TextInputAction.next,
+       maxLines = 1,
+       maxLength = null,
+       readOnly = false,
+       prefixIcon = const Icon(CupertinoIcons.person),
+       suffixIcon = null,
+       onTap = null,
+       inputFormatters = null,
+       textCapitalization = TextCapitalization.words,
+       helperText = null,
+       errorText = null,
+       showPasswordToggle = false;
+
   /// Phone text field
   const AppTextField.phone({
     this.hint = 'Phone Number',
@@ -112,8 +144,8 @@ class AppTextField extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.focusNode,
+    this.nextFocusNode,
     this.enabled = true,
-
     super.key,
   }) : obscureText = false,
        keyboardType = TextInputType.phone,
@@ -140,7 +172,7 @@ class AppTextField extends StatefulWidget {
     this.maxLength,
     this.enabled = true,
     this.focusNode,
-
+    this.nextFocusNode,
     super.key,
   }) : obscureText = false,
        keyboardType = TextInputType.multiline,
@@ -183,11 +215,24 @@ class _AppTextFieldState extends State<AppTextField> {
     });
   }
 
+  /// Called when the keyboard action button is pressed.
+  /// If [nextFocusNode] is provided, moves focus there.
+  /// Otherwise falls back to the parent's [onSubmitted] callback.
+  void _handleSubmitted(String value) {
+    if (widget.nextFocusNode != null) {
+      widget.nextFocusNode!.requestFocus();
+    } else if (widget.textInputAction == TextInputAction.done) {
+      // Dismiss the keyboard gracefully
+      widget.focusNode?.unfocus();
+      FocusScope.of(context).unfocus();
+    }
+    widget.onSubmitted?.call(value);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Build suffix icon (with password toggle if needed)
     Widget? suffixIcon = widget.suffixIcon;
     if (widget.showPasswordToggle) {
       suffixIcon = IconButton(
@@ -218,16 +263,15 @@ class _AppTextFieldState extends State<AppTextField> {
         readOnly: widget.readOnly,
         onTap: widget.onTap,
         onChanged: widget.onChanged,
-        onFieldSubmitted: widget.onSubmitted,
+        onFieldSubmitted: _handleSubmitted, // ← handles focus transfer
         inputFormatters: widget.inputFormatters,
         focusNode: widget.focusNode,
         textCapitalization: widget.textCapitalization,
         cursorColor: theme.colorScheme.secondary,
         cursorErrorColor: theme.colorScheme.errorContainer,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.outline,
-          ),
-
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: theme.colorScheme.outline,
+        ),
         decoration: InputDecoration(
           hintText: widget.hint,
           helperText: widget.helperText,

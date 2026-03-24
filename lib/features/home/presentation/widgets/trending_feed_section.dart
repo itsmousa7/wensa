@@ -6,7 +6,7 @@ import 'package:future_riverpod/features/home/presentation/providers/home_provid
 import 'package:future_riverpod/features/home/presentation/widgets/build_card_row_skeleton.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/feed_card.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/view_all_card.dart';
-import 'package:future_riverpod/features/places/domain/models/trending_feed_item_model.dart';
+import 'package:future_riverpod/features/home/models/trending_feed_item_model.dart';
 
 class TrendingFeedSection extends ConsumerWidget {
   const TrendingFeedSection({super.key, this.onViewAll});

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/places/domain/models/place_model.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_app_bar_state.dart';
@@ -72,7 +73,7 @@ class PlaceInfoSection extends ConsumerWidget {
                 const Gap(15),
                 SizedBox(
                   height: 20,
-                  child: Image.asset('assets/icons/verify.png'),
+                  child: SvgPicture.asset('assets/icons/verify.svg'),
                 ),
               ],
             ],
@@ -102,7 +103,7 @@ class PlaceInfoSection extends ConsumerWidget {
                   children: [
                     SizedBox(
                       height: 14,
-                      child: Image.asset('assets/icons/location.png'),
+                      child: SvgPicture.asset('assets/icons/location.svg'),
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -136,6 +137,8 @@ class PlaceInfoSection extends ConsumerWidget {
                 icon: CupertinoIcons.eye,
                 value: compactNumber(place.viewCount),
                 label: isAr ? 'مشاهدة' : 'Views',
+                textColor: cs.secondary,
+                accentColor: cs.primary,
               ),
               const SizedBox(width: 10),
               PlaceStatisticChip(
@@ -143,6 +146,7 @@ class PlaceInfoSection extends ConsumerWidget {
                 value: compactNumber(place.savesCount),
                 label: isAr ? 'إعجاب' : 'Likes',
                 accentColor: AppColors.alert,
+                textColor: cs.errorContainer,
               ),
               const SizedBox(width: 10),
               GestureDetector(
@@ -157,39 +161,11 @@ class PlaceInfoSection extends ConsumerWidget {
                   value: compactNumber(place.reviewsCount),
                   label: isAr ? 'تقييم' : 'Reviews',
                   highlighted: true,
+                  textColor: cs.secondary,
                 ),
               ),
             ],
           ),
-
-          // ── Price range ───────────────────────────────────────────────
-          if (place.priceRange != null) ...[
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Text(
-                  isAr ? 'نطاق السعر:' : 'Price range:',
-                  style: tt.bodyMedium?.copyWith(
-                    color: cs.outline,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ...List.generate(
-                  4,
-                  (i) => Text(
-                    '\$',
-                    style: tt.bodyMedium?.copyWith(
-                      color: i < (place.priceRange ?? 0)
-                          ? AppColors.lightGreenSecondary
-                          : cs.onSurface.withValues(alpha: 0.2),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
 
           // ── Tags ──────────────────────────────────────────────────────
           tagsAsync.when(

@@ -22,7 +22,7 @@ abstract class PlaceModel with _$PlaceModel {
     @Default(false) bool isTrending,
     @Default(false) bool isVerified,
     @Default(false) bool isFeatured,
-    int? priceRange,
+
     // opening_hours stored as raw Map since it's a flexible jsonb
     Map<String, dynamic>? openingHours,
     String? phone,
@@ -55,7 +55,7 @@ abstract class PlaceModel with _$PlaceModel {
     isTrending: json['is_trending'] ?? false,
     isVerified: json['is_verified'] ?? false,
     isFeatured: json['is_featured'] ?? false,
-    priceRange: json['price_range'],
+
     openingHours: json['opening_hours'] != null
         ? Map<String, dynamic>.from(json['opening_hours'])
         : null,

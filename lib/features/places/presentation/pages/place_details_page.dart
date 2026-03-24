@@ -6,7 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
-import 'package:future_riverpod/features/home/presentation/providers/favorites_provider.dart';
+import 'package:future_riverpod/core/widgets/detail_error_page.dart';
+import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_app_bar_state.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_appbar_button.dart';
@@ -83,18 +84,9 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
         backgroundColor: theme.scaffoldBackgroundColor,
         body: placeAsync.when(
           loading: () => const PlaceDetailsSkeleton(),
-          error: (e, _) => Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.error_outline, color: cs.error, size: 48),
-                const SizedBox(height: 12),
-                Text(
-                  e.toString(),
-                  style: TextStyle(color: cs.error, fontSize: 13),
-                ),
-              ],
-            ),
+          error: (e, _) => DetailErrorScreen(
+            isAr: _isAr,
+            onRetry: () => ref.invalidate(placeDetailsProvider(widget.placeId)),
           ),
           data: (place) {
             final name = _isAr ? place.nameAr : place.nameEn;
@@ -152,23 +144,25 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
                           overflow: TextOverflow.ellipsis,
                         )
                       : null,
-
+                  leadingWidth: 70,
+                  toolbarHeight: 50,
                   leading: Padding(
                     padding: const EdgeInsetsDirectional.only(start: 20),
                     child: PlaceAppBarButton(
                       icon: Icon(
-                        color: collapsed
-                            ? theme.colorScheme.outline
-                            : AppColors.white,
                         _isAr
                             ? CupertinoIcons.chevron_right
                             : CupertinoIcons.chevron_left,
+                        color: collapsed
+                            ? theme.colorScheme.outline
+                            : AppColors.white,
                       ),
                       onTap: () => Navigator.pop(context),
                       collapsed: collapsed,
+                      // ← chevron direction matches RTL/LTR
+                      sfSymbol: _isAr ? 'chevron.right' : 'chevron.left',
                     ),
                   ),
-                  leadingWidth: 75,
 
                   actions: [
                     Padding(
@@ -180,13 +174,17 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
                               : CupertinoIcons.heart,
                           color: isFav
                               ? AppColors.alert
-                              : (collapsed ? cs.onSurface : AppColors.white),
+                              : (collapsed
+                                    ? cs.onSurface
+                                    : AppColors.lightRedSecondary),
                         ),
                         onTap: () => ref
                             .read(favoritesProvider.notifier)
                             .toggle(place.id, itemType: 'place'),
                         collapsed: collapsed,
                         animate: true,
+                        // ← symbol switches based on current favorite state
+                        sfSymbol: isFav ? 'heart.fill' : 'heart',
                       ),
                     ),
                   ],

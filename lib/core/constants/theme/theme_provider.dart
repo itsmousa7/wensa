@@ -9,10 +9,9 @@ const _themeKey = 'app_theme';
 @riverpod
 class AppTheme extends _$AppTheme {
   @override
-  @override
   ThemeState build() {
     _loadSavedTheme();
-    return const SystemTheme(); // ← system default until loaded
+    return const SystemTheme(); // safe default — matches device until prefs load
   }
 
   Future<void> _loadSavedTheme() async {
@@ -21,30 +20,30 @@ class AppTheme extends _$AppTheme {
     state = switch (saved) {
       'light' => const LightTheme(),
       'dark' => const DarkTheme(),
-      _ => const SystemTheme(), // ← null or unknown = system
+      _ => const SystemTheme(), // 'system' or null → follow device
     };
   }
 
   Future<void> switchTheme(ThemeState themeState) async {
-    state = themeState;
+    state = themeState; // update UI immediately (synchronous)
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _themeKey,
-      switch (themeState) {
-        LightTheme() => 'light',
-        DarkTheme() => 'dark',
-        SystemTheme() => 'system',
-      },
-    );
+    await prefs.setString(_themeKey, switch (themeState) {
+      LightTheme() => 'light',
+      DarkTheme() => 'dark',
+      SystemTheme() => 'system',
+    });
   }
 
-  void toggle() {
-    switchTheme(
-      switch (state) {
-        LightTheme() => const DarkTheme(),
-        DarkTheme() => const LightTheme(),
-        SystemTheme() => const DarkTheme(), // system → go dark first
-      },
-    );
+  /// Toggle between light ↔ dark explicitly.
+  ///
+  /// [currentIsDark] is the ACTUAL visual brightness (resolves SystemTheme →
+  /// device brightness via MediaQuery), so the switch always flips correctly.
+  void toggle(bool currentIsDark) {
+    switchTheme(currentIsDark ? const LightTheme() : const DarkTheme());
   }
+
+  /// Reset to system/device-controlled theme.
+  void followSystem() => switchTheme(const SystemTheme());
+
+  bool get isFollowingSystem => state is SystemTheme;
 }

@@ -1,4 +1,6 @@
-// lib/features/places/presentation/widgets/place_details/place_appbar_buttons.dart
+import 'dart:io';
+
+import 'package:cupertino_native/cupertino_native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,19 +10,17 @@ class PlaceAppBarButton extends ConsumerStatefulWidget {
     required this.icon,
     required this.onTap,
     required this.collapsed,
-    this.activeColor,
     this.isActive = false,
-
     this.animate = false,
+    this.sfSymbol,
   });
 
   final Widget icon;
   final VoidCallback onTap;
   final bool collapsed;
-  final Color? activeColor;
   final bool isActive;
-
   final bool animate;
+  final String? sfSymbol;
 
   @override
   ConsumerState<PlaceAppBarButton> createState() => _PlaceAppBarButtonState();
@@ -28,14 +28,23 @@ class PlaceAppBarButton extends ConsumerStatefulWidget {
 
 class _PlaceAppBarButtonState extends ConsumerState<PlaceAppBarButton>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 200),
-  );
-  late final Animation<double> _scale = Tween(
-    begin: 1.0,
-    end: 1.4,
-  ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+  // ✅ Declare without initializing — no lazy late initializer
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    // ✅ Initialize in initState where vsync: this is safe
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _scale = Tween(
+      begin: 1.0,
+      end: 1.4,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+  }
 
   @override
   void dispose() {
@@ -50,6 +59,16 @@ class _PlaceAppBarButtonState extends ConsumerState<PlaceAppBarButton>
 
   @override
   Widget build(BuildContext context) {
+    // ── iOS: native liquid glass button ──────────────────────────────────
+    if (Platform.isIOS && widget.sfSymbol != null) {
+      return CNButton.icon(
+        icon: CNSymbol(widget.sfSymbol!),
+        onPressed: _onTap,
+        size: 50,
+      );
+    }
+
+    // ── Android: frosted glass button ─────────────────────────────────────
     final child = ScaleTransition(scale: _scale, child: widget.icon);
 
     if (widget.collapsed) {

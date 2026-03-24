@@ -4,10 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
-import 'package:future_riverpod/features/auth/presentation/providers/user_profile_provider.dart';
+import 'package:future_riverpod/features/profile/presentation/providers/user_profile_provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-
-bool _isArabicText(String text) => RegExp(r'[\u0600-\u06FF]').hasMatch(text);
 
 class HomeAppBar extends ConsumerWidget {
   const HomeAppBar({super.key});
@@ -18,6 +16,7 @@ class HomeAppBar extends ConsumerWidget {
     final userAsync = ref.watch(profileProvider);
     final theme = Theme.of(context);
 
+    // BUG FIX: use the actual locale, not the user's first name
     final uiLocale = isAr ? 'ar' : 'en';
     final textTheme = AppTypography.getTextTheme(uiLocale, context);
 
@@ -31,7 +30,7 @@ class HomeAppBar extends ConsumerWidget {
             children: [
               Text(
                 isAr ? 'مرحباً،' : 'Hello,',
-                style: textTheme.bodyMedium?.copyWith(
+                style: textTheme.titleSmall?.copyWith(
                   color: theme.colorScheme.onSurface,
                 ),
               ),
@@ -53,26 +52,13 @@ class HomeAppBar extends ConsumerWidget {
                   ),
                 ),
 
-                error: (_, _) => Text(
-                  '',
-                  style: textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
+                error: (_, _) => const SizedBox.shrink(),
 
-                data: (users) {
-                  final firstName = users.firstName;
-
-                  final nameLocale = _isArabicText(firstName) ? 'ar' : 'en';
-
-                  final nameTT = AppTypography.getTextTheme(
-                    nameLocale,
-                    context,
-                  );
-
+                data: (user) {
+                  // BUG FIX: pass uiLocale ('en'/'ar'), not user.firstName
                   return Text(
-                    '$firstName 👋',
-                    style: nameTT.titleMedium?.copyWith(
+                    '${user.firstName} 👋',
+                    style: textTheme.titleMedium?.copyWith(
                       color: theme.colorScheme.primary,
                     ),
                   );
@@ -80,7 +66,7 @@ class HomeAppBar extends ConsumerWidget {
               ),
             ],
           ),
-          Spacer(),
+          const Spacer(),
 
           Stack(
             children: [

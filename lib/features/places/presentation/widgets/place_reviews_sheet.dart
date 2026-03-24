@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +10,7 @@ import 'package:future_riverpod/features/places/domain/models/review_with_user_m
 import 'package:future_riverpod/features/places/presentation/providers/place_reviews_provider.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/comment_create_date.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/comment_section_skeleton.dart';
+import 'package:future_riverpod/features/profile/presentation/widgets/user_avatar.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
   }
 
   Future<void> _submit() async {
-    final userId = ref.read(authStateProvider)?.id;
+    final userId = ref.read(currentUserProvider)?.id;
     if (userId == null) return;
     FocusScope.of(context).unfocus();
     // Single trim — reused for both the null-check and the value
@@ -86,7 +86,7 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
     final cs = theme.colorScheme;
     final tt = AppTypography.getTextTheme(widget.isAr ? 'ar' : 'en', context);
     final reviewsAsync = ref.watch(placeReviewsProvider(widget.placeId));
-    final currentUserId = ref.watch(authStateProvider)?.id;
+    final currentUserId = ref.watch(currentUserProvider)?.id;
     final isLoading = reviewsAsync.isLoading;
 
     final hasReviewed =
@@ -476,6 +476,7 @@ class _AddReviewInput extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: cs.outline,
                   ),
+                  autofocus: true,
                   decoration: InputDecoration(
                     hintText: isAr ? 'أضف تعليقاً...' : 'Add a comment...',
                     hintStyle: tt.bodyMedium?.copyWith(
@@ -581,22 +582,12 @@ class _ReviewTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Avatar ───────────────────────────────────────────────────
-          CircleAvatar(
+          UserAvatar(
+            avatarUrl: reviewWithUser.avatarUrl, // ← direct field
+            initials: name.isNotEmpty ? name[0].toUpperCase() : '?',
             radius: 20,
-            backgroundColor: cs.primary.withValues(alpha: 0.1),
-            backgroundImage: reviewWithUser.avatarUrl != null
-                ? CachedNetworkImageProvider(reviewWithUser.avatarUrl!)
-                : null,
-            child: reviewWithUser.avatarUrl == null
-                ? Text(
-                    reviewWithUser.initials,
-                    style: tt.labelSmall?.copyWith(
-                      color: cs.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  )
-                : null,
           ),
+
           const SizedBox(width: 12),
           Expanded(
             child: Column(

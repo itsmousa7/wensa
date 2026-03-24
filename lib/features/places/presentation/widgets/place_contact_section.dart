@@ -1,5 +1,4 @@
 // lib/features/places/presentation/widgets/place_details/place_contact_section.dart
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/places/domain/models/place_model.dart';

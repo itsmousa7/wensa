@@ -34,6 +34,9 @@ class _SigninPageState extends ConsumerState<SigninPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -62,7 +65,7 @@ class _SigninPageState extends ConsumerState<SigninPage> {
 
       context.goNamed(
         RouteNames.verifyEmail,
-        queryParameters: {'email': email}, // was: extra: email
+        queryParameters: {'email': email}, 
       );
     } catch (e) {
       if (!mounted) return;
@@ -72,10 +75,17 @@ class _SigninPageState extends ConsumerState<SigninPage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentTheme = ref.watch(appThemeProvider);
+    final themeState = ref.watch(appThemeProvider);
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
     final theme = Theme.of(context);
+
+    final isDark = switch (themeState) {
+      DarkTheme() => true,
+      LightTheme() => false,
+      SystemTheme() =>
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+    };
 
     ref.listen(signinProvider, (prev, next) {
       listenAsyncProvider(
@@ -110,10 +120,12 @@ class _SigninPageState extends ConsumerState<SigninPage> {
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
+          backgroundColor: theme.scaffoldBackgroundColor,
           actions: [
             AppButton.icon(
-              onPressed: () => ref.read(appThemeProvider.notifier).toggle(),
-              icon: Icon(switch (currentTheme) {
+              onPressed: () =>
+                  ref.read(appThemeProvider.notifier).toggle(isDark),
+              icon: Icon(switch (themeState) {
                 LightTheme() => CupertinoIcons.sun_max,
                 DarkTheme() => CupertinoIcons.moon,
                 SystemTheme() =>
@@ -126,8 +138,8 @@ class _SigninPageState extends ConsumerState<SigninPage> {
             IconButton(
               onPressed: () => ref.read(appLocaleProvider.notifier).toggle(),
               icon: Icon(switch (ref.watch(appLocaleProvider)) {
-                ArabicLocale() => Icons.language, // showing AR → tap for EN
-                _ => Icons.language_outlined, // showing EN → tap for AR
+                ArabicLocale() => Icons.language, 
+                _ => Icons.language_outlined, 
               }),
             ),
           ],
@@ -152,6 +164,8 @@ class _SigninPageState extends ConsumerState<SigninPage> {
 
                     const Gap(AppSpacing.xl),
                     AppTextField.email(
+                      focusNode: _emailFocus,
+                      nextFocusNode: _passwordFocus,
                       controller: _emailController,
                       enabled: !isLoading,
                       hint: context.tr('email'),
@@ -168,6 +182,7 @@ class _SigninPageState extends ConsumerState<SigninPage> {
                     ),
                     const Gap(AppSpacing.mlg),
                     AppTextField.password(
+                      focusNode: _passwordFocus,
                       hint: context.tr('password'),
                       controller: _passwordController,
                       enabled: !isLoading,
@@ -223,7 +238,7 @@ class _SigninPageState extends ConsumerState<SigninPage> {
                         await ref
                             .read(googleAuthProvider.notifier)
                             .signInWithGoogle();
-                        // Don't navigate manually — GoRouterRefreshNotifier handles it
+                        
                       },
                       color: theme.colorScheme.outline,
                       icon: SvgPicture.asset(
