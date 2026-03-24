@@ -476,7 +476,7 @@ class _AddReviewInput extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: cs.outline,
                   ),
-                  autofocus: true,
+                
                   decoration: InputDecoration(
                     hintText: isAr ? 'أضف تعليقاً...' : 'Add a comment...',
                     hintStyle: tt.bodyMedium?.copyWith(

@@ -114,7 +114,7 @@ class AppTheme {
         disabledBorder: OutlineInputBorder(
           borderRadius: AppSpacing.borderRadiusMD,
           borderSide: BorderSide(
-            color: AppColors.lightSecondary.withOpacity(0.5),
+            color: AppColors.lightSecondary.withValues(alpha: 0.5),
             width: AppSpacing.borderThin,
           ),
         ),

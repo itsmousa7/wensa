@@ -75,15 +75,9 @@ class AuthRepository {
   }
 
   // Resend OTP
-  Future<void> resendOTP({
-    required String email,
-    required OtpType type,
-  }) async {
+  Future<void> resendOTP({required String email, required OtpType type}) async {
     try {
-      await _client.auth.resend(
-        email: email,
-        type: type,
-      );
+      await _client.auth.resend(email: email, type: type);
     } catch (e) {
       throw handleException(e);
     }
@@ -99,9 +93,7 @@ class AuthRepository {
 
   // Update Password
   Future<UserResponse> updatePassword(String newPassword) async {
-    return await _client.auth.updateUser(
-      UserAttributes(password: newPassword),
-    );
+    return await _client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
   Future<void> updateUserProfile({
@@ -115,14 +107,19 @@ class AuthRepository {
       // Update app_users table
       await _client
           .from('app_users')
-          .update({
-            'first_name': firstName,
-            'second_name': secondName,
-          })
+          .update({'first_name': firstName, 'second_name': secondName})
           .eq('id', userId);
     } catch (e) {
       throw handleException(e);
     }
+  }
+
+  Future<bool> emailExists({required String email}) async {
+    final result = await Supabase.instance.client.rpc(
+      'email_exists',
+      params: {'p_email': email.trim().toLowerCase()},
+    );
+    return result as bool;
   }
 
   // Get Current User
