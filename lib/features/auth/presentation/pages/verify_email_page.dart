@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:future_riverpod/core/constants/app_typography.dart';
+import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/app_strings_extentions.dart';
-import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:future_riverpod/features/auth/presentation/widgets/app_button.dart';
@@ -25,15 +27,13 @@ class VerifyEmailPage extends ConsumerStatefulWidget {
 class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
   late StreamController<ErrorAnimationType> errorController;
   late TextEditingController textEditingController;
-  String currentText = "";
+
+  String currentText = '';
   bool _canResend = false;
   int _resendCountdown = 60;
   Timer? _resendTimer;
   bool _isVerifying = false;
 
-  // FIXED: Use correct OTP type for password recovery
-  // OtpType.recovery matches resetPasswordForEmail
-  // OtpType.signup matches signUp
   OtpType get otpType => isRecovery ? OtpType.recovery : OtpType.signup;
   bool get isRecovery => widget.type == 'recovery';
 
@@ -53,22 +53,19 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
     super.dispose();
   }
 
+  // ── Countdown ─────────────────────────────────────────────────────────────
   void _startResendCountdown() {
     _resendTimer?.cancel();
-
     if (!mounted) return;
-
     setState(() {
       _canResend = false;
       _resendCountdown = 60;
     });
-
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
-
       if (_resendCountdown > 0) {
         setState(() => _resendCountdown--);
       } else {
@@ -78,22 +75,19 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
     });
   }
 
+  // ── Resend OTP ────────────────────────────────────────────────────────────
   Future<void> _resendOtp() async {
     if (!_canResend || _isVerifying || !mounted) return;
 
     final email = widget.email;
-
     if (email == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          snack(context, message: context.tr('no_email_found')),
-        );
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(snack(context, message: context.tr('no_email_found')));
       return;
     }
 
     try {
-      // FIXED: Resend OTP using signInWithOtp for recovery
       if (isRecovery) {
         await Supabase.instance.client.auth.signInWithOtp(
           email: email,
@@ -130,30 +124,25 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
     }
   }
 
+  // ── Verify OTP ────────────────────────────────────────────────────────────
   Future<void> _verifyOtp(String token) async {
     if (_isVerifying || !mounted) return;
-
     setState(() => _isVerifying = true);
 
     final email = widget.email;
-
     if (email == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          snack(context, message: 'No email found'),
-        );
-        setState(() => _isVerifying = false);
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(snack(context, isError: true, message: 'No email found'));
+      setState(() => _isVerifying = false);
       return;
     }
 
     try {
-      // FIXED: Verify OTP with correct type
       final response = await Supabase.instance.client.auth.verifyOTP(
         email: email,
         token: token,
-        type:
-            otpType, // Uses OtpType.email for recovery, OtpType.signup for signup
+        type: otpType,
       );
 
       if (response.session == null) {
@@ -173,7 +162,6 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
         ),
       );
 
-      // Navigate based on type
       if (isRecovery) {
         context.goNamed(
           RouteNames.changePassword,
@@ -196,21 +184,16 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
     }
   }
 
+  // ── Cancel ────────────────────────────────────────────────────────────────
   Future<void> _cancel() async {
     if (!mounted) return;
-
     try {
       _resendTimer?.cancel();
-
       if (isRecovery) {
         context.goNamed(RouteNames.signin);
       } else {
-        // For signup, sign out and go to sign in
-        final repository = ref.read(authRepositoryProvider);
-        await repository.signOut();
-        if (mounted) {
-          context.goNamed(RouteNames.signin);
-        }
+        await ref.read(authRepositoryProvider).signOut();
+        if (mounted) context.goNamed(RouteNames.signin);
       }
     } catch (e) {
       if (mounted) {
@@ -221,53 +204,87 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
     }
   }
 
+  // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
+    final langCode = isAr ? 'ar' : 'en';
+    final cs = Theme.of(context).colorScheme;
+    final tt = AppTypography.getTextTheme(langCode, context);
     final displayEmail = widget.email ?? 'your email';
-    final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        actions: [
-          AppButton.text(
-            onPressed: _isVerifying ? null : _cancel,
-            label: context.tr('cancel'),
-            color: theme.colorScheme.secondary,
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              isRecovery
-                  ? context.tr('password_recovery')
-                  : context.tr('email_verification'),
-              style: theme.textTheme.headlineLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              context.tr('enter_code'),
-              style: theme.textTheme.titleSmall,
-            ),
-            Text(
-              displayEmail,
-              style: TextStyle(
-                fontSize: 16,
-                color: theme.colorScheme.secondary,
+
+    return Directionality(
+      textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          automaticallyImplyLeading: false,
+          actions: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: AppButton.text(
+                onPressed: _isVerifying ? null : _cancel,
+                label: context.tr('cancel'),
+                color: cs.secondary,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(top: 30.0),
-              child: PinCodeTextField(
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Page title ──────────────────────────────────────────────
+              Text(
+                isRecovery
+                    ? context.tr('password_recovery')
+                    : context.tr('email_verification'),
+                style: tt.headlineLarge,
+              ),
+              const SizedBox(height: 8),
+
+              // ── Subtitle ────────────────────────────────────────────────
+              Text(
+                context.tr('enter_code'),
+                style: tt.bodyMedium?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+              const SizedBox(height: 4),
+
+              // ── Email chip ──────────────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: cs.secondary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  displayEmail,
+                  style: tt.bodyMedium?.copyWith(
+                    color: cs.secondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 36),
+
+              // ── PIN field ───────────────────────────────────────────────
+              PinCodeTextField(
                 autovalidateMode: AutovalidateMode.disabled,
                 autoFocus: true,
                 appContext: context,
-                pastedTextStyle: const TextStyle(
-                  color: AppColors.lightGreenSecondary,
-                  fontWeight: FontWeight.bold,
+                pastedTextStyle: tt.bodyLarge?.copyWith(
+                  color: cs.secondary,
+                  fontWeight: FontWeight.w700,
                 ),
                 length: 6,
                 animationType: AnimationType.fade,
@@ -277,67 +294,98 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
                   return null;
                 },
                 pinTheme: PinTheme(
-                  inactiveFillColor: Colors.transparent,
-                  inactiveColor: Colors.black,
-                  selectedColor: AppColors.lightGreenSecondary,
-                  selectedFillColor: Colors.white,
+                  // Active (filled) cell
+                  activeColor: cs.secondary,
+                  activeFillColor: cs.surface,
+                  // Selected (focused) cell
+                  selectedColor: cs.secondary,
+                  selectedFillColor: cs.surfaceContainerHighest,
+                  // Inactive (empty unfocused) cell
+                  inactiveColor: cs.onSurface.withValues(alpha: 0.2),
+                  inactiveFillColor: cs.surface,
+                  // Disabled
+                  disabledColor: cs.onSurface.withValues(alpha: 0.1),
+                  // Shape
                   shape: PinCodeFieldShape.box,
-                  borderRadius: BorderRadius.circular(5),
-                  fieldHeight: 50,
-                  fieldWidth: 40,
-                  activeFillColor: Colors.white,
-                  disabledColor: Colors.grey,
+                  borderRadius: BorderRadius.circular(10),
+                  borderWidth: 1.5,
+                  fieldHeight: 54,
+                  fieldWidth: 46,
                 ),
-                cursorColor: Theme.of(context).colorScheme.secondary,
-                animationDuration: const Duration(milliseconds: 300),
+                cursorColor: cs.secondary,
+                animationDuration: const Duration(milliseconds: 250),
                 enableActiveFill: true,
                 errorAnimationController: errorController,
                 controller: textEditingController,
                 keyboardType: TextInputType.number,
-                boxShadows: const [
+                textStyle: tt.headlineSmall?.copyWith(color: cs.onSurface),
+                boxShadows: [
                   BoxShadow(
-                    offset: Offset(0, 1),
-                    color: Colors.black12,
-                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                    color: cs.shadow.withValues(alpha: 0.06),
+                    blurRadius: 8,
                   ),
                 ],
-                onCompleted: (v) {
-                  _verifyOtp(v);
-                },
+                onCompleted: _verifyOtp,
                 onChanged: (value) {
-                  if (mounted) {
-                    setState(() {
-                      currentText = value;
-                    });
-                  }
+                  if (mounted) setState(() => currentText = value);
                 },
-                beforeTextPaste: (text) {
-                  return true;
-                },
+                beforeTextPaste: (_) => true,
               ),
-            ),
-            if (_isVerifying)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator(),
-                ),
+
+              const SizedBox(height: 8),
+
+              // ── Loading indicator ───────────────────────────────────────
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: _isVerifying
+                    ? Padding(
+                        key: const ValueKey('loader'),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Center(
+                          child: SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: cs.secondary,
+                            ),
+                          ),
+                        ),
+                      )
+                    : const SizedBox(key: ValueKey('empty'), height: 0),
               ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Text(
-                  context.tr('didnt_get_email'),
-                  style: theme.textTheme.titleMedium,
-                ),
-                AppButton.text(
-                  onPressed: _canResend && !_isVerifying ? _resendOtp : null,
-                  label: context.tr('resend_code'),
-                  color: theme.colorScheme.secondary,
-                ),
-              ],
-            ),
-          ],
+
+              const SizedBox(height: 16),
+
+              // ── Resend row ──────────────────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    context.tr('didnt_get_email'),
+                    style: tt.bodyMedium?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  _canResend
+                      ? AppButton.text(
+                          onPressed: !_isVerifying ? _resendOtp : null,
+                          label: context.tr('resend_code'),
+                          color: cs.secondary,
+                        )
+                      : Text(
+                          // Show countdown as "Resend in 42s"
+                          '${isAr ? 'إعادة الإرسال خلال' : 'Resend in'} $_resendCountdown${isAr ? 'ث' : 's'}',
+                          style: tt.bodyMedium?.copyWith(
+                            color: cs.onSurface.withValues(alpha: 0.4),
+                          ),
+                        ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
