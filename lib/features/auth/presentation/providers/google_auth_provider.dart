@@ -10,8 +10,17 @@ class GoogleAuth extends _$GoogleAuth {
 
   Future<void> signInWithGoogle() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(authRepositoryProvider).signInWithGoogle(),
-    );
+    try {
+      await ref.read(authRepositoryProvider).signInWithGoogle();
+      state = const AsyncData(null);
+    } catch (e) {
+      final errorStr = e.toString().toLowerCase();
+      // Silently ignore user-initiated cancellations
+      if (errorStr.contains('canceled') || errorStr.contains('cancelled')) {
+        state = const AsyncData(null); // Reset without error
+        return;
+      }
+      state = AsyncError(e, StackTrace.current);
+    }
   }
 }

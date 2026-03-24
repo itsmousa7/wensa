@@ -65,7 +65,7 @@ class _SigninPageState extends ConsumerState<SigninPage> {
 
       context.goNamed(
         RouteNames.verifyEmail,
-        queryParameters: {'email': email}, 
+        queryParameters: {'email': email},
       );
     } catch (e) {
       if (!mounted) return;
@@ -102,12 +102,13 @@ class _SigninPageState extends ConsumerState<SigninPage> {
         },
       );
     });
+    // Change the listener — remove onLoading
     ref.listen(googleAuthProvider, (prev, next) {
       listenAsyncProvider(
         context: context,
         prev: prev,
         next: next,
-        onLoading: () => showLoadingDialog(context),
+        // No onLoading here anymore
         onError: (error) => errorDialog(context, error),
       );
     });
@@ -138,8 +139,8 @@ class _SigninPageState extends ConsumerState<SigninPage> {
             IconButton(
               onPressed: () => ref.read(appLocaleProvider.notifier).toggle(),
               icon: Icon(switch (ref.watch(appLocaleProvider)) {
-                ArabicLocale() => Icons.language, 
-                _ => Icons.language_outlined, 
+                ArabicLocale() => Icons.language,
+                _ => Icons.language_outlined,
               }),
             ),
           ],
@@ -233,12 +234,18 @@ class _SigninPageState extends ConsumerState<SigninPage> {
                       ],
                     ),
                     const Gap(AppSpacing.lg),
+                    // Update the button's onPressed
                     AppButton.secondary(
                       onPressed: () async {
+                        showLoadingDialog(context); // Show manually before call
                         await ref
                             .read(googleAuthProvider.notifier)
                             .signInWithGoogle();
-                        
+                        if (context.mounted && Navigator.canPop(context)) {
+                          Navigator.pop(
+                            context,
+                          ); // Always dismiss after call ends
+                        }
                       },
                       color: theme.colorScheme.outline,
                       icon: SvgPicture.asset(
