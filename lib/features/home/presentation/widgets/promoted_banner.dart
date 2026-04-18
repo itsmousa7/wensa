@@ -127,8 +127,8 @@ class PromotedBannerInline extends ConsumerWidget {
       loading: () => _buildSkeleton(theme),
       error: (_, _) => const SizedBox.shrink(),
       data: (banners) {
-        if (banners.isEmpty) return const SizedBox.shrink();
-        final banner = banners[slotIndex % banners.length];
+        if (slotIndex >= banners.length) return const SizedBox.shrink();
+        final banner = banners[slotIndex];
         return Padding(
           padding: const EdgeInsets.fromLTRB(22, 6, 22, 0),
           child: _BannerCard(banner: banner, isAr: isAr),

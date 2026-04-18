@@ -186,7 +186,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                 ),
               ] else ...[
-                SliverToBoxAdapter(child: PromotedBanner()),
                 // ── Normal feed sections ─────────────────────────────────
                 if (ref.watch(hotEventsProvider).when(
                   data: (e) => e.isNotEmpty,
@@ -200,6 +199,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                 SliverToBoxAdapter(child: CategoryBar(isAr: isAr)),
 
                 if (selectedCat == null) ...[
+                  // ── Ad slot 0 ────────────────────────────────────────────
+                  const SliverToBoxAdapter(
+                    child: PromotedBannerInline(slotIndex: 0),
+                  ),
+
                   SliverToBoxAdapter(
                     child: _sectionTitle(
                       _trendingLabel,
@@ -211,6 +215,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                     child: TrendingFeedSection(
                       onViewAll: () => _goToSeeAll(SeeAllType.trending),
                     ),
+                  ),
+
+                  // ── Ad slot 1 ────────────────────────────────────────────
+                  const SliverToBoxAdapter(
+                    child: PromotedBannerInline(slotIndex: 1),
                   ),
 
                   SliverToBoxAdapter(
@@ -226,9 +235,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                   ),
 
-                  // ── Mid-feed ad slot ─────────────────────────────────────────────────
+                  // ── Ad slot 2 ────────────────────────────────────────────
                   const SliverToBoxAdapter(
-                    child: PromotedBannerInline(slotIndex: 1),
+                    child: PromotedBannerInline(slotIndex: 2),
                   ),
 
                   SliverToBoxAdapter(
@@ -243,6 +252,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                       onViewAll: () => _goToSeeAll(SeeAllType.newOpenings),
                     ),
                   ),
+
+                  // ── Ad slot 3 ────────────────────────────────────────────
+                  const SliverToBoxAdapter(
+                    child: PromotedBannerInline(slotIndex: 3),
+                  ),
+
                   if (ref.watch(allEventsProvider).when(
                     data: (e) => e.isNotEmpty,
                     loading: () => true,
@@ -259,6 +274,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                       child: AllEventsSection(
                         onViewAll: () => _goToSeeAll(SeeAllType.allEvents),
                       ),
+                    ),
+
+                    // ── Ad slot 4 ──────────────────────────────────────────
+                    const SliverToBoxAdapter(
+                      child: PromotedBannerInline(slotIndex: 4),
                     ),
                   ],
 

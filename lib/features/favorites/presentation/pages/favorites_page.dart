@@ -96,7 +96,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
 
               // ── Ad slot ──────────────────────────────────────────────────
               const SliverToBoxAdapter(
-                child: PromotedBannerInline(slotIndex: 2),
+                child: PromotedBannerInline(slotIndex: 0),
               ),
 
               // ── Feed ─────────────────────────────────────────────────────
