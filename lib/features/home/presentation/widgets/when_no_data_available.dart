@@ -4,7 +4,7 @@ import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
-import 'package:future_riverpod/features/home/presentation/widgets/full_width_feed_card.dart';
+import 'package:future_riverpod/core/widgets/full_width_feed_card.dart';
 import 'package:lottie/lottie.dart';
 
 class CategoryFeedSection extends ConsumerWidget {

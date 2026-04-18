@@ -1,5 +1,5 @@
-import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:future_riverpod/features/events/domain/models/event_model.dart';
+import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -12,9 +12,14 @@ part 'all_events_provider.g.dart';
 @riverpod
 Future<List<EventModel>> allEvents(Ref ref) async {
   final rows = await Supabase.instance.client
-      .from('events')
+      .schema('content')
+      .from('events_mobile')
       .select()
-      .order('hotness_score', ascending: false)
+      .eq('event_status', 'approved')
+      .or(
+        'end_date.is.null,end_date.gt.${DateTime.now().toUtc().toIso8601String()}',
+      )
+      .order('created_at', ascending: false)
       .limit(20);
 
   return (rows as List)
@@ -47,9 +52,14 @@ class AllEventsSeeAll extends _$AllEventsSeeAll {
       final to = from + _pageSize - 1;
 
       final rows = await Supabase.instance.client
-          .from('events')
+          .schema('content')
+          .from('events_mobile')
           .select()
-          .order('hotness_score', ascending: false)
+          .eq('event_status', 'approved')
+          .or(
+            'end_date.is.null,end_date.gt.${DateTime.now().toUtc().toIso8601String()}',
+          )
+          .order('created_at', ascending: false)
           .range(from, to);
 
       final fetched = (rows as List)

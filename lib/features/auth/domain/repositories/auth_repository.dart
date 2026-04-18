@@ -106,6 +106,7 @@ class AuthRepository {
 
       // Update app_users table
       await _client
+          .schema('profiles')
           .from('app_users')
           .update({'first_name': firstName, 'second_name': secondName})
           .eq('id', userId);

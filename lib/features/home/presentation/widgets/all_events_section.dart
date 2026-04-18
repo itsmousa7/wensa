@@ -30,22 +30,7 @@ class AllEventsSection extends ConsumerWidget {
       data: (allItems) {
         final items = allItems.take(_maxInlineItems).toList();
 
-        if (items.isEmpty) {
-          return SizedBox(
-            height: 100,
-            child: Center(
-              child: Text(
-                isAr ? 'لا توجد أحداث حالياً' : 'No events right now',
-                style: TextStyle(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.45),
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          );
-        }
+        if (items.isEmpty) return const SizedBox.shrink();
 
         return SizedBox(
           height: 210,
@@ -63,6 +48,7 @@ class AllEventsSection extends ConsumerWidget {
               return FeedCard(
                 placeId: event.id,
                 coverImageUrl: event.coverImageUrl,
+                logoUrl: event.logoUrl,
                 titleEn: event.titleEn,
                 titleAr: event.titleAr,
                 subtitleEn: event.city,

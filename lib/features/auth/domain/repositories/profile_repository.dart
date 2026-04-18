@@ -17,7 +17,7 @@ class ProfileRepository {
 
   Future<UserModel> fetchProfile(String userId) async {
     final data = await _client
-        .from('app_users')
+        .schema('profiles').from('app_users')
         .select()
         .eq('id', userId)
         .single();
@@ -26,6 +26,7 @@ class ProfileRepository {
 
   Future<int> fetchReviewsCount(String userId) async {
     final res = await _client
+        .schema('profiles')
         .from('reviews')
         .select('id')
         .eq('user_id', userId)
@@ -63,7 +64,7 @@ class ProfileRepository {
 
     // Clear the url from the database row
     await _client
-        .from('app_users')
+        .schema('profiles').from('app_users')
         .update({
           'avatar_url': null,
           'updated_at': DateTime.now().toUtc().toIso8601String(),
@@ -90,7 +91,7 @@ class ProfileRepository {
     };
 
     final data = await _client
-        .from('app_users')
+        .schema('profiles').from('app_users')
         .update(payload)
         .eq('id', userId)
         .select()

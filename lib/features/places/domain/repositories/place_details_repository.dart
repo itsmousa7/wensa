@@ -13,7 +13,8 @@ class PlaceDetailsRepository {
 
   Future<PlaceModel> fetchPlace(String placeId) async {
     final data = await _client
-        .from('places')
+        .schema('content')
+        .from('places_mobile')
         .select()
         .eq('id', placeId)
         .single();
@@ -22,15 +23,20 @@ class PlaceDetailsRepository {
 
   Future<List<PlaceImageModel>> fetchImages(String placeId) async {
     final data = await _client
+        .schema('content')
         .from('place_images')
         .select()
         .eq('place_id', placeId)
         .order('display_order', ascending: true);
-    return (data as List).map((e) => PlaceImageModel.fromJson(e)).toList();
+    return data
+        .map((e) => PlaceImageModel.fromJson(e))
+        .where((img) => img.imageUrl.isNotEmpty)
+        .toList();
   }
 
   Future<List<TagModel>> fetchTags(String placeId) async {
     final data = await _client
+        .schema('content')
         .from('place_tags')
         .select('tags(id, name_ar, name_en)')
         .eq('place_id', placeId);

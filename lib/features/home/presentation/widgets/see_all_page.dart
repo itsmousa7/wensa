@@ -39,59 +39,68 @@ class SeeAllPage extends ConsumerWidget {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: [
-              // ── App bar ──────────────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 8, 22, 4),
-                  child: Row(
-                    children: [
-                      CupertinoButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        padding: const EdgeInsets.all(12),
-                        child: Icon(
-                          isAr
-                              ? CupertinoIcons.chevron_right
-                              : CupertinoIcons.chevron_left,
-                          color: cs.onSurface,
-                          size: 20,
-                        ),
+          child: Column(
+            children: [
+              // ── Static app bar ───────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 8, 22, 4),
+                child: Row(
+                  children: [
+                    CupertinoButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      padding: const EdgeInsets.all(12),
+                      child: Icon(
+                        isAr
+                            ? CupertinoIcons.chevron_right
+                            : CupertinoIcons.chevron_left,
+                        color: cs.onSurface,
+                        size: 20,
                       ),
-                      Text(
-                        isAr ? titleAr : titleEn,
-                        style: tt.headlineSmall?.copyWith(
-                          color: cs.onSurface,
-                          fontWeight: FontWeight.w800,
-                        ),
+                    ),
+                    Text(
+                      isAr ? titleAr : titleEn,
+                      style: tt.headlineSmall?.copyWith(
+                        color: cs.onSurface,
+                        fontWeight: FontWeight.w800,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
 
-              // ── Feed ─────────────────────────────────────────────────────
-              FeedListSection(
-                feed: feed,
-                onLoadMore: () => type == SeeAllType.allEvents
-                    ? ref.read(allEventsSeeAllProvider.notifier).loadMore()
-                    : ref.read(seeAllFeedProvider(type).notifier).loadMore(),
-                emptyTitleEn: switch (type) {
-                  SeeAllType.trending => 'Nothing trending right now',
-                  SeeAllType.newOpenings => 'No new openings yet',
-                  SeeAllType.allEvents => 'No events right now',
-                },
-                emptyTitleAr: switch (type) {
-                  SeeAllType.trending => 'لا يوجد شيء رائج الآن',
-                  SeeAllType.newOpenings => 'لا توجد افتتاحات جديدة',
-                  SeeAllType.allEvents => 'لا توجد أحداث حالياً',
-                },
-              ),
+              // ── Scrollable feed ──────────────────────────────────────────
+              Expanded(
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  slivers: [
+                    FeedListSection(
+                      feed: feed,
+                      onLoadMore: () => type == SeeAllType.allEvents
+                          ? ref.read(allEventsSeeAllProvider.notifier).loadMore()
+                          : ref.read(seeAllFeedProvider(type).notifier).loadMore(),
+                      onRetry: () => type == SeeAllType.allEvents
+                          ? ref.invalidate(allEventsSeeAllProvider)
+                          : ref.invalidate(seeAllFeedProvider(type)),
+                      emptyTitleEn: switch (type) {
+                        SeeAllType.trending => 'Nothing trending right now',
+                        SeeAllType.newOpenings => 'No new openings yet',
+                        SeeAllType.allEvents => 'No events right now',
+                        SeeAllType.featured => 'No featured places right now',
+                      },
+                      emptyTitleAr: switch (type) {
+                        SeeAllType.trending => 'لا يوجد شيء رائج الآن',
+                        SeeAllType.newOpenings => 'لا توجد افتتاحات جديدة',
+                        SeeAllType.allEvents => 'لا توجد أحداث حالياً',
+                        SeeAllType.featured => 'لا توجد أماكن مميزة حالياً',
+                      },
+                    ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

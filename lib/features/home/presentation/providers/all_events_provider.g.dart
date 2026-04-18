@@ -46,7 +46,7 @@ final class AllEventsProvider
   }
 }
 
-String _$allEventsHash() => r'7e8a2f21975b4782f9cf74b289ba0e3848c902f0';
+String _$allEventsHash() => r'81d636eb5495efaa3e3dfc6ff437c4de7f9d0c17';
 
 @ProviderFor(AllEventsSeeAll)
 final allEventsSeeAllProvider = AllEventsSeeAllProvider._();
@@ -80,7 +80,7 @@ final class AllEventsSeeAllProvider
   }
 }
 
-String _$allEventsSeeAllHash() => r'28e302f2d74fd6c430b81b785356934febbe3ff7';
+String _$allEventsSeeAllHash() => r'37eaf9a5431980eadb7532c3100a62c3a0cdad0f';
 
 abstract class _$AllEventsSeeAll extends $Notifier<CategoryFeedState> {
   CategoryFeedState build();

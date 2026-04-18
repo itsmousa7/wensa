@@ -60,7 +60,11 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
   void _openFullscreen(List<String> images, int index) {
     Navigator.of(context).push(
       PageRouteBuilder<void>(
-        opaque: false,
+        opaque: true,
+        transitionDuration: const Duration(milliseconds: 180),
+        reverseTransitionDuration: const Duration(milliseconds: 180),
+        transitionsBuilder: (_, animation, _, child) =>
+            FadeTransition(opacity: animation, child: child),
         pageBuilder: (_, _, _) =>
             PlaceFullscreenViewer(images: images, initialIndex: index),
       ),

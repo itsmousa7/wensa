@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/widgets/merchant_logo.dart';
 import 'package:future_riverpod/features/places/domain/models/place_model.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_app_bar_state.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
@@ -11,7 +12,7 @@ import 'package:future_riverpod/features/places/presentation/widgets/place_detai
 import 'package:future_riverpod/features/places/presentation/widgets/place_location_sheet.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_opening_hours.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_reviews_sheet.dart';
-import 'package:future_riverpod/features/places/presentation/widgets/place_statistic_chip.dart';
+import 'package:future_riverpod/core/widgets/place_statistic_chip.dart';
 import 'package:gap/gap.dart';
 
 class PlaceInfoSection extends ConsumerWidget {
@@ -58,76 +59,100 @@ class PlaceInfoSection extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Name + verified ───────────────────────────────────────────
+          // ── Logo + Name + Location (ListTile-style) ───────────────────
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                name,
-                style: tt.titleLarge?.copyWith(
-                  color: cs.outline,
-                  fontWeight: FontWeight.bold,
-                  height: 1.5,
-                ),
-              ),
-              if (place.isVerified) ...[
-                const Gap(15),
-                SizedBox(
-                  height: 20,
-                  child: SvgPicture.asset('assets/icons/verify.svg'),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // ── Location chip ─────────────────────────────────────────────
-          if (place.area != null || place.city.isNotEmpty)
-            GestureDetector(
-              onTap: place.latitude != null && place.longitude != null
-                  ? () => showLocationSheet(
-                      context: context,
-                      latitude: place.latitude!,
-                      longitude: place.longitude!,
-                      placeName: name,
-                      isAr: isAr,
-                    )
-                  : null,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: primaryChipDecoration(),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              MerchantLogo(logoUrl: place.logoUrl, size: 62),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      height: 14,
-                      child: SvgPicture.asset('assets/icons/location.svg'),
+                    // Name + verified
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            name,
+                            style: tt.titleLarge?.copyWith(
+                              color: cs.outline,
+                              fontWeight: FontWeight.bold,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                        if (place.isVerified) ...[
+                          const Gap(10),
+                          SizedBox(
+                            height: 20,
+                            child: SvgPicture.asset('assets/icons/verify.svg'),
+                          ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      [
-                        if (place.area?.isNotEmpty == true) place.area!,
-                        if (place.city.isNotEmpty) place.city,
-                      ].join(' · '),
-                      style: tt.bodySmall?.copyWith(
-                        color: cs.onSurface.withValues(alpha: 0.75),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (place.latitude != null) ...[
-                      const SizedBox(width: 6),
-                      Icon(
-                        CupertinoIcons.arrow_up_right_square,
-                        size: 16,
-                        color: cs.primary.withValues(alpha: 0.7),
+                    // Location chip
+                    if (place.area != null || place.city.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: place.latitude != null && place.longitude != null
+                            ? () => showLocationSheet(
+                                context: context,
+                                latitude: place.latitude!,
+                                longitude: place.longitude!,
+                                placeName: name,
+                                isAr: isAr,
+                              )
+                            : null,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: primaryChipDecoration(),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                height: 13,
+                                child: SvgPicture.asset(
+                                  'assets/icons/location.svg',
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  [
+                                    if (place.area?.isNotEmpty == true)
+                                      place.area!,
+                                    if (place.city.isNotEmpty) place.city,
+                                  ].join(' · '),
+                                  style: tt.bodySmall?.copyWith(
+                                    color: cs.onSurface.withValues(alpha: 0.75),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (place.latitude != null) ...[
+                                const SizedBox(width: 5),
+                                Icon(
+                                  CupertinoIcons.arrow_up_right_square,
+                                  size: 14,
+                                  color: cs.primary.withValues(alpha: 0.7),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ],
                 ),
               ),
-            ),
+            ],
+          ),
           const SizedBox(height: 16),
 
           // ── Stats row ─────────────────────────────────────────────────

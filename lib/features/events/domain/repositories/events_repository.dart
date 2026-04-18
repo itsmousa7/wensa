@@ -16,7 +16,8 @@ class EventsRepository {
   /// Fetches the full event row by [eventId].
   Future<EventModel> fetchEvent(String eventId) async {
     final data = await _client
-        .from('events')
+        .schema('content')
+        .from('events_mobile')
         .select()
         .eq('id', eventId)
         .single();

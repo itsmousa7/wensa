@@ -33,10 +33,12 @@ class SearchRepository {
     int limit,
   ) async {
     final rows = await _client
-        .from('places')
+        .schema('content')
+        .from('places_mobile')
         .select(
           'id, name_en, name_ar, area, city, cover_image_url, is_verified',
         )
+        .eq('place_status', 'approved')
         .or('name_en.ilike.$pattern,name_ar.ilike.$pattern')
         .limit(limit);
 
@@ -50,8 +52,10 @@ class SearchRepository {
     int limit,
   ) async {
     final rows = await _client
-        .from('events')
+        .schema('content')
+        .from('events_mobile')
         .select('id, title_en, title_ar, city, cover_image_url')
+        .eq('event_status', 'approved')
         .or('title_en.ilike.$pattern,title_ar.ilike.$pattern')
         .limit(limit);
 

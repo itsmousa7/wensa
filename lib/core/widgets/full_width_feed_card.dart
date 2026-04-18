@@ -6,6 +6,7 @@ import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
+import 'package:future_riverpod/core/widgets/merchant_logo.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/wensa_badge.dart';
@@ -95,59 +96,76 @@ class FullWidthFeedCard extends ConsumerWidget {
                     isFavorited: isFav,
                   ),
                 ),
+
               ],
             ),
           ),
 
-          // ── Text area — inside the same Container ──────────────────────
+          // ── Text area — logo leading + title/location column ───────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Title + verify badge inline
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        isAr ? item.titleAr : item.titleEn,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: tt.titleMedium?.copyWith(color: cs.onSurface),
-                      ),
-                    ),
-                    if (item.isVerified) ...[
-                      const Gap(6),
-                      SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: SvgPicture.asset('assets/icons/verify.svg'),
-                      ),
-                    ],
-                  ],
-                ),
-
-                // Subtitle (area / location)
-                if ((isAr ? item.subtitleAr : item.subtitleEn) != null) ...[
-                  const SizedBox(height: 5),
-                  Row(
+                MerchantLogo(logoUrl: item.logoUrl, size: 52),
+                const Gap(12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(
-                        height: 10,
-                        child: SvgPicture.asset('assets/icons/location.svg'),
+                      // Title + verify badge
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              isAr ? item.titleAr : item.titleEn,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: tt.titleMedium?.copyWith(
+                                color: cs.onSurface,
+                              ),
+                            ),
+                          ),
+                          if (item.isVerified) ...[
+                            const Gap(6),
+                            SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: SvgPicture.asset(
+                                'assets/icons/verify.svg',
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                      const Gap(4),
-                      Text(
-                        isAr ? item.subtitleAr! : item.subtitleEn!,
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurface.withValues(alpha: 0.55),
+
+                      // Subtitle (area / location)
+                      if ((isAr ? item.subtitleAr : item.subtitleEn) !=
+                          null) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            SizedBox(
+                              height: 10,
+                              child: SvgPicture.asset(
+                                'assets/icons/location.svg',
+                              ),
+                            ),
+                            const Gap(4),
+                            Text(
+                              isAr ? item.subtitleAr! : item.subtitleEn!,
+                              style: tt.bodySmall?.copyWith(
+                                color: cs.onSurface.withValues(alpha: 0.55),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+                      ],
                     ],
                   ),
-                ],
+                ),
               ],
             ),
           ),
@@ -214,56 +232,73 @@ Widget buildFullWidthSkeleton(BuildContext context) {
           ),
         ),
 
-        // Text placeholder
+        // Text placeholder — logo leading + title/location
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Title + verify
-              Row(
-                children: [
-                  Container(
-                    height: 16,
-                    width: 150,
-                    decoration: BoxDecoration(
-                      color: cs.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  const Gap(8),
-                  Container(
-                    height: 16,
-                    width: 16,
-                    decoration: BoxDecoration(
-                      color: cs.surfaceContainerHighest,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ],
+              // Logo box
+              Container(
+                width: 57,
+                height: 57,
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              const SizedBox(height: 8),
-              // Location
-              Row(
-                children: [
-                  Container(
-                    height: 10,
-                    width: 10,
-                    decoration: BoxDecoration(
-                      color: cs.surfaceContainerHighest,
-                      shape: BoxShape.circle,
+              const Gap(12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title + verify
+                    Row(
+                      children: [
+                        Container(
+                          height: 16,
+                          width: 130,
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        const Gap(8),
+                        Container(
+                          height: 16,
+                          width: 16,
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerHighest,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const Gap(4),
-                  Container(
-                    height: 10,
-                    width: 90,
-                    decoration: BoxDecoration(
-                      color: cs.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(6),
+                    const SizedBox(height: 6),
+                    // Location
+                    Row(
+                      children: [
+                        Container(
+                          height: 10,
+                          width: 10,
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerHighest,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const Gap(4),
+                        Container(
+                          height: 10,
+                          width: 80,
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),

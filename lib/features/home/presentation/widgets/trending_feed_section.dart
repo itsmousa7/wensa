@@ -39,6 +39,7 @@ class TrendingFeedSection extends ConsumerWidget {
             return FeedCard(
               placeId: item.id,
               coverImageUrl: item.coverImageUrl,
+              logoUrl: item.logoUrl,
               titleEn: item.titleEn,
               titleAr: item.titleAr,
               subtitleEn: item.subtitleEn,

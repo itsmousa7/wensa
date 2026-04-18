@@ -5,13 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/widgets/merchant_logo.dart';
 import 'package:future_riverpod/features/events/domain/models/event_model.dart';
 import 'package:future_riverpod/features/events/presentation/providers/event_app_bar_state.dart';
 import 'package:future_riverpod/features/events/presentation/widgets/event_date_section.dart';
 import 'package:future_riverpod/features/events/presentation/widgets/event_ticket_section.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_details_helper.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_location_sheet.dart';
-import 'package:future_riverpod/features/places/presentation/widgets/place_statistic_chip.dart';
+import 'package:future_riverpod/core/widgets/place_statistic_chip.dart';
 import 'package:gap/gap.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -57,77 +58,97 @@ class EventInfoSection extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Title + featured badge ─────────────────────────────────────
+          // ── Logo + Title + Location (ListTile-style) ──────────────────
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Flexible(
-                child: Text(
-                  title,
-                  style: tt.titleLarge?.copyWith(
-                    color: cs.outline,
-                    fontWeight: FontWeight.bold,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              if (event.isFeatured) ...[
-                const Gap(15),
-                SizedBox(
-                  height: 20,
-                  child: SvgPicture.asset('assets/icons/verify.svg'),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // ── Location chip — tappable when lat/lng available ────────────
-          if (event.city != null && event.city!.isNotEmpty)
-            GestureDetector(
-              onTap: hasLocation
-                  ? () => showLocationSheet(
-                      context: context,
-                      latitude: event.latitude!,
-                      longitude: event.longitude!,
-                      placeName: title,
-                      isAr: isAr,
-                    )
-                  : null,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: primaryChipDecoration(),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              MerchantLogo(logoUrl: event.logoUrl, size: 62),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      height: 14,
-                      child: SvgPicture.asset('assets/icons/location.svg'),
+                    // Title + featured badge
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            style: tt.titleLarge?.copyWith(
+                              color: cs.outline,
+                              fontWeight: FontWeight.bold,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                        if (event.isFeatured) ...[
+                          const Gap(10),
+                          SizedBox(
+                            height: 20,
+                            child: SvgPicture.asset('assets/icons/verify.svg'),
+                          ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      event.city!,
-                      style: tt.titleSmall?.copyWith(
-                        color: cs.outline,
-                        fontSize: 12,
-                      ),
-                    ),
-                    // Arrow icon shown only when location is tappable
-                    if (hasLocation) ...[
-                      const SizedBox(width: 6),
-                      Icon(
-                        CupertinoIcons.arrow_up_right_square,
-                        size: 16,
-                        color: cs.primary.withValues(alpha: 0.7),
+                    // Location chip
+                    if (event.city != null && event.city!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: hasLocation
+                            ? () => showLocationSheet(
+                                context: context,
+                                latitude: event.latitude!,
+                                longitude: event.longitude!,
+                                placeName: title,
+                                isAr: isAr,
+                              )
+                            : null,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: primaryChipDecoration(),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                height: 13,
+                                child: SvgPicture.asset(
+                                  'assets/icons/location.svg',
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  event.city!,
+                                  style: tt.bodySmall?.copyWith(
+                                    color: cs.onSurface.withValues(alpha: 0.75),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (hasLocation) ...[
+                                const SizedBox(width: 5),
+                                Icon(
+                                  CupertinoIcons.arrow_up_right_square,
+                                  size: 14,
+                                  color: cs.primary.withValues(alpha: 0.7),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ],
                 ),
               ),
-            ),
-          const SizedBox(height: 10),
+            ],
+          ),
+          const SizedBox(height: 16),
 
           // ── Date chip ─────────────────────────────────────────────────
           if (event.startDate.isNotEmpty)

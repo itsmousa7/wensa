@@ -6,7 +6,7 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/features/profile/presentation/providers/user_profile_provider.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/profile_content.dart';
-import 'package:future_riverpod/features/profile/presentation/widgets/profile_error.dart';
+import 'package:future_riverpod/core/widgets/profile_error.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/profile_skeleton.dart';
 
 class ProfilePage extends ConsumerWidget {

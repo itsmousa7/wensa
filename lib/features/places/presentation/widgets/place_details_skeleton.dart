@@ -33,23 +33,45 @@ class PlaceDetailsSkeleton extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ── Logo + Name + Location (ListTile-style) ──────────
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Bone(
-                        width: 200,
-                        height: 26,
-                        borderRadius: BorderRadius.circular(8),
+                        width: 67,
+                        height: 67,
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       const SizedBox(width: 14),
-                      Bone.circle(size: 24),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Bone(
+                                  width: 160,
+                                  height: 22,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                const SizedBox(width: 10),
+                                Bone(
+                                  width: 20,
+                                  height: 20,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Bone(
+                              width: 130,
+                              height: 30,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  Bone(
-                    width: 160,
-                    height: 38,
-                    borderRadius: BorderRadius.circular(12),
                   ),
                   const SizedBox(height: 16),
 

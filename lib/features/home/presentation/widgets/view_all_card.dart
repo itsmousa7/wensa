@@ -8,7 +8,7 @@ class ViewAllCard extends StatelessWidget {
     this.height = 210,
     // How much of the bottom is "text area" below the image.
     // FeedCard image = 130px, text area ≈ 68px → offset = 68.
-    this.textAreaHeight = 68,
+    this.textAreaHeight = 69,
   });
 
   final bool isAr;

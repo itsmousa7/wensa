@@ -53,7 +53,11 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
   void _openFullscreen(List<String> images, int index) {
     Navigator.of(context).push(
       PageRouteBuilder<void>(
-        opaque: false,
+        opaque: true,
+        transitionDuration: const Duration(milliseconds: 180),
+        reverseTransitionDuration: const Duration(milliseconds: 180),
+        transitionsBuilder: (_, animation, _, child) =>
+            FadeTransition(opacity: animation, child: child),
         pageBuilder: (_, _, _) =>
             PlaceFullscreenViewer(images: images, initialIndex: index),
       ),
@@ -90,11 +94,10 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
           ),
           data: (place) {
             final name = _isAr ? place.nameAr : place.nameEn;
-            final extras =
-                ref.watch(placeImagesProvider(widget.placeId)).value ?? [];
             final images = [
               if (place.coverImageUrl != null) place.coverImageUrl!,
-              ...extras.map((e) => e.imageUrl),
+              ...place
+                  .additionalImages, // ← reads from the JSONB column directly
             ];
             final isFav =
                 ref.watch(favoritesProvider).value?.contains(place.id) ?? false;

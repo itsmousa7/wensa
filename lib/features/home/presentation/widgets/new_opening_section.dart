@@ -38,6 +38,7 @@ class NewOpeningSection extends ConsumerWidget {
             return FeedCard(
               placeId: item.id,
               coverImageUrl: item.coverImageUrl,
+              logoUrl: item.logoUrl,
               titleEn: item.nameEn,
               titleAr: item.nameAr,
               subtitleEn: item.area,

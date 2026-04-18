@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:future_riverpod/features/profile/presentation/widgets/profile_error.dart';
+import 'package:future_riverpod/core/widgets/profile_error.dart';
 import 'package:future_riverpod/features/search/presentation/providers/search_provider.dart';
 
 class ErrorSearchHint extends ConsumerWidget {

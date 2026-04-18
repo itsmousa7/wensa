@@ -33,7 +33,7 @@ final class GoogleAuthProvider
   GoogleAuth create() => GoogleAuth();
 }
 
-String _$googleAuthHash() => r'bdc2f62a1f03bfc7bdb0402610ee34ae05515a22';
+String _$googleAuthHash() => r'c7f136b09e5c1b6cf7e1d70c12dc081f723d90a6';
 
 abstract class _$GoogleAuth extends $AsyncNotifier<void> {
   FutureOr<void> build();

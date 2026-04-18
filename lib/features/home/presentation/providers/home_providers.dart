@@ -33,6 +33,12 @@ Future<List<PlaceModel>> newOpenings(Ref ref) {
   return ref.read(homeRepositoryProvider).getNewOpenings();
 }
 
+// ── Featured Feed ─────────────────────────────────────────────────────────────
+@riverpod
+Future<List<TrendingFeedItemModel>> featuredFeed(Ref ref) {
+  return ref.read(homeRepositoryProvider).getFeaturedFeed();
+}
+
 // ── Promoted Banners ──────────────────────────────────────────────────────────
 @riverpod
 Future<List<PromotedBannerModel>> promotedBanners(Ref ref) {

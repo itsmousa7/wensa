@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$EventModel {
 
- String get id; String? get placeId; String get titleAr; String get titleEn; String? get descriptionAr; String? get descriptionEn; String? get coverImageUrl; String get startDate; String? get endDate; double? get ticketPrice; String? get ticketUrl; String? get city; double? get latitude; double? get longitude; bool get isFeatured; int get viewCount; int get savesCount; int get reviewsCount; int get sharesCount; int get checkinsCount; double get hotnessScore; String? get createdAt; String? get updatedAt;
+ String get id; String? get placeId; String get titleAr; String get titleEn; String? get descriptionAr; String? get descriptionEn; String? get coverImageUrl; String? get logoUrl; String get startDate; String? get endDate; double? get ticketPrice; String? get ticketUrl; String? get city; double? get latitude; double? get longitude; bool get isFeatured; int get viewCount; int get savesCount; int get reviewsCount; int get sharesCount; int get checkinsCount; double get hotnessScore; String? get createdAt; String? get updatedAt;
 /// Create a copy of EventModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $EventModelCopyWith<EventModel> get copyWith => _$EventModelCopyWithImpl<EventMo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is EventModel&&(identical(other.id, id) || other.id == id)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.titleAr, titleAr) || other.titleAr == titleAr)&&(identical(other.titleEn, titleEn) || other.titleEn == titleEn)&&(identical(other.descriptionAr, descriptionAr) || other.descriptionAr == descriptionAr)&&(identical(other.descriptionEn, descriptionEn) || other.descriptionEn == descriptionEn)&&(identical(other.coverImageUrl, coverImageUrl) || other.coverImageUrl == coverImageUrl)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.ticketPrice, ticketPrice) || other.ticketPrice == ticketPrice)&&(identical(other.ticketUrl, ticketUrl) || other.ticketUrl == ticketUrl)&&(identical(other.city, city) || other.city == city)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.isFeatured, isFeatured) || other.isFeatured == isFeatured)&&(identical(other.viewCount, viewCount) || other.viewCount == viewCount)&&(identical(other.savesCount, savesCount) || other.savesCount == savesCount)&&(identical(other.reviewsCount, reviewsCount) || other.reviewsCount == reviewsCount)&&(identical(other.sharesCount, sharesCount) || other.sharesCount == sharesCount)&&(identical(other.checkinsCount, checkinsCount) || other.checkinsCount == checkinsCount)&&(identical(other.hotnessScore, hotnessScore) || other.hotnessScore == hotnessScore)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is EventModel&&(identical(other.id, id) || other.id == id)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.titleAr, titleAr) || other.titleAr == titleAr)&&(identical(other.titleEn, titleEn) || other.titleEn == titleEn)&&(identical(other.descriptionAr, descriptionAr) || other.descriptionAr == descriptionAr)&&(identical(other.descriptionEn, descriptionEn) || other.descriptionEn == descriptionEn)&&(identical(other.coverImageUrl, coverImageUrl) || other.coverImageUrl == coverImageUrl)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.ticketPrice, ticketPrice) || other.ticketPrice == ticketPrice)&&(identical(other.ticketUrl, ticketUrl) || other.ticketUrl == ticketUrl)&&(identical(other.city, city) || other.city == city)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.isFeatured, isFeatured) || other.isFeatured == isFeatured)&&(identical(other.viewCount, viewCount) || other.viewCount == viewCount)&&(identical(other.savesCount, savesCount) || other.savesCount == savesCount)&&(identical(other.reviewsCount, reviewsCount) || other.reviewsCount == reviewsCount)&&(identical(other.sharesCount, sharesCount) || other.sharesCount == sharesCount)&&(identical(other.checkinsCount, checkinsCount) || other.checkinsCount == checkinsCount)&&(identical(other.hotnessScore, hotnessScore) || other.hotnessScore == hotnessScore)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,placeId,titleAr,titleEn,descriptionAr,descriptionEn,coverImageUrl,startDate,endDate,ticketPrice,ticketUrl,city,latitude,longitude,isFeatured,viewCount,savesCount,reviewsCount,sharesCount,checkinsCount,hotnessScore,createdAt,updatedAt]);
+int get hashCode => Object.hashAll([runtimeType,id,placeId,titleAr,titleEn,descriptionAr,descriptionEn,coverImageUrl,logoUrl,startDate,endDate,ticketPrice,ticketUrl,city,latitude,longitude,isFeatured,viewCount,savesCount,reviewsCount,sharesCount,checkinsCount,hotnessScore,createdAt,updatedAt]);
 
 @override
 String toString() {
-  return 'EventModel(id: $id, placeId: $placeId, titleAr: $titleAr, titleEn: $titleEn, descriptionAr: $descriptionAr, descriptionEn: $descriptionEn, coverImageUrl: $coverImageUrl, startDate: $startDate, endDate: $endDate, ticketPrice: $ticketPrice, ticketUrl: $ticketUrl, city: $city, latitude: $latitude, longitude: $longitude, isFeatured: $isFeatured, viewCount: $viewCount, savesCount: $savesCount, reviewsCount: $reviewsCount, sharesCount: $sharesCount, checkinsCount: $checkinsCount, hotnessScore: $hotnessScore, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'EventModel(id: $id, placeId: $placeId, titleAr: $titleAr, titleEn: $titleEn, descriptionAr: $descriptionAr, descriptionEn: $descriptionEn, coverImageUrl: $coverImageUrl, logoUrl: $logoUrl, startDate: $startDate, endDate: $endDate, ticketPrice: $ticketPrice, ticketUrl: $ticketUrl, city: $city, latitude: $latitude, longitude: $longitude, isFeatured: $isFeatured, viewCount: $viewCount, savesCount: $savesCount, reviewsCount: $reviewsCount, sharesCount: $sharesCount, checkinsCount: $checkinsCount, hotnessScore: $hotnessScore, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $EventModelCopyWith<$Res>  {
   factory $EventModelCopyWith(EventModel value, $Res Function(EventModel) _then) = _$EventModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String? placeId, String titleAr, String titleEn, String? descriptionAr, String? descriptionEn, String? coverImageUrl, String startDate, String? endDate, double? ticketPrice, String? ticketUrl, String? city, double? latitude, double? longitude, bool isFeatured, int viewCount, int savesCount, int reviewsCount, int sharesCount, int checkinsCount, double hotnessScore, String? createdAt, String? updatedAt
+ String id, String? placeId, String titleAr, String titleEn, String? descriptionAr, String? descriptionEn, String? coverImageUrl, String? logoUrl, String startDate, String? endDate, double? ticketPrice, String? ticketUrl, String? city, double? latitude, double? longitude, bool isFeatured, int viewCount, int savesCount, int reviewsCount, int sharesCount, int checkinsCount, double hotnessScore, String? createdAt, String? updatedAt
 });
 
 
@@ -65,7 +65,7 @@ class _$EventModelCopyWithImpl<$Res>
 
 /// Create a copy of EventModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? placeId = freezed,Object? titleAr = null,Object? titleEn = null,Object? descriptionAr = freezed,Object? descriptionEn = freezed,Object? coverImageUrl = freezed,Object? startDate = null,Object? endDate = freezed,Object? ticketPrice = freezed,Object? ticketUrl = freezed,Object? city = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? isFeatured = null,Object? viewCount = null,Object? savesCount = null,Object? reviewsCount = null,Object? sharesCount = null,Object? checkinsCount = null,Object? hotnessScore = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? placeId = freezed,Object? titleAr = null,Object? titleEn = null,Object? descriptionAr = freezed,Object? descriptionEn = freezed,Object? coverImageUrl = freezed,Object? logoUrl = freezed,Object? startDate = null,Object? endDate = freezed,Object? ticketPrice = freezed,Object? ticketUrl = freezed,Object? city = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? isFeatured = null,Object? viewCount = null,Object? savesCount = null,Object? reviewsCount = null,Object? sharesCount = null,Object? checkinsCount = null,Object? hotnessScore = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,placeId: freezed == placeId ? _self.placeId : placeId // ignore: cast_nullable_to_non_nullable
@@ -74,6 +74,7 @@ as String,titleEn: null == titleEn ? _self.titleEn : titleEn // ignore: cast_nul
 as String,descriptionAr: freezed == descriptionAr ? _self.descriptionAr : descriptionAr // ignore: cast_nullable_to_non_nullable
 as String?,descriptionEn: freezed == descriptionEn ? _self.descriptionEn : descriptionEn // ignore: cast_nullable_to_non_nullable
 as String?,coverImageUrl: freezed == coverImageUrl ? _self.coverImageUrl : coverImageUrl // ignore: cast_nullable_to_non_nullable
+as String?,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
 as String?,startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
 as String,endDate: freezed == endDate ? _self.endDate : endDate // ignore: cast_nullable_to_non_nullable
 as String?,ticketPrice: freezed == ticketPrice ? _self.ticketPrice : ticketPrice // ignore: cast_nullable_to_non_nullable
@@ -175,10 +176,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? placeId,  String titleAr,  String titleEn,  String? descriptionAr,  String? descriptionEn,  String? coverImageUrl,  String startDate,  String? endDate,  double? ticketPrice,  String? ticketUrl,  String? city,  double? latitude,  double? longitude,  bool isFeatured,  int viewCount,  int savesCount,  int reviewsCount,  int sharesCount,  int checkinsCount,  double hotnessScore,  String? createdAt,  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? placeId,  String titleAr,  String titleEn,  String? descriptionAr,  String? descriptionEn,  String? coverImageUrl,  String? logoUrl,  String startDate,  String? endDate,  double? ticketPrice,  String? ticketUrl,  String? city,  double? latitude,  double? longitude,  bool isFeatured,  int viewCount,  int savesCount,  int reviewsCount,  int sharesCount,  int checkinsCount,  double hotnessScore,  String? createdAt,  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _EventModel() when $default != null:
-return $default(_that.id,_that.placeId,_that.titleAr,_that.titleEn,_that.descriptionAr,_that.descriptionEn,_that.coverImageUrl,_that.startDate,_that.endDate,_that.ticketPrice,_that.ticketUrl,_that.city,_that.latitude,_that.longitude,_that.isFeatured,_that.viewCount,_that.savesCount,_that.reviewsCount,_that.sharesCount,_that.checkinsCount,_that.hotnessScore,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.placeId,_that.titleAr,_that.titleEn,_that.descriptionAr,_that.descriptionEn,_that.coverImageUrl,_that.logoUrl,_that.startDate,_that.endDate,_that.ticketPrice,_that.ticketUrl,_that.city,_that.latitude,_that.longitude,_that.isFeatured,_that.viewCount,_that.savesCount,_that.reviewsCount,_that.sharesCount,_that.checkinsCount,_that.hotnessScore,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -196,10 +197,10 @@ return $default(_that.id,_that.placeId,_that.titleAr,_that.titleEn,_that.descrip
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? placeId,  String titleAr,  String titleEn,  String? descriptionAr,  String? descriptionEn,  String? coverImageUrl,  String startDate,  String? endDate,  double? ticketPrice,  String? ticketUrl,  String? city,  double? latitude,  double? longitude,  bool isFeatured,  int viewCount,  int savesCount,  int reviewsCount,  int sharesCount,  int checkinsCount,  double hotnessScore,  String? createdAt,  String? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? placeId,  String titleAr,  String titleEn,  String? descriptionAr,  String? descriptionEn,  String? coverImageUrl,  String? logoUrl,  String startDate,  String? endDate,  double? ticketPrice,  String? ticketUrl,  String? city,  double? latitude,  double? longitude,  bool isFeatured,  int viewCount,  int savesCount,  int reviewsCount,  int sharesCount,  int checkinsCount,  double hotnessScore,  String? createdAt,  String? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _EventModel():
-return $default(_that.id,_that.placeId,_that.titleAr,_that.titleEn,_that.descriptionAr,_that.descriptionEn,_that.coverImageUrl,_that.startDate,_that.endDate,_that.ticketPrice,_that.ticketUrl,_that.city,_that.latitude,_that.longitude,_that.isFeatured,_that.viewCount,_that.savesCount,_that.reviewsCount,_that.sharesCount,_that.checkinsCount,_that.hotnessScore,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.placeId,_that.titleAr,_that.titleEn,_that.descriptionAr,_that.descriptionEn,_that.coverImageUrl,_that.logoUrl,_that.startDate,_that.endDate,_that.ticketPrice,_that.ticketUrl,_that.city,_that.latitude,_that.longitude,_that.isFeatured,_that.viewCount,_that.savesCount,_that.reviewsCount,_that.sharesCount,_that.checkinsCount,_that.hotnessScore,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -216,10 +217,10 @@ return $default(_that.id,_that.placeId,_that.titleAr,_that.titleEn,_that.descrip
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? placeId,  String titleAr,  String titleEn,  String? descriptionAr,  String? descriptionEn,  String? coverImageUrl,  String startDate,  String? endDate,  double? ticketPrice,  String? ticketUrl,  String? city,  double? latitude,  double? longitude,  bool isFeatured,  int viewCount,  int savesCount,  int reviewsCount,  int sharesCount,  int checkinsCount,  double hotnessScore,  String? createdAt,  String? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? placeId,  String titleAr,  String titleEn,  String? descriptionAr,  String? descriptionEn,  String? coverImageUrl,  String? logoUrl,  String startDate,  String? endDate,  double? ticketPrice,  String? ticketUrl,  String? city,  double? latitude,  double? longitude,  bool isFeatured,  int viewCount,  int savesCount,  int reviewsCount,  int sharesCount,  int checkinsCount,  double hotnessScore,  String? createdAt,  String? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _EventModel() when $default != null:
-return $default(_that.id,_that.placeId,_that.titleAr,_that.titleEn,_that.descriptionAr,_that.descriptionEn,_that.coverImageUrl,_that.startDate,_that.endDate,_that.ticketPrice,_that.ticketUrl,_that.city,_that.latitude,_that.longitude,_that.isFeatured,_that.viewCount,_that.savesCount,_that.reviewsCount,_that.sharesCount,_that.checkinsCount,_that.hotnessScore,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.placeId,_that.titleAr,_that.titleEn,_that.descriptionAr,_that.descriptionEn,_that.coverImageUrl,_that.logoUrl,_that.startDate,_that.endDate,_that.ticketPrice,_that.ticketUrl,_that.city,_that.latitude,_that.longitude,_that.isFeatured,_that.viewCount,_that.savesCount,_that.reviewsCount,_that.sharesCount,_that.checkinsCount,_that.hotnessScore,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -231,7 +232,7 @@ return $default(_that.id,_that.placeId,_that.titleAr,_that.titleEn,_that.descrip
 @JsonSerializable()
 
 class _EventModel implements EventModel {
-  const _EventModel({this.id = '', this.placeId, this.titleAr = '', this.titleEn = '', this.descriptionAr, this.descriptionEn, this.coverImageUrl, this.startDate = '', this.endDate, this.ticketPrice, this.ticketUrl, this.city, this.latitude, this.longitude, this.isFeatured = false, this.viewCount = 0, this.savesCount = 0, this.reviewsCount = 0, this.sharesCount = 0, this.checkinsCount = 0, this.hotnessScore = 0.0, this.createdAt, this.updatedAt});
+  const _EventModel({this.id = '', this.placeId, this.titleAr = '', this.titleEn = '', this.descriptionAr, this.descriptionEn, this.coverImageUrl, this.logoUrl, this.startDate = '', this.endDate, this.ticketPrice, this.ticketUrl, this.city, this.latitude, this.longitude, this.isFeatured = false, this.viewCount = 0, this.savesCount = 0, this.reviewsCount = 0, this.sharesCount = 0, this.checkinsCount = 0, this.hotnessScore = 0.0, this.createdAt, this.updatedAt});
   factory _EventModel.fromJson(Map<String, dynamic> json) => _$EventModelFromJson(json);
 
 @override@JsonKey() final  String id;
@@ -241,6 +242,7 @@ class _EventModel implements EventModel {
 @override final  String? descriptionAr;
 @override final  String? descriptionEn;
 @override final  String? coverImageUrl;
+@override final  String? logoUrl;
 @override@JsonKey() final  String startDate;
 @override final  String? endDate;
 @override final  double? ticketPrice;
@@ -271,16 +273,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _EventModel&&(identical(other.id, id) || other.id == id)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.titleAr, titleAr) || other.titleAr == titleAr)&&(identical(other.titleEn, titleEn) || other.titleEn == titleEn)&&(identical(other.descriptionAr, descriptionAr) || other.descriptionAr == descriptionAr)&&(identical(other.descriptionEn, descriptionEn) || other.descriptionEn == descriptionEn)&&(identical(other.coverImageUrl, coverImageUrl) || other.coverImageUrl == coverImageUrl)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.ticketPrice, ticketPrice) || other.ticketPrice == ticketPrice)&&(identical(other.ticketUrl, ticketUrl) || other.ticketUrl == ticketUrl)&&(identical(other.city, city) || other.city == city)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.isFeatured, isFeatured) || other.isFeatured == isFeatured)&&(identical(other.viewCount, viewCount) || other.viewCount == viewCount)&&(identical(other.savesCount, savesCount) || other.savesCount == savesCount)&&(identical(other.reviewsCount, reviewsCount) || other.reviewsCount == reviewsCount)&&(identical(other.sharesCount, sharesCount) || other.sharesCount == sharesCount)&&(identical(other.checkinsCount, checkinsCount) || other.checkinsCount == checkinsCount)&&(identical(other.hotnessScore, hotnessScore) || other.hotnessScore == hotnessScore)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _EventModel&&(identical(other.id, id) || other.id == id)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.titleAr, titleAr) || other.titleAr == titleAr)&&(identical(other.titleEn, titleEn) || other.titleEn == titleEn)&&(identical(other.descriptionAr, descriptionAr) || other.descriptionAr == descriptionAr)&&(identical(other.descriptionEn, descriptionEn) || other.descriptionEn == descriptionEn)&&(identical(other.coverImageUrl, coverImageUrl) || other.coverImageUrl == coverImageUrl)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.ticketPrice, ticketPrice) || other.ticketPrice == ticketPrice)&&(identical(other.ticketUrl, ticketUrl) || other.ticketUrl == ticketUrl)&&(identical(other.city, city) || other.city == city)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.isFeatured, isFeatured) || other.isFeatured == isFeatured)&&(identical(other.viewCount, viewCount) || other.viewCount == viewCount)&&(identical(other.savesCount, savesCount) || other.savesCount == savesCount)&&(identical(other.reviewsCount, reviewsCount) || other.reviewsCount == reviewsCount)&&(identical(other.sharesCount, sharesCount) || other.sharesCount == sharesCount)&&(identical(other.checkinsCount, checkinsCount) || other.checkinsCount == checkinsCount)&&(identical(other.hotnessScore, hotnessScore) || other.hotnessScore == hotnessScore)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,placeId,titleAr,titleEn,descriptionAr,descriptionEn,coverImageUrl,startDate,endDate,ticketPrice,ticketUrl,city,latitude,longitude,isFeatured,viewCount,savesCount,reviewsCount,sharesCount,checkinsCount,hotnessScore,createdAt,updatedAt]);
+int get hashCode => Object.hashAll([runtimeType,id,placeId,titleAr,titleEn,descriptionAr,descriptionEn,coverImageUrl,logoUrl,startDate,endDate,ticketPrice,ticketUrl,city,latitude,longitude,isFeatured,viewCount,savesCount,reviewsCount,sharesCount,checkinsCount,hotnessScore,createdAt,updatedAt]);
 
 @override
 String toString() {
-  return 'EventModel(id: $id, placeId: $placeId, titleAr: $titleAr, titleEn: $titleEn, descriptionAr: $descriptionAr, descriptionEn: $descriptionEn, coverImageUrl: $coverImageUrl, startDate: $startDate, endDate: $endDate, ticketPrice: $ticketPrice, ticketUrl: $ticketUrl, city: $city, latitude: $latitude, longitude: $longitude, isFeatured: $isFeatured, viewCount: $viewCount, savesCount: $savesCount, reviewsCount: $reviewsCount, sharesCount: $sharesCount, checkinsCount: $checkinsCount, hotnessScore: $hotnessScore, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'EventModel(id: $id, placeId: $placeId, titleAr: $titleAr, titleEn: $titleEn, descriptionAr: $descriptionAr, descriptionEn: $descriptionEn, coverImageUrl: $coverImageUrl, logoUrl: $logoUrl, startDate: $startDate, endDate: $endDate, ticketPrice: $ticketPrice, ticketUrl: $ticketUrl, city: $city, latitude: $latitude, longitude: $longitude, isFeatured: $isFeatured, viewCount: $viewCount, savesCount: $savesCount, reviewsCount: $reviewsCount, sharesCount: $sharesCount, checkinsCount: $checkinsCount, hotnessScore: $hotnessScore, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -291,7 +293,7 @@ abstract mixin class _$EventModelCopyWith<$Res> implements $EventModelCopyWith<$
   factory _$EventModelCopyWith(_EventModel value, $Res Function(_EventModel) _then) = __$EventModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? placeId, String titleAr, String titleEn, String? descriptionAr, String? descriptionEn, String? coverImageUrl, String startDate, String? endDate, double? ticketPrice, String? ticketUrl, String? city, double? latitude, double? longitude, bool isFeatured, int viewCount, int savesCount, int reviewsCount, int sharesCount, int checkinsCount, double hotnessScore, String? createdAt, String? updatedAt
+ String id, String? placeId, String titleAr, String titleEn, String? descriptionAr, String? descriptionEn, String? coverImageUrl, String? logoUrl, String startDate, String? endDate, double? ticketPrice, String? ticketUrl, String? city, double? latitude, double? longitude, bool isFeatured, int viewCount, int savesCount, int reviewsCount, int sharesCount, int checkinsCount, double hotnessScore, String? createdAt, String? updatedAt
 });
 
 
@@ -308,7 +310,7 @@ class __$EventModelCopyWithImpl<$Res>
 
 /// Create a copy of EventModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? placeId = freezed,Object? titleAr = null,Object? titleEn = null,Object? descriptionAr = freezed,Object? descriptionEn = freezed,Object? coverImageUrl = freezed,Object? startDate = null,Object? endDate = freezed,Object? ticketPrice = freezed,Object? ticketUrl = freezed,Object? city = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? isFeatured = null,Object? viewCount = null,Object? savesCount = null,Object? reviewsCount = null,Object? sharesCount = null,Object? checkinsCount = null,Object? hotnessScore = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? placeId = freezed,Object? titleAr = null,Object? titleEn = null,Object? descriptionAr = freezed,Object? descriptionEn = freezed,Object? coverImageUrl = freezed,Object? logoUrl = freezed,Object? startDate = null,Object? endDate = freezed,Object? ticketPrice = freezed,Object? ticketUrl = freezed,Object? city = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? isFeatured = null,Object? viewCount = null,Object? savesCount = null,Object? reviewsCount = null,Object? sharesCount = null,Object? checkinsCount = null,Object? hotnessScore = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_EventModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,placeId: freezed == placeId ? _self.placeId : placeId // ignore: cast_nullable_to_non_nullable
@@ -317,6 +319,7 @@ as String,titleEn: null == titleEn ? _self.titleEn : titleEn // ignore: cast_nul
 as String,descriptionAr: freezed == descriptionAr ? _self.descriptionAr : descriptionAr // ignore: cast_nullable_to_non_nullable
 as String?,descriptionEn: freezed == descriptionEn ? _self.descriptionEn : descriptionEn // ignore: cast_nullable_to_non_nullable
 as String?,coverImageUrl: freezed == coverImageUrl ? _self.coverImageUrl : coverImageUrl // ignore: cast_nullable_to_non_nullable
+as String?,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
 as String?,startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
 as String,endDate: freezed == endDate ? _self.endDate : endDate // ignore: cast_nullable_to_non_nullable
 as String?,ticketPrice: freezed == ticketPrice ? _self.ticketPrice : ticketPrice // ignore: cast_nullable_to_non_nullable

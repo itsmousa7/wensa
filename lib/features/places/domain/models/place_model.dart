@@ -18,12 +18,12 @@ abstract class PlaceModel with _$PlaceModel {
     double? latitude,
     double? longitude,
     String? coverImageUrl,
+    String? logoUrl,
+    @Default(<String>[]) List<String> additionalImages, // ← ADD THIS
     @Default(false) bool isNew,
     @Default(false) bool isTrending,
     @Default(false) bool isVerified,
     @Default(false) bool isFeatured,
-
-    // opening_hours stored as raw Map since it's a flexible jsonb
     Map<String, dynamic>? openingHours,
     String? phone,
     String? instagramUrl,
@@ -51,11 +51,16 @@ abstract class PlaceModel with _$PlaceModel {
     latitude: (json['latitude'] as num?)?.toDouble(),
     longitude: (json['longitude'] as num?)?.toDouble(),
     coverImageUrl: json['cover_image_url'],
+    logoUrl: json['logo_url'],
+    additionalImages:
+        (json['additional_images'] as List<dynamic>?) // ← ADD THIS
+            ?.map((e) => e as String)
+            .toList() ??
+        [],
     isNew: json['is_new'] ?? false,
     isTrending: json['is_trending'] ?? false,
     isVerified: json['is_verified'] ?? false,
     isFeatured: json['is_featured'] ?? false,
-
     openingHours: json['opening_hours'] != null
         ? Map<String, dynamic>.from(json['opening_hours'])
         : null,

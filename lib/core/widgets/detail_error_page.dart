@@ -17,7 +17,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_appbar_button.dart';
-import 'package:future_riverpod/features/profile/presentation/widgets/profile_error.dart';
+import 'package:future_riverpod/core/widgets/profile_error.dart';
 
 class DetailErrorScreen extends StatelessWidget {
   const DetailErrorScreen({

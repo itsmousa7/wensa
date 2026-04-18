@@ -58,7 +58,7 @@ final class EventAppbarStateProvider
   }
 }
 
-String _$eventAppbarStateHash() => r'490a6b19cfd7aedbf9fe6c135897ff6e1f425095';
+String _$eventAppbarStateHash() => r'34076c78ba1c4da488c5e478728c18dfab48c457';
 
 final class EventAppbarStateFamily extends $Family
     with

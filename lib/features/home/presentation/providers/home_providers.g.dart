@@ -48,7 +48,7 @@ final class HomeRepositoryProvider
   }
 }
 
-String _$homeRepositoryHash() => r'3cd60e6bcffc0871e9b6eba9043708ad6b136576';
+String _$homeRepositoryHash() => r'6f5bd75295553f2b16759fc6a76e1eb902f2484e';
 
 @ProviderFor(hotEvents)
 final hotEventsProvider = HotEventsProvider._();
@@ -168,6 +168,47 @@ final class NewOpeningsProvider
 }
 
 String _$newOpeningsHash() => r'fb816449804d6c54811f5504ce663e81f00da781';
+
+@ProviderFor(featuredFeed)
+final featuredFeedProvider = FeaturedFeedProvider._();
+
+final class FeaturedFeedProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<TrendingFeedItemModel>>,
+          List<TrendingFeedItemModel>,
+          FutureOr<List<TrendingFeedItemModel>>
+        >
+    with
+        $FutureModifier<List<TrendingFeedItemModel>>,
+        $FutureProvider<List<TrendingFeedItemModel>> {
+  FeaturedFeedProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'featuredFeedProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$featuredFeedHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<TrendingFeedItemModel>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<TrendingFeedItemModel>> create(Ref ref) {
+    return featuredFeed(ref);
+  }
+}
+
+String _$featuredFeedHash() => r'964af12f155c4d492d86a23c524b5ae01d85703b';
 
 @ProviderFor(promotedBanners)
 final promotedBannersProvider = PromotedBannersProvider._();

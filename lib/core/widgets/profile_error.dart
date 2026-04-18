@@ -51,7 +51,7 @@ class GlobalErrorWidget extends StatelessWidget {
             const SizedBox(height: 30),
             Text(
               isAr
-                  ? 'حدث خطأ، حاول مجدداً'
+                  ? 'حدث خطأ، حاول مجدداً'
                   : 'Something went wrong. Try again.',
               style: tt.titleMedium?.copyWith(color: cs.outline),
             ),

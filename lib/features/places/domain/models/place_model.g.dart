@@ -19,6 +19,12 @@ _PlaceModel _$PlaceModelFromJson(Map<String, dynamic> json) => _PlaceModel(
   latitude: (json['latitude'] as num?)?.toDouble(),
   longitude: (json['longitude'] as num?)?.toDouble(),
   coverImageUrl: json['coverImageUrl'] as String?,
+  logoUrl: json['logoUrl'] as String?,
+  additionalImages:
+      (json['additionalImages'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const <String>[],
   isNew: json['isNew'] as bool? ?? false,
   isTrending: json['isTrending'] as bool? ?? false,
   isVerified: json['isVerified'] as bool? ?? false,
@@ -51,6 +57,8 @@ Map<String, dynamic> _$PlaceModelToJson(_PlaceModel instance) =>
       'latitude': instance.latitude,
       'longitude': instance.longitude,
       'coverImageUrl': instance.coverImageUrl,
+      'logoUrl': instance.logoUrl,
+      'additionalImages': instance.additionalImages,
       'isNew': instance.isNew,
       'isTrending': instance.isTrending,
       'isVerified': instance.isVerified,

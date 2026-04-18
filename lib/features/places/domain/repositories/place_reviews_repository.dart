@@ -12,6 +12,7 @@ class PlaceReviewsRepository {
 
   Future<List<ReviewWithUser>> fetchReviews(String placeId) async {
     final data = await _client
+        .schema('profiles')
         .from('reviews')
         .select('*, app_users(first_name, second_name, avatar_url)')
         .eq('place_id', placeId)
@@ -34,7 +35,7 @@ class PlaceReviewsRepository {
     required int rating,
     String? comment,
   }) async {
-    await _client.from('reviews').insert({
+    await _client.schema('profiles').from('reviews').insert({
       'place_id': placeId,
       'user_id': userId,
       'rating': rating,
@@ -44,7 +45,7 @@ class PlaceReviewsRepository {
   }
 
   Future<void> deleteReview(String reviewId) async {
-    await _client.from('reviews').delete().eq('id', reviewId);
+    await _client.schema('profiles').from('reviews').delete().eq('id', reviewId);
   }
 }
 

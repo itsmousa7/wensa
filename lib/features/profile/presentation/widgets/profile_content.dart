@@ -10,7 +10,7 @@ import 'package:future_riverpod/core/constants/theme/theme_provider.dart';
 import 'package:future_riverpod/core/constants/theme/theme_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
-import 'package:future_riverpod/features/places/presentation/widgets/place_statistic_chip.dart';
+import 'package:future_riverpod/core/widgets/place_statistic_chip.dart';
 import 'package:future_riverpod/features/profile/presentation/providers/user_profile_provider.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/profile_header.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/section_label.dart';

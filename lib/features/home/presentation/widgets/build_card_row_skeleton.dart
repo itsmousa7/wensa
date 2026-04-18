@@ -35,42 +35,48 @@ class BuildCardRowSkeleton extends StatelessWidget {
                     color: theme.colorScheme.surfaceContainerHighest,
                   ),
                 ),
-                // ── Text block: matches padding fromLTRB(12,10,12,12) ─
+                // ── Text block: logo leading + title/location ──────────
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Title ~h13 + badge 52×20
-                      Row(
-                        children: [
-                          Container(
-                            height: 13,
-                            width: 130,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            height: 20,
-                            width: 52,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      // Subtitle ~h10
+                      // Logo box
                       Container(
-                        height: 10,
-                        width: 90,
+                        width: 49,
+                        height: 49,
                         decoration: BoxDecoration(
                           color: theme.colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Title
+                            Container(
+                              height: 13,
+                              width: 110,
+                              decoration: BoxDecoration(
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                            const SizedBox(height: 7),
+                            // Subtitle
+                            Container(
+                              height: 10,
+                              width: 75,
+                              decoration: BoxDecoration(
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

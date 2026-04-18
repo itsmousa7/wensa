@@ -19,6 +19,7 @@ class Favorites extends _$Favorites {
     if (user == null) return {};
 
     final rows = await _db
+        .schema('profiles')
         .from('favorites')
         .select('place_id, event_id')
         .eq('user_id', user.id);
@@ -66,10 +67,11 @@ class Favorites extends _$Favorites {
         final row = itemType == 'event'
             ? {'user_id': user.id, 'event_id': itemId}
             : {'user_id': user.id, 'place_id': itemId};
-        await _db.from('favorites').insert(row);
+        await _db.schema('profiles').from('favorites').insert(row);
       } else {
         final col = itemType == 'event' ? 'event_id' : 'place_id';
         await _db
+            .schema('profiles')
             .from('favorites')
             .delete()
             .eq('user_id', user.id)
@@ -119,6 +121,7 @@ class FavoritesFeed extends _$FavoritesFeed {
     // ── Places ───────────────────────────────────────────────────────────────
     try {
       final placeRows = await db
+          .schema('profiles')
           .from('favorites')
           .select('place_id')
           .eq('user_id', user.id)
@@ -131,7 +134,8 @@ class FavoritesFeed extends _$FavoritesFeed {
 
       if (placeIds.isNotEmpty) {
         final places = await db
-            .from('places')
+            .schema('content')
+            .from('places_mobile')
             .select('id, name_en, name_ar, area, cover_image_url, is_verified')
             .inFilter('id', placeIds);
 
@@ -155,6 +159,7 @@ class FavoritesFeed extends _$FavoritesFeed {
     // subtitle_en / subtitle_ar do NOT exist on events — use city instead
     try {
       final eventRows = await db
+          .schema('profiles')
           .from('favorites')
           .select('event_id')
           .eq('user_id', user.id)
@@ -168,9 +173,11 @@ class FavoritesFeed extends _$FavoritesFeed {
       if (eventIds.isNotEmpty) {
         // ✅ Only select columns that actually exist on the events table
         final events = await db
-            .from('events')
+            .schema('content')
+            .from('events_mobile')
             .select('id, title_en, title_ar, city, cover_image_url')
-            .inFilter('id', eventIds);
+            .inFilter('id', eventIds)
+            .eq('event_status', 'approved');
 
         items.addAll(
           (events as List).map((e) {
@@ -205,7 +212,7 @@ class FavoritesFeed extends _$FavoritesFeed {
 // ─────────────────────────────────────────────────────────────────────────────
 //  SeeAllType
 // ─────────────────────────────────────────────────────────────────────────────
-enum SeeAllType { trending, newOpenings, allEvents }
+enum SeeAllType { trending, newOpenings, allEvents, featured }
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  SeeAllFeed
@@ -234,15 +241,17 @@ class SeeAllFeed extends _$SeeAllFeed {
       switch (type) {
         case SeeAllType.trending:
           rows = await Supabase.instance.client
+              .schema('content')
               .from('trending_feed')
               .select(
                 'id, title_en, title_ar, subtitle_en, subtitle_ar, cover_image_url, is_verified, type',
               )
-              .order('hotness_score', ascending: false)
+              .order('created_at', ascending: false)
               .range(from, to);
         case SeeAllType.newOpenings:
           rows = await Supabase.instance.client
-              .from('places')
+              .schema('content')
+              .from('places_mobile')
               .select(
                 'id, name_en, name_ar, area, cover_image_url, is_verified',
               )
@@ -251,15 +260,30 @@ class SeeAllFeed extends _$SeeAllFeed {
               .range(from, to);
         case SeeAllType.allEvents:
           rows = await Supabase.instance.client
-              .from('events')
+              .schema('content')
+              .from('events_mobile')
               .select('id, title_en, title_ar, city, cover_image_url')
+              .eq('event_status', 'approved')
+              .or(
+                'end_date.is.null,end_date.gt.${DateTime.now().toUtc().toIso8601String()}',
+              )
+              .order('created_at', ascending: false)
+              .range(from, to);
+        case SeeAllType.featured:
+          rows = await Supabase.instance.client
+              .schema('content')
+              .from('trending_feed')
+              .select(
+                'id, title_en, title_ar, subtitle_en, subtitle_ar, cover_image_url, is_verified, type',
+              )
+              .eq('is_featured', true)
               .order('hotness_score', ascending: false)
               .range(from, to);
       }
 
       final fetched = rows.map((r) {
         final m = r as Map<String, dynamic>;
-        return type == SeeAllType.trending
+        return (type == SeeAllType.trending || type == SeeAllType.featured)
             ? CategoryFeedItem.fromTrendingRow(m)
             : CategoryFeedItem.fromRow(m);
       }).toList();

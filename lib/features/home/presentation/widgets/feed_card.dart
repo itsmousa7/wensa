@@ -6,12 +6,13 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
+import 'package:future_riverpod/core/widgets/merchant_logo.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/new_opening_badge.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
-enum FeedCardBadge { trending, event, newOpening }
+enum FeedCardBadge { trending, event, newOpening, featured }
 
 class FeedCard extends ConsumerWidget {
   const FeedCard({
@@ -22,6 +23,7 @@ class FeedCard extends ConsumerWidget {
     required this.placeId,
     this.subtitleEn,
     this.subtitleAr,
+    this.logoUrl,
     this.badge = FeedCardBadge.trending,
     this.isVerified = false,
     this.itemType = 'place', // ✅ NEW — 'place' | 'event'
@@ -30,6 +32,7 @@ class FeedCard extends ConsumerWidget {
 
   final String placeId; // holds the item ID regardless of type
   final String? coverImageUrl;
+  final String? logoUrl;
   final String titleEn;
   final String titleAr;
   final String? subtitleEn;
@@ -58,6 +61,10 @@ class FeedCard extends ConsumerWidget {
       FeedCardBadge.newOpening => (
         theme.colorScheme.primary,
         isAr ? 'افتتح مؤخراً' : 'Just Opened',
+      ),
+      FeedCardBadge.featured => (
+        const Color(0xFFFFB800),
+        isAr ? '⭐ مميز' : '⭐ Featured',
       ),
     };
 
@@ -148,56 +155,70 @@ class FeedCard extends ConsumerWidget {
               ],
             ),
 
-            // ── Text area ──────────────────────────────────────────────────
+            // ── Text area — logo leading + title/location column ───────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          isAr ? titleAr : titleEn,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: theme.colorScheme.outline,
-                          ),
+                  MerchantLogo(logoUrl: logoUrl, size: 44),
+                  const Gap(10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                isAr ? titleAr : titleEn,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  color: theme.colorScheme.outline,
+                                ),
+                              ),
+                            ),
+                            if (isVerified) ...[
+                              const Gap(5),
+                              SizedBox(
+                                height: 14,
+                                width: 14,
+                                child: SvgPicture.asset(
+                                  'assets/icons/verify.svg',
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                      ),
-                      if (isVerified) ...[
-                        const Gap(5),
-                        SizedBox(
-                          height: 14,
-                          width: 14,
-                          child: SvgPicture.asset('assets/icons/verify.svg'),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            SizedBox(
+                              height: 12,
+                              child: itemType == 'place'
+                                  ? SvgPicture.asset('assets/icons/location.svg')
+                                  : Image.asset('assets/icons/calendar.png'),
+                            ),
+                            const Gap(5),
+                            Flexible(
+                              child: Text(
+                                (isAr ? subtitleAr : subtitleEn) ?? '',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.outline.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      SizedBox(
-                        height: 12,
-                        child: itemType == 'place'
-                            ? SvgPicture.asset('assets/icons/location.svg')
-                            : Image.asset('assets/icons/calendar.png'),
-                      ),
-                      const Gap(6),
-                      Text(
-                        (isAr ? subtitleAr : subtitleEn) ?? '',
-                        maxLines: 1,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline.withValues(
-                            alpha: 0.7,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),

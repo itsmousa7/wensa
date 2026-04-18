@@ -13,6 +13,7 @@ abstract class TrendingFeedItemModel with _$TrendingFeedItemModel {
     @Default('') String titleAr,
     @Default('') String titleEn,
     String? coverImageUrl,
+    String? logoUrl,
     String? city,
     String? subtitleAr, // منطقة للمكان / تاريخ للحدث
     String? subtitleEn,
@@ -30,6 +31,7 @@ abstract class TrendingFeedItemModel with _$TrendingFeedItemModel {
         titleAr: json['title_ar'] ?? '',
         titleEn: json['title_en'] ?? '',
         coverImageUrl: json['cover_image_url'],
+        logoUrl: json['logo_url'],
         city: json['city'],
         subtitleAr: json['subtitle_ar'],
         subtitleEn: json['subtitle_en'],

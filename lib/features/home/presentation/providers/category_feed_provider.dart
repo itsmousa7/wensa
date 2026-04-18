@@ -13,6 +13,7 @@ class CategoryFeedItem {
   final String? subtitleEn;
   final String? subtitleAr;
   final String? coverImageUrl;
+  final String? logoUrl;
   final bool isVerified;
   final String type; // 'place' | 'event'
 
@@ -23,6 +24,7 @@ class CategoryFeedItem {
     this.subtitleEn,
     this.subtitleAr,
     this.coverImageUrl,
+    this.logoUrl,
     this.isVerified = false,
     this.type = 'place',
   });
@@ -35,6 +37,7 @@ class CategoryFeedItem {
     subtitleEn: m['area'] as String?,
     subtitleAr: m['area'] as String?,
     coverImageUrl: m['cover_image_url'] as String?,
+    logoUrl: m['logo_url'] as String?,
     isVerified: m['is_verified'] as bool? ?? false,
     type: 'place',
   );
@@ -48,6 +51,7 @@ class CategoryFeedItem {
         subtitleEn: m['subtitle_en'] as String?,
         subtitleAr: m['subtitle_ar'] as String?,
         coverImageUrl: m['cover_image_url'] as String?,
+        logoUrl: m['logo_url'] as String?,
         isVerified: m['is_verified'] as bool? ?? false,
         type: m['type'] as String? ?? 'place',
       );
@@ -115,8 +119,10 @@ class CategoryFeed extends _$CategoryFeed {
       final to = from + _pageSize - 1;
 
       final rows = await Supabase.instance.client
-          .from('places')
+          .schema('content')
+          .from('places_mobile')
           .select('id, name_en, name_ar, area, cover_image_url, is_verified')
+          .eq('place_status', 'approved')
           .eq('category_id', categoryId)
           .order('hotness_score', ascending: false)
           .range(from, to);
@@ -167,9 +173,11 @@ class AllPlacesFeed extends _$AllPlacesFeed {
       final to = from + _pageSize - 1;
 
       final rows = await Supabase.instance.client
-          .from('places')
+          .schema('content')
+          .from('places_mobile')
           .select('id, name_en, name_ar, area, cover_image_url, is_verified')
-          .order('hotness_score', ascending: false)
+          .eq('place_status', 'approved')
+          .order('created_at', ascending: false)
           .range(from, to);
 
       final fetched = (rows as List)

@@ -3,10 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
-import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
-import 'package:future_riverpod/features/home/presentation/widgets/full_width_feed_card.dart';
-import 'package:future_riverpod/features/profile/presentation/widgets/profile_error.dart';
+import 'package:future_riverpod/core/widgets/full_width_feed_card.dart';
+import 'package:future_riverpod/core/widgets/profile_error.dart';
 import 'package:lottie/lottie.dart';
 
 class FeedListSection extends ConsumerWidget {
@@ -14,6 +13,7 @@ class FeedListSection extends ConsumerWidget {
     super.key,
     required this.feed,
     this.onLoadMore,
+    this.onRetry,
     this.onTapItem,
     this.emptyTitleEn = 'Nothing here yet',
     this.emptyTitleAr = 'لا يوجد شيء هنا بعد',
@@ -24,6 +24,7 @@ class FeedListSection extends ConsumerWidget {
 
   final CategoryFeedState feed;
   final VoidCallback? onLoadMore;
+  final VoidCallback? onRetry;
   final void Function(CategoryFeedItem item)? onTapItem;
   final String emptyTitleEn;
   final String emptyTitleAr;
@@ -58,7 +59,7 @@ class FeedListSection extends ConsumerWidget {
           cs: cs,
           isAr: isAr,
           tt: tt,
-          onTap: () => ref.invalidate(favoritesProvider),
+          onTap: onRetry,
         ),
       );
     }

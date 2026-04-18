@@ -58,7 +58,7 @@ final class PlaceAppbarStateProvider
   }
 }
 
-String _$placeAppbarStateHash() => r'03578bd3f355890d1b49c907bcc5b22a5bee8c8e';
+String _$placeAppbarStateHash() => r'be84b83daa3d03964c417ffc55f16ea1cfed4518';
 
 final class PlaceAppbarStateFamily extends $Family
     with

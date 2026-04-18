@@ -14,6 +14,7 @@ class AllPlacesSection extends ConsumerWidget {
     return FeedListSection(
       feed: feed,
       onLoadMore: () => ref.read(allPlacesFeedProvider.notifier).loadMore(),
+      onRetry: () => ref.invalidate(allPlacesFeedProvider),
       emptyTitleEn: 'No places yet',
       emptyTitleAr: 'لا توجد أماكن حالياً',
     );
@@ -32,6 +33,7 @@ class SeeAllSection extends ConsumerWidget {
     return FeedListSection(
       feed: feed,
       onLoadMore: () => ref.read(seeAllFeedProvider(type).notifier).loadMore(),
+      onRetry: () => ref.invalidate(seeAllFeedProvider(type)),
       emptyTitleEn: type == SeeAllType.trending
           ? 'Nothing trending right now'
           : 'No new openings yet',

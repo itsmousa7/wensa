@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:future_riverpod/features/home/presentation/widgets/full_width_feed_card.dart';
+import 'package:future_riverpod/core/widgets/full_width_feed_card.dart';
 
 class ResultsList extends StatelessWidget {
   const ResultsList({super.key, required this.items, required this.isAr});

@@ -99,8 +99,8 @@ class PlaceImageCarousel extends StatelessWidget {
         if (images.length > 1)
           Positioned(
             bottom: 52,
-            left: isAr ? 18 : null,
-            right: isAr ? null : 18,
+            left: isAr ? null : 18,
+            right: isAr ? 18 : null,
             child: IgnorePointer(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
@@ -133,8 +133,8 @@ class PlaceImageCarousel extends StatelessWidget {
         if (images.isNotEmpty)
           Positioned(
             bottom: 50,
-            left: isAr ? null : 18,
-            right: isAr ? 18 : null,
+            left: isAr ? 18 : null,
+            right: isAr ? null : 18,
             child: IgnorePointer(
               child: Icon(
                 Icons.open_in_full_rounded,
