@@ -6,6 +6,7 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/favorites/presentation/widgets/feed_list_section.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/promoted_banner.dart';
 
 class FavoritesPage extends ConsumerStatefulWidget {
   const FavoritesPage({super.key});
@@ -93,9 +94,15 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
                 ),
               ),
 
+              // ── Ad slot ──────────────────────────────────────────────────
+              const SliverToBoxAdapter(
+                child: PromotedBannerInline(slotIndex: 2),
+              ),
+
               // ── Feed ─────────────────────────────────────────────────────
               FeedListSection(
                 feed: feed,
+                onRetry: () => ref.invalidate(favoritesFeedProvider),
                 emptyTitleEn: 'No favorites yet',
                 emptyTitleAr: 'لا توجد مفضلات بعد',
                 emptySubtitleEn: 'Double tap on any place to save it here',
