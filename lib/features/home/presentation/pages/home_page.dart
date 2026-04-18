@@ -17,12 +17,13 @@ import 'package:future_riverpod/features/home/presentation/widgets/app_bar.dart'
 import 'package:future_riverpod/features/home/presentation/widgets/category_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/home_search_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/hot_event_section.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/featured_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/new_opening_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/promoted_banner.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/see_all_page.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/trending_feed_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/when_no_data_available.dart';
-import 'package:future_riverpod/features/profile/presentation/widgets/profile_error.dart';
+import 'package:future_riverpod/core/widgets/profile_error.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -44,6 +45,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.invalidate(hotEventsProvider);
     ref.invalidate(trendingFeedProvider);
     ref.invalidate(newOpeningsProvider);
+    ref.invalidate(featuredFeedProvider);
     ref.invalidate(promotedBannersProvider);
     ref.invalidate(categoriesProvider);
     ref.invalidate(allPlacesFeedProvider);
@@ -61,6 +63,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   String get _trendingLabel =>
       isAr ? 'الأكثر رواجاً هذا الأسبوع' : 'Trending This Week';
   String get _newOpeningsLabel => isAr ? 'افتتاحات جديدة' : 'New Openings';
+  String get _featuredLabel => isAr ? 'مميز' : 'Featured';
   String get _allPlacesLabel => isAr ? 'كل الأماكن' : 'All Places';
   String get _allEventsLabel => isAr ? 'كل الاحداث' : 'All Events';
   String get _seeAll => isAr ? 'عرض الكل ›' : 'See all ›';
@@ -73,11 +76,13 @@ class _HomePageState extends ConsumerState<HomePage> {
           SeeAllType.trending => 'Trending This Week',
           SeeAllType.newOpenings => 'New Openings',
           SeeAllType.allEvents => 'All Events',
+          SeeAllType.featured => 'Featured',
         },
         titleAr: switch (type) {
           SeeAllType.trending => 'الأكثر رواجاً',
           SeeAllType.newOpenings => 'افتتاحات جديدة',
           SeeAllType.allEvents => 'كل الأحداث',
+          SeeAllType.featured => 'مميز',
         },
       ),
     ),
@@ -171,6 +176,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ref.invalidate(hotEventsProvider);
                       ref.invalidate(trendingFeedProvider);
                       ref.invalidate(newOpeningsProvider);
+                      ref.invalidate(featuredFeedProvider);
                       ref.invalidate(promotedBannersProvider);
                       ref.invalidate(categoriesProvider);
                       ref.invalidate(allPlacesFeedProvider);
@@ -182,8 +188,14 @@ class _HomePageState extends ConsumerState<HomePage> {
               ] else ...[
                 SliverToBoxAdapter(child: PromotedBanner()),
                 // ── Normal feed sections ─────────────────────────────────
-                SliverToBoxAdapter(child: _sectionTitle(_hotEventsLabel)),
-                const SliverToBoxAdapter(child: HotEventsSection()),
+                if (ref.watch(hotEventsProvider).when(
+                  data: (e) => e.isNotEmpty,
+                  loading: () => true,
+                  error: (_, _) => false,
+                )) ...[
+                  SliverToBoxAdapter(child: _sectionTitle(_hotEventsLabel)),
+                  const SliverToBoxAdapter(child: HotEventsSection()),
+                ],
                 SliverToBoxAdapter(child: _sectionTitle(_categoryLabel)),
                 SliverToBoxAdapter(child: CategoryBar(isAr: isAr)),
 
@@ -203,6 +215,24 @@ class _HomePageState extends ConsumerState<HomePage> {
 
                   SliverToBoxAdapter(
                     child: _sectionTitle(
+                      _featuredLabel,
+                      more: true,
+                      onMoreTap: () => _goToSeeAll(SeeAllType.featured),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: FeaturedSection(
+                      onViewAll: () => _goToSeeAll(SeeAllType.featured),
+                    ),
+                  ),
+
+                  // ── Mid-feed ad slot ─────────────────────────────────────────────────
+                  const SliverToBoxAdapter(
+                    child: PromotedBannerInline(slotIndex: 1),
+                  ),
+
+                  SliverToBoxAdapter(
+                    child: _sectionTitle(
                       _newOpeningsLabel,
                       more: true,
                       onMoreTap: () => _goToSeeAll(SeeAllType.newOpenings),
@@ -213,19 +243,24 @@ class _HomePageState extends ConsumerState<HomePage> {
                       onViewAll: () => _goToSeeAll(SeeAllType.newOpenings),
                     ),
                   ),
-                  SliverToBoxAdapter(
-                    child: _sectionTitle(
-                      _allEventsLabel,
-                      more: true,
-                      onMoreTap: () => _goToSeeAll(SeeAllType.allEvents),
+                  if (ref.watch(allEventsProvider).when(
+                    data: (e) => e.isNotEmpty,
+                    loading: () => true,
+                    error: (_, _) => false,
+                  )) ...[
+                    SliverToBoxAdapter(
+                      child: _sectionTitle(
+                        _allEventsLabel,
+                        more: true,
+                        onMoreTap: () => _goToSeeAll(SeeAllType.allEvents),
+                      ),
                     ),
-                  ),
-
-                  SliverToBoxAdapter(
-                    child: AllEventsSection(
-                      onViewAll: () => _goToSeeAll(SeeAllType.allEvents),
+                    SliverToBoxAdapter(
+                      child: AllEventsSection(
+                        onViewAll: () => _goToSeeAll(SeeAllType.allEvents),
+                      ),
                     ),
-                  ),
+                  ],
 
                   SliverToBoxAdapter(child: _sectionTitle(_allPlacesLabel)),
 
