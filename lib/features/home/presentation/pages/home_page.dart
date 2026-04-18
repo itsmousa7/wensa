@@ -186,6 +186,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                 ),
               ] else ...[
+                SliverToBoxAdapter(child: PromotedBanner()),
                 // ── Normal feed sections ─────────────────────────────────
                 if (ref.watch(hotEventsProvider).when(
                   data: (e) => e.isNotEmpty,
