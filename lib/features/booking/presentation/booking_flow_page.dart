@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/farm_section.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/padel_section.dart';
+import 'package:future_riverpod/features/booking/presentation/sections/restaurant_section.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 
 class BookingFlowPage extends ConsumerWidget {
@@ -38,6 +39,11 @@ class BookingFlowPage extends ConsumerWidget {
 
           if (category == 'farm') {
             return FarmSection(placeId: placeId, placeName: placeName);
+          }
+
+          if (category == 'restaurant') {
+            return RestaurantSection(
+                placeId: placeId, placeName: placeName);
           }
 
           if (category == 'padel' || category == 'football') {

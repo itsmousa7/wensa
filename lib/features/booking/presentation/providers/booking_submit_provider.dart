@@ -83,5 +83,37 @@ class BookingSubmit extends _$BookingSubmit {
     }
   }
 
+  Future<void> createRestaurantBooking({
+    required String placeId,
+    required String startsAt, // ISO datetime
+    required int partySize,
+    String? seatingOptionId,
+  }) async {
+    state = const BookingSubmitState.loading();
+    try {
+      final client = Supabase.instance.client;
+      final result = await client.functions.invoke(
+        'create-booking',
+        body: {
+          'category': 'restaurant',
+          'place_id': placeId,
+          'starts_at': startsAt,
+          'party_size': partySize,
+          'seating_option_id': ?seatingOptionId,
+        },
+      );
+      if (result.status != 200) throw Exception(result.data.toString());
+      final data = result.data as Map<String, dynamic>;
+      // Restaurant returns booking_id only (no payment_url at this stage)
+      state = BookingSubmitState.success(
+        bookingId: data['booking_id'] as String,
+        paymentUrl: '', // no payment yet
+        holdUntil: '', // no hold for restaurant
+      );
+    } catch (e) {
+      state = BookingSubmitState.error(e.toString());
+    }
+  }
+
   void reset() => state = const BookingSubmitState.idle();
 }

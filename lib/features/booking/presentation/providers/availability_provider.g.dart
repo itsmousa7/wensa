@@ -241,3 +241,176 @@ final class FarmShiftsFamily extends $Family
   @override
   String toString() => r'farmShiftsProvider';
 }
+
+@ProviderFor(seatingOptions)
+final seatingOptionsProvider = SeatingOptionsFamily._();
+
+final class SeatingOptionsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<RestaurantSeatingOption>>,
+          List<RestaurantSeatingOption>,
+          FutureOr<List<RestaurantSeatingOption>>
+        >
+    with
+        $FutureModifier<List<RestaurantSeatingOption>>,
+        $FutureProvider<List<RestaurantSeatingOption>> {
+  SeatingOptionsProvider._({
+    required SeatingOptionsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'seatingOptionsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$seatingOptionsHash();
+
+  @override
+  String toString() {
+    return r'seatingOptionsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<RestaurantSeatingOption>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<RestaurantSeatingOption>> create(Ref ref) {
+    final argument = this.argument as String;
+    return seatingOptions(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SeatingOptionsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$seatingOptionsHash() => r'aefbe0b09de2034be11d6ee887d6298033e61d31';
+
+final class SeatingOptionsFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<RestaurantSeatingOption>>,
+          String
+        > {
+  SeatingOptionsFamily._()
+    : super(
+        retry: null,
+        name: r'seatingOptionsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  SeatingOptionsProvider call(String placeId) =>
+      SeatingOptionsProvider._(argument: placeId, from: this);
+
+  @override
+  String toString() => r'seatingOptionsProvider';
+}
+
+/// Generates 30-minute time slots from 10:00 to 22:00 (Asia/Baghdad, UTC+3).
+/// Returns ISO datetime strings stored as UTC (Baghdad - 3h).
+
+@ProviderFor(restaurantTimeSlots)
+final restaurantTimeSlotsProvider = RestaurantTimeSlotsFamily._();
+
+/// Generates 30-minute time slots from 10:00 to 22:00 (Asia/Baghdad, UTC+3).
+/// Returns ISO datetime strings stored as UTC (Baghdad - 3h).
+
+final class RestaurantTimeSlotsProvider
+    extends $FunctionalProvider<List<String>, List<String>, List<String>>
+    with $Provider<List<String>> {
+  /// Generates 30-minute time slots from 10:00 to 22:00 (Asia/Baghdad, UTC+3).
+  /// Returns ISO datetime strings stored as UTC (Baghdad - 3h).
+  RestaurantTimeSlotsProvider._({
+    required RestaurantTimeSlotsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'restaurantTimeSlotsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$restaurantTimeSlotsHash();
+
+  @override
+  String toString() {
+    return r'restaurantTimeSlotsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<List<String>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  List<String> create(Ref ref) {
+    final argument = this.argument as String;
+    return restaurantTimeSlots(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<String>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is RestaurantTimeSlotsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$restaurantTimeSlotsHash() =>
+    r'406f631b522d8fbeddad300dab79d5b85089c5a4';
+
+/// Generates 30-minute time slots from 10:00 to 22:00 (Asia/Baghdad, UTC+3).
+/// Returns ISO datetime strings stored as UTC (Baghdad - 3h).
+
+final class RestaurantTimeSlotsFamily extends $Family
+    with $FunctionalFamilyOverride<List<String>, String> {
+  RestaurantTimeSlotsFamily._()
+    : super(
+        retry: null,
+        name: r'restaurantTimeSlotsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Generates 30-minute time slots from 10:00 to 22:00 (Asia/Baghdad, UTC+3).
+  /// Returns ISO datetime strings stored as UTC (Baghdad - 3h).
+
+  RestaurantTimeSlotsProvider call(String date) =>
+      RestaurantTimeSlotsProvider._(argument: date, from: this);
+
+  @override
+  String toString() => r'restaurantTimeSlotsProvider';
+}
