@@ -5,9 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership.dart';
-import 'package:future_riverpod/features/bookings_history/presentation/pages/ticket_detail_page.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/ticket_card.dart';
+import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class BookingsHistoryPage extends ConsumerStatefulWidget {
@@ -44,9 +44,7 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
   }
 
   void _navigateToDetail(BuildContext context, String id) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => TicketDetailPage(id: id)),
-    );
+    context.push('/bookings/$id');
   }
 
   @override
