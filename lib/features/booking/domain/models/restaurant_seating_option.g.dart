@@ -13,7 +13,7 @@ _RestaurantSeatingOption _$RestaurantSeatingOptionFromJson(
   placeId: json['placeId'] as String? ?? '',
   labelAr: json['labelAr'] as String? ?? '',
   labelEn: json['labelEn'] as String? ?? '',
-  isActive: json['isActive'] as bool? ?? true,
+  isActive: json['isActive'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$RestaurantSeatingOptionToJson(

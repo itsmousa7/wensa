@@ -2,6 +2,7 @@ enum BookingCategory { padel, football, farm, concert, restaurant }
 
 enum BookingStatus { pending, confirmed, completed, cancelled, expired, noShow, used }
 
+
 enum FarmShiftType { day, night, full }
 
 enum MembershipStatus { active, frozen, expired, cancelled, used }

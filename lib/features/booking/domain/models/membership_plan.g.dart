@@ -16,7 +16,7 @@ _MembershipPlan _$MembershipPlanFromJson(Map<String, dynamic> json) =>
       durationDays: (json['durationDays'] as num?)?.toInt() ?? 0,
       priceIqd: (json['priceIqd'] as num?)?.toInt() ?? 0,
       allowFreeze: json['allowFreeze'] as bool? ?? false,
-      isActive: json['isActive'] as bool? ?? true,
+      isActive: json['isActive'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$MembershipPlanToJson(_MembershipPlan instance) =>

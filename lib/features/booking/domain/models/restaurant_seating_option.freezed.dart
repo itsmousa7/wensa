@@ -213,7 +213,7 @@ return $default(_that.id,_that.placeId,_that.labelAr,_that.labelEn,_that.isActiv
 @JsonSerializable()
 
 class _RestaurantSeatingOption implements RestaurantSeatingOption {
-  const _RestaurantSeatingOption({this.id = '', this.placeId = '', this.labelAr = '', this.labelEn = '', this.isActive = true});
+  const _RestaurantSeatingOption({this.id = '', this.placeId = '', this.labelAr = '', this.labelEn = '', this.isActive = false});
   factory _RestaurantSeatingOption.fromJson(Map<String, dynamic> json) => _$RestaurantSeatingOptionFromJson(json);
 
 @override@JsonKey() final  String id;

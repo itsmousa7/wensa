@@ -20,7 +20,7 @@ abstract class EventTier with _$EventTier {
     eventId: json['event_id'] ?? '',
     nameAr: json['name_ar'] ?? '',
     nameEn: json['name_en'] ?? '',
-    priceIqd: json['price_iqd'] ?? 0,
+    priceIqd: (json['price_iqd'] as num?)?.toInt() ?? 0,
     capacity: json['capacity'] ?? 0,
     sortOrder: json['sort_order'] ?? 0,
   );

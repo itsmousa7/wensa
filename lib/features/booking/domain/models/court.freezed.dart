@@ -214,7 +214,7 @@ return $default(_that.id,_that.placeId,_that.nameAr,_that.nameEn,_that.sortOrder
 @JsonSerializable()
 
 class _Court implements Court {
-  const _Court({this.id = '', this.placeId = '', this.nameAr = '', this.nameEn = '', this.sortOrder = 0, this.isActive = true});
+  const _Court({this.id = '', this.placeId = '', this.nameAr = '', this.nameEn = '', this.sortOrder = 0, this.isActive = false});
   factory _Court.fromJson(Map<String, dynamic> json) => _$CourtFromJson(json);
 
 @override@JsonKey() final  String id;

@@ -14,7 +14,7 @@ abstract class MembershipPlan with _$MembershipPlan {
     @Default(0) int durationDays,
     @Default(0) int priceIqd,
     @Default(false) bool allowFreeze,
-    @Default(true) bool isActive,
+    @Default(false) bool isActive,
   }) = _MembershipPlan;
 
   factory MembershipPlan.fromJson(Map<String, dynamic> json) => MembershipPlan(
@@ -24,8 +24,8 @@ abstract class MembershipPlan with _$MembershipPlan {
     nameAr: json['name_ar'] ?? '',
     nameEn: json['name_en'] ?? '',
     durationDays: json['duration_days'] ?? 0,
-    priceIqd: json['price_iqd'] ?? 0,
+    priceIqd: (json['price_iqd'] as num?)?.toInt() ?? 0,
     allowFreeze: json['allow_freeze'] ?? false,
-    isActive: json['is_active'] ?? true,
+    isActive: json['is_active'] ?? false,
   );
 }

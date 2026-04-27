@@ -19,6 +19,6 @@ abstract class FarmShift with _$FarmShift {
     shiftType: FarmShiftTypeFromString.fromString(json['shift_type'] ?? ''),
     startsTime: json['starts_time'] ?? '',
     endsTime: json['ends_time'] ?? '',
-    priceIqd: json['price_iqd'] ?? 0,
+    priceIqd: (json['price_iqd'] as num?)?.toInt() ?? 0,
   );
 }

@@ -34,7 +34,7 @@ abstract class Membership with _$Membership {
     membershipType: json['membership_type'] ?? '',
     startsAt: json['starts_at'] ?? '',
     endsAt: json['ends_at'] ?? '',
-    amountIqd: json['amount_iqd'] ?? 0,
+    amountIqd: (json['amount_iqd'] as num?)?.toInt() ?? 0,
     paymentId: json['payment_id'],
     paymentStatus: json['payment_status'],
     qrToken: json['qr_token'] ?? '',

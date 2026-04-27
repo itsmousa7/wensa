@@ -12,7 +12,7 @@ _Court _$CourtFromJson(Map<String, dynamic> json) => _Court(
   nameAr: json['nameAr'] as String? ?? '',
   nameEn: json['nameEn'] as String? ?? '',
   sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
-  isActive: json['isActive'] as bool? ?? true,
+  isActive: json['isActive'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$CourtToJson(_Court instance) => <String, dynamic>{

@@ -10,7 +10,7 @@ abstract class RestaurantSeatingOption with _$RestaurantSeatingOption {
     @Default('') String placeId,
     @Default('') String labelAr,
     @Default('') String labelEn,
-    @Default(true) bool isActive,
+    @Default(false) bool isActive,
   }) = _RestaurantSeatingOption;
 
   factory RestaurantSeatingOption.fromJson(Map<String, dynamic> json) =>
@@ -19,6 +19,6 @@ abstract class RestaurantSeatingOption with _$RestaurantSeatingOption {
         placeId: json['place_id'] ?? '',
         labelAr: json['label_ar'] ?? '',
         labelEn: json['label_en'] ?? '',
-        isActive: json['is_active'] ?? true,
+        isActive: json['is_active'] ?? false,
       );
 }

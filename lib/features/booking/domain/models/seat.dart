@@ -21,8 +21,8 @@ abstract class Seat with _$Seat {
     row: json['row'] ?? '',
     seat: json['seat'] ?? '',
     tierKey: json['tier_key'] ?? '',
-    x: json['x'] ?? 0,
-    y: json['y'] ?? 0,
+    x: (json['x'] as num?)?.toInt() ?? 0,
+    y: (json['y'] as num?)?.toInt() ?? 0,
     status: SeatStatusFromString.fromString(json['status'] ?? ''),
   );
 }
