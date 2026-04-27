@@ -17,6 +17,7 @@ import 'package:future_riverpod/features/events/presentation/pages/event_details
 import 'package:future_riverpod/features/favorites/presentation/pages/favorites_page.dart';
 import 'package:future_riverpod/features/home/presentation/pages/home_page.dart';
 import 'package:future_riverpod/features/home/presentation/pages/splash_page.dart';
+import 'package:future_riverpod/features/notifications/fcm_service.dart';
 import 'package:future_riverpod/features/places/presentation/pages/place_details_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/profile_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/theme_settings_page.dart';
@@ -172,6 +173,14 @@ String? _redirect(Ref ref, GoRouterState state) {
   final isAuth = ref.read(isAuthenticatedProvider);
   final isVerified = ref.read(isEmailVerifiedProvider);
   final path = state.matchedLocation;
+
+  // Check for pending FCM route (cold-start deep link from notification)
+  if (isAuth && isVerified) {
+    final pendingRoute = FcmService.instance.consumePendingRoute();
+    if (pendingRoute != null) {
+      return pendingRoute;
+    }
+  }
 
   final isPublic = const [
     '/signin',

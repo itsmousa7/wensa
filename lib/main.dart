@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -10,11 +11,22 @@ import 'package:future_riverpod/core/constants/theme/theme_provider.dart'
     hide AppTheme;
 import 'package:future_riverpod/core/constants/theme/theme_state.dart';
 import 'package:future_riverpod/core/router/router_provider.dart';
+import 'package:future_riverpod/features/notifications/fcm_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+
+  // Initialize Firebase (will fail gracefully until native config is added)
+  try {
+    await Firebase.initializeApp();
+    // TODO: Uncomment after running `flutterfire configure` to generate firebase_options.dart:
+    // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  } catch (e) {
+    debugPrint('[Firebase] Initialization skipped: $e');
+  }
+
   await Supabase.initialize(
     url: SupabaseConfig.url,
     anonKey: SupabaseConfig.anonKey,
@@ -24,6 +36,13 @@ void main() async {
       autoRefreshToken: true,
     ),
   );
+
+  // Initialize FCM after Supabase is ready (non-critical, wrapped in try/catch)
+  try {
+    await FcmService.instance.initialize(Supabase.instance.client);
+  } catch (e) {
+    debugPrint('[FCM] Initialization error (non-fatal): $e');
+  }
 
   runApp(const ProviderScope(child: MyApp()));
 }
