@@ -80,6 +80,7 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
             ? (isDark ? Brightness.light : Brightness.dark)
             : Brightness.light,
       ),
+      
     );
 
     return Directionality(

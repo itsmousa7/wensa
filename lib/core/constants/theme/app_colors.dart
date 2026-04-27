@@ -33,7 +33,7 @@ class AppColors {
   static const Color lightSecondary = Color.fromARGB(255, 231, 231, 231);
 
   /// Primary green color for buttons and actions (light theme)
-  static const Color lightGreenPrimary = Color.fromARGB(219, 52, 144, 162);
+  static const Color lightGreenPrimary = Color(0xDB3490A2);
 
   /// Secondary green color for button borders (light theme)
   static const Color lightGreenSecondary = Color(0xFF155b6a);

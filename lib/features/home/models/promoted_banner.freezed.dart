@@ -14,7 +14,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PromotedBannerModel {
 
- String get id; String? get placeId; String? get eventId; String get imageUrl; String? get actionUrl; String get startDate; String get endDate; bool get isActive; String? get placeNameAr; String? get placeNameEn; String? get placeArea; String? get eventTitleAr; String? get eventTitleEn; String? get eventCity;
+ String get id; String? get placeId; String? get eventId; String get imageUrl; String? get actionUrl; String get startDate; String get endDate; bool get isActive;// Merchant-entered title (description_en / description_ar in DB)
+ String? get titleEn; String? get titleAr;// Merchant-entered city
+ String? get cityEn; String? get cityAr;// Joined from linked place / event (fallbacks)
+ String? get placeNameAr; String? get placeNameEn; String? get placeArea; String? get eventTitleAr; String? get eventTitleEn; String? get eventCity;
 /// Create a copy of PromotedBannerModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +28,16 @@ $PromotedBannerModelCopyWith<PromotedBannerModel> get copyWith => _$PromotedBann
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PromotedBannerModel&&(identical(other.id, id) || other.id == id)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.actionUrl, actionUrl) || other.actionUrl == actionUrl)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.placeNameAr, placeNameAr) || other.placeNameAr == placeNameAr)&&(identical(other.placeNameEn, placeNameEn) || other.placeNameEn == placeNameEn)&&(identical(other.placeArea, placeArea) || other.placeArea == placeArea)&&(identical(other.eventTitleAr, eventTitleAr) || other.eventTitleAr == eventTitleAr)&&(identical(other.eventTitleEn, eventTitleEn) || other.eventTitleEn == eventTitleEn)&&(identical(other.eventCity, eventCity) || other.eventCity == eventCity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PromotedBannerModel&&(identical(other.id, id) || other.id == id)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.actionUrl, actionUrl) || other.actionUrl == actionUrl)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.titleEn, titleEn) || other.titleEn == titleEn)&&(identical(other.titleAr, titleAr) || other.titleAr == titleAr)&&(identical(other.cityEn, cityEn) || other.cityEn == cityEn)&&(identical(other.cityAr, cityAr) || other.cityAr == cityAr)&&(identical(other.placeNameAr, placeNameAr) || other.placeNameAr == placeNameAr)&&(identical(other.placeNameEn, placeNameEn) || other.placeNameEn == placeNameEn)&&(identical(other.placeArea, placeArea) || other.placeArea == placeArea)&&(identical(other.eventTitleAr, eventTitleAr) || other.eventTitleAr == eventTitleAr)&&(identical(other.eventTitleEn, eventTitleEn) || other.eventTitleEn == eventTitleEn)&&(identical(other.eventCity, eventCity) || other.eventCity == eventCity));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,placeId,eventId,imageUrl,actionUrl,startDate,endDate,isActive,placeNameAr,placeNameEn,placeArea,eventTitleAr,eventTitleEn,eventCity);
+int get hashCode => Object.hash(runtimeType,id,placeId,eventId,imageUrl,actionUrl,startDate,endDate,isActive,titleEn,titleAr,cityEn,cityAr,placeNameAr,placeNameEn,placeArea,eventTitleAr,eventTitleEn,eventCity);
 
 @override
 String toString() {
-  return 'PromotedBannerModel(id: $id, placeId: $placeId, eventId: $eventId, imageUrl: $imageUrl, actionUrl: $actionUrl, startDate: $startDate, endDate: $endDate, isActive: $isActive, placeNameAr: $placeNameAr, placeNameEn: $placeNameEn, placeArea: $placeArea, eventTitleAr: $eventTitleAr, eventTitleEn: $eventTitleEn, eventCity: $eventCity)';
+  return 'PromotedBannerModel(id: $id, placeId: $placeId, eventId: $eventId, imageUrl: $imageUrl, actionUrl: $actionUrl, startDate: $startDate, endDate: $endDate, isActive: $isActive, titleEn: $titleEn, titleAr: $titleAr, cityEn: $cityEn, cityAr: $cityAr, placeNameAr: $placeNameAr, placeNameEn: $placeNameEn, placeArea: $placeArea, eventTitleAr: $eventTitleAr, eventTitleEn: $eventTitleEn, eventCity: $eventCity)';
 }
 
 
@@ -45,7 +48,7 @@ abstract mixin class $PromotedBannerModelCopyWith<$Res>  {
   factory $PromotedBannerModelCopyWith(PromotedBannerModel value, $Res Function(PromotedBannerModel) _then) = _$PromotedBannerModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String? placeId, String? eventId, String imageUrl, String? actionUrl, String startDate, String endDate, bool isActive, String? placeNameAr, String? placeNameEn, String? placeArea, String? eventTitleAr, String? eventTitleEn, String? eventCity
+ String id, String? placeId, String? eventId, String imageUrl, String? actionUrl, String startDate, String endDate, bool isActive, String? titleEn, String? titleAr, String? cityEn, String? cityAr, String? placeNameAr, String? placeNameEn, String? placeArea, String? eventTitleAr, String? eventTitleEn, String? eventCity
 });
 
 
@@ -62,7 +65,7 @@ class _$PromotedBannerModelCopyWithImpl<$Res>
 
 /// Create a copy of PromotedBannerModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? placeId = freezed,Object? eventId = freezed,Object? imageUrl = null,Object? actionUrl = freezed,Object? startDate = null,Object? endDate = null,Object? isActive = null,Object? placeNameAr = freezed,Object? placeNameEn = freezed,Object? placeArea = freezed,Object? eventTitleAr = freezed,Object? eventTitleEn = freezed,Object? eventCity = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? placeId = freezed,Object? eventId = freezed,Object? imageUrl = null,Object? actionUrl = freezed,Object? startDate = null,Object? endDate = null,Object? isActive = null,Object? titleEn = freezed,Object? titleAr = freezed,Object? cityEn = freezed,Object? cityAr = freezed,Object? placeNameAr = freezed,Object? placeNameEn = freezed,Object? placeArea = freezed,Object? eventTitleAr = freezed,Object? eventTitleEn = freezed,Object? eventCity = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,placeId: freezed == placeId ? _self.placeId : placeId // ignore: cast_nullable_to_non_nullable
@@ -72,7 +75,11 @@ as String,actionUrl: freezed == actionUrl ? _self.actionUrl : actionUrl // ignor
 as String?,startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
 as String,endDate: null == endDate ? _self.endDate : endDate // ignore: cast_nullable_to_non_nullable
 as String,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
-as bool,placeNameAr: freezed == placeNameAr ? _self.placeNameAr : placeNameAr // ignore: cast_nullable_to_non_nullable
+as bool,titleEn: freezed == titleEn ? _self.titleEn : titleEn // ignore: cast_nullable_to_non_nullable
+as String?,titleAr: freezed == titleAr ? _self.titleAr : titleAr // ignore: cast_nullable_to_non_nullable
+as String?,cityEn: freezed == cityEn ? _self.cityEn : cityEn // ignore: cast_nullable_to_non_nullable
+as String?,cityAr: freezed == cityAr ? _self.cityAr : cityAr // ignore: cast_nullable_to_non_nullable
+as String?,placeNameAr: freezed == placeNameAr ? _self.placeNameAr : placeNameAr // ignore: cast_nullable_to_non_nullable
 as String?,placeNameEn: freezed == placeNameEn ? _self.placeNameEn : placeNameEn // ignore: cast_nullable_to_non_nullable
 as String?,placeArea: freezed == placeArea ? _self.placeArea : placeArea // ignore: cast_nullable_to_non_nullable
 as String?,eventTitleAr: freezed == eventTitleAr ? _self.eventTitleAr : eventTitleAr // ignore: cast_nullable_to_non_nullable
@@ -163,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? placeId,  String? eventId,  String imageUrl,  String? actionUrl,  String startDate,  String endDate,  bool isActive,  String? placeNameAr,  String? placeNameEn,  String? placeArea,  String? eventTitleAr,  String? eventTitleEn,  String? eventCity)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? placeId,  String? eventId,  String imageUrl,  String? actionUrl,  String startDate,  String endDate,  bool isActive,  String? titleEn,  String? titleAr,  String? cityEn,  String? cityAr,  String? placeNameAr,  String? placeNameEn,  String? placeArea,  String? eventTitleAr,  String? eventTitleEn,  String? eventCity)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PromotedBannerModel() when $default != null:
-return $default(_that.id,_that.placeId,_that.eventId,_that.imageUrl,_that.actionUrl,_that.startDate,_that.endDate,_that.isActive,_that.placeNameAr,_that.placeNameEn,_that.placeArea,_that.eventTitleAr,_that.eventTitleEn,_that.eventCity);case _:
+return $default(_that.id,_that.placeId,_that.eventId,_that.imageUrl,_that.actionUrl,_that.startDate,_that.endDate,_that.isActive,_that.titleEn,_that.titleAr,_that.cityEn,_that.cityAr,_that.placeNameAr,_that.placeNameEn,_that.placeArea,_that.eventTitleAr,_that.eventTitleEn,_that.eventCity);case _:
   return orElse();
 
 }
@@ -184,10 +191,10 @@ return $default(_that.id,_that.placeId,_that.eventId,_that.imageUrl,_that.action
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? placeId,  String? eventId,  String imageUrl,  String? actionUrl,  String startDate,  String endDate,  bool isActive,  String? placeNameAr,  String? placeNameEn,  String? placeArea,  String? eventTitleAr,  String? eventTitleEn,  String? eventCity)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? placeId,  String? eventId,  String imageUrl,  String? actionUrl,  String startDate,  String endDate,  bool isActive,  String? titleEn,  String? titleAr,  String? cityEn,  String? cityAr,  String? placeNameAr,  String? placeNameEn,  String? placeArea,  String? eventTitleAr,  String? eventTitleEn,  String? eventCity)  $default,) {final _that = this;
 switch (_that) {
 case _PromotedBannerModel():
-return $default(_that.id,_that.placeId,_that.eventId,_that.imageUrl,_that.actionUrl,_that.startDate,_that.endDate,_that.isActive,_that.placeNameAr,_that.placeNameEn,_that.placeArea,_that.eventTitleAr,_that.eventTitleEn,_that.eventCity);case _:
+return $default(_that.id,_that.placeId,_that.eventId,_that.imageUrl,_that.actionUrl,_that.startDate,_that.endDate,_that.isActive,_that.titleEn,_that.titleAr,_that.cityEn,_that.cityAr,_that.placeNameAr,_that.placeNameEn,_that.placeArea,_that.eventTitleAr,_that.eventTitleEn,_that.eventCity);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -204,10 +211,10 @@ return $default(_that.id,_that.placeId,_that.eventId,_that.imageUrl,_that.action
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? placeId,  String? eventId,  String imageUrl,  String? actionUrl,  String startDate,  String endDate,  bool isActive,  String? placeNameAr,  String? placeNameEn,  String? placeArea,  String? eventTitleAr,  String? eventTitleEn,  String? eventCity)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? placeId,  String? eventId,  String imageUrl,  String? actionUrl,  String startDate,  String endDate,  bool isActive,  String? titleEn,  String? titleAr,  String? cityEn,  String? cityAr,  String? placeNameAr,  String? placeNameEn,  String? placeArea,  String? eventTitleAr,  String? eventTitleEn,  String? eventCity)?  $default,) {final _that = this;
 switch (_that) {
 case _PromotedBannerModel() when $default != null:
-return $default(_that.id,_that.placeId,_that.eventId,_that.imageUrl,_that.actionUrl,_that.startDate,_that.endDate,_that.isActive,_that.placeNameAr,_that.placeNameEn,_that.placeArea,_that.eventTitleAr,_that.eventTitleEn,_that.eventCity);case _:
+return $default(_that.id,_that.placeId,_that.eventId,_that.imageUrl,_that.actionUrl,_that.startDate,_that.endDate,_that.isActive,_that.titleEn,_that.titleAr,_that.cityEn,_that.cityAr,_that.placeNameAr,_that.placeNameEn,_that.placeArea,_that.eventTitleAr,_that.eventTitleEn,_that.eventCity);case _:
   return null;
 
 }
@@ -219,7 +226,7 @@ return $default(_that.id,_that.placeId,_that.eventId,_that.imageUrl,_that.action
 
 
 class _PromotedBannerModel implements PromotedBannerModel {
-  const _PromotedBannerModel({required this.id, this.placeId, this.eventId, required this.imageUrl, this.actionUrl, required this.startDate, required this.endDate, this.isActive = true, this.placeNameAr, this.placeNameEn, this.placeArea, this.eventTitleAr, this.eventTitleEn, this.eventCity});
+  const _PromotedBannerModel({required this.id, this.placeId, this.eventId, required this.imageUrl, this.actionUrl, required this.startDate, required this.endDate, this.isActive = true, this.titleEn, this.titleAr, this.cityEn, this.cityAr, this.placeNameAr, this.placeNameEn, this.placeArea, this.eventTitleAr, this.eventTitleEn, this.eventCity});
   
 
 @override final  String id;
@@ -230,6 +237,13 @@ class _PromotedBannerModel implements PromotedBannerModel {
 @override final  String startDate;
 @override final  String endDate;
 @override@JsonKey() final  bool isActive;
+// Merchant-entered title (description_en / description_ar in DB)
+@override final  String? titleEn;
+@override final  String? titleAr;
+// Merchant-entered city
+@override final  String? cityEn;
+@override final  String? cityAr;
+// Joined from linked place / event (fallbacks)
 @override final  String? placeNameAr;
 @override final  String? placeNameEn;
 @override final  String? placeArea;
@@ -247,16 +261,16 @@ _$PromotedBannerModelCopyWith<_PromotedBannerModel> get copyWith => __$PromotedB
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PromotedBannerModel&&(identical(other.id, id) || other.id == id)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.actionUrl, actionUrl) || other.actionUrl == actionUrl)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.placeNameAr, placeNameAr) || other.placeNameAr == placeNameAr)&&(identical(other.placeNameEn, placeNameEn) || other.placeNameEn == placeNameEn)&&(identical(other.placeArea, placeArea) || other.placeArea == placeArea)&&(identical(other.eventTitleAr, eventTitleAr) || other.eventTitleAr == eventTitleAr)&&(identical(other.eventTitleEn, eventTitleEn) || other.eventTitleEn == eventTitleEn)&&(identical(other.eventCity, eventCity) || other.eventCity == eventCity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PromotedBannerModel&&(identical(other.id, id) || other.id == id)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.actionUrl, actionUrl) || other.actionUrl == actionUrl)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.titleEn, titleEn) || other.titleEn == titleEn)&&(identical(other.titleAr, titleAr) || other.titleAr == titleAr)&&(identical(other.cityEn, cityEn) || other.cityEn == cityEn)&&(identical(other.cityAr, cityAr) || other.cityAr == cityAr)&&(identical(other.placeNameAr, placeNameAr) || other.placeNameAr == placeNameAr)&&(identical(other.placeNameEn, placeNameEn) || other.placeNameEn == placeNameEn)&&(identical(other.placeArea, placeArea) || other.placeArea == placeArea)&&(identical(other.eventTitleAr, eventTitleAr) || other.eventTitleAr == eventTitleAr)&&(identical(other.eventTitleEn, eventTitleEn) || other.eventTitleEn == eventTitleEn)&&(identical(other.eventCity, eventCity) || other.eventCity == eventCity));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,placeId,eventId,imageUrl,actionUrl,startDate,endDate,isActive,placeNameAr,placeNameEn,placeArea,eventTitleAr,eventTitleEn,eventCity);
+int get hashCode => Object.hash(runtimeType,id,placeId,eventId,imageUrl,actionUrl,startDate,endDate,isActive,titleEn,titleAr,cityEn,cityAr,placeNameAr,placeNameEn,placeArea,eventTitleAr,eventTitleEn,eventCity);
 
 @override
 String toString() {
-  return 'PromotedBannerModel(id: $id, placeId: $placeId, eventId: $eventId, imageUrl: $imageUrl, actionUrl: $actionUrl, startDate: $startDate, endDate: $endDate, isActive: $isActive, placeNameAr: $placeNameAr, placeNameEn: $placeNameEn, placeArea: $placeArea, eventTitleAr: $eventTitleAr, eventTitleEn: $eventTitleEn, eventCity: $eventCity)';
+  return 'PromotedBannerModel(id: $id, placeId: $placeId, eventId: $eventId, imageUrl: $imageUrl, actionUrl: $actionUrl, startDate: $startDate, endDate: $endDate, isActive: $isActive, titleEn: $titleEn, titleAr: $titleAr, cityEn: $cityEn, cityAr: $cityAr, placeNameAr: $placeNameAr, placeNameEn: $placeNameEn, placeArea: $placeArea, eventTitleAr: $eventTitleAr, eventTitleEn: $eventTitleEn, eventCity: $eventCity)';
 }
 
 
@@ -267,7 +281,7 @@ abstract mixin class _$PromotedBannerModelCopyWith<$Res> implements $PromotedBan
   factory _$PromotedBannerModelCopyWith(_PromotedBannerModel value, $Res Function(_PromotedBannerModel) _then) = __$PromotedBannerModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? placeId, String? eventId, String imageUrl, String? actionUrl, String startDate, String endDate, bool isActive, String? placeNameAr, String? placeNameEn, String? placeArea, String? eventTitleAr, String? eventTitleEn, String? eventCity
+ String id, String? placeId, String? eventId, String imageUrl, String? actionUrl, String startDate, String endDate, bool isActive, String? titleEn, String? titleAr, String? cityEn, String? cityAr, String? placeNameAr, String? placeNameEn, String? placeArea, String? eventTitleAr, String? eventTitleEn, String? eventCity
 });
 
 
@@ -284,7 +298,7 @@ class __$PromotedBannerModelCopyWithImpl<$Res>
 
 /// Create a copy of PromotedBannerModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? placeId = freezed,Object? eventId = freezed,Object? imageUrl = null,Object? actionUrl = freezed,Object? startDate = null,Object? endDate = null,Object? isActive = null,Object? placeNameAr = freezed,Object? placeNameEn = freezed,Object? placeArea = freezed,Object? eventTitleAr = freezed,Object? eventTitleEn = freezed,Object? eventCity = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? placeId = freezed,Object? eventId = freezed,Object? imageUrl = null,Object? actionUrl = freezed,Object? startDate = null,Object? endDate = null,Object? isActive = null,Object? titleEn = freezed,Object? titleAr = freezed,Object? cityEn = freezed,Object? cityAr = freezed,Object? placeNameAr = freezed,Object? placeNameEn = freezed,Object? placeArea = freezed,Object? eventTitleAr = freezed,Object? eventTitleEn = freezed,Object? eventCity = freezed,}) {
   return _then(_PromotedBannerModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,placeId: freezed == placeId ? _self.placeId : placeId // ignore: cast_nullable_to_non_nullable
@@ -294,7 +308,11 @@ as String,actionUrl: freezed == actionUrl ? _self.actionUrl : actionUrl // ignor
 as String?,startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
 as String,endDate: null == endDate ? _self.endDate : endDate // ignore: cast_nullable_to_non_nullable
 as String,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
-as bool,placeNameAr: freezed == placeNameAr ? _self.placeNameAr : placeNameAr // ignore: cast_nullable_to_non_nullable
+as bool,titleEn: freezed == titleEn ? _self.titleEn : titleEn // ignore: cast_nullable_to_non_nullable
+as String?,titleAr: freezed == titleAr ? _self.titleAr : titleAr // ignore: cast_nullable_to_non_nullable
+as String?,cityEn: freezed == cityEn ? _self.cityEn : cityEn // ignore: cast_nullable_to_non_nullable
+as String?,cityAr: freezed == cityAr ? _self.cityAr : cityAr // ignore: cast_nullable_to_non_nullable
+as String?,placeNameAr: freezed == placeNameAr ? _self.placeNameAr : placeNameAr // ignore: cast_nullable_to_non_nullable
 as String?,placeNameEn: freezed == placeNameEn ? _self.placeNameEn : placeNameEn // ignore: cast_nullable_to_non_nullable
 as String?,placeArea: freezed == placeArea ? _self.placeArea : placeArea // ignore: cast_nullable_to_non_nullable
 as String?,eventTitleAr: freezed == eventTitleAr ? _self.eventTitleAr : eventTitleAr // ignore: cast_nullable_to_non_nullable

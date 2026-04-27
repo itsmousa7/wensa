@@ -11,6 +11,7 @@ import 'package:future_riverpod/features/home/models/promoted_banner.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // ── Top carousel ──────────────────────────────────────────────────────────────
 
@@ -68,12 +69,9 @@ class _PromotedBannerState extends ConsumerState<PromotedBanner> {
       data: (banners) {
         if (banners.isEmpty) return const SizedBox.shrink();
 
-        // Only (re)start timer when banner count changes — avoids resetting
-        // the 4-second window on every rebuild.
         if (banners.length != _timerBannerCount) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
-            // Clamp current index in case the new list is shorter.
             if (_current >= banners.length) {
               setState(() => _current = 0);
               _ctrl.jumpToPage(0);
@@ -109,7 +107,8 @@ class _PromotedBannerState extends ConsumerState<PromotedBanner> {
   }
 }
 
-// ── Inline single-banner slot ────────────────────────────────────────────────
+// ── Inline single-banner slot (vertical lists) ───────────────────────────────
+// Uses modulo so banners always cycle — no hard limit on appearances.
 
 class PromotedBannerInline extends ConsumerWidget {
   const PromotedBannerInline({super.key, required this.slotIndex});
@@ -127,8 +126,8 @@ class PromotedBannerInline extends ConsumerWidget {
       loading: () => _buildSkeleton(theme),
       error: (_, _) => const SizedBox.shrink(),
       data: (banners) {
-        if (slotIndex >= banners.length) return const SizedBox.shrink();
-        final banner = banners[slotIndex];
+        if (banners.isEmpty) return const SizedBox.shrink();
+        final banner = banners[slotIndex % banners.length];
         return Padding(
           padding: const EdgeInsets.fromLTRB(22, 6, 22, 0),
           child: _BannerCard(banner: banner, isAr: isAr),
@@ -138,32 +137,84 @@ class PromotedBannerInline extends ConsumerWidget {
   }
 }
 
-// ── Shared card widget ───────────────────────────────────────────────────────
+// ── Inline banner card for horizontal carousels ───────────────────────────────
+// Same card, taller (210 px) so it matches the carousel height.
+
+class PromotedBannerCardInline extends ConsumerWidget {
+  const PromotedBannerCardInline({super.key, required this.slotIndex});
+
+  final int slotIndex;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bannersAsync = ref.watch(promotedBannersProvider);
+    final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
+
+    return bannersAsync.when(
+      skipLoadingOnRefresh: true,
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (banners) {
+        if (banners.isEmpty) return const SizedBox.shrink();
+        final banner = banners[slotIndex % banners.length];
+        return SizedBox(
+          width: 250,
+          height: 210,
+          child: _BannerCard(banner: banner, isAr: isAr, height: 210),
+        );
+      },
+    );
+  }
+}
+
+// ── Shared card widget ────────────────────────────────────────────────────────
 
 class _BannerCard extends StatelessWidget {
-  const _BannerCard({required this.banner, required this.isAr});
+  const _BannerCard({
+    required this.banner,
+    required this.isAr,
+    this.height = 82,
+  });
 
   final PromotedBannerModel banner;
   final bool isAr;
+  final double height;
+
+  VoidCallback? _onTap(BuildContext context) {
+    if (banner.placeId != null) {
+      return () => context.pushNamed(
+            RouteNames.placeDetails,
+            queryParameters: {'placeId': banner.placeId!},
+          );
+    }
+    if (banner.eventId != null) {
+      return () => context.pushNamed(
+            RouteNames.eventDetails,
+            queryParameters: {'eventId': banner.eventId!},
+          );
+    }
+    if (banner.actionUrl != null) {
+      return () async {
+        final uri = Uri.tryParse(banner.actionUrl!);
+        if (uri != null) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      };
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final locale = isAr ? 'ar' : 'en';
+    final title = banner.displayNameFor(locale);
+    final location = banner.displayLocationFor(locale);
 
     return GestureDetector(
-      onTap: banner.placeId != null
-          ? () => context.pushNamed(
-              RouteNames.placeDetails,
-              queryParameters: {'placeId': banner.placeId!},
-            )
-          : banner.eventId != null
-              ? () => context.pushNamed(
-                  RouteNames.eventDetails,
-                  queryParameters: {'eventId': banner.eventId!},
-                )
-              : null,
+      onTap: _onTap(context),
       child: SizedBox(
-        height: 82,
+        height: height,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(18),
           child: Stack(
@@ -201,16 +252,21 @@ class _BannerCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            banner.displayNameFor(isAr ? 'ar' : 'en'),
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: AppColors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          if (banner.displayLocation != null)
+                          if (title.isNotEmpty)
                             Text(
-                              banner.displayLocation!,
+                              title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: AppColors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          if (location != null && location.isNotEmpty)
+                            Text(
+                              location,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: AppColors.white.withValues(alpha: 0.8),
                                 fontWeight: FontWeight.w900,
@@ -230,7 +286,7 @@ class _BannerCard extends StatelessWidget {
   }
 }
 
-// ── Dots indicator ───────────────────────────────────────────────────────────
+// ── Dots indicator ────────────────────────────────────────────────────────────
 
 class _DotsIndicator extends StatelessWidget {
   const _DotsIndicator({required this.count, required this.current});
@@ -260,7 +316,7 @@ class _DotsIndicator extends StatelessWidget {
   }
 }
 
-// ── Skeleton ─────────────────────────────────────────────────────────────────
+// ── Skeleton ──────────────────────────────────────────────────────────────────
 
 Widget _buildSkeleton(ThemeData theme) => Skeletonizer(
   enabled: true,

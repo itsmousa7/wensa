@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/features/home/models/promoted_banner.dart';
+import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/promoted_banner.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:future_riverpod/core/widgets/full_width_feed_card.dart';
 import 'package:future_riverpod/core/widgets/profile_error.dart';
@@ -99,50 +102,97 @@ class FeedListSection extends ConsumerWidget {
       );
     }
 
-    // ── Infinite list ──────────────────────────────────────────────────────
+    // ── Infinite list with banners every 5 items ───────────────────────────
+    // Riverpod caches the provider — watching here adds no extra fetch.
+    final hasBanners =
+        (ref.watch(promotedBannersProvider).value ?? const <PromotedBannerModel>[])
+            .isNotEmpty;
+
+    final n = feed.items.length;
+    // One banner after each complete group of 5 real items.
+    final bannerCount = hasBanners ? n ~/ 5 : 0;
+    // Total virtual slots: items + banners + 1 load-more indicator
+    final virtualCount = n + bannerCount + 1;
+
     return SliverList(
-      delegate: SliverChildBuilderDelegate((context, index) {
-        if (index == feed.items.length) {
-          if (feed.hasMore && onLoadMore != null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) => onLoadMore!());
+      delegate: SliverChildBuilderDelegate(
+        (context, vi) {
+          // ── Load-more / end-of-list ───────────────────────────────────
+          if (vi == n + bannerCount) {
+            if (feed.hasMore && onLoadMore != null) {
+              WidgetsBinding.instance
+                  .addPostFrameCallback((_) => onLoadMore!());
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: cs.primary,
+                    ),
+                  ),
+                ),
+              );
+            }
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
+              padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: cs.primary,
+                child: Text(
+                  isAr
+                      ? '— لقد وصلت للنهاية —'
+                      : '— You\'ve reached the end —',
+                  style: tt.labelLarge?.copyWith(
+                    color: cs.onTertiary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
                   ),
                 ),
               ),
             );
           }
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Center(
-              child: Text(
-                isAr ? '— لقد وصلت للنهاية —' : '— You\'ve reached the end —',
-                style: tt.labelLarge?.copyWith(
-                  color: cs.onTertiary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
+
+          if (hasBanners) {
+            // Groups of 6: [item, item, item, item, item, banner]
+            final group = vi ~/ 6;
+            final pos = vi % 6;
+
+            // ── Banner slot ───────────────────────────────────────────────
+            if (pos == 5 && group < bannerCount) {
+              // slotIndex uses modulo inside PromotedBannerInline, so banners
+              // cycle freely — no limit on how many times one appears.
+              return PromotedBannerInline(
+                slotIndex: group,
+                key: ValueKey('feed_banner_$group'),
+              );
+            }
+
+            // ── Real item ─────────────────────────────────────────────────
+            final itemIndex = group * 5 + pos;
+            if (itemIndex >= n) return const SizedBox.shrink();
+            final item = feed.items[itemIndex];
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+              child: FullWidthFeedCard(
+                item: item,
+                onTap: onTapItem != null ? () => onTapItem!(item) : null,
               ),
+            );
+          }
+
+          // ── No banners — direct mapping ───────────────────────────────
+          final item = feed.items[vi];
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+            child: FullWidthFeedCard(
+              item: item,
+              onTap: onTapItem != null ? () => onTapItem!(item) : null,
             ),
           );
-        }
-
-        final item = feed.items[index];
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-          child: FullWidthFeedCard(
-            item: item,
-            onTap: onTapItem != null ? () => onTapItem!(item) : null,
-          ),
-        );
-      }, childCount: feed.items.length + 1),
+        },
+        childCount: virtualCount,
+      ),
     );
   }
 }
