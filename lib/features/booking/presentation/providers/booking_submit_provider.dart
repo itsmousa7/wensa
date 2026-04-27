@@ -115,5 +115,32 @@ class BookingSubmit extends _$BookingSubmit {
     }
   }
 
+  Future<void> createConcertBooking({
+    required String eventId,
+    required List<String> seatIds,
+  }) async {
+    state = const BookingSubmitState.loading();
+    try {
+      final client = Supabase.instance.client;
+      final result = await client.functions.invoke(
+        'create-booking',
+        body: {
+          'category': 'concert',
+          'event_id': eventId,
+          'seat_ids': seatIds,
+        },
+      );
+      if (result.status != 200) throw Exception(result.data.toString());
+      final data = result.data as Map<String, dynamic>;
+      state = BookingSubmitState.success(
+        bookingId: data['booking_id'] as String,
+        paymentUrl: data['payment_url'] as String,
+        holdUntil: data['hold_until'] as String,
+      );
+    } catch (e) {
+      state = BookingSubmitState.error(e.toString());
+    }
+  }
+
   void reset() => state = const BookingSubmitState.idle();
 }

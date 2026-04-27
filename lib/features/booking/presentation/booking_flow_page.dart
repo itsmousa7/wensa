@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:future_riverpod/features/booking/presentation/sections/concert_section.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/farm_section.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/membership_section.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/padel_section.dart';
@@ -49,6 +50,14 @@ class BookingFlowPage extends ConsumerWidget {
           if (category == 'restaurant') {
             return RestaurantSection(
                 placeId: placeId, placeName: placeName);
+          }
+
+          if (category == 'concert' ||
+              (category == null && eventId != null)) {
+            final eid = eventId ?? '';
+            if (eid.isNotEmpty) {
+              return ConcertSection(eventId: eid);
+            }
           }
 
           if (category == 'padel' || category == 'football') {

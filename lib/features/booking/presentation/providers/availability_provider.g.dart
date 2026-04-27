@@ -400,6 +400,155 @@ final class MembershipPlansFamily extends $Family
   String toString() => r'membershipPlansProvider';
 }
 
+@ProviderFor(availableSeats)
+final availableSeatsProvider = AvailableSeatsFamily._();
+
+final class AvailableSeatsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Seat>>,
+          List<Seat>,
+          FutureOr<List<Seat>>
+        >
+    with $FutureModifier<List<Seat>>, $FutureProvider<List<Seat>> {
+  AvailableSeatsProvider._({
+    required AvailableSeatsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'availableSeatsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$availableSeatsHash();
+
+  @override
+  String toString() {
+    return r'availableSeatsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Seat>> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Seat>> create(Ref ref) {
+    final argument = this.argument as String;
+    return availableSeats(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AvailableSeatsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$availableSeatsHash() => r'f0554f3434120121089a8a7c6b259b6d289237e1';
+
+final class AvailableSeatsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Seat>>, String> {
+  AvailableSeatsFamily._()
+    : super(
+        retry: null,
+        name: r'availableSeatsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  AvailableSeatsProvider call(String eventId) =>
+      AvailableSeatsProvider._(argument: eventId, from: this);
+
+  @override
+  String toString() => r'availableSeatsProvider';
+}
+
+@ProviderFor(eventTiers)
+final eventTiersProvider = EventTiersFamily._();
+
+final class EventTiersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<EventTier>>,
+          List<EventTier>,
+          FutureOr<List<EventTier>>
+        >
+    with $FutureModifier<List<EventTier>>, $FutureProvider<List<EventTier>> {
+  EventTiersProvider._({
+    required EventTiersFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'eventTiersProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$eventTiersHash();
+
+  @override
+  String toString() {
+    return r'eventTiersProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<EventTier>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<EventTier>> create(Ref ref) {
+    final argument = this.argument as String;
+    return eventTiers(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EventTiersProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$eventTiersHash() => r'f3c8f3df2295f8c012e6a3b7f607052d86e6bd77';
+
+final class EventTiersFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<EventTier>>, String> {
+  EventTiersFamily._()
+    : super(
+        retry: null,
+        name: r'eventTiersProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  EventTiersProvider call(String eventId) =>
+      EventTiersProvider._(argument: eventId, from: this);
+
+  @override
+  String toString() => r'eventTiersProvider';
+}
+
 /// Generates 30-minute time slots from 10:00 to 22:00 (Asia/Baghdad, UTC+3).
 /// Returns ISO datetime strings stored as UTC (Baghdad - 3h).
 
