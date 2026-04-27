@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -39,6 +40,35 @@ class BookingSubmit extends _$BookingSubmit {
           'court_id': courtId,
           'starts_at': startsAt,
           'hours': hours,
+        },
+      );
+      if (result.status != 200) throw Exception(result.data.toString());
+      final data = result.data as Map<String, dynamic>;
+      state = BookingSubmitState.success(
+        bookingId: data['booking_id'] as String,
+        paymentUrl: data['payment_url'] as String,
+        holdUntil: data['hold_until'] as String,
+      );
+    } catch (e) {
+      state = BookingSubmitState.error(e.toString());
+    }
+  }
+
+  Future<void> createFarmBooking({
+    required String placeId,
+    required String date, // 'yyyy-MM-dd'
+    required FarmShiftType shiftType,
+  }) async {
+    state = const BookingSubmitState.loading();
+    try {
+      final client = Supabase.instance.client;
+      final result = await client.functions.invoke(
+        'create-booking',
+        body: {
+          'category': 'farm',
+          'place_id': placeId,
+          'date': date,
+          'shift_type': shiftType.name,
         },
       );
       if (result.status != 200) throw Exception(result.data.toString());

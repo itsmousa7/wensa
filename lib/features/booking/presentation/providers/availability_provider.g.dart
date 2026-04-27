@@ -166,3 +166,78 @@ final class AvailableSlotsFamily extends $Family
   @override
   String toString() => r'availableSlotsProvider';
 }
+
+@ProviderFor(farmShifts)
+final farmShiftsProvider = FarmShiftsFamily._();
+
+final class FarmShiftsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<FarmShift>>,
+          List<FarmShift>,
+          FutureOr<List<FarmShift>>
+        >
+    with $FutureModifier<List<FarmShift>>, $FutureProvider<List<FarmShift>> {
+  FarmShiftsProvider._({
+    required FarmShiftsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'farmShiftsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$farmShiftsHash();
+
+  @override
+  String toString() {
+    return r'farmShiftsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<FarmShift>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<FarmShift>> create(Ref ref) {
+    final argument = this.argument as String;
+    return farmShifts(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FarmShiftsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$farmShiftsHash() => r'604db61ea0ed1094844588e5f618e830b6a89b43';
+
+final class FarmShiftsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<FarmShift>>, String> {
+  FarmShiftsFamily._()
+    : super(
+        retry: null,
+        name: r'farmShiftsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  FarmShiftsProvider call(String placeId) =>
+      FarmShiftsProvider._(argument: placeId, from: this);
+
+  @override
+  String toString() => r'farmShiftsProvider';
+}

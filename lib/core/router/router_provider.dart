@@ -138,7 +138,10 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: '/place/:placeId/book',
         name: RouteNames.bookingFlow,
-        builder: (_, s) => BookingFlowPage(placeId: s.pathParameters['placeId'] ?? ''),
+        builder: (_, s) => BookingFlowPage(
+          placeId: s.pathParameters['placeId'] ?? '',
+          category: s.uri.queryParameters['category'],
+        ),
       ),
       GoRoute(
         path: '/event/:eventId/book',

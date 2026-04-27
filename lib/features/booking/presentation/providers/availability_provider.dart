@@ -1,4 +1,5 @@
 import 'package:future_riverpod/features/booking/domain/models/court.dart';
+import 'package:future_riverpod/features/booking/domain/models/farm_shift.dart';
 import 'package:future_riverpod/features/booking/domain/models/slot.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -19,3 +20,7 @@ Future<List<Slot>> availableSlots(
       courtId: courtId,
       date: date,
     );
+
+@riverpod
+Future<List<FarmShift>> farmShifts(Ref ref, String placeId) =>
+    ref.watch(bookingRepositoryProvider).fetchFarmShifts(placeId);

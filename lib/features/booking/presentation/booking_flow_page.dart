@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:future_riverpod/features/booking/presentation/sections/farm_section.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/padel_section.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 
 class BookingFlowPage extends ConsumerWidget {
-  const BookingFlowPage({super.key, required this.placeId, this.eventId});
+  const BookingFlowPage({
+    super.key,
+    required this.placeId,
+    this.eventId,
+    this.category,
+  });
 
   final String placeId;
   final String? eventId;
+  final String? category;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,12 +33,23 @@ class BookingFlowPage extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (place) {
-          // For now, always mount PadelSection.
-          // Category-based routing will be wired once category IDs are known.
-          // The section is appropriate for padel and football venues.
+          final placeName =
+              place.nameEn.isNotEmpty ? place.nameEn : place.nameAr;
+
+          if (category == 'farm') {
+            return FarmSection(placeId: placeId, placeName: placeName);
+          }
+
+          if (category == 'padel' || category == 'football') {
+            return PadelSection(placeId: placeId);
+          }
+
+          // Fallback: if no category param, check placeId
           if (placeId.isEmpty) {
             return const Center(child: Text('Coming soon'));
           }
+
+          // Default to padel for backwards compatibility
           return PadelSection(placeId: placeId);
         },
       ),
