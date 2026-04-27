@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'booking_submit_provider.dart';
+part of 'membership_submit_provider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -9,28 +9,28 @@ part of 'booking_submit_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(BookingSubmit)
-final bookingSubmitProvider = BookingSubmitProvider._();
+@ProviderFor(MembershipSubmit)
+final membershipSubmitProvider = MembershipSubmitProvider._();
 
-final class BookingSubmitProvider
-    extends $NotifierProvider<BookingSubmit, BookingSubmitState> {
-  BookingSubmitProvider._()
+final class MembershipSubmitProvider
+    extends $NotifierProvider<MembershipSubmit, BookingSubmitState> {
+  MembershipSubmitProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'bookingSubmitProvider',
+        name: r'membershipSubmitProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$bookingSubmitHash();
+  String debugGetCreateSourceHash() => _$membershipSubmitHash();
 
   @$internal
   @override
-  BookingSubmit create() => BookingSubmit();
+  MembershipSubmit create() => MembershipSubmit();
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(BookingSubmitState value) {
@@ -41,9 +41,9 @@ final class BookingSubmitProvider
   }
 }
 
-String _$bookingSubmitHash() => r'fdc94d22f7470a5ca5f89f6d6715131eae06ff90';
+String _$membershipSubmitHash() => r'600c041a5f744de75014d4f46e4813e6b4a45498';
 
-abstract class _$BookingSubmit extends $Notifier<BookingSubmitState> {
+abstract class _$MembershipSubmit extends $Notifier<BookingSubmitState> {
   BookingSubmitState build();
   @$mustCallSuper
   @override

@@ -323,6 +323,83 @@ final class SeatingOptionsFamily extends $Family
   String toString() => r'seatingOptionsProvider';
 }
 
+@ProviderFor(membershipPlans)
+final membershipPlansProvider = MembershipPlansFamily._();
+
+final class MembershipPlansProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<MembershipPlan>>,
+          List<MembershipPlan>,
+          FutureOr<List<MembershipPlan>>
+        >
+    with
+        $FutureModifier<List<MembershipPlan>>,
+        $FutureProvider<List<MembershipPlan>> {
+  MembershipPlansProvider._({
+    required MembershipPlansFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'membershipPlansProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$membershipPlansHash();
+
+  @override
+  String toString() {
+    return r'membershipPlansProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<MembershipPlan>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<MembershipPlan>> create(Ref ref) {
+    final argument = this.argument as String;
+    return membershipPlans(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MembershipPlansProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$membershipPlansHash() => r'bc5c689e564127f0edac5fd4a666232e5950d9ed';
+
+final class MembershipPlansFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<MembershipPlan>>, String> {
+  MembershipPlansFamily._()
+    : super(
+        retry: null,
+        name: r'membershipPlansProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  MembershipPlansProvider call(String placeId) =>
+      MembershipPlansProvider._(argument: placeId, from: this);
+
+  @override
+  String toString() => r'membershipPlansProvider';
+}
+
 /// Generates 30-minute time slots from 10:00 to 22:00 (Asia/Baghdad, UTC+3).
 /// Returns ISO datetime strings stored as UTC (Baghdad - 3h).
 

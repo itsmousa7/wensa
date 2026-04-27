@@ -1,5 +1,6 @@
 import 'package:future_riverpod/features/booking/domain/models/court.dart';
 import 'package:future_riverpod/features/booking/domain/models/farm_shift.dart';
+import 'package:future_riverpod/features/booking/domain/models/membership_plan.dart';
 import 'package:future_riverpod/features/booking/domain/models/restaurant_seating_option.dart';
 import 'package:future_riverpod/features/booking/domain/models/slot.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
@@ -30,6 +31,10 @@ Future<List<FarmShift>> farmShifts(Ref ref, String placeId) =>
 Future<List<RestaurantSeatingOption>> seatingOptions(
         Ref ref, String placeId) =>
     ref.watch(bookingRepositoryProvider).fetchSeatingOptions(placeId);
+
+@riverpod
+Future<List<MembershipPlan>> membershipPlans(Ref ref, String placeId) =>
+    ref.watch(bookingRepositoryProvider).fetchMembershipPlans(placeId);
 
 /// Generates 30-minute time slots from 10:00 to 22:00 (Asia/Baghdad, UTC+3).
 /// Returns ISO datetime strings stored as UTC (Baghdad - 3h).

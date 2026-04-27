@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/farm_section.dart';
+import 'package:future_riverpod/features/booking/presentation/sections/membership_section.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/padel_section.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/restaurant_section.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
@@ -36,6 +37,10 @@ class BookingFlowPage extends ConsumerWidget {
         data: (place) {
           final placeName =
               place.nameEn.isNotEmpty ? place.nameEn : place.nameAr;
+
+          if (category == 'gym' || category == 'membership') {
+            return MembershipSection(placeId: placeId, placeName: placeName);
+          }
 
           if (category == 'farm') {
             return FarmSection(placeId: placeId, placeName: placeName);
