@@ -9,11 +9,15 @@ import 'package:future_riverpod/features/auth/presentation/pages/signin_page.dar
 import 'package:future_riverpod/features/auth/presentation/pages/signup_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/verify_email_page.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_provider.dart';
+import 'package:future_riverpod/features/booking/presentation/booking_flow_page.dart';
+import 'package:future_riverpod/features/bookings_history/presentation/pages/bookings_history_page.dart';
+import 'package:future_riverpod/features/bookings_history/presentation/pages/ticket_detail_page.dart';
 import 'package:future_riverpod/features/bottom_bar/widgets/nav_shell.dart';
 import 'package:future_riverpod/features/events/presentation/pages/event_details_page.dart';
 import 'package:future_riverpod/features/favorites/presentation/pages/favorites_page.dart';
 import 'package:future_riverpod/features/home/presentation/pages/home_page.dart';
 import 'package:future_riverpod/features/home/presentation/pages/splash_page.dart';
+import 'package:future_riverpod/features/notifications/fcm_service.dart';
 import 'package:future_riverpod/features/places/presentation/pages/place_details_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/profile_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/theme_settings_page.dart';
@@ -132,6 +136,32 @@ GoRouter router(Ref ref) {
         name: RouteNames.search,
         builder: (_, _) => const SearchPage(),
       ),
+      GoRoute(
+        path: '/place/:placeId/book',
+        name: RouteNames.bookingFlow,
+        builder: (_, s) => BookingFlowPage(
+          placeId: s.pathParameters['placeId'] ?? '',
+          category: s.uri.queryParameters['category'],
+        ),
+      ),
+      GoRoute(
+        path: '/event/:eventId/book',
+        name: RouteNames.eventBookingFlow,
+        builder: (_, s) => BookingFlowPage(
+          placeId: '',
+          eventId: s.pathParameters['eventId'],
+        ),
+      ),
+      GoRoute(
+        path: '/bookings',
+        name: RouteNames.bookingsHistory,
+        builder: (_, _) => const BookingsHistoryPage(),
+      ),
+      GoRoute(
+        path: '/bookings/:id',
+        name: RouteNames.ticketDetail,
+        builder: (_, s) => TicketDetailPage(id: s.pathParameters['id'] ?? ''),
+      ),
     ],
   );
 }
@@ -143,6 +173,14 @@ String? _redirect(Ref ref, GoRouterState state) {
   final isAuth = ref.read(isAuthenticatedProvider);
   final isVerified = ref.read(isEmailVerifiedProvider);
   final path = state.matchedLocation;
+
+  // Check for pending FCM route (cold-start deep link from notification)
+  if (isAuth && isVerified) {
+    final pendingRoute = FcmService.instance.consumePendingRoute();
+    if (pendingRoute != null) {
+      return pendingRoute;
+    }
+  }
 
   final isPublic = const [
     '/signin',
@@ -160,6 +198,9 @@ String? _redirect(Ref ref, GoRouterState state) {
     '/profile',
     '/changeName',
     '/theme-settings',
+    '/place',
+    '/event',
+    '/bookings',
   ]) {
     if (path.startsWith(guarded)) {
       return (isAuth && isVerified) ? null : '/signin';
