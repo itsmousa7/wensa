@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/plans/domain/feature_gate.dart';
 import 'package:future_riverpod/features/plans/domain/models/plan_model.dart';
-import 'package:future_riverpod/features/plans/domain/models/plan_tier.dart';
 import 'package:future_riverpod/features/plans/presentation/providers/current_plan_provider.dart';
 import 'package:future_riverpod/features/plans/presentation/pages/plans_page.dart';
 
