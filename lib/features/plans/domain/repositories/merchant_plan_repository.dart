@@ -41,7 +41,7 @@ class MerchantPlanRepository {
       plan = PlanModel.fallbackBasic;
     }
 
-    return MerchantPlanState.fromJson(data as Map<String, dynamic>, plan);
+    return MerchantPlanState.fromJson(data, plan);
   }
 
   /// Calls `plans-change` edge function.
