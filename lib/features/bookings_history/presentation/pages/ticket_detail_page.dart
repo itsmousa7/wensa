@@ -141,7 +141,7 @@ class _BookingDetailBody extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Name placeholder — will be wired in T12 polish
+                            // TODO: replace with BilingualLabel once place/event name is fetched
                             Text(
                               booking.id,
                               style: tt.titleMedium,

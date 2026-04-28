@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership_plan.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_label.dart';
 
 class MembershipPlanCard extends StatelessWidget {
   const MembershipPlanCard({
@@ -50,8 +51,9 @@ class MembershipPlanCard extends StatelessWidget {
                   Row(
                     children: [
                       Flexible(
-                        child: Text(
-                          plan.nameEn,
+                        child: BilingualLabel(
+                          ar: plan.nameAr,
+                          en: plan.nameEn,
                           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                 color: foregroundColor,
                                 fontWeight: FontWeight.w600,

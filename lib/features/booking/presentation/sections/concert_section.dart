@@ -5,6 +5,7 @@ import 'package:future_riverpod/features/booking/domain/models/seat.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/hold_provider.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_label.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/hold_countdown_banner.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/seat_map.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/tier_legend.dart';
@@ -285,11 +286,10 @@ class _TierFilterChips extends StatelessWidget {
           final key = tier.nameEn;
           final isSelected = selectedTierKeys.contains(key);
           final color = tierColors[key] ?? Colors.grey;
-          final name = tier.nameEn.isNotEmpty ? tier.nameEn : tier.nameAr;
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsetsDirectional.only(end: 8),
             child: FilterChip(
-              label: Text(name),
+              label: BilingualLabel(ar: tier.nameAr, en: tier.nameEn),
               selected: isSelected,
               selectedColor: color.withValues(alpha: 0.25),
               checkmarkColor: color,

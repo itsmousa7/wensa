@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/booking/domain/models/event_tier.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_label.dart';
 
 class TierLegend extends StatelessWidget {
   const TierLegend({
@@ -19,10 +20,9 @@ class TierLegend extends StatelessWidget {
       child: Row(
         children: tiers.map((tier) {
           final color = tierColors[tier.nameEn] ?? Colors.grey;
-          final name = tier.nameEn.isNotEmpty ? tier.nameEn : tier.nameAr;
           final price = tier.priceIqd;
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsetsDirectional.only(end: 8),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
@@ -42,8 +42,9 @@ class TierLegend extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    name,
+                  BilingualLabel(
+                    ar: tier.nameAr,
+                    en: tier.nameEn,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/court.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_label.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/hold_countdown_banner.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/slot_grid.dart';
 import 'package:go_router/go_router.dart';
@@ -182,11 +183,9 @@ class _BookingFormView extends ConsumerWidget {
                   children: courts.map((court) {
                     final isSelected = selectedCourt?.id == court.id;
                     return Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsetsDirectional.only(end: 8),
                       child: ChoiceChip(
-                        label: Text(
-                          court.nameEn.isNotEmpty ? court.nameEn : court.nameAr,
-                        ),
+                        label: BilingualLabel(ar: court.nameAr, en: court.nameEn),
                         selected: isSelected,
                         onSelected: (_) {
                           ref.read(_selectedCourtProvider.notifier).set(court);
@@ -294,9 +293,6 @@ class _ReviewPanel extends ConsumerWidget {
     final sortedSlots = selectedSlots.toList()..sort();
     final timeFrom = _timeLabel(sortedSlots.first);
     final timeTo = _timeLabel(sortedSlots.last);
-    final courtName = selectedCourt.nameEn.isNotEmpty
-        ? selectedCourt.nameEn
-        : selectedCourt.nameAr;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -306,7 +302,11 @@ class _ReviewPanel extends ConsumerWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
-        _SummaryRow(label: 'Court', value: courtName),
+        _SummaryRowBilingual(
+          label: 'Court',
+          arValue: selectedCourt.nameAr,
+          enValue: selectedCourt.nameEn,
+        ),
         _SummaryRow(label: 'Date', value: _formatDate(selectedDate)),
         _SummaryRow(label: 'Time', value: '$timeFrom – $timeTo (+1h)'),
         _SummaryRow(
@@ -359,6 +359,41 @@ class _SummaryRow extends StatelessWidget {
                 ),
           ),
           Text(value, style: Theme.of(context).textTheme.bodyMedium),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryRowBilingual extends StatelessWidget {
+  const _SummaryRowBilingual({
+    required this.label,
+    required this.arValue,
+    required this.enValue,
+  });
+
+  final String label;
+  final String arValue;
+  final String enValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+          ),
+          BilingualLabel(
+            ar: arValue,
+            en: enValue,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
         ],
       ),
     );

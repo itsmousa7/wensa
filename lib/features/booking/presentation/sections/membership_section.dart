@@ -4,6 +4,7 @@ import 'package:future_riverpod/features/booking/domain/models/membership_plan.d
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/membership_submit_provider.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_label.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/membership_plan_card.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -192,7 +193,11 @@ class _MembershipReviewPanel extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         _SummaryRow(label: 'Place', value: placeName),
-        _SummaryRow(label: 'Plan', value: selectedPlan.nameEn),
+        _SummaryRowBilingual(
+          label: 'Plan',
+          arValue: selectedPlan.nameAr,
+          enValue: selectedPlan.nameEn,
+        ),
         _SummaryRow(
             label: 'Duration', value: '${selectedPlan.durationDays} days'),
         _SummaryRow(label: 'Start Date', value: formatDate(today)),
@@ -243,6 +248,41 @@ class _SummaryRow extends StatelessWidget {
                 ),
           ),
           Text(value, style: Theme.of(context).textTheme.bodyMedium),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryRowBilingual extends StatelessWidget {
+  const _SummaryRowBilingual({
+    required this.label,
+    required this.arValue,
+    required this.enValue,
+  });
+
+  final String label;
+  final String arValue;
+  final String enValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+          ),
+          BilingualLabel(
+            ar: arValue,
+            en: enValue,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
         ],
       ),
     );
