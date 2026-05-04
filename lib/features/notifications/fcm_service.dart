@@ -8,6 +8,7 @@
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FcmService {
@@ -37,7 +38,10 @@ class FcmService {
         await _saveToken(supabase, token);
       }
 
-      // 3. Listen for token refresh and save new tokens
+      // 3a. Sync preferred_locale on startup so the backend is always current
+      await _saveLocale(supabase);
+
+      // 3. Listen for token refresh and save updated tokens
       FirebaseMessaging.instance.onTokenRefresh.listen(
         (newToken) => _saveToken(supabase, newToken),
       );
@@ -75,6 +79,26 @@ class FcmService {
     } catch (e) {
       debugPrint('[FCM] Failed to save token: $e');
       // Best-effort; don't crash if table not ready or offline
+    }
+  }
+
+  /// Sync preferred_locale from SharedPreferences to Supabase
+  Future<void> _saveLocale(SupabaseClient supabase) async {
+    try {
+      final uid = supabase.auth.currentUser?.id;
+      if (uid == null) return;
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString('app_locale');
+      // Only sync explicit ar/en choices; skip 'system' or unset
+      if (saved != 'ar' && saved != 'en') return;
+      await supabase
+          .schema('profiles')
+          .from('app_users')
+          .update({'preferred_locale': saved})
+          .eq('id', uid);
+      debugPrint('[FCM] Synced preferred_locale=$saved');
+    } catch (e) {
+      debugPrint('[FCM] Failed to sync locale: $e');
     }
   }
 

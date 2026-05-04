@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -12,7 +13,13 @@ import 'package:future_riverpod/core/constants/theme/theme_provider.dart'
 import 'package:future_riverpod/core/constants/theme/theme_state.dart';
 import 'package:future_riverpod/core/router/router_provider.dart';
 import 'package:future_riverpod/features/notifications/fcm_service.dart';
+import 'package:future_riverpod/firebase_options.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print('Background Message: ${message.messageId}');
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,9 +27,10 @@ void main() async {
 
   // Initialize Firebase (will fail gracefully until native config is added)
   try {
-    await Firebase.initializeApp();
-    // TODO: Uncomment after running `flutterfire configure` to generate firebase_options.dart:
-    // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   } catch (e) {
     debugPrint('[Firebase] Initialization skipped: $e');
   }

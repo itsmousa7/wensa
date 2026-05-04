@@ -10,77 +10,62 @@ import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 // ── Nav items ─────────────────────────────────────────────────────────────────
 
 class NavItem {
-  final IconData icon;
-  final IconData activeIcon;
+  final IconData? icon;
+  final IconData? activeIcon;
   final String labelEn;
   final String labelAr;
-  final String sfSymbol;
+  final String? sfSymbol;
 
   const NavItem({
-    required this.icon,
-    required this.activeIcon,
+    this.icon,
+    this.activeIcon,
     required this.labelEn,
     required this.labelAr,
-    required this.sfSymbol,
+    this.sfSymbol,
   });
 }
 
-// iOS — 3 tabs (search lives as a separate CNButton in IosNavShell)
-// Indices map directly to shell branches: 0=Home | 1=Favorites | 2=Profile
+// iOS — 4 tabs (search lives as a separate CNButton in IosNavShell)
+// Indices map to shell branches: 0=Home | 1=Favorites | 2=Profile | 3=Bookings
 const kNavItems = [
-  NavItem(
-    icon: CupertinoIcons.home,
-    activeIcon: CupertinoIcons.house_fill,
-    labelEn: 'Home',
-    labelAr: 'الرئيسية',
-    sfSymbol: 'house.fill',
-  ),
-  NavItem(
-    icon: CupertinoIcons.heart,
-    activeIcon: CupertinoIcons.heart_fill,
-    labelEn: 'Favorites',
-    labelAr: 'المفضلة',
-    sfSymbol: 'heart.fill',
-  ),
-  NavItem(
-    icon: CupertinoIcons.person,
-    activeIcon: CupertinoIcons.person_fill,
-    labelEn: 'Profile',
-    labelAr: 'حسابي',
-    sfSymbol: 'person.fill',
-  ),
+  NavItem(labelEn: 'Home', labelAr: 'الرئيسية', sfSymbol: 'house.fill'),
+  NavItem(labelEn: 'Favorites', labelAr: 'المفضلة', sfSymbol: 'heart.fill'),
+  NavItem(labelEn: 'Bookings', labelAr: 'حجوزاتي', sfSymbol: 'ticket.fill'),
+  NavItem(labelEn: 'Profile', labelAr: 'حسابي', sfSymbol: 'person.fill'),
 ];
 
-// Android — 4 visual tabs; Search (index 1) is a push route, not a shell branch.
-// Bar index → shell branch: 0→0, 1→push, 2→1, 3→2
+// Android — 5 visual tabs; Search (index 1) is a push route, not a shell branch.
+// Bar index → shell branch: 0→0, 1→push, 2→1, 3→2, 4→3
 const kAndroidNavItems = [
   NavItem(
     icon: CupertinoIcons.home,
     activeIcon: CupertinoIcons.house_fill,
     labelEn: 'Home',
     labelAr: 'الرئيسية',
-    sfSymbol: 'house.fill',
   ),
   NavItem(
     icon: CupertinoIcons.search,
     activeIcon: CupertinoIcons.search,
     labelEn: 'Search',
     labelAr: 'بحث',
-    sfSymbol: 'magnifyingglass',
   ),
   NavItem(
     icon: CupertinoIcons.heart,
     activeIcon: CupertinoIcons.heart_fill,
     labelEn: 'Favorites',
     labelAr: 'المفضلة',
-    sfSymbol: 'heart.fill',
   ),
   NavItem(
     icon: CupertinoIcons.person,
     activeIcon: CupertinoIcons.person_fill,
     labelEn: 'Profile',
     labelAr: 'حسابي',
-    sfSymbol: 'person.fill',
+  ),
+  NavItem(
+    icon: CupertinoIcons.ticket,
+    activeIcon: CupertinoIcons.ticket_fill,
+    labelEn: 'Bookings',
+    labelAr: 'حجوزاتي',
   ),
 ];
 
@@ -147,7 +132,7 @@ class _LiquidGlassBar extends StatelessWidget {
                     .map(
                       (item) => CNTabBarItem(
                         label: isAr ? item.labelAr : item.labelEn,
-                        icon: CNSymbol(item.sfSymbol),
+                        icon: CNSymbol(item.sfSymbol!),
                       ),
                     )
                     .toList(),

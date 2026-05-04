@@ -18,7 +18,7 @@ class BookingRepository {
   final SupabaseClient _client;
 
   Future<List<Booking>> fetchUserBookings({BookingCategory? category}) async {
-    var query = _client.from('bookings').select();
+    var query = _client.schema('bookings').from('bookings').select();
     if (category != null) {
       query = query.eq('category', category.name);
     }
@@ -27,12 +27,13 @@ class BookingRepository {
   }
 
   Future<Booking> fetchBooking(String id) async {
-    final data = await _client.from('bookings').select().eq('id', id).single();
+    final data = await _client.schema('bookings').from('bookings').select().eq('id', id).single();
     return Booking.fromJson(data);
   }
 
   Future<List<Membership>> fetchUserMemberships() async {
     final data = await _client
+        .schema('bookings')
         .from('memberships')
         .select()
         .order('created_at', ascending: false);
@@ -41,6 +42,7 @@ class BookingRepository {
 
   Future<List<Court>> fetchCourts(String placeId) async {
     final data = await _client
+        .schema('bookings')
         .from('courts')
         .select()
         .eq('place_id', placeId)
@@ -55,18 +57,19 @@ class BookingRepository {
   }) async {
     final data = await _client.schema('bookings').rpc(
       'available_slots',
-      params: {'court_id': courtId, 'date': date},
+      params: {'p_court_id': courtId, 'p_date': date},
     );
     return (data as List).map((e) => Slot.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<List<FarmShift>> fetchFarmShifts(String placeId) async {
-    final data = await _client.from('farm_shifts').select().eq('place_id', placeId);
+    final data = await _client.schema('bookings').from('farm_shifts').select().eq('place_id', placeId);
     return data.map(FarmShift.fromJson).toList();
   }
 
   Future<List<EventTier>> fetchEventTiers(String eventId) async {
     final data = await _client
+        .schema('bookings')
         .from('event_tiers')
         .select()
         .eq('event_id', eventId)
@@ -84,6 +87,7 @@ class BookingRepository {
 
   Future<List<MembershipPlan>> fetchMembershipPlans(String placeId) async {
     final data = await _client
+        .schema('bookings')
         .from('membership_plans')
         .select()
         .eq('place_id', placeId)
@@ -94,6 +98,7 @@ class BookingRepository {
 
   Future<List<RestaurantSeatingOption>> fetchSeatingOptions(String placeId) async {
     final data = await _client
+        .schema('bookings')
         .from('restaurant_seating_options')
         .select()
         .eq('place_id', placeId)

@@ -18,24 +18,25 @@ import 'package:cupertino_native/components/button.dart';
 import 'package:cupertino_native/style/sf_symbol.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:future_riverpod/features/bottom_bar/pages/bottom_bar.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
+import 'package:future_riverpod/features/bottom_bar/pages/bottom_bar.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_scroll_controller.dart';
 import 'package:go_router/go_router.dart';
 
 // ── Index mapping ─────────────────────────────────────────────────────────────
 
-/// iOS bar index (0-2) → shell branch index (0,2,3).
-/// Branch 1 (Search) is never a destination for the tab bar.
-const _barToBranch = [0, 1, 2];
+/// iOS bar index (0-3) → shell branch index.
+/// Bar layout: 0=Home | 1=Favorites | 2=Profile | 3=Bookings
+const _barToBranch = [0, 1, 2, 3];
 
 int _branchToBar(int branch) {
   return switch (branch) {
-    0 => 0,
-    1 => 1,
-    2 => 2,
+    0 => 0, // Home
+    1 => 1, // Favorites
+    2 => 2, // Profile
+    3 => 3, // Bookings
     _ => 0,
   };
 }

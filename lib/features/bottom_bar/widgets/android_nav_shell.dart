@@ -28,11 +28,13 @@ import 'package:go_router/go_router.dart';
 
 // Maps bar visual index → shell branch index.
 // Returns null for Search (bar 1) because it is a push route, not a branch.
+// Bar layout: 0=Home | 1=Search(push) | 2=Favorites | 3=Profile | 4=Bookings
 int? _barToBranch(int barIndex) => switch (barIndex) {
   0 => 0, // Home
   1 => null, // Search — push route
   2 => 1, // Favorites
   3 => 2, // Profile
+  4 => 3, // Bookings
   _ => null,
 };
 
@@ -41,6 +43,7 @@ int _branchToBar(int branchIndex) => switch (branchIndex) {
   0 => 0, // Home
   1 => 2, // Favorites
   2 => 3, // Profile
+  3 => 4, // Bookings
   _ => 0,
 };
 

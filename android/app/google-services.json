@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "801707924316",
+    "project_id": "wensa-notification",
+    "storage_bucket": "wensa-notification.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:801707924316:android:5188600c4f67a0bafb3f99",
+        "android_client_info": {
+          "package_name": "com.example.wensa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSYwab_MWCsJ8wjQLqZmfFxHZc7pWYmnc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

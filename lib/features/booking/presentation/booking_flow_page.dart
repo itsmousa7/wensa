@@ -39,38 +39,25 @@ class BookingFlowPage extends ConsumerWidget {
           final placeName =
               place.nameEn.isNotEmpty ? place.nameEn : place.nameAr;
 
-          if (category == 'gym' || category == 'membership') {
-            return MembershipSection(placeId: placeId, placeName: placeName);
+          // Event-based booking (concert route)
+          if (eventId != null && eventId!.isNotEmpty) {
+            return ConcertSection(eventId: eventId!);
           }
 
-          if (category == 'farm') {
-            return FarmSection(placeId: placeId, placeName: placeName);
+          // Place-based booking — category comes from content.places.booking_category
+          switch (category) {
+            case 'sports':
+              return PadelSection(placeId: placeId);
+            case 'restaurant':
+              return RestaurantSection(placeId: placeId, placeName: placeName);
+            case 'gym':
+            case 'membership':
+              return MembershipSection(placeId: placeId, placeName: placeName);
+            case 'farm':
+              return FarmSection(placeId: placeId, placeName: placeName);
           }
 
-          if (category == 'restaurant') {
-            return RestaurantSection(
-                placeId: placeId, placeName: placeName);
-          }
-
-          if (category == 'concert' ||
-              (category == null && eventId != null)) {
-            final eid = eventId ?? '';
-            if (eid.isNotEmpty) {
-              return ConcertSection(eventId: eid);
-            }
-          }
-
-          if (category == 'padel' || category == 'football') {
-            return PadelSection(placeId: placeId);
-          }
-
-          // Fallback: if no category param, check placeId
-          if (placeId.isEmpty) {
-            return const Center(child: Text('Coming soon'));
-          }
-
-          // Default to padel for backwards compatibility
-          return PadelSection(placeId: placeId);
+          return const Center(child: Text('Coming soon'));
         },
       ),
     );

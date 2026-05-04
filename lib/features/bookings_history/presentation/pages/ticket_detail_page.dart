@@ -8,6 +8,8 @@ import 'package:future_riverpod/features/booking/domain/models/membership.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/qr_block.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/ticket_status_badge.dart';
+import 'package:future_riverpod/features/events/presentation/providers/event_details_provider.dart';
+import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:intl/intl.dart';
 
 class TicketDetailPage extends ConsumerWidget {
@@ -75,7 +77,7 @@ class _BookingDetail extends ConsumerWidget {
   }
 }
 
-class _BookingDetailBody extends StatelessWidget {
+class _BookingDetailBody extends ConsumerWidget {
   const _BookingDetailBody({required this.booking});
 
   final Booking booking;
@@ -105,9 +107,29 @@ class _BookingDetailBody extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+
+    // Resolve place or event name
+    final String displayName;
+    if (booking.placeId != null && booking.placeId!.isNotEmpty) {
+      final placeAsync = ref.watch(placeDetailsProvider(booking.placeId!));
+      displayName = placeAsync.when(
+        data: (p) => p.nameEn.isNotEmpty ? p.nameEn : p.nameAr,
+        loading: () => '...',
+        error: (_, _) => booking.category.name.toUpperCase(),
+      );
+    } else if (booking.eventId != null && booking.eventId!.isNotEmpty) {
+      final eventAsync = ref.watch(eventDetailsProvider(booking.eventId!));
+      displayName = eventAsync.when(
+        data: (e) => e.titleEn.isNotEmpty ? e.titleEn : e.titleAr,
+        loading: () => '...',
+        error: (_, _) => booking.category.name.toUpperCase(),
+      );
+    } else {
+      displayName = booking.category.name.toUpperCase();
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -141,9 +163,8 @@ class _BookingDetailBody extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // TODO: replace with BilingualLabel once place/event name is fetched
                             Text(
-                              booking.id,
+                              displayName,
                               style: tt.titleMedium,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

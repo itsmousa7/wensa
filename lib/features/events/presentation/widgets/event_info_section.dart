@@ -14,6 +14,7 @@ import 'package:future_riverpod/features/places/presentation/widgets/place_detai
 import 'package:future_riverpod/features/places/presentation/widgets/place_location_sheet.dart';
 import 'package:future_riverpod/core/widgets/place_statistic_chip.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class EventInfoSection extends ConsumerWidget {
@@ -235,10 +236,63 @@ class EventInfoSection extends ConsumerWidget {
               ),
           ],
 
-          // ── CTA ────────────────────────────────────────────────────────
+          // ── CTAs ───────────────────────────────────────────────────────
           const SizedBox(height: 28),
+          _EventBookButton(eventId: eventId, isAr: isAr),
+          const SizedBox(height: 12),
           _EventCtaButton(ticketUrl: event.ticketUrl, isAr: isAr),
         ],
+      ),
+    );
+  }
+}
+
+// ── In-app booking button ──────────────────────────────────────────────────────
+
+class _EventBookButton extends StatelessWidget {
+  const _EventBookButton({required this.eventId, required this.isAr});
+
+  final String eventId;
+  final bool isAr;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return GestureDetector(
+      onTap: () => context.push('/event/$eventId/book'),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [cs.primary, AppColors.lightGreenSecondary],
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: cs.primary.withValues(alpha: 0.35),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.event_seat_outlined,
+                color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              isAr ? 'احجز مقعدك' : 'Book a Seat',
+              style: tt.titleMedium?.copyWith(
+                color: Colors.white,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

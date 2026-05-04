@@ -41,6 +41,7 @@ _PlaceModel _$PlaceModelFromJson(Map<String, dynamic> json) => _PlaceModel(
   hotnessScore: (json['hotnessScore'] as num?)?.toDouble() ?? 0.0,
   createdAt: json['createdAt'] as String?,
   updatedAt: json['updatedAt'] as String?,
+  bookingCategory: json['bookingCategory'] as String?,
 );
 
 Map<String, dynamic> _$PlaceModelToJson(_PlaceModel instance) =>
@@ -75,4 +76,5 @@ Map<String, dynamic> _$PlaceModelToJson(_PlaceModel instance) =>
       'hotnessScore': instance.hotnessScore,
       'createdAt': instance.createdAt,
       'updatedAt': instance.updatedAt,
+      'bookingCategory': instance.bookingCategory,
     };

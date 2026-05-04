@@ -8,6 +8,7 @@ import 'package:future_riverpod/features/places/domain/models/place_model.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_app_bar_state.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_contact_section.dart';
+import 'package:go_router/go_router.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_details_helper.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_location_sheet.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_opening_hours.dart';
@@ -280,8 +281,50 @@ class PlaceInfoSection extends ConsumerWidget {
             PlaceContactSection(place: place, isAr: isAr),
           ],
 
-          // ── Reviews CTA ───────────────────────────────────────────────
+          // ── CTAs ──────────────────────────────────────────────────────
           const SizedBox(height: 28),
+          if (place.bookingCategory != null) ...[
+            // Book Now button
+            GestureDetector(
+              onTap: () => context.push(
+                '/place/$placeId/book?category=${place.bookingCategory}',
+              ),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [cs.primary, AppColors.lightGreenSecondary],
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: cs.primary.withValues(alpha: 0.35),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.calendar_today_outlined,
+                        color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      isAr ? 'احجز الآن' : 'Book Now',
+                      style: tt.titleMedium?.copyWith(
+                        color: Colors.white,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          // Reviews button
           GestureDetector(
             onTap: () => showReviewsSheet(
               context: context,
@@ -291,28 +334,21 @@ class PlaceInfoSection extends ConsumerWidget {
             ),
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(vertical: 14),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [cs.primary, AppColors.lightGreenSecondary],
-                ),
+                color: cs.surfaceContainer,
                 borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: cs.primary.withValues(alpha: 0.35),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Icon(Icons.star_outline_rounded,
+                      color: cs.onSurface.withValues(alpha: 0.6), size: 20),
                   const SizedBox(width: 8),
                   Text(
                     isAr ? 'التقييمات' : 'Reviews',
                     style: tt.titleMedium?.copyWith(
-                      color: Colors.white,
+                      color: cs.onSurface.withValues(alpha: 0.7),
                       letterSpacing: 0.3,
                     ),
                   ),

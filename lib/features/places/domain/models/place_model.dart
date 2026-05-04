@@ -36,6 +36,7 @@ abstract class PlaceModel with _$PlaceModel {
     @Default(0.0) double hotnessScore,
     String? createdAt,
     String? updatedAt,
+    String? bookingCategory,
   }) = _PlaceModel;
 
   factory PlaceModel.fromJson(Map<String, dynamic> json) => PlaceModel(
@@ -75,5 +76,6 @@ abstract class PlaceModel with _$PlaceModel {
     hotnessScore: (json['hotness_score'] as num?)?.toDouble() ?? 0.0,
     createdAt: json['created_at'],
     updatedAt: json['updated_at'],
+    bookingCategory: json['booking_category'],
   );
 }

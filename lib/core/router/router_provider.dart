@@ -123,6 +123,15 @@ GoRouter router(Ref ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
+                path: '/bookings',
+                name: RouteNames.bookingsHistory,
+                builder: (_, _) => const BookingsHistoryPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
                 path: '/profile',
                 name: RouteNames.profile,
                 builder: (_, _) => const ProfilePage(),
@@ -147,15 +156,8 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: '/event/:eventId/book',
         name: RouteNames.eventBookingFlow,
-        builder: (_, s) => BookingFlowPage(
-          placeId: '',
-          eventId: s.pathParameters['eventId'],
-        ),
-      ),
-      GoRoute(
-        path: '/bookings',
-        name: RouteNames.bookingsHistory,
-        builder: (_, _) => const BookingsHistoryPage(),
+        builder: (_, s) =>
+            BookingFlowPage(placeId: '', eventId: s.pathParameters['eventId']),
       ),
       GoRoute(
         path: '/bookings/:id',
