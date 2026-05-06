@@ -9,8 +9,8 @@ import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_
 import 'package:future_riverpod/features/booking/presentation/widgets/hold_countdown_banner.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/seat_map.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/tier_legend.dart';
+import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 // ---------------------------------------------------------------------------
 // Tier palette
@@ -111,12 +111,41 @@ class ConcertSection extends ConsumerWidget {
 
     ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
       next.maybeWhen(
-        success: (bookingId, paymentUrl, holdUntil) async {
+        success: (bookingId, paymentUrl, holdUntil, waylReferenceId) {
           if (paymentUrl.isNotEmpty) {
-            final uri = Uri.parse(paymentUrl);
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            }
+            PaymentWebViewPage.push(
+              context,
+              paymentUrl,
+              referenceId: waylReferenceId,
+              redirectionUrl: 'wansa://payment',
+              onPaymentSuccess: (_, _) {
+                ref.read(bookingSubmitProvider.notifier).reset();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Payment successful! Your tickets are confirmed.'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  context.goNamed('bookingsHistory');
+                }
+              },
+              onPaymentFailed: () {
+                ref.read(bookingSubmitProvider.notifier).reset();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Payment failed. Please try again.'),
+                    backgroundColor: Color(0xFFE53935),
+                  ),
+                );
+              },
+              onPaymentCancelled: () {
+                ref.read(bookingSubmitProvider.notifier).reset();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Payment cancelled.')),
+                );
+              },
+            );
           }
         },
         error: (message) {
@@ -131,11 +160,7 @@ class ConcertSection extends ConsumerWidget {
       );
     });
 
-    return submitState.maybeWhen(
-      success: (bookingId, paymentUrl, holdUntil) =>
-          _PaymentInProgressView(holdUntil: holdUntil, eventId: eventId),
-      orElse: () => _ConcertBookingView(eventId: eventId),
-    );
+    return _ConcertBookingView(eventId: eventId);
   }
 }
 
@@ -543,61 +568,3 @@ class _ReviewSheet extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Payment in-progress screen
-// ---------------------------------------------------------------------------
-
-class _PaymentInProgressView extends ConsumerWidget {
-  const _PaymentInProgressView({
-    required this.holdUntil,
-    required this.eventId,
-  });
-
-  final String holdUntil;
-  final String eventId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      children: [
-        if (holdUntil.isNotEmpty) HoldCountdownBanner(holdUntil: holdUntil),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.payment_outlined, size: 64),
-                const SizedBox(height: 16),
-                Text(
-                  'Payment in progress...',
-                  style: Theme.of(context).textTheme.titleLarge,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Complete the payment in your browser, then return here.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-                FilledButton.icon(
-                  onPressed: () => context.goNamed('bookingsHistory'),
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text("I've completed payment"),
-                ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () {
-                    ref.read(bookingSubmitProvider.notifier).reset();
-                    ref.read(_concertSelectionProvider.notifier).reset();
-                  },
-                  child: const Text('Go back'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}

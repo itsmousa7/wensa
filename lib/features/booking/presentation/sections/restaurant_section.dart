@@ -82,7 +82,7 @@ class RestaurantSection extends ConsumerWidget {
     });
 
     return submitState.maybeWhen(
-      success: (bookingId, paymentUrl, holdUntil) =>
+      success: (bookingId, paymentUrl, holdUntil, waylReferenceId) =>
           const _RestaurantPendingView(),
       orElse: () => _RestaurantBookingFormView(
         placeId: placeId,

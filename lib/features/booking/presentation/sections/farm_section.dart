@@ -4,10 +4,10 @@ import 'package:future_riverpod/features/booking/domain/models/booking_enums.dar
 import 'package:future_riverpod/features/booking/domain/models/farm_shift.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
-import 'package:future_riverpod/features/booking/presentation/widgets/hold_countdown_banner.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/shift_card.dart';
+import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
+import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 // ---------------------------------------------------------------------------
 // Local state notifiers
@@ -51,10 +51,46 @@ class FarmSection extends ConsumerWidget {
 
     ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
       next.maybeWhen(
-        success: (bookingId, paymentUrl, holdUntil) async {
-          final uri = Uri.parse(paymentUrl);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
+        success: (bookingId, paymentUrl, holdUntil, waylReferenceId) {
+          if (paymentUrl.isNotEmpty) {
+            PaymentWebViewPage.push(
+              context,
+              paymentUrl,
+              referenceId: waylReferenceId,
+              redirectionUrl: 'wansa://payment',
+              onPaymentSuccess: (_, orderId) async {
+                  try {
+                    await ref
+                        .read(bookingRepositoryProvider)
+                        .confirmPayment(bookingId, orderId);
+                  } catch (_) {}
+                  ref.read(bookingSubmitProvider.notifier).reset();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Payment successful! Your booking is confirmed.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    context.push('/bookings/$bookingId');
+                  }
+                },
+              onPaymentFailed: () {
+                ref.read(bookingSubmitProvider.notifier).reset();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Payment failed. Please try again.'),
+                    backgroundColor: Color(0xFFE53935),
+                  ),
+                );
+              },
+              onPaymentCancelled: () {
+                ref.read(bookingSubmitProvider.notifier).reset();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Payment cancelled.')),
+                );
+              },
+            );
           }
         },
         error: (message) {
@@ -69,14 +105,7 @@ class FarmSection extends ConsumerWidget {
       );
     });
 
-    return submitState.maybeWhen(
-      success: (bookingId, paymentUrl, holdUntil) =>
-          _FarmPaymentInProgressView(holdUntil: holdUntil),
-      orElse: () => _FarmBookingFormView(
-        placeId: placeId,
-        placeName: placeName,
-      ),
-    );
+    return _FarmBookingFormView(placeId: placeId, placeName: placeName);
   }
 }
 
@@ -308,57 +337,3 @@ class _SummaryRow extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Payment in-progress screen
-// ---------------------------------------------------------------------------
-
-class _FarmPaymentInProgressView extends ConsumerWidget {
-  const _FarmPaymentInProgressView({required this.holdUntil});
-
-  final String holdUntil;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      children: [
-        HoldCountdownBanner(holdUntil: holdUntil),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.payment_outlined, size: 64),
-                const SizedBox(height: 16),
-                Text(
-                  'Payment in progress...',
-                  style: Theme.of(context).textTheme.titleLarge,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Complete the payment in your browser, then return here.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-                FilledButton.icon(
-                  onPressed: () => context.goNamed('bookingsHistory'),
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text("I've completed payment"),
-                ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () {
-                    ref.read(bookingSubmitProvider.notifier).reset();
-                    ref.read(_farmSelectedShiftProvider.notifier).set(null);
-                  },
-                  child: const Text('Go back'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}

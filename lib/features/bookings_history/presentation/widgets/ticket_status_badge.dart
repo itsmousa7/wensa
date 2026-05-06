@@ -22,7 +22,7 @@ class TicketStatusBadge extends StatelessWidget {
   static String _labelFromBooking(BookingStatus s) {
     switch (s) {
       case BookingStatus.confirmed:
-        return 'Confirmed';
+        return 'Upcoming';
       case BookingStatus.pending:
         return 'Pending';
       case BookingStatus.completed:

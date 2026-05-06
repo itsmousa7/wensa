@@ -14,6 +14,9 @@ abstract class BookingSubmitState with _$BookingSubmitState {
     required String bookingId,
     required String paymentUrl,
     required String holdUntil,
+    // Wayl referenceId (e.g. "booking_{uuid}_{ts}") — use this for polling,
+    // NOT bookingId which is just the raw UUID.
+    required String waylReferenceId,
   }) = _Success;
   const factory BookingSubmitState.error(String message) = _Error;
 }
@@ -35,7 +38,7 @@ class BookingSubmit extends _$BookingSubmit {
       final result = await client.functions.invoke(
         'create-booking',
         body: {
-          'category': 'padel',
+          'category': 'sports',
           'place_id': placeId,
           'court_id': courtId,
           'starts_at': startsAt,
@@ -47,7 +50,8 @@ class BookingSubmit extends _$BookingSubmit {
       state = BookingSubmitState.success(
         bookingId: data['booking_id'] as String,
         paymentUrl: data['payment_url'] as String,
-        holdUntil: data['hold_until'] as String,
+        holdUntil: data['hold_until'] as String? ?? '',
+        waylReferenceId: data['reference_id'] as String,
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
@@ -76,7 +80,8 @@ class BookingSubmit extends _$BookingSubmit {
       state = BookingSubmitState.success(
         bookingId: data['booking_id'] as String,
         paymentUrl: data['payment_url'] as String,
-        holdUntil: data['hold_until'] as String,
+        holdUntil: data['hold_until'] as String? ?? '',
+        waylReferenceId: data['reference_id'] as String,
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
@@ -104,11 +109,11 @@ class BookingSubmit extends _$BookingSubmit {
       );
       if (result.status != 200) throw Exception(result.data.toString());
       final data = result.data as Map<String, dynamic>;
-      // Restaurant returns booking_id only (no payment_url at this stage)
       state = BookingSubmitState.success(
         bookingId: data['booking_id'] as String,
-        paymentUrl: '', // no payment yet
-        holdUntil: '', // no hold for restaurant
+        paymentUrl: data['payment_url'] as String? ?? '',
+        holdUntil: '',
+        waylReferenceId: data['reference_id'] as String? ?? '',
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
@@ -132,10 +137,12 @@ class BookingSubmit extends _$BookingSubmit {
       );
       if (result.status != 200) throw Exception(result.data.toString());
       final data = result.data as Map<String, dynamic>;
+      // Concerts return group_id (not booking_id) — use group_id as bookingId
       state = BookingSubmitState.success(
-        bookingId: data['booking_id'] as String,
+        bookingId: (data['group_id'] ?? data['booking_id'] ?? '') as String,
         paymentUrl: data['payment_url'] as String,
-        holdUntil: data['hold_until'] as String,
+        holdUntil: data['hold_until'] as String? ?? '',
+        waylReferenceId: data['reference_id'] as String,
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());

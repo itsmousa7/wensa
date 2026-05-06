@@ -106,6 +106,21 @@ class BookingRepository {
     return data.map(RestaurantSeatingOption.fromJson).toList();
   }
 
+  Future<void> confirmPayment(String bookingId, String paymentId) async {
+    await _client.rpc('confirm_payment', params: {
+      'p_booking_id': bookingId,
+      if (paymentId.isNotEmpty) 'p_payment_id': paymentId,
+    });
+  }
+
+  Future<void> confirmMembershipPayment(
+      String membershipId, String paymentId) async {
+    await _client.rpc('confirm_membership_payment', params: {
+      'p_membership_id': membershipId,
+      if (paymentId.isNotEmpty) 'p_payment_id': paymentId,
+    });
+  }
+
   Future<void> cancelBooking(String id) async {
     await _client.schema('bookings').rpc('cancel_booking', params: {'id': id});
   }

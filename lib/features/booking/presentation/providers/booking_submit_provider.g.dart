@@ -41,7 +41,7 @@ final class BookingSubmitProvider
   }
 }
 
-String _$bookingSubmitHash() => r'5da889889c35df8977faa58b9abfc20428df95ad';
+String _$bookingSubmitHash() => r'607f32a8d4b704bb23d7d83ad58d863e513125dc';
 
 abstract class _$BookingSubmit extends $Notifier<BookingSubmitState> {
   BookingSubmitState build();

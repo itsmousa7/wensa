@@ -31,6 +31,7 @@ class MembershipSubmit extends _$MembershipSubmit {
         bookingId: data['booking_id'] as String,
         paymentUrl: data['payment_url'] as String,
         holdUntil: '',
+        waylReferenceId: data['reference_id'] as String,
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());

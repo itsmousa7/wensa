@@ -128,12 +128,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function()?  loading,TResult Function( String bookingId,  String paymentUrl,  String holdUntil)?  success,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function()?  loading,TResult Function( String bookingId,  String paymentUrl,  String holdUntil,  String waylReferenceId)?  success,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Idle() when idle != null:
 return idle();case _Loading() when loading != null:
 return loading();case _Success() when success != null:
-return success(_that.bookingId,_that.paymentUrl,_that.holdUntil);case _Error() when error != null:
+return success(_that.bookingId,_that.paymentUrl,_that.holdUntil,_that.waylReferenceId);case _Error() when error != null:
 return error(_that.message);case _:
   return orElse();
 
@@ -152,12 +152,12 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function()  loading,required TResult Function( String bookingId,  String paymentUrl,  String holdUntil)  success,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function()  loading,required TResult Function( String bookingId,  String paymentUrl,  String holdUntil,  String waylReferenceId)  success,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case _Idle():
 return idle();case _Loading():
 return loading();case _Success():
-return success(_that.bookingId,_that.paymentUrl,_that.holdUntil);case _Error():
+return success(_that.bookingId,_that.paymentUrl,_that.holdUntil,_that.waylReferenceId);case _Error():
 return error(_that.message);case _:
   throw StateError('Unexpected subclass');
 
@@ -175,12 +175,12 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function()?  loading,TResult? Function( String bookingId,  String paymentUrl,  String holdUntil)?  success,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function()?  loading,TResult? Function( String bookingId,  String paymentUrl,  String holdUntil,  String waylReferenceId)?  success,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case _Idle() when idle != null:
 return idle();case _Loading() when loading != null:
 return loading();case _Success() when success != null:
-return success(_that.bookingId,_that.paymentUrl,_that.holdUntil);case _Error() when error != null:
+return success(_that.bookingId,_that.paymentUrl,_that.holdUntil,_that.waylReferenceId);case _Error() when error != null:
 return error(_that.message);case _:
   return null;
 
@@ -257,12 +257,15 @@ String toString() {
 
 
 class _Success implements BookingSubmitState {
-  const _Success({required this.bookingId, required this.paymentUrl, required this.holdUntil});
+  const _Success({required this.bookingId, required this.paymentUrl, required this.holdUntil, required this.waylReferenceId});
   
 
  final  String bookingId;
  final  String paymentUrl;
  final  String holdUntil;
+// Wayl referenceId (e.g. "booking_{uuid}_{ts}") — use this for polling,
+// NOT bookingId which is just the raw UUID.
+ final  String waylReferenceId;
 
 /// Create a copy of BookingSubmitState
 /// with the given fields replaced by the non-null parameter values.
@@ -274,16 +277,16 @@ _$SuccessCopyWith<_Success> get copyWith => __$SuccessCopyWithImpl<_Success>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Success&&(identical(other.bookingId, bookingId) || other.bookingId == bookingId)&&(identical(other.paymentUrl, paymentUrl) || other.paymentUrl == paymentUrl)&&(identical(other.holdUntil, holdUntil) || other.holdUntil == holdUntil));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Success&&(identical(other.bookingId, bookingId) || other.bookingId == bookingId)&&(identical(other.paymentUrl, paymentUrl) || other.paymentUrl == paymentUrl)&&(identical(other.holdUntil, holdUntil) || other.holdUntil == holdUntil)&&(identical(other.waylReferenceId, waylReferenceId) || other.waylReferenceId == waylReferenceId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,bookingId,paymentUrl,holdUntil);
+int get hashCode => Object.hash(runtimeType,bookingId,paymentUrl,holdUntil,waylReferenceId);
 
 @override
 String toString() {
-  return 'BookingSubmitState.success(bookingId: $bookingId, paymentUrl: $paymentUrl, holdUntil: $holdUntil)';
+  return 'BookingSubmitState.success(bookingId: $bookingId, paymentUrl: $paymentUrl, holdUntil: $holdUntil, waylReferenceId: $waylReferenceId)';
 }
 
 
@@ -294,7 +297,7 @@ abstract mixin class _$SuccessCopyWith<$Res> implements $BookingSubmitStateCopyW
   factory _$SuccessCopyWith(_Success value, $Res Function(_Success) _then) = __$SuccessCopyWithImpl;
 @useResult
 $Res call({
- String bookingId, String paymentUrl, String holdUntil
+ String bookingId, String paymentUrl, String holdUntil, String waylReferenceId
 });
 
 
@@ -311,11 +314,12 @@ class __$SuccessCopyWithImpl<$Res>
 
 /// Create a copy of BookingSubmitState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? bookingId = null,Object? paymentUrl = null,Object? holdUntil = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? bookingId = null,Object? paymentUrl = null,Object? holdUntil = null,Object? waylReferenceId = null,}) {
   return _then(_Success(
 bookingId: null == bookingId ? _self.bookingId : bookingId // ignore: cast_nullable_to_non_nullable
 as String,paymentUrl: null == paymentUrl ? _self.paymentUrl : paymentUrl // ignore: cast_nullable_to_non_nullable
 as String,holdUntil: null == holdUntil ? _self.holdUntil : holdUntil // ignore: cast_nullable_to_non_nullable
+as String,waylReferenceId: null == waylReferenceId ? _self.waylReferenceId : waylReferenceId // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
