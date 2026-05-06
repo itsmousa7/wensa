@@ -11,7 +11,10 @@
       "Read(//c/Users/mousa.abbas/flutter/**)",
       "Read(//c/src/flutter/**)",
       "Bash(find /c -name \"flutter\" -type f)",
-      "mcp__claude_ai_Supabase__list_tables"
+      "mcp__claude_ai_Supabase__list_tables",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\mousa.abbas\\\\Desktop\\\\flutter_projects\\\\wensa\\\\lib\\\\features\\\\booking\" -Recurse -Filter \"*.dart\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(dart analyze *)"
     ]
   }
 }

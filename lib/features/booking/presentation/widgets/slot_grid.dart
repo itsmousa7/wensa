@@ -33,10 +33,10 @@ class SlotGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 1.65,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
+        crossAxisCount: 4,
+        childAspectRatio: 1.9,
+        crossAxisSpacing: 7,
+        mainAxisSpacing: 7,
       ),
       itemCount: slots.length,
       itemBuilder: (context, index) {
@@ -90,27 +90,27 @@ class _SlotTile extends StatelessWidget {
             : isAvailable
                 ? colorScheme.surface
                 : colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
         border: isSelected
             ? null
             : Border.all(
                 color: isAvailable
-                    ? colorScheme.outline.withValues(alpha: 0.35)
-                    : colorScheme.outline.withValues(alpha: 0.15),
+                    ? colorScheme.outline.withValues(alpha: 0.3)
+                    : colorScheme.outline.withValues(alpha: 0.12),
               ),
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: colorScheme.primary.withValues(alpha: 0.35),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: colorScheme.primary.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
                 ),
               ]
             : [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  blurRadius: 3,
+                  offset: const Offset(0, 1),
                 ),
               ],
       ),
@@ -118,7 +118,7 @@ class _SlotTile extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(10),
           splashColor: isSelected
               ? Colors.white.withValues(alpha: 0.2)
               : colorScheme.primary.withValues(alpha: 0.1),
@@ -129,7 +129,7 @@ class _SlotTile extends StatelessWidget {
                 startLabel,
                 style: TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                   color: isSelected
                       ? Colors.white
                       : isAvailable
@@ -140,25 +140,17 @@ class _SlotTile extends StatelessWidget {
                 ),
               ),
               if (endLabel.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Container(
-                  height: 1,
-                  width: 20,
-                  color: isSelected
-                      ? Colors.white.withValues(alpha: 0.5)
-                      : colorScheme.outline.withValues(alpha: 0.3),
-                ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 1),
                 Text(
                   endLabel,
                   style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w400,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
                     color: isSelected
-                        ? Colors.white.withValues(alpha: 0.85)
+                        ? Colors.white.withValues(alpha: 0.75)
                         : isAvailable
-                            ? colorScheme.onSurface.withValues(alpha: 0.6)
-                            : colorScheme.onSurface.withValues(alpha: 0.25),
+                            ? colorScheme.onSurface.withValues(alpha: 0.45)
+                            : colorScheme.onSurface.withValues(alpha: 0.2),
                     decoration: isAvailable ? null : TextDecoration.lineThrough,
                     decorationColor: colorScheme.onSurface.withValues(alpha: 0.25),
                   ),

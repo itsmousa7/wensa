@@ -108,21 +108,16 @@ class _RestaurantBookingFormView extends ConsumerWidget {
   String _formatDate(DateTime dt) =>
       '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
 
-  String _formatDisplay(DateTime dt) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+  String _formatDisplay(DateTime dt, {bool isArabic = false}) {
+    const monthsEn = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
+    const monthsAr = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+    ];
+    final months = isArabic ? monthsAr : monthsEn;
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
 
@@ -155,6 +150,7 @@ class _RestaurantBookingFormView extends ConsumerWidget {
     final dateStr = _formatDate(selectedDate);
     final slots = ref.watch(restaurantTimeSlotsProvider(dateStr));
     final seatingAsync = ref.watch(seatingOptionsProvider(placeId));
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -162,7 +158,7 @@ class _RestaurantBookingFormView extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ---- Step 1: Date picker ----
-          Text('Select Date', style: Theme.of(context).textTheme.titleMedium),
+          Text(isAr ? 'اختر التاريخ' : 'Select Date', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Card(
             margin: EdgeInsets.zero,
@@ -180,14 +176,16 @@ class _RestaurantBookingFormView extends ConsumerWidget {
 
           // ---- Step 2: Time slot list ----
           Text(
-            'Select Time — ${_formatDisplay(selectedDate)}',
+            isAr
+                ? 'اختر الوقت — ${_formatDisplay(selectedDate, isArabic: true)}'
+                : 'Select Time — ${_formatDisplay(selectedDate)}',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           if (slots.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text('No slots available for this date.'),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text(isAr ? 'لا توجد أوقات متاحة لهذا التاريخ.' : 'No available times for this date.'),
             )
           else
             Card(
@@ -217,7 +215,7 @@ class _RestaurantBookingFormView extends ConsumerWidget {
 
           // ---- Step 3: Party-size stepper ----
           Text(
-            'Party Size',
+            isAr ? 'عدد الضيوف' : 'Number of Guests',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
@@ -229,7 +227,7 @@ class _RestaurantBookingFormView extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Number of guests',
+                    isAr ? 'ضيوف' : 'Guests',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   Row(
@@ -280,7 +278,7 @@ class _RestaurantBookingFormView extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Seating Preference',
+                    isAr ? 'تفضيل الجلوس' : 'Seating Preference',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
@@ -288,9 +286,9 @@ class _RestaurantBookingFormView extends ConsumerWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: options.map((option) {
-                      final label = option.labelEn.isNotEmpty
-                          ? option.labelEn
-                          : option.labelAr;
+                      final label = isAr
+                          ? (option.labelAr.isNotEmpty ? option.labelAr : option.labelEn)
+                          : (option.labelEn.isNotEmpty ? option.labelEn : option.labelAr);
                       final isSelected = selectedSeating?.id == option.id;
                       return ChoiceChip(
                         label: Text(label),
@@ -360,27 +358,30 @@ class _RestaurantReviewPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Booking Summary',
+          isAr ? 'ملخص الحجز' : 'Booking Summary',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
-        _SummaryRow(label: 'Place', value: placeName),
-        _SummaryRow(label: 'Date', value: _formatDate(selectedDate)),
-        _SummaryRow(label: 'Time', value: slotDisplayTime),
+        _SummaryRow(label: isAr ? 'المكان' : 'Venue', value: placeName),
+        _SummaryRow(label: isAr ? 'التاريخ' : 'Date', value: _formatDate(selectedDate)),
+        _SummaryRow(label: isAr ? 'الوقت' : 'Time', value: slotDisplayTime),
         _SummaryRow(
-          label: 'Party Size',
-          value: '$partySize guest${partySize > 1 ? 's' : ''}',
+          label: isAr ? 'الضيوف' : 'Guests',
+          value: isAr
+              ? '$partySize ${partySize == 1 ? 'ضيف' : 'ضيوف'}'
+              : '$partySize ${partySize == 1 ? 'guest' : 'guests'}',
         ),
         if (selectedSeating != null)
           _SummaryRow(
-            label: 'Seating',
-            value: selectedSeating!.labelEn.isNotEmpty
-                ? selectedSeating!.labelEn
-                : selectedSeating!.labelAr,
+            label: isAr ? 'الجلوس' : 'Seating',
+            value: isAr
+                ? (selectedSeating!.labelAr.isNotEmpty ? selectedSeating!.labelAr : selectedSeating!.labelEn)
+                : (selectedSeating!.labelEn.isNotEmpty ? selectedSeating!.labelEn : selectedSeating!.labelAr),
           ),
         const SizedBox(height: 16),
         FilledButton(
@@ -402,7 +403,7 @@ class _RestaurantReviewPanel extends ConsumerWidget {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Request Booking'),
+              : Text(isAr ? 'طلب الحجز' : 'Request Booking'),
         ),
       ],
     );
@@ -444,6 +445,7 @@ class _RestaurantPendingView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -456,13 +458,15 @@ class _RestaurantPendingView extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'Booking Request Sent',
+            isAr ? 'تم إرسال طلب الحجز' : 'Booking Request Sent',
             style: Theme.of(context).textTheme.headlineSmall,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
           Text(
-            "Awaiting merchant confirmation. You'll receive a push notification when your booking is confirmed or rejected.",
+            isAr
+                ? 'بانتظار تأكيد التاجر. ستتلقى إشعاراً عند تأكيد الحجز أو رفضه.'
+                : 'Waiting for merchant confirmation. You will receive a notification when your booking is confirmed or rejected.',
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
@@ -470,7 +474,7 @@ class _RestaurantPendingView extends ConsumerWidget {
           FilledButton.icon(
             onPressed: () => context.go('/bookings'),
             icon: const Icon(Icons.list_alt_rounded),
-            label: const Text('View My Bookings'),
+            label: Text(isAr ? 'عرض حجوزاتي' : 'View My Bookings'),
           ),
         ],
       ),

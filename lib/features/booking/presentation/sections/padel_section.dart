@@ -43,11 +43,11 @@ class _SlotsNotifier extends Notifier<Set<String>> {
 }
 
 final _selectedDateProvider =
-    NotifierProvider<_DateNotifier, DateTime>(_DateNotifier.new);
+    NotifierProvider.autoDispose<_DateNotifier, DateTime>(_DateNotifier.new);
 final _selectedCourtProvider =
-    NotifierProvider<_CourtNotifier, Court?>(_CourtNotifier.new);
+    NotifierProvider.autoDispose<_CourtNotifier, Court?>(_CourtNotifier.new);
 final _selectedSlotsProvider =
-    NotifierProvider<_SlotsNotifier, Set<String>>(_SlotsNotifier.new);
+    NotifierProvider.autoDispose<_SlotsNotifier, Set<String>>(_SlotsNotifier.new);
 
 // ---------------------------------------------------------------------------
 // PadelSection
@@ -130,13 +130,21 @@ class _BookingFormView extends ConsumerWidget {
   String _formatDate(DateTime dt) =>
       '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
 
-  static String displayDate(DateTime dt) {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const months = [
+  static String displayDate(DateTime dt, {bool isArabic = false}) {
+    const daysEn = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const daysAr = ['الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'];
+    const monthsEn = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    return '${days[dt.weekday - 1]}, ${dt.day} ${months[dt.month - 1]} ${dt.year}';
+    const monthsAr = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ];
+    if (isArabic) {
+      return '${daysAr[dt.weekday - 1]}، ${dt.day} ${monthsAr[dt.month - 1]} ${dt.year}';
+    }
+    return '${daysEn[dt.weekday - 1]}, ${dt.day} ${monthsEn[dt.month - 1]} ${dt.year}';
   }
 
   @override
@@ -148,6 +156,7 @@ class _BookingFormView extends ConsumerWidget {
     final submitState = ref.watch(bookingSubmitProvider);
     final isLoading =
         submitState.maybeWhen(loading: () => true, orElse: () => false);
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     final slotsAsync = selectedCourt != null
         ? ref.watch(availableSlotsProvider(
@@ -163,7 +172,7 @@ class _BookingFormView extends ConsumerWidget {
           const SizedBox(height: 8),
 
           // ── Date strip ─────────────────────────────────────────────
-          _SectionLabel('Select Date'),
+          _SectionLabel(isAr ? 'اختر التاريخ' : 'Select Date'),
           _DateStrip(
             selected: selectedDate,
             onSelect: (date) {
@@ -174,7 +183,7 @@ class _BookingFormView extends ConsumerWidget {
           const SizedBox(height: 28),
 
           // ── Court selector ─────────────────────────────────────────
-          _SectionLabel('Select Court'),
+          _SectionLabel(isAr ? 'اختر الملعب' : 'Select Court'),
           courtsAsync.when(
             loading: () => const Padding(
               padding: EdgeInsets.all(24),
@@ -185,9 +194,9 @@ class _BookingFormView extends ConsumerWidget {
               child: Text('Error loading courts: $e'),
             ),
             data: (courts) => courts.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    child: Text('No courts available.'),
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    child: Text(isAr ? 'لا توجد ملاعب متاحة.' : 'No courts available.'),
                   )
                 : _CourtsRow(
                     courts: courts,
@@ -215,8 +224,9 @@ class _BookingFormView extends ConsumerWidget {
                         '${selectedCourt.id}-${_formatDate(selectedDate)}'),
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _SectionLabel(
-                          'Available Slots — ${displayDate(selectedDate)}'),
+                      _SectionLabel(isAr
+                          ? 'الأوقات المتاحة — ${displayDate(selectedDate, isArabic: true)}'
+                          : 'Available Times — ${displayDate(selectedDate)}'),
                       if (slotsAsync != null)
                         slotsAsync.when(
                           loading: () => const Padding(
@@ -226,7 +236,7 @@ class _BookingFormView extends ConsumerWidget {
                           error: (e, _) => Padding(
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 20),
-                            child: Text('Error loading slots: $e'),
+                            child: Text('Error loading times: $e'),
                           ),
                           data: (slots) {
                             if (slots.isEmpty) {
@@ -388,10 +398,14 @@ class _DateStripState extends State<_DateStrip> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    const dayNamesEn = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const dayNamesAr = ['الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'];
+    final dayNames = isAr ? dayNamesAr : dayNamesEn;
+    final todayLabel = isAr ? 'اليوم' : 'Today';
 
     return SizedBox(
-      height: 88,
+      height: 100,
       child: ListView.builder(
         controller: _scroll,
         scrollDirection: Axis.horizontal,
@@ -405,7 +419,10 @@ class _DateStripState extends State<_DateStrip> {
               date.month == widget.selected.month &&
               date.day == widget.selected.day;
           final isToday = i == 0;
-          final isWeekend = date.weekday == 6 || date.weekday == 7;
+
+          final Color dayLabelColor = isSelected
+              ? Colors.white
+              : colorScheme.onSurface.withValues(alpha: 0.85);
 
           return Padding(
             padding: EdgeInsetsDirectional.only(end: _spacing),
@@ -418,10 +435,7 @@ class _DateStripState extends State<_DateStrip> {
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? LinearGradient(
-                          colors: [
-                            colorScheme.primary,
-                            colorScheme.secondary,
-                          ],
+                          colors: [colorScheme.primary, colorScheme.secondary],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                         )
@@ -429,17 +443,21 @@ class _DateStripState extends State<_DateStrip> {
                   color: isSelected
                       ? null
                       : isToday
-                          ? colorScheme.primaryContainer
+                          ? colorScheme.primary.withValues(alpha: 0.1)
                           : colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(18),
-                  border: isSelected || isToday
-                      ? null
-                      : Border.all(
-                          color: colorScheme.outline.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.transparent
+                        : isToday
+                            ? colorScheme.primary.withValues(alpha: 0.4)
+                            : colorScheme.outline.withValues(alpha: 0.15),
+                    width: isToday && !isSelected ? 1.5 : 1,
+                  ),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: colorScheme.primary.withValues(alpha: 0.4),
+                            color: colorScheme.primary.withValues(alpha: 0.35),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -449,45 +467,61 @@ class _DateStripState extends State<_DateStrip> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      isToday ? 'Today' : dayNames[date.weekday - 1],
-                      style: TextStyle(
-                        fontSize: isToday ? 10 : 11,
-                        fontWeight: FontWeight.w500,
-                        color: isSelected
-                            ? Colors.white.withValues(alpha: 0.85)
-                            : isToday
-                                ? colorScheme.primary
-                                : isWeekend
-                                    ? colorScheme.error.withValues(alpha: 0.7)
-                                    : colorScheme.onSurface
-                                        .withValues(alpha: 0.55),
+                    // Day label / Today badge
+                    if (isToday && !isSelected)
+                      Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primary,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              todayLabel,
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.w700,
+                                color: colorScheme.onPrimary,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Text(
+                        isToday ? todayLabel : dayNames[date.weekday - 1],
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          color: dayLabelColor,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 5),
                     Text(
                       '${date.day}',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 22,
                         fontWeight: FontWeight.w800,
                         height: 1.0,
                         color: isSelected
                             ? Colors.white
                             : isToday
                                 ? colorScheme.primary
-                                : colorScheme.onSurface,
+                                : colorScheme.onSurface.withValues(alpha: 0.85),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 5),
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      width: isSelected ? 20 : 4,
+                      width: isSelected ? 22 : (isToday ? 6 : 4),
                       height: 3,
                       decoration: BoxDecoration(
                         color: isSelected
                             ? Colors.white.withValues(alpha: 0.7)
                             : isToday
-                                ? colorScheme.primary
+                                ? colorScheme.primary.withValues(alpha: 0.6)
                                 : Colors.transparent,
                         borderRadius: BorderRadius.circular(2),
                       ),
@@ -625,12 +659,15 @@ class _EmptySlots extends StatelessWidget {
           Icon(Icons.event_busy_rounded,
               size: 36, color: colorScheme.outline.withValues(alpha: 0.5)),
           const SizedBox(height: 8),
-          Text(
-            'No slots available for this date.',
-            style: TextStyle(
-                color: colorScheme.onSurface.withValues(alpha: 0.5),
-                fontSize: 13),
-          ),
+          Builder(builder: (context) {
+            final isAr = Localizations.localeOf(context).languageCode == 'ar';
+            return Text(
+              isAr ? 'لا توجد أوقات متاحة لهذا التاريخ.' : 'No available times for this date.',
+              style: TextStyle(
+                  color: colorScheme.onSurface.withValues(alpha: 0.5),
+                  fontSize: 13),
+            );
+          }),
         ],
       ),
     );
@@ -677,13 +714,8 @@ class _BookingSummaryCard extends ConsumerWidget {
     }
   }
 
-  String _displayDate(DateTime dt) {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${days[dt.weekday - 1]}, ${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  String _displayDate(DateTime dt, {bool isArabic = false}) {
+    return _BookingFormView.displayDate(dt, isArabic: isArabic);
   }
 
   String _earliestSlot() {
@@ -705,6 +737,7 @@ class _BookingSummaryCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final hours = selectedSlots.length;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -748,7 +781,7 @@ class _BookingSummaryCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Booking Summary',
+                  isAr ? 'ملخص الحجز' : 'Booking Summary',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -763,7 +796,9 @@ class _BookingSummaryCard extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '$hours ${hours == 1 ? 'hour' : 'hours'}',
+                    isAr
+                        ? '$hours ${hours == 1 ? 'ساعة' : 'ساعات'}'
+                        : '$hours ${hours == 1 ? 'hour' : 'hours'}',
                     style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -781,7 +816,7 @@ class _BookingSummaryCard extends ConsumerWidget {
               children: [
                 _DetailRow(
                   icon: Icons.sports_tennis_rounded,
-                  label: 'Court',
+                  label: isAr ? 'الملعب' : 'Court',
                   valueWidget: BilingualLabel(
                     ar: selectedCourt.nameAr,
                     en: selectedCourt.nameEn,
@@ -794,13 +829,13 @@ class _BookingSummaryCard extends ConsumerWidget {
                 _divider(),
                 _DetailRow(
                   icon: Icons.calendar_today_rounded,
-                  label: 'Date',
-                  value: _displayDate(selectedDate),
+                  label: isAr ? 'التاريخ' : 'Date',
+                  value: _displayDate(selectedDate, isArabic: isAr),
                 ),
                 _divider(),
                 _DetailRow(
                   icon: Icons.schedule_rounded,
-                  label: 'Time',
+                  label: isAr ? 'الوقت' : 'Time',
                   value: _timeRange(),
                 ),
                 const SizedBox(height: 16),
@@ -828,7 +863,7 @@ class _BookingSummaryCard extends ConsumerWidget {
                           size: 20, color: colorScheme.primary),
                       const SizedBox(width: 10),
                       Text(
-                        'Total Amount',
+                        isAr ? 'المبلغ الإجمالي' : 'Total Amount',
                         style: TextStyle(
                           color: colorScheme.primary,
                           fontWeight: FontWeight.w600,
@@ -908,15 +943,15 @@ class _BookingSummaryCard extends ConsumerWidget {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Row(
+                              : Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.lock_outline_rounded,
+                                    const Icon(Icons.lock_outline_rounded,
                                         color: Colors.white, size: 18),
-                                    SizedBox(width: 8),
+                                    const SizedBox(width: 8),
                                     Text(
-                                      'Proceed to Pay',
-                                      style: TextStyle(
+                                      isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
+                                      style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w700,
                                         fontSize: 15,

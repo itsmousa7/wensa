@@ -197,7 +197,7 @@ class _ConcertBookingView extends ConsumerWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          'Your seat hold has expired. Please reselect.',
+                          'Your seat hold has expired. Please select again.',
                         ),
                       ),
                     );
@@ -390,28 +390,36 @@ class _SelectedSeatsBar extends ConsumerWidget {
         child: Row(
           children: [
             Expanded(
-              child: Column(
+              child: Builder(builder: (context) {
+                final isAr = Localizations.localeOf(context).languageCode == 'ar';
+                return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '$count seat${count > 1 ? 's' : ''} selected',
+                    isAr
+                        ? '$count ${count == 1 ? 'مقعد محدد' : 'مقاعد محددة'}'
+                        : '$count ${count == 1 ? 'seat selected' : 'seats selected'}',
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   Text(
-                    '${(total / 1000).toStringAsFixed(0)}k IQD total',
+                    '${(total / 1000).toStringAsFixed(0)}k IQD ${isAr ? 'إجمالي' : 'total'}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.outline,
                         ),
                   ),
                 ],
-              ),
+              );
+              }),
             ),
             const SizedBox(width: 12),
-            FilledButton(
-              onPressed: () => _showReviewSheet(context, ref),
-              child: const Text('Review'),
-            ),
+            Builder(builder: (context) {
+              final isAr = Localizations.localeOf(context).languageCode == 'ar';
+              return FilledButton(
+                onPressed: () => _showReviewSheet(context, ref),
+                child: Text(isAr ? 'مراجعة' : 'Review'),
+              );
+            }),
           ],
         ),
       ),
@@ -466,6 +474,7 @@ class _ReviewSheet extends ConsumerWidget {
       loading: () => true,
       orElse: () => false,
     );
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return DraggableScrollableSheet(
       expand: false,
@@ -488,10 +497,13 @@ class _ReviewSheet extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Review Seats',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Builder(builder: (ctx) {
+              final isAr = Localizations.localeOf(ctx).languageCode == 'ar';
+              return Text(
+                isAr ? 'مراجعة المقاعد' : 'Review Seats',
+                style: Theme.of(ctx).textTheme.titleLarge,
+              );
+            }),
             const SizedBox(height: 12),
             Expanded(
               child: ListView.separated(
@@ -501,13 +513,16 @@ class _ReviewSheet extends ConsumerWidget {
                 itemBuilder: (context, i) {
                   final s = selectedSeats[i];
                   final tier = tierByKey[s.tierKey];
+                  final isAr = Localizations.localeOf(context).languageCode == 'ar';
                   final tierName = tier != null
-                      ? (tier.nameEn.isNotEmpty ? tier.nameEn : tier.nameAr)
+                      ? (isAr
+                          ? (tier.nameAr.isNotEmpty ? tier.nameAr : tier.nameEn)
+                          : (tier.nameEn.isNotEmpty ? tier.nameEn : tier.nameAr))
                       : s.tierKey;
                   final price = tier?.priceIqd ?? 0;
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text('Row ${s.row} · Seat ${s.seat}'),
+                    title: Text(isAr ? 'صف ${s.row} · مقعد ${s.seat}' : 'Row ${s.row} · Seat ${s.seat}'),
                     subtitle: Text(tierName),
                     trailing: Text(
                       '${(price / 1000).toStringAsFixed(0)}k IQD',
@@ -524,7 +539,7 @@ class _ReviewSheet extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Total',
+                    isAr ? 'الإجمالي' : 'Total',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   Text(
@@ -557,7 +572,7 @@ class _ReviewSheet extends ConsumerWidget {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Proceed to Pay'),
+                  : Text(isAr ? 'المتابعة للدفع' : 'Proceed to Payment'),
             ),
             const SizedBox(height: 16),
           ],

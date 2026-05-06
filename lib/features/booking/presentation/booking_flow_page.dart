@@ -26,18 +26,27 @@ class BookingFlowPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: placeAsync.maybeWhen(
-          data: (place) => Text(
-            place.nameEn.isNotEmpty ? place.nameEn : place.nameAr,
-          ),
-          orElse: () => const Text('Book'),
+          data: (place) {
+            final isAr = Localizations.localeOf(context).languageCode == 'ar';
+            final name = isAr
+                ? (place.nameAr.isNotEmpty ? place.nameAr : place.nameEn)
+                : (place.nameEn.isNotEmpty ? place.nameEn : place.nameAr);
+            return Text(name);
+          },
+          orElse: () {
+            final isAr = Localizations.localeOf(context).languageCode == 'ar';
+            return Text(isAr ? 'الحجز' : 'Booking');
+          },
         ),
       ),
       body: placeAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (place) {
-          final placeName =
-              place.nameEn.isNotEmpty ? place.nameEn : place.nameAr;
+          final isAr = Localizations.localeOf(context).languageCode == 'ar';
+          final placeName = isAr
+              ? (place.nameAr.isNotEmpty ? place.nameAr : place.nameEn)
+              : (place.nameEn.isNotEmpty ? place.nameEn : place.nameAr);
 
           // Event-based booking (concert route)
           if (eventId != null && eventId!.isNotEmpty) {
@@ -57,7 +66,7 @@ class BookingFlowPage extends ConsumerWidget {
               return FarmSection(placeId: placeId, placeName: placeName);
           }
 
-          return const Center(child: Text('Coming soon'));
+          return const Center(child: Text('Coming Soon'));
         },
       ),
     );

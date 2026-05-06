@@ -122,21 +122,16 @@ class _FarmBookingFormView extends ConsumerWidget {
   final String placeId;
   final String placeName;
 
-  String _formatDisplay(DateTime dt) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+  String _formatDisplay(DateTime dt, {bool isArabic = false}) {
+    const monthsEn = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
+    const monthsAr = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+    ];
+    final months = isArabic ? monthsAr : monthsEn;
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
 
@@ -150,6 +145,7 @@ class _FarmBookingFormView extends ConsumerWidget {
       loading: () => true,
       orElse: () => false,
     );
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -157,7 +153,7 @@ class _FarmBookingFormView extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ---- Step 1: Date picker ----
-          Text('Select Date', style: Theme.of(context).textTheme.titleMedium),
+          Text(isAr ? 'اختر التاريخ' : 'Select Date', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Card(
             margin: EdgeInsets.zero,
@@ -175,7 +171,9 @@ class _FarmBookingFormView extends ConsumerWidget {
 
           // ---- Step 2: Shift picker ----
           Text(
-            'Select Shift — ${_formatDisplay(selectedDate)}',
+            isAr
+                ? 'اختر الوردية — ${_formatDisplay(selectedDate, isArabic: true)}'
+                : 'Select Shift — ${_formatDisplay(selectedDate)}',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
@@ -184,9 +182,9 @@ class _FarmBookingFormView extends ConsumerWidget {
             error: (e, _) => Text('Error loading shifts: $e'),
             data: (shifts) {
               if (shifts.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Text('No shifts available for this place.'),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(isAr ? 'لا توجد أوردية متاحة لهذا الموقع.' : 'No shifts available for this location.'),
                 );
               }
               return Column(
@@ -251,7 +249,17 @@ class _FarmReviewPanel extends ConsumerWidget {
   String _formatDate(DateTime dt) =>
       '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
 
-  String _shiftLabel(FarmShiftType type) {
+  String _shiftLabel(FarmShiftType type, {bool isArabic = false}) {
+    if (isArabic) {
+      switch (type) {
+        case FarmShiftType.day:
+          return 'نهار';
+        case FarmShiftType.night:
+          return 'ليل';
+        case FarmShiftType.full:
+          return 'يوم كامل';
+      }
+    }
     switch (type) {
       case FarmShiftType.day:
         return 'Day';
@@ -264,26 +272,27 @@ class _FarmReviewPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Booking Summary',
+          isAr ? 'ملخص الحجز' : 'Booking Summary',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
-        _SummaryRow(label: 'Place', value: placeName),
-        _SummaryRow(label: 'Date', value: _formatDate(selectedDate)),
+        _SummaryRow(label: isAr ? 'المكان' : 'Venue', value: placeName),
+        _SummaryRow(label: isAr ? 'التاريخ' : 'Date', value: _formatDate(selectedDate)),
         _SummaryRow(
-          label: 'Shift',
-          value: _shiftLabel(selectedShift.shiftType),
+          label: isAr ? 'الوردية' : 'Shift',
+          value: _shiftLabel(selectedShift.shiftType, isArabic: isAr),
         ),
         _SummaryRow(
-          label: 'Time',
+          label: isAr ? 'الوقت' : 'Time',
           value: '${selectedShift.startsTime} – ${selectedShift.endsTime}',
         ),
         _SummaryRow(
-          label: 'Total',
+          label: isAr ? 'الإجمالي' : 'Total',
           value: '${selectedShift.priceIqd} IQD',
         ),
         const SizedBox(height: 16),
@@ -303,7 +312,7 @@ class _FarmReviewPanel extends ConsumerWidget {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Proceed to Pay'),
+              : Text(isAr ? 'المتابعة للدفع' : 'Proceed to Payment'),
         ),
       ],
     );

@@ -61,7 +61,7 @@ class MembershipSection extends ConsumerWidget {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Payment successful! Your membership is active.'),
+                        content: Text('Payment successful! Your membership is now active.'),
                         backgroundColor: Colors.green,
                       ),
                     );
@@ -128,6 +128,8 @@ class _MembershipFormView extends ConsumerWidget {
       orElse: () => false,
     );
 
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -135,7 +137,7 @@ class _MembershipFormView extends ConsumerWidget {
         children: [
           // ---- Step 1: Plan list ----
           Text(
-            'Select a Membership Plan',
+            isAr ? 'اختر خطة العضوية' : 'Select Membership Plan',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
@@ -144,9 +146,9 @@ class _MembershipFormView extends ConsumerWidget {
             error: (e, _) => Text('Error loading plans: $e'),
             data: (plans) {
               if (plans.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Text('No membership plans available for this place.'),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(isAr ? 'لا توجد خطط عضوية متاحة لهذا الموقع.' : 'No membership plans available for this location.'),
                 );
               }
               return Column(
@@ -211,26 +213,28 @@ class _MembershipReviewPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final today = DateTime.now();
     final endDate = today.add(Duration(days: selectedPlan.durationDays));
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Membership Summary',
+          isAr ? 'ملخص العضوية' : 'Membership Summary',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
-        _SummaryRow(label: 'Place', value: placeName),
+        _SummaryRow(label: isAr ? 'المكان' : 'Venue', value: placeName),
         _SummaryRowBilingual(
-          label: 'Plan',
+          label: isAr ? 'الخطة' : 'Plan',
           arValue: selectedPlan.nameAr,
           enValue: selectedPlan.nameEn,
         ),
         _SummaryRow(
-            label: 'Duration', value: '${selectedPlan.durationDays} days'),
-        _SummaryRow(label: 'Start Date', value: formatDate(today)),
-        _SummaryRow(label: 'End Date', value: formatDate(endDate)),
-        _SummaryRow(label: 'Total', value: '${selectedPlan.priceIqd} IQD'),
+            label: isAr ? 'المدة' : 'Duration',
+            value: isAr ? '${selectedPlan.durationDays} أيام' : '${selectedPlan.durationDays} days'),
+        _SummaryRow(label: isAr ? 'تاريخ البداية' : 'Start Date', value: formatDate(today)),
+        _SummaryRow(label: isAr ? 'تاريخ الانتهاء' : 'End Date', value: formatDate(endDate)),
+        _SummaryRow(label: isAr ? 'الإجمالي' : 'Total', value: '${selectedPlan.priceIqd} IQD'),
         const SizedBox(height: 16),
         FilledButton(
           onPressed: isLoading
@@ -249,7 +253,7 @@ class _MembershipReviewPanel extends ConsumerWidget {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Proceed to Pay'),
+              : Text(isAr ? 'المتابعة للدفع' : 'Proceed to Payment'),
         ),
       ],
     );

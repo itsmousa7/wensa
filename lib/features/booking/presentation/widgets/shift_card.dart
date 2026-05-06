@@ -87,7 +87,7 @@ class ShiftCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'Blocks whole day',
+                            'Blocks the full day',
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                   color: isSelected
                                       ? colorScheme.onPrimary

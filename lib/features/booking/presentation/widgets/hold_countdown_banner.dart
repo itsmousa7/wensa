@@ -15,7 +15,7 @@ class HoldCountdownBanner extends ConsumerWidget {
       return MaterialBanner(
         backgroundColor: Theme.of(context).colorScheme.errorContainer,
         content: Text(
-          'Slot expired — please restart',
+          'Time expired — please start again',
           style: TextStyle(
             color: Theme.of(context).colorScheme.onErrorContainer,
             fontWeight: FontWeight.w600,
@@ -32,7 +32,7 @@ class HoldCountdownBanner extends ConsumerWidget {
           const Icon(Icons.timer_outlined, size: 18, color: Colors.amber),
           const SizedBox(width: 8),
           Text(
-            'Hold expires in $seconds seconds',
+            'Seat hold expires in $seconds seconds',
             style: const TextStyle(
               color: Colors.black87,
               fontWeight: FontWeight.w600,
