@@ -65,7 +65,7 @@ class MembershipSection extends ConsumerWidget {
                         backgroundColor: Colors.green,
                       ),
                     );
-                    context.push('/bookings/m_$bookingId');
+                    context.go('/bookings/m_$bookingId');
                   }
                 },
               onPaymentFailed: () {

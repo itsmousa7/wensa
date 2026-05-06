@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Court {
 
- String get id; String get placeId; String get nameAr; String get nameEn; int get sortOrder; bool get isActive;
+ String get id; String get placeId; String get nameAr; String get nameEn; int get sortOrder; bool get isActive; double get pricePerHour;
 /// Create a copy of Court
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $CourtCopyWith<Court> get copyWith => _$CourtCopyWithImpl<Court>(this as Court, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Court&&(identical(other.id, id) || other.id == id)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.nameAr, nameAr) || other.nameAr == nameAr)&&(identical(other.nameEn, nameEn) || other.nameEn == nameEn)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isActive, isActive) || other.isActive == isActive));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Court&&(identical(other.id, id) || other.id == id)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.nameAr, nameAr) || other.nameAr == nameAr)&&(identical(other.nameEn, nameEn) || other.nameEn == nameEn)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.pricePerHour, pricePerHour) || other.pricePerHour == pricePerHour));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,placeId,nameAr,nameEn,sortOrder,isActive);
+int get hashCode => Object.hash(runtimeType,id,placeId,nameAr,nameEn,sortOrder,isActive,pricePerHour);
 
 @override
 String toString() {
-  return 'Court(id: $id, placeId: $placeId, nameAr: $nameAr, nameEn: $nameEn, sortOrder: $sortOrder, isActive: $isActive)';
+  return 'Court(id: $id, placeId: $placeId, nameAr: $nameAr, nameEn: $nameEn, sortOrder: $sortOrder, isActive: $isActive, pricePerHour: $pricePerHour)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $CourtCopyWith<$Res>  {
   factory $CourtCopyWith(Court value, $Res Function(Court) _then) = _$CourtCopyWithImpl;
 @useResult
 $Res call({
- String id, String placeId, String nameAr, String nameEn, int sortOrder, bool isActive
+ String id, String placeId, String nameAr, String nameEn, int sortOrder, bool isActive, double pricePerHour
 });
 
 
@@ -65,7 +65,7 @@ class _$CourtCopyWithImpl<$Res>
 
 /// Create a copy of Court
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? placeId = null,Object? nameAr = null,Object? nameEn = null,Object? sortOrder = null,Object? isActive = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? placeId = null,Object? nameAr = null,Object? nameEn = null,Object? sortOrder = null,Object? isActive = null,Object? pricePerHour = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,placeId: null == placeId ? _self.placeId : placeId // ignore: cast_nullable_to_non_nullable
@@ -73,7 +73,8 @@ as String,nameAr: null == nameAr ? _self.nameAr : nameAr // ignore: cast_nullabl
 as String,nameEn: null == nameEn ? _self.nameEn : nameEn // ignore: cast_nullable_to_non_nullable
 as String,sortOrder: null == sortOrder ? _self.sortOrder : sortOrder // ignore: cast_nullable_to_non_nullable
 as int,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,pricePerHour: null == pricePerHour ? _self.pricePerHour : pricePerHour // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 
@@ -83,17 +84,6 @@ as bool,
 /// Adds pattern-matching-related methods to [Court].
 extension CourtPatterns on Court {
 /// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
 @optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _Court value)?  $default,{required TResult orElse(),}){
 final _that = this;
 switch (_that) {
@@ -104,18 +94,6 @@ return $default(_that);case _:
 }
 }
 /// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
 @optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _Court value)  $default,){
 final _that = this;
 switch (_that) {
@@ -126,17 +104,6 @@ return $default(_that);case _:
 }
 }
 /// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
 @optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _Court value)?  $default,){
 final _that = this;
 switch (_that) {
@@ -147,62 +114,28 @@ return $default(_that);case _:
 }
 }
 /// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String placeId,  String nameAr,  String nameEn,  int sortOrder,  bool isActive)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String placeId,  String nameAr,  String nameEn,  int sortOrder,  bool isActive,  double pricePerHour)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Court() when $default != null:
-return $default(_that.id,_that.placeId,_that.nameAr,_that.nameEn,_that.sortOrder,_that.isActive);case _:
+return $default(_that.id,_that.placeId,_that.nameAr,_that.nameEn,_that.sortOrder,_that.isActive,_that.pricePerHour);case _:
   return orElse();
 
 }
 }
 /// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String placeId,  String nameAr,  String nameEn,  int sortOrder,  bool isActive)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String placeId,  String nameAr,  String nameEn,  int sortOrder,  bool isActive,  double pricePerHour)  $default,) {final _that = this;
 switch (_that) {
 case _Court():
-return $default(_that.id,_that.placeId,_that.nameAr,_that.nameEn,_that.sortOrder,_that.isActive);case _:
+return $default(_that.id,_that.placeId,_that.nameAr,_that.nameEn,_that.sortOrder,_that.isActive,_that.pricePerHour);case _:
   throw StateError('Unexpected subclass');
 
 }
 }
 /// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String placeId,  String nameAr,  String nameEn,  int sortOrder,  bool isActive)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String placeId,  String nameAr,  String nameEn,  int sortOrder,  bool isActive,  double pricePerHour)?  $default,) {final _that = this;
 switch (_that) {
 case _Court() when $default != null:
-return $default(_that.id,_that.placeId,_that.nameAr,_that.nameEn,_that.sortOrder,_that.isActive);case _:
+return $default(_that.id,_that.placeId,_that.nameAr,_that.nameEn,_that.sortOrder,_that.isActive,_that.pricePerHour);case _:
   return null;
 
 }
@@ -214,7 +147,7 @@ return $default(_that.id,_that.placeId,_that.nameAr,_that.nameEn,_that.sortOrder
 @JsonSerializable()
 
 class _Court implements Court {
-  const _Court({this.id = '', this.placeId = '', this.nameAr = '', this.nameEn = '', this.sortOrder = 0, this.isActive = false});
+  const _Court({this.id = '', this.placeId = '', this.nameAr = '', this.nameEn = '', this.sortOrder = 0, this.isActive = false, this.pricePerHour = 0.0});
   factory _Court.fromJson(Map<String, dynamic> json) => _$CourtFromJson(json);
 
 @override@JsonKey() final  String id;
@@ -223,6 +156,7 @@ class _Court implements Court {
 @override@JsonKey() final  String nameEn;
 @override@JsonKey() final  int sortOrder;
 @override@JsonKey() final  bool isActive;
+@override@JsonKey() final  double pricePerHour;
 
 /// Create a copy of Court
 /// with the given fields replaced by the non-null parameter values.
@@ -237,16 +171,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Court&&(identical(other.id, id) || other.id == id)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.nameAr, nameAr) || other.nameAr == nameAr)&&(identical(other.nameEn, nameEn) || other.nameEn == nameEn)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isActive, isActive) || other.isActive == isActive));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Court&&(identical(other.id, id) || other.id == id)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.nameAr, nameAr) || other.nameAr == nameAr)&&(identical(other.nameEn, nameEn) || other.nameEn == nameEn)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.pricePerHour, pricePerHour) || other.pricePerHour == pricePerHour));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,placeId,nameAr,nameEn,sortOrder,isActive);
+int get hashCode => Object.hash(runtimeType,id,placeId,nameAr,nameEn,sortOrder,isActive,pricePerHour);
 
 @override
 String toString() {
-  return 'Court(id: $id, placeId: $placeId, nameAr: $nameAr, nameEn: $nameEn, sortOrder: $sortOrder, isActive: $isActive)';
+  return 'Court(id: $id, placeId: $placeId, nameAr: $nameAr, nameEn: $nameEn, sortOrder: $sortOrder, isActive: $isActive, pricePerHour: $pricePerHour)';
 }
 
 
@@ -257,7 +191,7 @@ abstract mixin class _$CourtCopyWith<$Res> implements $CourtCopyWith<$Res> {
   factory _$CourtCopyWith(_Court value, $Res Function(_Court) _then) = __$CourtCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String placeId, String nameAr, String nameEn, int sortOrder, bool isActive
+ String id, String placeId, String nameAr, String nameEn, int sortOrder, bool isActive, double pricePerHour
 });
 
 
@@ -274,7 +208,7 @@ class __$CourtCopyWithImpl<$Res>
 
 /// Create a copy of Court
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? placeId = null,Object? nameAr = null,Object? nameEn = null,Object? sortOrder = null,Object? isActive = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? placeId = null,Object? nameAr = null,Object? nameEn = null,Object? sortOrder = null,Object? isActive = null,Object? pricePerHour = null,}) {
   return _then(_Court(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,placeId: null == placeId ? _self.placeId : placeId // ignore: cast_nullable_to_non_nullable
@@ -282,7 +216,8 @@ as String,nameAr: null == nameAr ? _self.nameAr : nameAr // ignore: cast_nullabl
 as String,nameEn: null == nameEn ? _self.nameEn : nameEn // ignore: cast_nullable_to_non_nullable
 as String,sortOrder: null == sortOrder ? _self.sortOrder : sortOrder // ignore: cast_nullable_to_non_nullable
 as int,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,pricePerHour: null == pricePerHour ? _self.pricePerHour : pricePerHour // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 

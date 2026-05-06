@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir *)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "mcp__claude_ai_Supabase__get_edge_function",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "Bash(flutter analyze *)",
+      "Bash(where flutter *)",
+      "Read(//c/Users/mousa.abbas/flutter/**)",
+      "Read(//c/src/flutter/**)",
+      "Bash(find /c -name \"flutter\" -type f)",
+      "mcp__claude_ai_Supabase__list_tables"
+    ]
+  }
+}

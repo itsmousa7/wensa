@@ -56,16 +56,16 @@ const kAndroidNavItems = [
     labelAr: 'المفضلة',
   ),
   NavItem(
-    icon: CupertinoIcons.person,
-    activeIcon: CupertinoIcons.person_fill,
-    labelEn: 'Profile',
-    labelAr: 'حسابي',
-  ),
-  NavItem(
     icon: CupertinoIcons.ticket,
     activeIcon: CupertinoIcons.ticket_fill,
     labelEn: 'Bookings',
     labelAr: 'حجوزاتي',
+  ),
+  NavItem(
+    icon: CupertinoIcons.person,
+    activeIcon: CupertinoIcons.person_fill,
+    labelEn: 'Profile',
+    labelAr: 'حسابي',
   ),
 ];
 

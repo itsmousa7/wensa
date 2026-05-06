@@ -41,14 +41,33 @@ class BookingRepository {
   }
 
   Future<List<Court>> fetchCourts(String placeId) async {
-    final data = await _client
+    final courtsData = await _client
         .schema('bookings')
         .from('courts')
         .select()
         .eq('place_id', placeId)
         .eq('is_active', true)
         .order('sort_order', ascending: true);
-    return data.map(Court.fromJson).toList();
+
+    final pricingData = await _client
+        .schema('bookings')
+        .from('place_pricing')
+        .select()
+        .eq('place_id', placeId);
+
+    final pricing = (pricingData as List).cast<Map<String, dynamic>>();
+
+    return courtsData.map((courtJson) {
+      final courtId = courtJson['id'] as String;
+      final courtRate = pricing
+          .where((p) => p['court_id'] == courtId)
+          .firstOrNull;
+      final placeRate = pricing
+          .where((p) => p['court_id'] == null)
+          .firstOrNull;
+      final rate = ((courtRate ?? placeRate)?['hourly_rate_iqd'] as num?)?.toDouble() ?? 0.0;
+      return Court.fromJson({...courtJson, 'price_per_hour': rate});
+    }).toList();
   }
 
   Future<List<Slot>> fetchAvailableSlots({

@@ -237,15 +237,17 @@ class _SigninPageState extends ConsumerState<SigninPage> {
                     // Update the button's onPressed
                     AppButton.secondary(
                       onPressed: () async {
-                        showLoadingDialog(context); // Show manually before call
+                        // Capture navigator before the async gap — context may
+                        // be unmounted by the time GoRouter navigates to /home.
+                        final nav = Navigator.of(
+                          context,
+                          rootNavigator: true,
+                        );
+                        showLoadingDialog(context);
                         await ref
                             .read(googleAuthProvider.notifier)
                             .signInWithGoogle();
-                        if (context.mounted && Navigator.canPop(context)) {
-                          Navigator.pop(
-                            context,
-                          ); // Always dismiss after call ends
-                        }
+                        if (nav.canPop()) nav.pop();
                       },
                       color: theme.colorScheme.outline,
                       icon: SvgPicture.asset(

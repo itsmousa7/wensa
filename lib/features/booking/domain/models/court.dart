@@ -12,6 +12,7 @@ abstract class Court with _$Court {
     @Default('') String nameEn,
     @Default(0) int sortOrder,
     @Default(false) bool isActive,
+    @Default(0.0) double pricePerHour,
   }) = _Court;
 
   factory Court.fromJson(Map<String, dynamic> json) => Court(
@@ -21,5 +22,6 @@ abstract class Court with _$Court {
     nameEn: json['name_en'] ?? '',
     sortOrder: json['sort_order'] ?? 0,
     isActive: json['is_active'] ?? false,
+    pricePerHour: (json['price_per_hour'] as num?)?.toDouble() ?? 0.0,
   );
 }

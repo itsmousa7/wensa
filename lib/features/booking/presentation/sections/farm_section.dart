@@ -72,7 +72,7 @@ class FarmSection extends ConsumerWidget {
                         backgroundColor: Colors.green,
                       ),
                     );
-                    context.push('/bookings/$bookingId');
+                    context.go('/bookings/$bookingId');
                   }
                 },
               onPaymentFailed: () {

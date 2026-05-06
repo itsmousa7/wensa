@@ -13,6 +13,7 @@ _Court _$CourtFromJson(Map<String, dynamic> json) => _Court(
   nameEn: json['nameEn'] as String? ?? '',
   sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
   isActive: json['isActive'] as bool? ?? false,
+  pricePerHour: (json['pricePerHour'] as num?)?.toDouble() ?? 0.0,
 );
 
 Map<String, dynamic> _$CourtToJson(_Court instance) => <String, dynamic>{
@@ -22,4 +23,5 @@ Map<String, dynamic> _$CourtToJson(_Court instance) => <String, dynamic>{
   'nameEn': instance.nameEn,
   'sortOrder': instance.sortOrder,
   'isActive': instance.isActive,
+  'pricePerHour': instance.pricePerHour,
 };

@@ -126,6 +126,14 @@ GoRouter router(Ref ref) {
                 path: '/bookings',
                 name: RouteNames.bookingsHistory,
                 builder: (_, _) => const BookingsHistoryPage(),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    name: RouteNames.ticketDetail,
+                    builder: (_, s) =>
+                        TicketDetailPage(id: s.pathParameters['id'] ?? ''),
+                  ),
+                ],
               ),
             ],
           ),
@@ -158,11 +166,6 @@ GoRouter router(Ref ref) {
         name: RouteNames.eventBookingFlow,
         builder: (_, s) =>
             BookingFlowPage(placeId: '', eventId: s.pathParameters['eventId']),
-      ),
-      GoRoute(
-        path: '/bookings/:id',
-        name: RouteNames.ticketDetail,
-        builder: (_, s) => TicketDetailPage(id: s.pathParameters['id'] ?? ''),
       ),
     ],
   );

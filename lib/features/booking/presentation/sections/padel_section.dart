@@ -10,7 +10,7 @@ import 'package:future_riverpod/features/booking/presentation/pages/payment_webv
 import 'package:go_router/go_router.dart';
 
 // ---------------------------------------------------------------------------
-// Local state — using Notifier + NotifierProvider (riverpod 3.x compatible)
+// Local state
 // ---------------------------------------------------------------------------
 
 class _DateNotifier extends Notifier<DateTime> {
@@ -44,10 +44,8 @@ class _SlotsNotifier extends Notifier<Set<String>> {
 
 final _selectedDateProvider =
     NotifierProvider<_DateNotifier, DateTime>(_DateNotifier.new);
-
 final _selectedCourtProvider =
     NotifierProvider<_CourtNotifier, Court?>(_CourtNotifier.new);
-
 final _selectedSlotsProvider =
     NotifierProvider<_SlotsNotifier, Set<String>>(_SlotsNotifier.new);
 
@@ -57,14 +55,10 @@ final _selectedSlotsProvider =
 
 class PadelSection extends ConsumerWidget {
   const PadelSection({super.key, required this.placeId});
-
   final String placeId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final submitState = ref.watch(bookingSubmitProvider);
-
-    // Listen for state changes and trigger side-effects.
     ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
       next.maybeWhen(
         success: (bookingId, paymentUrl, holdUntil, waylReferenceId) {
@@ -75,22 +69,22 @@ class PadelSection extends ConsumerWidget {
               referenceId: waylReferenceId,
               redirectionUrl: 'wansa://payment',
               onPaymentSuccess: (_, orderId) async {
-                  try {
-                    await ref
-                        .read(bookingRepositoryProvider)
-                        .confirmPayment(bookingId, orderId);
-                  } catch (_) {}
-                  ref.read(bookingSubmitProvider.notifier).reset();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Payment successful! Your booking is confirmed.'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    context.push('/bookings/$bookingId');
-                  }
-                },
+                try {
+                  await ref
+                      .read(bookingRepositoryProvider)
+                      .confirmPayment(bookingId, orderId);
+                } catch (_) {}
+                ref.read(bookingSubmitProvider.notifier).reset();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Payment successful! Your booking is confirmed.'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  context.go('/bookings/$bookingId');
+                }
+              },
               onPaymentFailed: () {
                 ref.read(bookingSubmitProvider.notifier).reset();
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -126,34 +120,23 @@ class PadelSection extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Booking form (steps 1–3)
+// Booking form
 // ---------------------------------------------------------------------------
 
 class _BookingFormView extends ConsumerWidget {
   const _BookingFormView({required this.placeId});
-
   final String placeId;
 
-  String _formatDate(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-  }
+  String _formatDate(DateTime dt) =>
+      '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
 
-  String _formatDisplay(DateTime dt) {
+  static String displayDate(DateTime dt) {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+    return '${days[dt.weekday - 1]}, ${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
 
   @override
@@ -163,119 +146,168 @@ class _BookingFormView extends ConsumerWidget {
     final selectedSlots = ref.watch(_selectedSlotsProvider);
     final courtsAsync = ref.watch(courtsProvider(placeId));
     final submitState = ref.watch(bookingSubmitProvider);
-    final isLoading = submitState.maybeWhen(
-      loading: () => true,
-      orElse: () => false,
-    );
+    final isLoading =
+        submitState.maybeWhen(loading: () => true, orElse: () => false);
 
-    final slotsAsync = (selectedCourt != null)
-        ? ref.watch(
-            availableSlotsProvider(
-              courtId: selectedCourt.id,
-              date: _formatDate(selectedDate),
-            ),
-          )
+    final slotsAsync = selectedCourt != null
+        ? ref.watch(availableSlotsProvider(
+            courtId: selectedCourt.id,
+            date: _formatDate(selectedDate),
+          ))
         : null;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ---- Step 1: Date picker ----
-          Text('Select Date', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-          Card(
-            margin: EdgeInsets.zero,
-            child: CalendarDatePicker(
-              initialDate: selectedDate,
-              firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(const Duration(days: 90)),
-              onDateChanged: (date) {
-                ref.read(_selectedDateProvider.notifier).set(date);
-                ref.read(_selectedSlotsProvider.notifier).clear();
-              },
-            ),
-          ),
-          const SizedBox(height: 24),
 
-          // ---- Step 1: Court picker ----
-          Text('Select Court', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
+          // ── Date strip ─────────────────────────────────────────────
+          _SectionLabel('Select Date'),
+          _DateStrip(
+            selected: selectedDate,
+            onSelect: (date) {
+              ref.read(_selectedDateProvider.notifier).set(date);
+              ref.read(_selectedSlotsProvider.notifier).clear();
+            },
+          ),
+          const SizedBox(height: 28),
+
+          // ── Court selector ─────────────────────────────────────────
+          _SectionLabel('Select Court'),
           courtsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Text('Error loading courts: $e'),
-            data: (courts) {
-              if (courts.isEmpty) {
-                return const Text('No courts available.');
-              }
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: courts.map((court) {
-                    final isSelected = selectedCourt?.id == court.id;
-                    return Padding(
-                      padding: const EdgeInsetsDirectional.only(end: 8),
-                      child: ChoiceChip(
-                        label: BilingualLabel(ar: court.nameAr, en: court.nameEn),
-                        selected: isSelected,
-                        onSelected: (_) {
-                          ref.read(_selectedCourtProvider.notifier).set(court);
-                          ref.read(_selectedSlotsProvider.notifier).clear();
-                        },
-                      ),
-                    );
-                  }).toList(),
+            loading: () => const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text('Error loading courts: $e'),
+            ),
+            data: (courts) => courts.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    child: Text('No courts available.'),
+                  )
+                : _CourtsRow(
+                    courts: courts,
+                    selectedId: selectedCourt?.id,
+                    onSelect: (court) {
+                      ref.read(_selectedCourtProvider.notifier).set(court);
+                      ref.read(_selectedSlotsProvider.notifier).clear();
+                    },
+                  ),
+          ),
+          const SizedBox(height: 28),
+
+          // ── Slot grid ──────────────────────────────────────────────
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: child,
+            ),
+            child: selectedCourt != null
+                ? Column(
+                    key: ValueKey(
+                        '${selectedCourt.id}-${_formatDate(selectedDate)}'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SectionLabel(
+                          'Available Slots — ${displayDate(selectedDate)}'),
+                      if (slotsAsync != null)
+                        slotsAsync.when(
+                          loading: () => const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 32),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                          error: (e, _) => Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20),
+                            child: Text('Error loading slots: $e'),
+                          ),
+                          data: (slots) {
+                            if (slots.isEmpty) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 24),
+                                child: _EmptySlots(),
+                              );
+                            }
+                            final now = DateTime.now();
+                            final isToday = selectedDate.year == now.year &&
+                                selectedDate.month == now.month &&
+                                selectedDate.day == now.day;
+                            final displaySlots = isToday
+                                ? slots.map((slot) {
+                                    try {
+                                      final slotTime =
+                                          DateTime.parse(slot.startsAt)
+                                              .toLocal();
+                                      if (!slotTime.isAfter(now)) {
+                                        return slot.copyWith(available: false);
+                                      }
+                                    } catch (_) {}
+                                    return slot;
+                                  }).toList()
+                                : slots;
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: SlotGrid(
+                                slots: displaySlots,
+                                selectedStartTimes: selectedSlots,
+                                onTap: (slot) {
+                                  ref
+                                      .read(_selectedSlotsProvider.notifier)
+                                      .toggle(slot.startsAt);
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      const SizedBox(height: 24),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
+
+          // ── Summary card (animated) ────────────────────────────────
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            transitionBuilder: (child, animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.08),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  )),
+                  child: child,
                 ),
               );
             },
+            child: (selectedCourt != null && selectedSlots.isNotEmpty)
+                ? Padding(
+                    key: const ValueKey('summary-visible'),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _BookingSummaryCard(
+                      selectedDate: selectedDate,
+                      selectedCourt: selectedCourt,
+                      selectedSlots: selectedSlots,
+                      placeId: placeId,
+                      isLoading: isLoading,
+                    ),
+                  )
+                : const SizedBox.shrink(key: ValueKey('summary-hidden')),
           ),
-          const SizedBox(height: 24),
 
-          // ---- Step 2: Slot grid ----
-          if (selectedCourt != null) ...[
-            Text(
-              'Available Slots — ${_formatDisplay(selectedDate)}',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            if (slotsAsync != null)
-              slotsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Text('Error loading slots: $e'),
-                data: (slots) {
-                  if (slots.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Text('No slots available for this date.'),
-                    );
-                  }
-                  return SlotGrid(
-                    slots: slots,
-                    selectedStartTimes: selectedSlots,
-                    onTap: (slot) {
-                      ref
-                          .read(_selectedSlotsProvider.notifier)
-                          .toggle(slot.startsAt);
-                    },
-                  );
-                },
-              ),
-            const SizedBox(height: 24),
-          ],
-
-          // ---- Step 3: Review + Pay ----
-          if (selectedCourt != null && selectedSlots.isNotEmpty) ...[
-            const Divider(),
-            const SizedBox(height: 12),
-            _ReviewPanel(
-              selectedDate: selectedDate,
-              selectedCourt: selectedCourt,
-              selectedSlots: selectedSlots,
-              placeId: placeId,
-              isLoading: isLoading,
-            ),
-          ],
+          const SizedBox(height: 48),
         ],
       ),
     );
@@ -283,11 +315,334 @@ class _BookingFormView extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Review + Pay panel
+// Section label with accent bar
 // ---------------------------------------------------------------------------
 
-class _ReviewPanel extends ConsumerWidget {
-  const _ReviewPanel({
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.primary;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      child: Row(
+        children: [
+          Container(
+            width: 3,
+            height: 18,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            text,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Horizontal date strip
+// ---------------------------------------------------------------------------
+
+class _DateStrip extends StatefulWidget {
+  const _DateStrip({required this.selected, required this.onSelect});
+  final DateTime selected;
+  final void Function(DateTime) onSelect;
+
+  @override
+  State<_DateStrip> createState() => _DateStripState();
+}
+
+class _DateStripState extends State<_DateStrip> {
+  late final ScrollController _scroll;
+  static const double _itemW = 64;
+  static const double _spacing = 10;
+  static const double _padding = 16;
+
+  @override
+  void initState() {
+    super.initState();
+    final today = DateTime.now();
+    final diff = widget.selected.difference(DateTime(today.year, today.month, today.day)).inDays.clamp(0, 89);
+    final offset = (diff * (_itemW + _spacing)).clamp(0.0, double.infinity);
+    _scroll = ScrollController(initialScrollOffset: offset);
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    return SizedBox(
+      height: 88,
+      child: ListView.builder(
+        controller: _scroll,
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: _padding),
+        itemCount: 90,
+        itemBuilder: (context, i) {
+          final today = DateTime.now();
+          final date = DateTime(today.year, today.month, today.day)
+              .add(Duration(days: i));
+          final isSelected = date.year == widget.selected.year &&
+              date.month == widget.selected.month &&
+              date.day == widget.selected.day;
+          final isToday = i == 0;
+          final isWeekend = date.weekday == 6 || date.weekday == 7;
+
+          return Padding(
+            padding: EdgeInsetsDirectional.only(end: _spacing),
+            child: GestureDetector(
+              onTap: () => widget.onSelect(date),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                width: _itemW,
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? LinearGradient(
+                          colors: [
+                            colorScheme.primary,
+                            colorScheme.secondary,
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        )
+                      : null,
+                  color: isSelected
+                      ? null
+                      : isToday
+                          ? colorScheme.primaryContainer
+                          : colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(18),
+                  border: isSelected || isToday
+                      ? null
+                      : Border.all(
+                          color: colorScheme.outline.withValues(alpha: 0.2)),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: colorScheme.primary.withValues(alpha: 0.4),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      isToday ? 'Today' : dayNames[date.weekday - 1],
+                      style: TextStyle(
+                        fontSize: isToday ? 10 : 11,
+                        fontWeight: FontWeight.w500,
+                        color: isSelected
+                            ? Colors.white.withValues(alpha: 0.85)
+                            : isToday
+                                ? colorScheme.primary
+                                : isWeekend
+                                    ? colorScheme.error.withValues(alpha: 0.7)
+                                    : colorScheme.onSurface
+                                        .withValues(alpha: 0.55),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${date.day}',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        height: 1.0,
+                        color: isSelected
+                            ? Colors.white
+                            : isToday
+                                ? colorScheme.primary
+                                : colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: isSelected ? 20 : 4,
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Colors.white.withValues(alpha: 0.7)
+                            : isToday
+                                ? colorScheme.primary
+                                : Colors.transparent,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Courts row
+// ---------------------------------------------------------------------------
+
+class _CourtsRow extends StatelessWidget {
+  const _CourtsRow({
+    required this.courts,
+    required this.selectedId,
+    required this.onSelect,
+  });
+  final List<Court> courts;
+  final String? selectedId;
+  final void Function(Court) onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 72,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: courts.length,
+        itemBuilder: (context, i) {
+          final court = courts[i];
+          final isSelected = selectedId == court.id;
+          final colorScheme = Theme.of(context).colorScheme;
+
+          return Padding(
+            padding: const EdgeInsetsDirectional.only(end: 10),
+            child: GestureDetector(
+              onTap: () => onSelect(court),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeInOut,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? LinearGradient(
+                          colors: [colorScheme.primary, colorScheme.secondary],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
+                  color: isSelected ? null : colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.transparent
+                        : colorScheme.outline.withValues(alpha: 0.3),
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: colorScheme.primary.withValues(alpha: 0.3),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.sports_tennis_rounded,
+                      size: 16,
+                      color: isSelected ? Colors.white : colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    BilingualLabel(
+                      ar: court.nameAr,
+                      en: court.nameEn,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: isSelected ? Colors.white : colorScheme.onSurface,
+                      ),
+                    ),
+                    if (isSelected) ...[
+                      const SizedBox(width: 8),
+                      const Icon(Icons.check_circle_rounded,
+                          color: Colors.white, size: 15),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Empty slots placeholder
+// ---------------------------------------------------------------------------
+
+class _EmptySlots extends StatelessWidget {
+  const _EmptySlots();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.event_busy_rounded,
+              size: 36, color: colorScheme.outline.withValues(alpha: 0.5)),
+          const SizedBox(height: 8),
+          Text(
+            'No slots available for this date.',
+            style: TextStyle(
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
+                fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Booking summary card
+// ---------------------------------------------------------------------------
+
+class _BookingSummaryCard extends ConsumerWidget {
+  const _BookingSummaryCard({
     required this.selectedDate,
     required this.selectedCourt,
     required this.selectedSlots,
@@ -301,17 +656,34 @@ class _ReviewPanel extends ConsumerWidget {
   final String placeId;
   final bool isLoading;
 
-  String _formatDate(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+  String _timeLabel(DateTime dt) {
+    final hour = dt.hour;
+    final minute = dt.minute;
+    final period = hour < 12 ? 'AM' : 'PM';
+    final h = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    final m = minute.toString().padLeft(2, '0');
+    return '$h:$m $period';
   }
 
-  String _timeLabel(String isoString) {
+  String _timeRange() {
+    final sorted = selectedSlots.toList()..sort();
     try {
-      final dt = DateTime.parse(isoString).toLocal();
-      return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+      final startDt = DateTime.parse(sorted.first).toLocal();
+      final hours = selectedSlots.length;
+      final endDt = startDt.add(Duration(hours: hours));
+      return '${_timeLabel(startDt)} – ${_timeLabel(endDt)} (${hours}h)';
     } catch (_) {
-      return isoString;
+      return '';
     }
+  }
+
+  String _displayDate(DateTime dt) {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${days[dt.weekday - 1]}, ${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
 
   String _earliestSlot() {
@@ -319,117 +691,300 @@ class _ReviewPanel extends ConsumerWidget {
     return sorted.first;
   }
 
+  String _formatPrice(double pricePerHour) {
+    if (pricePerHour <= 0) return 'TBD';
+    final total = (pricePerHour * selectedSlots.length).toInt();
+    final formatted = total.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
+    return 'IQD $formatted';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
     final hours = selectedSlots.length;
-    final sortedSlots = selectedSlots.toList()..sort();
-    final timeFrom = _timeLabel(sortedSlots.first);
-    final timeTo = _timeLabel(sortedSlots.last);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Gradient header
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [colorScheme.primary, colorScheme.secondary],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.receipt_long_rounded,
+                      color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Booking Summary',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '$hours ${hours == 1 ? 'hour' : 'hours'}',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Details body
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              children: [
+                _DetailRow(
+                  icon: Icons.sports_tennis_rounded,
+                  label: 'Court',
+                  valueWidget: BilingualLabel(
+                    ar: selectedCourt.nameAr,
+                    en: selectedCourt.nameEn,
+                    style:
+                        Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                  ),
+                ),
+                _divider(),
+                _DetailRow(
+                  icon: Icons.calendar_today_rounded,
+                  label: 'Date',
+                  value: _displayDate(selectedDate),
+                ),
+                _divider(),
+                _DetailRow(
+                  icon: Icons.schedule_rounded,
+                  label: 'Time',
+                  value: _timeRange(),
+                ),
+                const SizedBox(height: 16),
+
+                // Total amount highlight row
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 14, horizontal: 16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        colorScheme.primary.withValues(alpha: 0.08),
+                        colorScheme.secondary.withValues(alpha: 0.06),
+                      ],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                        color: colorScheme.primary.withValues(alpha: 0.15)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.payments_rounded,
+                          size: 20, color: colorScheme.primary),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Total Amount',
+                        style: TextStyle(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _formatPrice(selectedCourt.pricePerHour),
+                        style: TextStyle(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // Pay button with gradient
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: isLoading
+                          ? null
+                          : LinearGradient(
+                              colors: [
+                                colorScheme.primary,
+                                colorScheme.secondary,
+                              ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                      color: isLoading
+                          ? colorScheme.surfaceContainerHighest
+                          : null,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: isLoading
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: colorScheme.primary
+                                    .withValues(alpha: 0.45),
+                                blurRadius: 14,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: isLoading
+                            ? null
+                            : () {
+                                ref
+                                    .read(bookingSubmitProvider.notifier)
+                                    .createPadelBooking(
+                                      placeId: placeId,
+                                      courtId: selectedCourt.id,
+                                      startsAt: _earliestSlot(),
+                                      hours: hours,
+                                    );
+                              },
+                        borderRadius: BorderRadius.circular(16),
+                        splashColor: Colors.white.withValues(alpha: 0.2),
+                        child: Center(
+                          child: isLoading
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.lock_outline_rounded,
+                                        color: Colors.white, size: 18),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Proceed to Pay',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 15,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _divider() => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 10),
+        child: Divider(height: 1),
+      );
+}
+
+// ---------------------------------------------------------------------------
+// Detail row widget
+// ---------------------------------------------------------------------------
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    this.value,
+    this.valueWidget,
+  });
+
+  final IconData icon;
+  final String label;
+  final String? value;
+  final Widget? valueWidget;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Row(
       children: [
+        Icon(icon, size: 16, color: colorScheme.outline),
+        const SizedBox(width: 8),
         Text(
-          'Booking Summary',
-          style: Theme.of(context).textTheme.titleMedium,
+          label,
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall
+              ?.copyWith(color: colorScheme.outline),
         ),
-        const SizedBox(height: 12),
-        _SummaryRowBilingual(
-          label: 'Court',
-          arValue: selectedCourt.nameAr,
-          enValue: selectedCourt.nameEn,
-        ),
-        _SummaryRow(label: 'Date', value: _formatDate(selectedDate)),
-        _SummaryRow(label: 'Time', value: '$timeFrom – $timeTo (+1h)'),
-        _SummaryRow(
-          label: 'Duration',
-          value: '$hours hour${hours > 1 ? 's' : ''}',
-        ),
-        _SummaryRow(label: 'Total', value: 'Rate TBD'),
-        const SizedBox(height: 16),
-        FilledButton(
-          onPressed: isLoading
-              ? null
-              : () {
-                  ref.read(bookingSubmitProvider.notifier).createPadelBooking(
-                        placeId: placeId,
-                        courtId: selectedCourt.id,
-                        startsAt: _earliestSlot(),
-                        hours: hours,
-                      );
-                },
-          child: isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Proceed to Pay'),
-        ),
+        const Spacer(),
+        valueWidget ??
+            Text(
+              value ?? '',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.w500),
+            ),
       ],
     );
   }
 }
-
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-          ),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryRowBilingual extends StatelessWidget {
-  const _SummaryRowBilingual({
-    required this.label,
-    required this.arValue,
-    required this.enValue,
-  });
-
-  final String label;
-  final String arValue;
-  final String enValue;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-          ),
-          BilingualLabel(
-            ar: arValue,
-            en: enValue,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
