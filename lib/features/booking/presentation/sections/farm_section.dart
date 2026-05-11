@@ -4,9 +4,12 @@ import 'package:future_riverpod/features/booking/domain/models/booking_enums.dar
 import 'package:future_riverpod/features/booking/domain/models/farm_shift.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/shift_card.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
+import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart' show bookingsRefreshProvider;
 import 'package:go_router/go_router.dart';
 
 // ---------------------------------------------------------------------------
@@ -47,8 +50,6 @@ class FarmSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final submitState = ref.watch(bookingSubmitProvider);
-
     ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
       next.maybeWhen(
         success: (bookingId, paymentUrl, holdUntil, waylReferenceId) {
@@ -59,22 +60,23 @@ class FarmSection extends ConsumerWidget {
               referenceId: waylReferenceId,
               redirectionUrl: 'wansa://payment',
               onPaymentSuccess: (_, orderId) async {
-                  try {
-                    await ref
-                        .read(bookingRepositoryProvider)
-                        .confirmPayment(bookingId, orderId);
-                  } catch (_) {}
-                  ref.read(bookingSubmitProvider.notifier).reset();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Payment successful! Your booking is confirmed.'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    context.go('/bookings/$bookingId');
-                  }
-                },
+                try {
+                  await ref
+                      .read(bookingRepositoryProvider)
+                      .confirmPayment(bookingId, orderId);
+                } catch (_) {}
+                ref.read(bookingSubmitProvider.notifier).reset();
+                ref.read(bookingsRefreshProvider.notifier).bump();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Payment successful! Your booking is confirmed.'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  context.go('/bookings/$bookingId');
+                }
+              },
               onPaymentFailed: () {
                 ref.read(bookingSubmitProvider.notifier).reset();
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -122,134 +124,7 @@ class _FarmBookingFormView extends ConsumerWidget {
   final String placeId;
   final String placeName;
 
-  String _formatDisplay(DateTime dt, {bool isArabic = false}) {
-    const monthsEn = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    const monthsAr = [
-      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
-    ];
-    final months = isArabic ? monthsAr : monthsEn;
-    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final selectedDate = ref.watch(_farmSelectedDateProvider);
-    final selectedShift = ref.watch(_farmSelectedShiftProvider);
-    final shiftsAsync = ref.watch(farmShiftsProvider(placeId));
-    final submitState = ref.watch(bookingSubmitProvider);
-    final isLoading = submitState.maybeWhen(
-      loading: () => true,
-      orElse: () => false,
-    );
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ---- Step 1: Date picker ----
-          Text(isAr ? 'اختر التاريخ' : 'Select Date', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Card(
-            margin: EdgeInsets.zero,
-            child: CalendarDatePicker(
-              initialDate: selectedDate,
-              firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(const Duration(days: 90)),
-              onDateChanged: (date) {
-                ref.read(_farmSelectedDateProvider.notifier).set(date);
-                ref.read(_farmSelectedShiftProvider.notifier).set(null);
-              },
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // ---- Step 2: Shift picker ----
-          Text(
-            isAr
-                ? 'اختر الوردية — ${_formatDisplay(selectedDate, isArabic: true)}'
-                : 'Select Shift — ${_formatDisplay(selectedDate)}',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          shiftsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Text('Error loading shifts: $e'),
-            data: (shifts) {
-              if (shifts.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(isAr ? 'لا توجد أوردية متاحة لهذا الموقع.' : 'No shifts available for this location.'),
-                );
-              }
-              return Column(
-                children: shifts.map((shift) {
-                  final isSelected =
-                      selectedShift?.shiftType == shift.shiftType;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: ShiftCard(
-                      shift: shift,
-                      isSelected: isSelected,
-                      onTap: () {
-                        ref
-                            .read(_farmSelectedShiftProvider.notifier)
-                            .set(isSelected ? null : shift);
-                      },
-                    ),
-                  );
-                }).toList(),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-
-          // ---- Step 3: Review + Pay ----
-          if (selectedShift != null) ...[
-            const Divider(),
-            const SizedBox(height: 12),
-            _FarmReviewPanel(
-              selectedDate: selectedDate,
-              selectedShift: selectedShift,
-              placeName: placeName,
-              placeId: placeId,
-              isLoading: isLoading,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Review + Pay panel
-// ---------------------------------------------------------------------------
-
-class _FarmReviewPanel extends ConsumerWidget {
-  const _FarmReviewPanel({
-    required this.selectedDate,
-    required this.selectedShift,
-    required this.placeName,
-    required this.placeId,
-    required this.isLoading,
-  });
-
-  final DateTime selectedDate;
-  final FarmShift selectedShift;
-  final String placeName;
-  final String placeId;
-  final bool isLoading;
-
-  String _formatDate(DateTime dt) =>
-      '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-
-  String _shiftLabel(FarmShiftType type, {bool isArabic = false}) {
+  static String _shiftLabel(FarmShiftType type, {bool isArabic = false}) {
     if (isArabic) {
       switch (type) {
         case FarmShiftType.day:
@@ -270,79 +145,166 @@ class _FarmReviewPanel extends ConsumerWidget {
     }
   }
 
+  static String _formatPrice(int priceIqd) {
+    final formatted = priceIqd.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
+    return 'IQD $formatted';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final selectedDate = ref.watch(_farmSelectedDateProvider);
+    final selectedShift = ref.watch(_farmSelectedShiftProvider);
+    final shiftsAsync = ref.watch(farmShiftsProvider(placeId));
+    final submitState = ref.watch(bookingSubmitProvider);
+    final isLoading =
+        submitState.maybeWhen(loading: () => true, orElse: () => false);
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          isAr ? 'ملخص الحجز' : 'Booking Summary',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 12),
-        _SummaryRow(label: isAr ? 'المكان' : 'Venue', value: placeName),
-        _SummaryRow(label: isAr ? 'التاريخ' : 'Date', value: _formatDate(selectedDate)),
-        _SummaryRow(
-          label: isAr ? 'الوردية' : 'Shift',
-          value: _shiftLabel(selectedShift.shiftType, isArabic: isAr),
-        ),
-        _SummaryRow(
-          label: isAr ? 'الوقت' : 'Time',
-          value: '${selectedShift.startsTime} – ${selectedShift.endsTime}',
-        ),
-        _SummaryRow(
-          label: isAr ? 'الإجمالي' : 'Total',
-          value: '${selectedShift.priceIqd} IQD',
-        ),
-        const SizedBox(height: 16),
-        FilledButton(
-          onPressed: isLoading
-              ? null
-              : () {
-                  ref.read(bookingSubmitProvider.notifier).createFarmBooking(
-                        placeId: placeId,
-                        date: _formatDate(selectedDate),
-                        shiftType: selectedShift.shiftType,
-                      );
-                },
-          child: isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(isAr ? 'المتابعة للدفع' : 'Proceed to Payment'),
-        ),
-      ],
-    );
-  }
-}
 
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+          const SizedBox(height: 8),
+
+          // ── Date strip ─────────────────────────────────────────────
+          BookingSectionLabel(isAr ? 'اختر التاريخ' : 'Select Date'),
+          BookingDateStrip(
+            selected: selectedDate,
+            onSelect: (date) {
+              ref.read(_farmSelectedDateProvider.notifier).set(date);
+              ref.read(_farmSelectedShiftProvider.notifier).set(null);
+            },
           ),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: 28),
+
+          // ── Shift picker ───────────────────────────────────────────
+          BookingSectionLabel(
+            isAr
+                ? 'اختر الوردية — ${bookingDisplayDate(selectedDate, isArabic: true)}'
+                : 'Select Shift — ${bookingDisplayDate(selectedDate)}',
+          ),
+          shiftsAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text('Error loading shifts: $e'),
+            ),
+            data: (shifts) {
+              if (shifts.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 8),
+                  child: Text(
+                    isAr
+                        ? 'لا توجد أوردية متاحة لهذا الموقع.'
+                        : 'No shifts available for this location.',
+                    style: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.5)),
+                  ),
+                );
+              }
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: shifts.map((shift) {
+                    final isSelected =
+                        selectedShift?.shiftType == shift.shiftType;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: ShiftCard(
+                        shift: shift,
+                        isSelected: isSelected,
+                        isBooked: false,
+                        onTap: () {
+                          ref
+                              .read(_farmSelectedShiftProvider.notifier)
+                              .set(isSelected ? null : shift);
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+
+          // ── Booking summary card (animated) ────────────────────────
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.08),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            ),
+            child: selectedShift != null
+                ? Padding(
+                    key: const ValueKey('summary-visible'),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: BookingSummaryCard(
+                      title: isAr ? 'ملخص الحجز' : 'Booking Summary',
+                      badgeText: _shiftLabel(selectedShift.shiftType,
+                          isArabic: isAr),
+                      rows: [
+                        BookingSummaryRow(
+                          icon: Icons.calendar_today_rounded,
+                          label: isAr ? 'التاريخ' : 'Date',
+                          value: bookingDisplayDate(selectedDate,
+                              isArabic: isAr),
+                        ),
+                        BookingSummaryRow(
+                          icon: Icons.wb_sunny_rounded,
+                          label: isAr ? 'الوردية' : 'Shift',
+                          value: _shiftLabel(selectedShift.shiftType,
+                              isArabic: isAr),
+                        ),
+                        BookingSummaryRow(
+                          icon: Icons.schedule_rounded,
+                          label: isAr ? 'الوقت' : 'Time',
+                          value:
+                              '${selectedShift.startsTime} – ${selectedShift.endsTime}',
+                        ),
+                      ],
+                      totalLabel: isAr ? 'الإجمالي' : 'Total Amount',
+                      totalValue: _formatPrice(selectedShift.priceIqd),
+                      actionLabel:
+                          isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
+                      onAction: () {
+                        final shift = selectedShift;
+                        ref
+                            .read(bookingSubmitProvider.notifier)
+                            .createFarmBooking(
+                              placeId: placeId,
+                              date: bookingFormatDate(selectedDate),
+                              shiftType: shift.shiftType,
+                            );
+                      },
+                      isLoading: isLoading,
+                    ),
+                  )
+                : const SizedBox.shrink(key: ValueKey('summary-hidden')),
+          ),
+
+          const SizedBox(height: 48),
         ],
       ),
     );
   }
 }
-
-// ---------------------------------------------------------------------------

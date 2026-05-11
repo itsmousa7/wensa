@@ -7,11 +7,13 @@ class ShiftCard extends StatelessWidget {
     super.key,
     required this.shift,
     required this.isSelected,
+    required this.isBooked,
     required this.onTap,
   });
 
   final FarmShift shift;
   final bool isSelected;
+  final bool isBooked;
   final VoidCallback onTap;
 
   IconData _icon() {
@@ -39,21 +41,35 @@ class ShiftCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final backgroundColor =
-        isSelected ? colorScheme.primary : colorScheme.surfaceContainerHighest;
-    final foregroundColor =
-        isSelected ? colorScheme.onPrimary : colorScheme.onSurface;
-    final subtextColor =
-        isSelected ? colorScheme.onPrimary.withValues(alpha: 0.8) : colorScheme.outline;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+
+    final Color backgroundColor;
+    final Color foregroundColor;
+    final Color subtextColor;
+
+    if (isBooked) {
+      backgroundColor =
+          colorScheme.surfaceContainerHighest.withValues(alpha: 0.5);
+      foregroundColor = colorScheme.onSurface.withValues(alpha: 0.38);
+      subtextColor = colorScheme.onSurface.withValues(alpha: 0.38);
+    } else if (isSelected) {
+      backgroundColor = colorScheme.primary;
+      foregroundColor = colorScheme.onPrimary;
+      subtextColor = colorScheme.onPrimary.withValues(alpha: 0.8);
+    } else {
+      backgroundColor = colorScheme.surfaceContainerHighest;
+      foregroundColor = colorScheme.onSurface;
+      subtextColor = colorScheme.outline;
+    }
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: isBooked ? null : onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(12),
-          border: isSelected
+          border: isSelected && !isBooked
               ? Border.all(color: colorScheme.primary, width: 2)
               : Border.all(color: colorScheme.outlineVariant),
         ),
@@ -75,7 +91,25 @@ class ShiftCard extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                             ),
                       ),
-                      if (shift.shiftType == FarmShiftType.full) ...[
+                      // "Booked" chip — takes priority over "Blocks the full day"
+                      if (isBooked) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: colorScheme.errorContainer,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            isAr ? 'محجوز' : 'Booked',
+                            style:
+                                Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: colorScheme.onErrorContainer,
+                                    ),
+                          ),
+                        ),
+                      ] else if (shift.shiftType == FarmShiftType.full) ...[
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -87,12 +121,13 @@ class ShiftCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'Blocks the full day',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: isSelected
-                                      ? colorScheme.onPrimary
-                                      : colorScheme.onPrimaryContainer,
-                                ),
+                            isAr ? 'يحجب اليوم كاملاً' : 'Blocks the full day',
+                            style:
+                                Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: isSelected
+                                          ? colorScheme.onPrimary
+                                          : colorScheme.onPrimaryContainer,
+                                    ),
                           ),
                         ),
                       ],
@@ -109,7 +144,7 @@ class ShiftCard extends StatelessWidget {
               ),
             ),
             Text(
-              '${shift.priceIqd.toString()} IQD',
+              '${shift.priceIqd} IQD',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: foregroundColor,
                     fontWeight: FontWeight.bold,
