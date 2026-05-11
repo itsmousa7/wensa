@@ -1,6 +1,5 @@
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:future_riverpod/features/booking/domain/models/farm_shift.dart';
-import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 
 void main() {
   group('FarmShift.fromJson', () {
