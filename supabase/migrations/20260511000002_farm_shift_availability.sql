@@ -1,6 +1,7 @@
 -- ============================================================
 -- Migration: Farm shift availability RPC
 -- Date: 2026-05-11
+-- Project: wain_flosi (qvozjwlkzordudkhamcu)
 -- ============================================================
 --
 -- Returns one row per configured shift for a farm + date,
