@@ -180,7 +180,7 @@ final class FarmShiftsProvider
     with $FutureModifier<List<FarmShift>>, $FutureProvider<List<FarmShift>> {
   FarmShiftsProvider._({
     required FarmShiftsFamily super.from,
-    required String super.argument,
+    required (String, String) super.argument,
   }) : super(
          retry: null,
          name: r'farmShiftsProvider',
@@ -196,7 +196,7 @@ final class FarmShiftsProvider
   String toString() {
     return r'farmShiftsProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -207,8 +207,8 @@ final class FarmShiftsProvider
 
   @override
   FutureOr<List<FarmShift>> create(Ref ref) {
-    final argument = this.argument as String;
-    return farmShifts(ref, argument);
+    final argument = this.argument as (String, String);
+    return farmShifts(ref, argument.$1, argument.$2);
   }
 
   @override
@@ -222,10 +222,11 @@ final class FarmShiftsProvider
   }
 }
 
-String _$farmShiftsHash() => r'604db61ea0ed1094844588e5f618e830b6a89b43';
+String _$farmShiftsHash() => r'8af73dafd24a3d9aaa4b8104aef0acb3b758b85f';
 
 final class FarmShiftsFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<List<FarmShift>>, String> {
+    with
+        $FunctionalFamilyOverride<FutureOr<List<FarmShift>>, (String, String)> {
   FarmShiftsFamily._()
     : super(
         retry: null,
@@ -235,8 +236,8 @@ final class FarmShiftsFamily extends $Family
         isAutoDispose: true,
       );
 
-  FarmShiftsProvider call(String placeId) =>
-      FarmShiftsProvider._(argument: placeId, from: this);
+  FarmShiftsProvider call(String placeId, String date) =>
+      FarmShiftsProvider._(argument: (placeId, date), from: this);
 
   @override
   String toString() => r'farmShiftsProvider';

@@ -81,9 +81,14 @@ class BookingRepository {
     return (data as List).map((e) => Slot.fromJson(e as Map<String, dynamic>)).toList();
   }
 
-  Future<List<FarmShift>> fetchFarmShifts(String placeId) async {
-    final data = await _client.schema('bookings').from('farm_shifts').select().eq('place_id', placeId);
-    return data.map(FarmShift.fromJson).toList();
+  Future<List<FarmShift>> fetchFarmShifts(String placeId, String date) async {
+    final data = await _client.schema('bookings').rpc(
+      'available_farm_shifts',
+      params: {'p_place_id': placeId, 'p_date': date},
+    );
+    return (data as List)
+        .map((e) => FarmShift.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<List<EventTier>> fetchEventTiers(String eventId) async {

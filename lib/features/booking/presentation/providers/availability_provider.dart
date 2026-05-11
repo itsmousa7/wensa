@@ -26,8 +26,8 @@ Future<List<Slot>> availableSlots(
     );
 
 @riverpod
-Future<List<FarmShift>> farmShifts(Ref ref, String placeId) =>
-    ref.watch(bookingRepositoryProvider).fetchFarmShifts(placeId);
+Future<List<FarmShift>> farmShifts(Ref ref, String placeId, String date) =>
+    ref.watch(bookingRepositoryProvider).fetchFarmShifts(placeId, date);
 
 @riverpod
 Future<List<RestaurantSeatingOption>> seatingOptions(
