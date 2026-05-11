@@ -157,7 +157,9 @@ class _FarmBookingFormView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedDate = ref.watch(_farmSelectedDateProvider);
     final selectedShift = ref.watch(_farmSelectedShiftProvider);
-    final shiftsAsync = ref.watch(farmShiftsProvider(placeId));
+    final shiftsAsync = ref.watch(
+      farmShiftsProvider(placeId, bookingFormatDate(selectedDate)),
+    );
     final submitState = ref.watch(bookingSubmitProvider);
     final isLoading =
         submitState.maybeWhen(loading: () => true, orElse: () => false);
@@ -223,7 +225,7 @@ class _FarmBookingFormView extends ConsumerWidget {
                       child: ShiftCard(
                         shift: shift,
                         isSelected: isSelected,
-                        isBooked: false,
+                        isBooked: !shift.isAvailable,
                         onTap: () {
                           ref
                               .read(_farmSelectedShiftProvider.notifier)
