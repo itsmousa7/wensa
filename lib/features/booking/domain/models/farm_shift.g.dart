@@ -14,6 +14,7 @@ _FarmShift _$FarmShiftFromJson(Map<String, dynamic> json) => _FarmShift(
   startsTime: json['startsTime'] as String? ?? '',
   endsTime: json['endsTime'] as String? ?? '',
   priceIqd: (json['priceIqd'] as num?)?.toInt() ?? 0,
+  isAvailable: json['isAvailable'] as bool? ?? true,
 );
 
 Map<String, dynamic> _$FarmShiftToJson(_FarmShift instance) =>
@@ -23,6 +24,7 @@ Map<String, dynamic> _$FarmShiftToJson(_FarmShift instance) =>
       'startsTime': instance.startsTime,
       'endsTime': instance.endsTime,
       'priceIqd': instance.priceIqd,
+      'isAvailable': instance.isAvailable,
     };
 
 const _$FarmShiftTypeEnumMap = {

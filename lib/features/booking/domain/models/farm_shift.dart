@@ -12,6 +12,7 @@ abstract class FarmShift with _$FarmShift {
     @Default('') String startsTime,
     @Default('') String endsTime,
     @Default(0) int priceIqd,
+    @Default(true) bool isAvailable,
   }) = _FarmShift;
 
   factory FarmShift.fromJson(Map<String, dynamic> json) => FarmShift(
@@ -20,5 +21,6 @@ abstract class FarmShift with _$FarmShift {
     startsTime: json['starts_time'] ?? '',
     endsTime: json['ends_time'] ?? '',
     priceIqd: (json['price_iqd'] as num?)?.toInt() ?? 0,
+    isAvailable: (json['is_available'] as bool?) ?? true,
   );
 }

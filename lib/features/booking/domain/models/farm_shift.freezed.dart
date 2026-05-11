@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$FarmShift {
 
- String get placeId; FarmShiftType get shiftType; String get startsTime; String get endsTime; int get priceIqd;
+ String get placeId; FarmShiftType get shiftType; String get startsTime; String get endsTime; int get priceIqd; bool get isAvailable;
 /// Create a copy of FarmShift
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $FarmShiftCopyWith<FarmShift> get copyWith => _$FarmShiftCopyWithImpl<FarmShift>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FarmShift&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.shiftType, shiftType) || other.shiftType == shiftType)&&(identical(other.startsTime, startsTime) || other.startsTime == startsTime)&&(identical(other.endsTime, endsTime) || other.endsTime == endsTime)&&(identical(other.priceIqd, priceIqd) || other.priceIqd == priceIqd));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FarmShift&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.shiftType, shiftType) || other.shiftType == shiftType)&&(identical(other.startsTime, startsTime) || other.startsTime == startsTime)&&(identical(other.endsTime, endsTime) || other.endsTime == endsTime)&&(identical(other.priceIqd, priceIqd) || other.priceIqd == priceIqd)&&(identical(other.isAvailable, isAvailable) || other.isAvailable == isAvailable));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,placeId,shiftType,startsTime,endsTime,priceIqd);
+int get hashCode => Object.hash(runtimeType,placeId,shiftType,startsTime,endsTime,priceIqd,isAvailable);
 
 @override
 String toString() {
-  return 'FarmShift(placeId: $placeId, shiftType: $shiftType, startsTime: $startsTime, endsTime: $endsTime, priceIqd: $priceIqd)';
+  return 'FarmShift(placeId: $placeId, shiftType: $shiftType, startsTime: $startsTime, endsTime: $endsTime, priceIqd: $priceIqd, isAvailable: $isAvailable)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $FarmShiftCopyWith<$Res>  {
   factory $FarmShiftCopyWith(FarmShift value, $Res Function(FarmShift) _then) = _$FarmShiftCopyWithImpl;
 @useResult
 $Res call({
- String placeId, FarmShiftType shiftType, String startsTime, String endsTime, int priceIqd
+ String placeId, FarmShiftType shiftType, String startsTime, String endsTime, int priceIqd, bool isAvailable
 });
 
 
@@ -65,14 +65,15 @@ class _$FarmShiftCopyWithImpl<$Res>
 
 /// Create a copy of FarmShift
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? placeId = null,Object? shiftType = null,Object? startsTime = null,Object? endsTime = null,Object? priceIqd = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? placeId = null,Object? shiftType = null,Object? startsTime = null,Object? endsTime = null,Object? priceIqd = null,Object? isAvailable = null,}) {
   return _then(_self.copyWith(
 placeId: null == placeId ? _self.placeId : placeId // ignore: cast_nullable_to_non_nullable
 as String,shiftType: null == shiftType ? _self.shiftType : shiftType // ignore: cast_nullable_to_non_nullable
 as FarmShiftType,startsTime: null == startsTime ? _self.startsTime : startsTime // ignore: cast_nullable_to_non_nullable
 as String,endsTime: null == endsTime ? _self.endsTime : endsTime // ignore: cast_nullable_to_non_nullable
 as String,priceIqd: null == priceIqd ? _self.priceIqd : priceIqd // ignore: cast_nullable_to_non_nullable
-as int,
+as int,isAvailable: null == isAvailable ? _self.isAvailable : isAvailable // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -157,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String placeId,  FarmShiftType shiftType,  String startsTime,  String endsTime,  int priceIqd)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String placeId,  FarmShiftType shiftType,  String startsTime,  String endsTime,  int priceIqd,  bool isAvailable)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _FarmShift() when $default != null:
-return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_that.priceIqd);case _:
+return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_that.priceIqd,_that.isAvailable);case _:
   return orElse();
 
 }
@@ -178,10 +179,10 @@ return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String placeId,  FarmShiftType shiftType,  String startsTime,  String endsTime,  int priceIqd)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String placeId,  FarmShiftType shiftType,  String startsTime,  String endsTime,  int priceIqd,  bool isAvailable)  $default,) {final _that = this;
 switch (_that) {
 case _FarmShift():
-return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_that.priceIqd);case _:
+return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_that.priceIqd,_that.isAvailable);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +199,10 @@ return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String placeId,  FarmShiftType shiftType,  String startsTime,  String endsTime,  int priceIqd)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String placeId,  FarmShiftType shiftType,  String startsTime,  String endsTime,  int priceIqd,  bool isAvailable)?  $default,) {final _that = this;
 switch (_that) {
 case _FarmShift() when $default != null:
-return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_that.priceIqd);case _:
+return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_that.priceIqd,_that.isAvailable);case _:
   return null;
 
 }
@@ -213,7 +214,7 @@ return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_t
 @JsonSerializable()
 
 class _FarmShift implements FarmShift {
-  const _FarmShift({this.placeId = '', this.shiftType = FarmShiftType.day, this.startsTime = '', this.endsTime = '', this.priceIqd = 0});
+  const _FarmShift({this.placeId = '', this.shiftType = FarmShiftType.day, this.startsTime = '', this.endsTime = '', this.priceIqd = 0, this.isAvailable = true});
   factory _FarmShift.fromJson(Map<String, dynamic> json) => _$FarmShiftFromJson(json);
 
 @override@JsonKey() final  String placeId;
@@ -221,6 +222,7 @@ class _FarmShift implements FarmShift {
 @override@JsonKey() final  String startsTime;
 @override@JsonKey() final  String endsTime;
 @override@JsonKey() final  int priceIqd;
+@override@JsonKey() final  bool isAvailable;
 
 /// Create a copy of FarmShift
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +237,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _FarmShift&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.shiftType, shiftType) || other.shiftType == shiftType)&&(identical(other.startsTime, startsTime) || other.startsTime == startsTime)&&(identical(other.endsTime, endsTime) || other.endsTime == endsTime)&&(identical(other.priceIqd, priceIqd) || other.priceIqd == priceIqd));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _FarmShift&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.shiftType, shiftType) || other.shiftType == shiftType)&&(identical(other.startsTime, startsTime) || other.startsTime == startsTime)&&(identical(other.endsTime, endsTime) || other.endsTime == endsTime)&&(identical(other.priceIqd, priceIqd) || other.priceIqd == priceIqd)&&(identical(other.isAvailable, isAvailable) || other.isAvailable == isAvailable));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,placeId,shiftType,startsTime,endsTime,priceIqd);
+int get hashCode => Object.hash(runtimeType,placeId,shiftType,startsTime,endsTime,priceIqd,isAvailable);
 
 @override
 String toString() {
-  return 'FarmShift(placeId: $placeId, shiftType: $shiftType, startsTime: $startsTime, endsTime: $endsTime, priceIqd: $priceIqd)';
+  return 'FarmShift(placeId: $placeId, shiftType: $shiftType, startsTime: $startsTime, endsTime: $endsTime, priceIqd: $priceIqd, isAvailable: $isAvailable)';
 }
 
 
@@ -255,7 +257,7 @@ abstract mixin class _$FarmShiftCopyWith<$Res> implements $FarmShiftCopyWith<$Re
   factory _$FarmShiftCopyWith(_FarmShift value, $Res Function(_FarmShift) _then) = __$FarmShiftCopyWithImpl;
 @override @useResult
 $Res call({
- String placeId, FarmShiftType shiftType, String startsTime, String endsTime, int priceIqd
+ String placeId, FarmShiftType shiftType, String startsTime, String endsTime, int priceIqd, bool isAvailable
 });
 
 
@@ -272,14 +274,15 @@ class __$FarmShiftCopyWithImpl<$Res>
 
 /// Create a copy of FarmShift
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? placeId = null,Object? shiftType = null,Object? startsTime = null,Object? endsTime = null,Object? priceIqd = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? placeId = null,Object? shiftType = null,Object? startsTime = null,Object? endsTime = null,Object? priceIqd = null,Object? isAvailable = null,}) {
   return _then(_FarmShift(
 placeId: null == placeId ? _self.placeId : placeId // ignore: cast_nullable_to_non_nullable
 as String,shiftType: null == shiftType ? _self.shiftType : shiftType // ignore: cast_nullable_to_non_nullable
 as FarmShiftType,startsTime: null == startsTime ? _self.startsTime : startsTime // ignore: cast_nullable_to_non_nullable
 as String,endsTime: null == endsTime ? _self.endsTime : endsTime // ignore: cast_nullable_to_non_nullable
 as String,priceIqd: null == priceIqd ? _self.priceIqd : priceIqd // ignore: cast_nullable_to_non_nullable
-as int,
+as int,isAvailable: null == isAvailable ? _self.isAvailable : isAvailable // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
