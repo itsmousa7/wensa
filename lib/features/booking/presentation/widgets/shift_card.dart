@@ -1,157 +1,358 @@
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/farm_shift.dart';
+import 'package:future_riverpod/features/booking/domain/models/slot_availability.dart';
 
 class ShiftCard extends StatelessWidget {
   const ShiftCard({
     super.key,
     required this.shift,
     required this.isSelected,
-    required this.isBooked,
+    required this.availability,
     required this.onTap,
   });
 
   final FarmShift shift;
   final bool isSelected;
-  final bool isBooked;
+  final SlotAvailability availability;
   final VoidCallback onTap;
+
+  // Vivid accent — borders, strip, icon fill bg, dark-theme text
+  Color _accent() {
+    switch (shift.shiftType) {
+      case FarmShiftType.day:
+        return const Color(0xFFF59E0B); // amber-400
+      case FarmShiftType.night:
+        return const Color(0xFF6366F1); // indigo-500
+      case FarmShiftType.full:
+        return const Color(0xFF10B981); // emerald-500
+    }
+  }
+
+  // Darker variant — text on light surfaces (passes WCAG AA contrast)
+  Color _accentDark() {
+    switch (shift.shiftType) {
+      case FarmShiftType.day:
+        return const Color(0xFF92400E); // amber-900
+      case FarmShiftType.night:
+        return const Color(0xFF3730A3); // indigo-800
+      case FarmShiftType.full:
+        return const Color(0xFF065F46); // emerald-900
+    }
+  }
 
   IconData _icon() {
     switch (shift.shiftType) {
       case FarmShiftType.day:
-        return Icons.wb_sunny;
+        return Icons.wb_sunny_rounded;
       case FarmShiftType.night:
         return Icons.nightlight_round;
       case FarmShiftType.full:
-        return Icons.brightness_4;
+        return Icons.brightness_4_rounded;
     }
   }
 
-  String _label() {
+  String _label({required bool isAr}) {
     switch (shift.shiftType) {
       case FarmShiftType.day:
-        return 'Day';
+        return isAr ? 'نهار' : 'Day';
       case FarmShiftType.night:
-        return 'Night';
+        return isAr ? 'ليل' : 'Night';
       case FarmShiftType.full:
-        return 'Full Day';
+        return isAr ? 'يوم كامل' : 'Full Day';
     }
+  }
+
+  // HH:MM:SS → 12h format (e.g. 21:00 → 9:00 PM)
+  static String _toTime12h(String t) {
+    final parts = t.split(':');
+    if (parts.length < 2) return t;
+    final h = int.tryParse(parts[0]) ?? 0;
+    final m = parts[1].padLeft(2, '0');
+    final period = h < 12 ? 'AM' : 'PM';
+    final h12 = h % 12 == 0 ? 12 : h % 12;
+    return '$h12:$m $period';
+  }
+
+  String _formattedPrice() {
+    return shift.priceIqd.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
-    final Color backgroundColor;
-    final Color foregroundColor;
-    final Color subtextColor;
+    final accent = _accent();
+    // On dark surfaces the vivid accent is readable; on light surfaces use
+    // the darkened variant to satisfy contrast requirements.
+    final textAccent = isDark ? accent : _accentDark();
 
-    if (isBooked) {
-      backgroundColor =
-          colorScheme.surfaceContainerHighest.withValues(alpha: 0.5);
-      foregroundColor = colorScheme.onSurface.withValues(alpha: 0.38);
-      subtextColor = colorScheme.onSurface.withValues(alpha: 0.38);
+    // ── State tokens ──────────────────────────────────────────────────────────
+    final Color cardBg;
+    final Color borderColor;
+    final double borderWidth;
+    final List<BoxShadow> shadows;
+    final Color iconBg;
+    final Color iconColor;
+    final Color labelColor;
+    final Color timeColor;
+    final Color priceColor;
+    final Color currencyColor;
+
+    final bool isUnavailable = availability != SlotAvailability.available;
+
+    if (isUnavailable) {
+      cardBg = cs.surfaceContainerLowest;
+      borderColor = cs.outlineVariant.withValues(alpha: 0.50);
+      borderWidth = 1.0;
+      shadows = [];
+      iconBg = cs.surfaceContainerHighest;
+      iconColor = cs.onSurface.withValues(alpha: 0.28);
+      labelColor = cs.onSurface.withValues(alpha: 0.35);
+      timeColor = cs.onSurface.withValues(alpha: 0.24);
+      priceColor = cs.onSurface.withValues(alpha: 0.35);
+      currencyColor = cs.onSurface.withValues(alpha: 0.22);
     } else if (isSelected) {
-      backgroundColor = colorScheme.primary;
-      foregroundColor = colorScheme.onPrimary;
-      subtextColor = colorScheme.onPrimary.withValues(alpha: 0.8);
+      cardBg = cs.primary.withValues(alpha: isDark ? 0.16 : 0.07);
+      borderColor = cs.primary;
+      borderWidth = 1.8;
+      shadows = [
+        BoxShadow(
+          color: cs.primary.withValues(alpha: isDark ? 0.38 : 0.22),
+          blurRadius: 20,
+          spreadRadius: -2,
+          offset: const Offset(0, 6),
+        ),
+      ];
+      iconBg = cs.primary;
+      iconColor = Colors.white;
+      labelColor = cs.primary;
+      timeColor = cs.primary.withValues(alpha: 0.62);
+      priceColor = cs.primary;
+      currencyColor = cs.primary.withValues(alpha: 0.50);
     } else {
-      backgroundColor = colorScheme.surfaceContainerHighest;
-      foregroundColor = colorScheme.onSurface;
-      subtextColor = colorScheme.outline;
+      cardBg = cs.surface;
+      borderColor = cs.outlineVariant;
+      borderWidth = 1.0;
+      shadows = [
+        BoxShadow(
+          color: cs.shadow.withValues(alpha: 0.05),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ];
+      iconBg = accent.withValues(alpha: isDark ? 0.18 : 0.10);
+      iconColor = textAccent;
+      labelColor = cs.onSurface;
+      timeColor = cs.onSurface.withValues(alpha: 0.50);
+      priceColor = cs.onSurface;
+      currencyColor = cs.onSurface.withValues(alpha: 0.40);
     }
 
+    final timeStr =
+        '${_toTime12h(shift.startsTime)} – ${_toTime12h(shift.endsTime)}';
+
     return GestureDetector(
-      onTap: isBooked ? null : onTap,
+      onTap: isUnavailable ? null : onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(12),
-          border: isSelected && !isBooked
-              ? Border.all(color: colorScheme.primary, width: 2)
-              : Border.all(color: colorScheme.outlineVariant),
+          color: cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor, width: borderWidth),
+          boxShadow: shadows,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Icon(_icon(), color: foregroundColor, size: 28),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        _label(),
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: foregroundColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                      // "Booked" chip — takes priority over "Blocks the full day"
-                      if (isBooked) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+        child: ClipRRect(
+          // Slightly inset so clip follows the border exactly
+          borderRadius: BorderRadius.circular(15.2),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── Body ────────────────────────────────────────────────────
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 13),
+                    child: Row(
+                      children: [
+                        // Icon badge
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 260),
+                          width: 46,
+                          height: 46,
                           decoration: BoxDecoration(
-                            color: colorScheme.errorContainer,
-                            borderRadius: BorderRadius.circular(4),
+                            color: iconBg,
+                            borderRadius: BorderRadius.circular(13),
                           ),
-                          child: Text(
-                            isAr ? 'محجوز' : 'Booked',
-                            style:
-                                Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: colorScheme.onErrorContainer,
-                                    ),
+                          child: Icon(
+                            switch (availability) {
+                              SlotAvailability.booked  => Icons.lock_outline_rounded,
+                              SlotAvailability.expired => Icons.schedule_rounded,
+                              SlotAvailability.closed  => Icons.block_rounded,
+                              _                        => _icon(),
+                            },
+                            size: 22,
+                            color: iconColor,
                           ),
                         ),
-                      ] else if (shift.shiftType == FarmShiftType.full) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? colorScheme.onPrimary.withValues(alpha: 0.2)
-                                : colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            isAr ? 'يحجب اليوم كاملاً' : 'Blocks the full day',
-                            style:
-                                Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: isSelected
-                                          ? colorScheme.onPrimary
-                                          : colorScheme.onPrimaryContainer,
+                        const SizedBox(width: 12),
+
+                        // Label + status chip + time
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: AnimatedDefaultTextStyle(
+                                      duration:
+                                          const Duration(milliseconds: 200),
+                                      style: (tt.titleSmall ??
+                                              const TextStyle())
+                                          .copyWith(
+                                        color: labelColor,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.1,
+                                      ),
+                                      child: Text(
+                                        _label(isAr: isAr),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
+                                  ),
+                                  if (isUnavailable) ...[
+                                    const SizedBox(width: 6),
+                                    _Chip(
+                                      label: switch (availability) {
+                                        SlotAvailability.booked  => isAr ? 'محجوز'  : 'Booked',
+                                        SlotAvailability.expired => isAr ? 'منتهي'  : 'Expired',
+                                        SlotAvailability.closed  => isAr ? 'مغلق'   : 'Closed',
+                                        _                        => '',
+                                      },
+                                      bg: switch (availability) {
+                                        SlotAvailability.booked  => cs.errorContainer.withValues(alpha: 0.75),
+                                        SlotAvailability.expired => const Color(0xFFF59E0B).withValues(alpha: 0.18),
+                                        SlotAvailability.closed  => cs.surfaceContainerHighest,
+                                        _                        => cs.surfaceContainerHighest,
+                                      },
+                                      fg: switch (availability) {
+                                        SlotAvailability.booked  => cs.onErrorContainer,
+                                        SlotAvailability.expired => const Color(0xFF92400E),
+                                        SlotAvailability.closed  => cs.onSurface.withValues(alpha: 0.55),
+                                        _                        => cs.onSurface,
+                                      },
+                                    ),
+                                  ] else if (shift.shiftType == FarmShiftType.full) ...[
+                                    const SizedBox(width: 6),
+                                    _Chip(
+                                      label: isAr
+                                          ? 'يحجب اليوم كاملاً'
+                                          : 'Blocks full day',
+                                      bg: isSelected
+                                          ? cs.primary.withValues(alpha: 0.12)
+                                          : cs.primaryContainer
+                                              .withValues(alpha: 0.55),
+                                      fg: isSelected
+                                          ? cs.primary
+                                          : cs.onPrimaryContainer,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              AnimatedDefaultTextStyle(
+                                duration: const Duration(milliseconds: 200),
+                                style: (tt.bodySmall ?? const TextStyle())
+                                    .copyWith(
+                                  color: timeColor,
+                                  letterSpacing: 0.2,
+                                ),
+                                child: Text(timeStr),
+                              ),
+                            ],
                           ),
+                        ),
+                        const SizedBox(width: 8),
+
+                        // Price
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 200),
+                              style: (tt.titleMedium ?? const TextStyle())
+                                  .copyWith(
+                                color: priceColor,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
+                              ),
+                              child: Text(_formattedPrice()),
+                            ),
+                            AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 200),
+                              style: (tt.labelSmall ?? const TextStyle())
+                                  .copyWith(
+                                color: currencyColor,
+                                letterSpacing: 1.2,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              child: const Text('IQD'),
+                            ),
+                          ],
                         ),
                       ],
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${shift.startsTime} – ${shift.endsTime}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: subtextColor,
-                        ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Text(
-              '${shift.priceIqd} IQD',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: foregroundColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Badge chip ────────────────────────────────────────────────────────────────
+
+class _Chip extends StatelessWidget {
+  const _Chip({
+    required this.label,
+    required this.bg,
+    required this.fg,
+  });
+
+  final String label;
+  final Color bg;
+  final Color fg;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: fg,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
       ),
     );
   }
