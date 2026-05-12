@@ -21,6 +21,10 @@ DECLARE
   v_date date := p_start_date;
   v_row  RECORD;
 BEGIN
+  IF p_end_date - p_start_date > 365 THEN
+    RAISE EXCEPTION 'Date range exceeds maximum of 365 days' USING ERRCODE = 'P0001';
+  END IF;
+
   WHILE v_date <= p_end_date LOOP
     SELECT * INTO v_row
     FROM bookings._court_hours(p_place_id, NULL::uuid, v_date);
