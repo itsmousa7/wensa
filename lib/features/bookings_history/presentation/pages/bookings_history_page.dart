@@ -10,6 +10,17 @@ import 'package:future_riverpod/features/bookings_history/presentation/widgets/t
 import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+/// Semantic tab labels for the bookings history filter bar.
+/// Order must match the [TabController] index assignments in [_BookingsHistoryPageState].
+const kBookingHistoryTabs = [
+  'All',
+  'Sports',
+  'Farm',
+  'Concert',
+  'Restaurant',
+  'Memberships',
+];
+
 class BookingsHistoryPage extends ConsumerStatefulWidget {
   const BookingsHistoryPage({super.key});
 
@@ -22,19 +33,13 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
-  static const _tabs = [
-    'All',
-    'Padel/Football',
-    'Farm',
-    'Concerts',
-    'Restaurant',
-    'Memberships',
-  ];
-
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController = TabController(
+      length: kBookingHistoryTabs.length,
+      vsync: this,
+    );
   }
 
   @override
@@ -51,6 +56,12 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
+    // When any booking is made, invalidate all list providers from inside this page.
+    ref.listen(bookingsRefreshProvider, (_, _) {
+      ref.invalidate(userBookingsProvider);
+      ref.invalidate(userMembershipsProvider);
+    });
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -65,10 +76,21 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
           isScrollable: true,
           tabAlignment: TabAlignment.start,
           labelColor: cs.primary,
-          unselectedLabelColor: cs.onSurface.withValues(alpha: 0.5),
-          indicatorColor: cs.primary,
+          unselectedLabelColor: cs.onSurface.withValues(alpha: 0.40),
+          labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
+          ),
+          unselectedLabelStyle: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(fontWeight: FontWeight.w500, letterSpacing: 0.1),
+          indicator: UnderlineTabIndicator(
+            borderSide: BorderSide(width: 3, color: cs.primary),
+            borderRadius: BorderRadius.circular(3),
+          ),
           indicatorSize: TabBarIndicatorSize.label,
-          tabs: _tabs.map((t) => Tab(text: t)).toList(),
+          dividerColor: Colors.transparent,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 14),
+          tabs: kBookingHistoryTabs.map((t) => Tab(text: t)).toList(),
         ),
       ),
       body: TabBarView(
@@ -79,28 +101,31 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
             asyncValue: ref.watch(userBookingsProvider()),
             onTap: (id) => _navigateToDetail(context, id),
           ),
-          // Tab 1: Padel / Football — combine both
-          _CombinedSportsTab(
-            onTap: (id) => _navigateToDetail(context, id),
-          ),
-          // Tab 2: Farm
+          // Tab 1: Hourly (courts / padel / football)
           _BookingsTab(
             asyncValue: ref.watch(
-              userBookingsProvider(category: BookingCategory.farm),
+              userBookingsProvider(category: BookingCategory.hourly),
             ),
             onTap: (id) => _navigateToDetail(context, id),
           ),
-          // Tab 3: Concerts
+          // Tab 2: Shift (farm)
           _BookingsTab(
             asyncValue: ref.watch(
-              userBookingsProvider(category: BookingCategory.concert),
+              userBookingsProvider(category: BookingCategory.shift),
             ),
             onTap: (id) => _navigateToDetail(context, id),
           ),
-          // Tab 4: Restaurant
+          // Tab 3: Venue / Seat (concerts)
           _BookingsTab(
             asyncValue: ref.watch(
-              userBookingsProvider(category: BookingCategory.restaurant),
+              userBookingsProvider(category: BookingCategory.venueSeat),
+            ),
+            onTap: (id) => _navigateToDetail(context, id),
+          ),
+          // Tab 4: Reservation (restaurant)
+          _BookingsTab(
+            asyncValue: ref.watch(
+              userBookingsProvider(category: BookingCategory.reservation),
             ),
             onTap: (id) => _navigateToDetail(context, id),
           ),
@@ -119,10 +144,7 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
 //  _BookingsTab
 // ─────────────────────────────────────────────────────────────────────────────
 class _BookingsTab extends ConsumerWidget {
-  const _BookingsTab({
-    required this.asyncValue,
-    required this.onTap,
-  });
+  const _BookingsTab({required this.asyncValue, required this.onTap});
 
   final AsyncValue<List<Booking>> asyncValue;
   final void Function(String id) onTap;
@@ -156,10 +178,7 @@ class _BookingsTab extends ConsumerWidget {
 //  _MembershipsTab
 // ─────────────────────────────────────────────────────────────────────────────
 class _MembershipsTab extends ConsumerWidget {
-  const _MembershipsTab({
-    required this.asyncValue,
-    required this.onTap,
-  });
+  const _MembershipsTab({required this.asyncValue, required this.onTap});
 
   final AsyncValue<List<Membership>> asyncValue;
   final void Function(String id) onTap;
@@ -190,77 +209,13 @@ class _MembershipsTab extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  _CombinedSportsTab  (padel + football)
-// ─────────────────────────────────────────────────────────────────────────────
-class _CombinedSportsTab extends ConsumerWidget {
-  const _CombinedSportsTab({required this.onTap});
-
-  final void Function(String id) onTap;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final padelAsync =
-        ref.watch(userBookingsProvider(category: BookingCategory.padel));
-    final footballAsync =
-        ref.watch(userBookingsProvider(category: BookingCategory.football));
-
-    if (padelAsync.isLoading || footballAsync.isLoading) {
-      return _BookingsSkeleton();
-    }
-    if (padelAsync.hasError) {
-      return _ErrorView(
-        message: padelAsync.error.toString(),
-        onRetry: () {
-          ref.invalidate(
-            userBookingsProvider(category: BookingCategory.padel),
-          );
-          ref.invalidate(
-            userBookingsProvider(category: BookingCategory.football),
-          );
-        },
-      );
-    }
-    if (footballAsync.hasError) {
-      return _ErrorView(
-        message: footballAsync.error.toString(),
-        onRetry: () {
-          ref.invalidate(
-            userBookingsProvider(category: BookingCategory.padel),
-          );
-          ref.invalidate(
-            userBookingsProvider(category: BookingCategory.football),
-          );
-        },
-      );
-    }
-
-    final combined = [
-      ...(padelAsync.value ?? []),
-      ...(footballAsync.value ?? []),
-    ]..sort((a, b) => b.startsAt.compareTo(a.startsAt));
-
-    if (combined.isEmpty) {
-      return const _EmptyView(message: 'No padel or football bookings found.');
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 8, bottom: 24),
-      itemCount: combined.length,
-      itemBuilder: (_, i) => TicketCard.booking(
-        booking: combined[i],
-        onTap: () => onTap(combined[i].id),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 //  Skeleton
 // ─────────────────────────────────────────────────────────────────────────────
 class _BookingsSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final cardColor = Theme.of(context).cardTheme.color ?? cs.surface;
     return Skeletonizer(
       enabled: true,
       effect: ShimmerEffect(
@@ -271,34 +226,56 @@ class _BookingsSkeleton extends StatelessWidget {
       child: ListView.builder(
         padding: const EdgeInsets.only(top: 8),
         itemCount: 5,
-        itemBuilder: (_, _) => Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: CircleAvatar(
-              backgroundColor: cs.surfaceContainerHighest,
+        itemBuilder: (_, _) => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+          child: Container(
+            height: 82,
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: cs.onSurface.withValues(alpha: 0.07)),
             ),
-            title: Container(
-              height: 14,
-              width: 160,
-              decoration: BoxDecoration(
-                color: cs.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Container(
-                height: 20,
-                width: 100,
-                decoration: BoxDecoration(
-                  color: cs.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
+            child: Row(
+              children: [
+                // icon panel placeholder
+                Container(
+                  width: 60,
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(15),
+                      bottomLeft: Radius.circular(15),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        height: 13,
+                        width: 150,
+                        decoration: BoxDecoration(
+                          color: cs.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        height: 11,
+                        width: 90,
+                        decoration: BoxDecoration(
+                          color: cs.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+              ],
             ),
           ),
         ),
@@ -329,28 +306,23 @@ class _ErrorView extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Something went wrong',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(color: cs.onSurface),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(color: cs.onSurface),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               message,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: cs.onSurface.withValues(alpha: 0.5)),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.5),
+              ),
               textAlign: TextAlign.center,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 20),
-            FilledButton(
-              onPressed: onRetry,
-              child: const Text('Retry'),
-            ),
+            FilledButton(onPressed: onRetry, child: const Text('Retry')),
           ],
         ),
       ),
@@ -384,8 +356,8 @@ class _EmptyView extends StatelessWidget {
             Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.5),
-                  ),
+                color: cs.onSurface.withValues(alpha: 0.5),
+              ),
               textAlign: TextAlign.center,
             ),
           ],
