@@ -1,5 +1,4 @@
 import 'package:future_riverpod/features/booking/domain/models/booking.dart';
-import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/court.dart';
 import 'package:future_riverpod/features/booking/domain/models/event_tier.dart';
 import 'package:future_riverpod/features/booking/domain/models/farm_shift.dart';
@@ -17,10 +16,10 @@ class BookingRepository {
   const BookingRepository(this._client);
   final SupabaseClient _client;
 
-  Future<List<Booking>> fetchUserBookings({BookingCategory? category}) async {
+  Future<List<Booking>> fetchUserBookings({List<String>? categories}) async {
     var query = _client.schema('bookings').from('bookings').select();
-    if (category != null) {
-      query = query.eq('category', category.name);
+    if (categories != null && categories.isNotEmpty) {
+      query = query.inFilter('category', categories);
     }
     final data = await query.order('created_at', ascending: false);
     return data.map(Booking.fromJson).toList();
@@ -89,6 +88,22 @@ class BookingRepository {
     return (data as List)
         .map((e) => FarmShift.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<Set<String>> fetchClosedDates({
+    required String placeId,
+    required String startDate,
+    required String endDate,
+  }) async {
+    final data = await _client.schema('bookings').rpc(
+      'place_closed_dates',
+      params: {
+        'p_place_id': placeId,
+        'p_start_date': startDate,
+        'p_end_date': endDate,
+      },
+    );
+    return (data as List).map((e) => e.toString().substring(0, 10)).toSet();
   }
 
   Future<List<EventTier>> fetchEventTiers(String eventId) async {

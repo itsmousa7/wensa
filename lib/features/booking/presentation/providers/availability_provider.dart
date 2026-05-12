@@ -6,6 +6,7 @@ import 'package:future_riverpod/features/booking/domain/models/restaurant_seatin
 import 'package:future_riverpod/features/booking/domain/models/seat.dart';
 import 'package:future_riverpod/features/booking/domain/models/slot.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'availability_provider.g.dart';
@@ -28,6 +29,18 @@ Future<List<Slot>> availableSlots(
 @riverpod
 Future<List<FarmShift>> farmShifts(Ref ref, String placeId, String date) =>
     ref.watch(bookingRepositoryProvider).fetchFarmShifts(placeId, date);
+
+@riverpod
+Future<Set<String>> placeClosedDates(Ref ref, String placeId) {
+  final today = DateTime.now();
+  final startDate = bookingFormatDate(today);
+  final endDate = bookingFormatDate(today.add(const Duration(days: 89)));
+  return ref.watch(bookingRepositoryProvider).fetchClosedDates(
+    placeId: placeId,
+    startDate: startDate,
+    endDate: endDate,
+  );
+}
 
 @riverpod
 Future<List<RestaurantSeatingOption>> seatingOptions(

@@ -243,6 +243,81 @@ final class FarmShiftsFamily extends $Family
   String toString() => r'farmShiftsProvider';
 }
 
+@ProviderFor(placeClosedDates)
+final placeClosedDatesProvider = PlaceClosedDatesFamily._();
+
+final class PlaceClosedDatesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Set<String>>,
+          Set<String>,
+          FutureOr<Set<String>>
+        >
+    with $FutureModifier<Set<String>>, $FutureProvider<Set<String>> {
+  PlaceClosedDatesProvider._({
+    required PlaceClosedDatesFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'placeClosedDatesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$placeClosedDatesHash();
+
+  @override
+  String toString() {
+    return r'placeClosedDatesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Set<String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Set<String>> create(Ref ref) {
+    final argument = this.argument as String;
+    return placeClosedDates(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PlaceClosedDatesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$placeClosedDatesHash() => r'ed181699111e34a41c735a6ccc59bf32e9b956e8';
+
+final class PlaceClosedDatesFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Set<String>>, String> {
+  PlaceClosedDatesFamily._()
+    : super(
+        retry: null,
+        name: r'placeClosedDatesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  PlaceClosedDatesProvider call(String placeId) =>
+      PlaceClosedDatesProvider._(argument: placeId, from: this);
+
+  @override
+  String toString() => r'placeClosedDatesProvider';
+}
+
 @ProviderFor(seatingOptions)
 final seatingOptionsProvider = SeatingOptionsFamily._();
 
