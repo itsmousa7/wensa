@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/restaurant_seating_option.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
+import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart' show bookingsRefreshProvider;
 import 'package:go_router/go_router.dart';
 
 // ---------------------------------------------------------------------------
@@ -69,6 +72,9 @@ class RestaurantSection extends ConsumerWidget {
 
     ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
       next.maybeWhen(
+        success: (_, __, ___, ____) {
+          ref.read(bookingsRefreshProvider.notifier).bump();
+        },
         error: (message) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -105,26 +111,9 @@ class _RestaurantBookingFormView extends ConsumerWidget {
   final String placeId;
   final String placeName;
 
-  String _formatDate(DateTime dt) =>
-      '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-
-  String _formatDisplay(DateTime dt, {bool isArabic = false}) {
-    const monthsEn = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    const monthsAr = [
-      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
-    ];
-    final months = isArabic ? monthsAr : monthsEn;
-    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
-  }
-
-  /// Converts a UTC ISO string back to local Baghdad time for display.
+  /// Converts a UTC ISO string to Baghdad display time (UTC+3).
   String _slotDisplayTime(String isoUtc) {
     try {
-      // Stored as UTC but represents Baghdad time (UTC+3), so add 3h.
       final utc = DateTime.parse(isoUtc);
       final baghdad = utc.add(const Duration(hours: 3));
       final h = baghdad.hour.toString().padLeft(2, '0');
@@ -142,133 +131,169 @@ class _RestaurantBookingFormView extends ConsumerWidget {
     final partySize = ref.watch(_restaurantPartySizeProvider);
     final selectedSeating = ref.watch(_restaurantSeatingOptionProvider);
     final submitState = ref.watch(bookingSubmitProvider);
-    final isLoading = submitState.maybeWhen(
-      loading: () => true,
-      orElse: () => false,
-    );
-
-    final dateStr = _formatDate(selectedDate);
-    final slots = ref.watch(restaurantTimeSlotsProvider(dateStr));
+    final isLoading =
+        submitState.maybeWhen(loading: () => true, orElse: () => false);
     final seatingAsync = ref.watch(seatingOptionsProvider(placeId));
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final closedDatesAsync = ref.watch(placeClosedDatesProvider(placeId));
+    final closedDates = closedDatesAsync.value ?? const <String>{};
+    final selectedDateStr = bookingFormatDate(selectedDate);
+    final isSelectedDateClosed = closedDates.contains(selectedDateStr);
+
+    final dateStr = bookingFormatDate(selectedDate);
+    final slots = ref.watch(restaurantTimeSlotsProvider(dateStr));
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ---- Step 1: Date picker ----
-          Text(isAr ? 'اختر التاريخ' : 'Select Date', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-          Card(
-            margin: EdgeInsets.zero,
-            child: CalendarDatePicker(
-              initialDate: selectedDate,
-              firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(const Duration(days: 90)),
-              onDateChanged: (date) {
-                ref.read(_restaurantSelectedDateProvider.notifier).set(date);
-                ref.read(_restaurantSelectedSlotProvider.notifier).set(null);
-              },
-            ),
-          ),
-          const SizedBox(height: 24),
 
-          // ---- Step 2: Time slot list ----
-          Text(
-            isAr
-                ? 'اختر الوقت — ${_formatDisplay(selectedDate, isArabic: true)}'
-                : 'Select Time — ${_formatDisplay(selectedDate)}',
-            style: Theme.of(context).textTheme.titleMedium,
+          // ── Date strip ─────────────────────────────────────────────
+          BookingSectionLabel(isAr ? 'اختر التاريخ' : 'Select Date'),
+          BookingDateStrip(
+            selected: selectedDate,
+            closedDates: closedDates,
+            onSelect: (date) {
+              ref.read(_restaurantSelectedDateProvider.notifier).set(date);
+              ref.read(_restaurantSelectedSlotProvider.notifier).set(null);
+            },
           ),
-          const SizedBox(height: 8),
-          if (slots.isEmpty)
+          const SizedBox(height: 28),
+
+          // ── Time slots ─────────────────────────────────────────────
+          BookingSectionLabel(
+            isAr
+                ? 'اختر الوقت — ${bookingDisplayDate(selectedDate, isArabic: true)}'
+                : 'Select Time — ${bookingDisplayDate(selectedDate)}',
+          ),
+          if (isSelectedDateClosed)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text(isAr ? 'لا توجد أوقات متاحة لهذا التاريخ.' : 'No available times for this date.'),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: const _ClosedDay(),
+            )
+          else if (slots.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Text(
+                isAr
+                    ? 'لا توجد أوقات متاحة لهذا التاريخ.'
+                    : 'No available times for this date.',
+                style: TextStyle(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.5)),
+              ),
             )
           else
-            Card(
-              margin: EdgeInsets.zero,
-              child: Column(
-                children: slots.map((slot) {
-                  final isSelected = selectedSlot == slot;
-                  return ListTile(
-                    title: Text(_slotDisplayTime(slot)),
-                    trailing: isSelected
-                        ? Icon(
-                            Icons.check_circle,
-                            color: Theme.of(context).colorScheme.primary,
-                          )
-                        : const Icon(Icons.radio_button_unchecked),
-                    selected: isSelected,
-                    onTap: () {
-                      ref
-                          .read(_restaurantSelectedSlotProvider.notifier)
-                          .set(isSelected ? null : slot);
-                    },
-                  );
-                }).toList(),
-              ),
-            ),
-          const SizedBox(height: 24),
-
-          // ---- Step 3: Party-size stepper ----
-          Text(
-            isAr ? 'عدد الضيوف' : 'Number of Guests',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Card(
-            margin: EdgeInsets.zero,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    isAr ? 'ضيوف' : 'Guests',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove_circle_outline),
-                        onPressed: partySize <= 1
-                            ? null
-                            : () {
-                                ref
-                                    .read(_restaurantPartySizeProvider.notifier)
-                                    .set(partySize - 1);
-                              },
-                      ),
-                      SizedBox(
-                        width: 36,
-                        child: Text(
-                          '$partySize',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.titleMedium,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Card(
+                margin: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                child: Column(
+                  children: slots.map((slot) {
+                    final isSelected = selectedSlot == slot;
+                    final isExpired = DateTime.tryParse(slot)?.isBefore(DateTime.now().toUtc()) ?? false;
+                    final cs = Theme.of(context).colorScheme;
+                    return ListTile(
+                      title: Text(
+                        _slotDisplayTime(slot),
+                        style: TextStyle(
+                          color: isExpired
+                              ? cs.onSurface.withValues(alpha: 0.35)
+                              : null,
+                          decoration:
+                              isExpired ? TextDecoration.lineThrough : null,
+                          decorationColor: cs.onSurface.withValues(alpha: 0.35),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle_outline),
-                        onPressed: partySize >= 20
-                            ? null
-                            : () {
-                                ref
-                                    .read(_restaurantPartySizeProvider.notifier)
-                                    .set(partySize + 1);
-                              },
-                      ),
-                    ],
-                  ),
-                ],
+                      trailing: isExpired
+                          ? Text(
+                              isAr ? 'منتهي' : 'Expired',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF92400E)
+                                    .withValues(alpha: 0.75),
+                              ),
+                            )
+                          : isSelected
+                              ? Icon(Icons.check_circle,
+                                  color: cs.primary)
+                              : const Icon(Icons.radio_button_unchecked),
+                      selected: isSelected && !isExpired,
+                      enabled: !isExpired,
+                      onTap: isExpired
+                          ? null
+                          : () {
+                              ref
+                                  .read(_restaurantSelectedSlotProvider.notifier)
+                                  .set(isSelected ? null : slot);
+                            },
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          const SizedBox(height: 28),
+
+          // ── Party size ─────────────────────────────────────────────
+          BookingSectionLabel(isAr ? 'عدد الضيوف' : 'Number of Guests'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Card(
+              margin: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isAr ? 'ضيوف' : 'Guests',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline),
+                          onPressed: partySize <= 1
+                              ? null
+                              : () => ref
+                                  .read(_restaurantPartySizeProvider.notifier)
+                                  .set(partySize - 1),
+                        ),
+                        SizedBox(
+                          width: 36,
+                          child: Text(
+                            '$partySize',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline),
+                          onPressed: partySize >= 20
+                              ? null
+                              : () => ref
+                                  .read(_restaurantPartySizeProvider.notifier)
+                                  .set(partySize + 1),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
 
-          // ---- Step 4: Seating options (optional) ----
+          // ── Seating preference (optional) ──────────────────────────
           seatingAsync.when(
             loading: () => const SizedBox.shrink(),
             error: (e, _) => const SizedBox.shrink(),
@@ -277,159 +302,114 @@ class _RestaurantBookingFormView extends ConsumerWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    isAr ? 'تفضيل الجلوس' : 'Seating Preference',
-                    style: Theme.of(context).textTheme.titleMedium,
+                  BookingSectionLabel(
+                      isAr ? 'تفضيل الجلوس' : 'Seating Preference'),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: options.map((option) {
+                        final label = isAr
+                            ? (option.labelAr.isNotEmpty
+                                ? option.labelAr
+                                : option.labelEn)
+                            : (option.labelEn.isNotEmpty
+                                ? option.labelEn
+                                : option.labelAr);
+                        final isSelected = selectedSeating?.id == option.id;
+                        return ChoiceChip(
+                          label: Text(label),
+                          selected: isSelected,
+                          onSelected: (_) {
+                            ref
+                                .read(_restaurantSeatingOptionProvider.notifier)
+                                .set(isSelected ? null : option);
+                          },
+                        );
+                      }).toList(),
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: options.map((option) {
-                      final label = isAr
-                          ? (option.labelAr.isNotEmpty ? option.labelAr : option.labelEn)
-                          : (option.labelEn.isNotEmpty ? option.labelEn : option.labelAr);
-                      final isSelected = selectedSeating?.id == option.id;
-                      return ChoiceChip(
-                        label: Text(label),
-                        selected: isSelected,
-                        onSelected: (_) {
-                          ref
-                              .read(_restaurantSeatingOptionProvider.notifier)
-                              .set(isSelected ? null : option);
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
                 ],
               );
             },
           ),
 
-          // ---- Review + Request ----
-          if (selectedSlot != null) ...[
-            const Divider(),
-            const SizedBox(height: 12),
-            _RestaurantReviewPanel(
-              selectedDate: selectedDate,
-              selectedSlot: selectedSlot,
-              partySize: partySize,
-              selectedSeating: selectedSeating,
-              placeName: placeName,
-              placeId: placeId,
-              isLoading: isLoading,
-              slotDisplayTime: _slotDisplayTime(selectedSlot),
+          // ── Booking summary card (animated) ────────────────────────
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.08),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
             ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Review + Request panel
-// ---------------------------------------------------------------------------
-
-class _RestaurantReviewPanel extends ConsumerWidget {
-  const _RestaurantReviewPanel({
-    required this.selectedDate,
-    required this.selectedSlot,
-    required this.partySize,
-    required this.selectedSeating,
-    required this.placeName,
-    required this.placeId,
-    required this.isLoading,
-    required this.slotDisplayTime,
-  });
-
-  final DateTime selectedDate;
-  final String selectedSlot;
-  final int partySize;
-  final RestaurantSeatingOption? selectedSeating;
-  final String placeName;
-  final String placeId;
-  final bool isLoading;
-  final String slotDisplayTime;
-
-  String _formatDate(DateTime dt) =>
-      '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          isAr ? 'ملخص الحجز' : 'Booking Summary',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 12),
-        _SummaryRow(label: isAr ? 'المكان' : 'Venue', value: placeName),
-        _SummaryRow(label: isAr ? 'التاريخ' : 'Date', value: _formatDate(selectedDate)),
-        _SummaryRow(label: isAr ? 'الوقت' : 'Time', value: slotDisplayTime),
-        _SummaryRow(
-          label: isAr ? 'الضيوف' : 'Guests',
-          value: isAr
-              ? '$partySize ${partySize == 1 ? 'ضيف' : 'ضيوف'}'
-              : '$partySize ${partySize == 1 ? 'guest' : 'guests'}',
-        ),
-        if (selectedSeating != null)
-          _SummaryRow(
-            label: isAr ? 'الجلوس' : 'Seating',
-            value: isAr
-                ? (selectedSeating!.labelAr.isNotEmpty ? selectedSeating!.labelAr : selectedSeating!.labelEn)
-                : (selectedSeating!.labelEn.isNotEmpty ? selectedSeating!.labelEn : selectedSeating!.labelAr),
+            child: selectedSlot != null
+                ? Padding(
+                    key: const ValueKey('summary-visible'),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: BookingSummaryCard(
+                      title: isAr ? 'ملخص الحجز' : 'Booking Summary',
+                      rows: [
+                        BookingSummaryRow(
+                          icon: Icons.calendar_today_rounded,
+                          label: isAr ? 'التاريخ' : 'Date',
+                          value: bookingDisplayDate(selectedDate,
+                              isArabic: isAr),
+                        ),
+                        BookingSummaryRow(
+                          icon: Icons.schedule_rounded,
+                          label: isAr ? 'الوقت' : 'Time',
+                          value: _slotDisplayTime(selectedSlot),
+                        ),
+                        BookingSummaryRow(
+                          icon: Icons.people_rounded,
+                          label: isAr ? 'الضيوف' : 'Guests',
+                          value: isAr
+                              ? '$partySize ${partySize == 1 ? 'ضيف' : 'ضيوف'}'
+                              : '$partySize ${partySize == 1 ? 'guest' : 'guests'}',
+                        ),
+                        if (selectedSeating != null)
+                          BookingSummaryRow(
+                            icon: Icons.chair_rounded,
+                            label: isAr ? 'الجلوس' : 'Seating',
+                            value: isAr
+                                ? (selectedSeating.labelAr.isNotEmpty
+                                    ? selectedSeating.labelAr
+                                    : selectedSeating.labelEn)
+                                : (selectedSeating.labelEn.isNotEmpty
+                                    ? selectedSeating.labelEn
+                                    : selectedSeating.labelAr),
+                          ),
+                      ],
+                      // No total — restaurant uses request-based booking
+                      actionLabel: isAr ? 'طلب الحجز' : 'Request Booking',
+                      onAction: () {
+                        final slot = selectedSlot;
+                        ref
+                            .read(bookingSubmitProvider.notifier)
+                            .createRestaurantBooking(
+                              placeId: placeId,
+                              startsAt: slot,
+                              partySize: partySize,
+                              seatingOptionId: selectedSeating?.id,
+                            );
+                      },
+                      isLoading: isLoading,
+                    ),
+                  )
+                : const SizedBox.shrink(key: ValueKey('summary-hidden')),
           ),
-        const SizedBox(height: 16),
-        FilledButton(
-          onPressed: isLoading
-              ? null
-              : () {
-                  ref
-                      .read(bookingSubmitProvider.notifier)
-                      .createRestaurantBooking(
-                        placeId: placeId,
-                        startsAt: selectedSlot,
-                        partySize: partySize,
-                        seatingOptionId: selectedSeating?.id,
-                      );
-                },
-          child: isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(isAr ? 'طلب الحجز' : 'Request Booking'),
-        ),
-      ],
-    );
-  }
-}
 
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-          ),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: 48),
         ],
       ),
     );
@@ -475,6 +455,43 @@ class _RestaurantPendingView extends ConsumerWidget {
             onPressed: () => context.go('/bookings'),
             icon: const Icon(Icons.list_alt_rounded),
             label: Text(isAr ? 'عرض حجوزاتي' : 'View My Bookings'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Closed day banner
+// ---------------------------------------------------------------------------
+
+class _ClosedDay extends StatelessWidget {
+  const _ClosedDay();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      decoration: BoxDecoration(
+        color: cs.errorContainer.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.error.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.block_rounded,
+              size: 36, color: cs.error.withValues(alpha: 0.45)),
+          const SizedBox(height: 8),
+          Text(
+            isAr
+                ? 'هذا المكان مغلق في هذا التاريخ.'
+                : 'This place is closed on this date.',
+            style: TextStyle(
+                color: cs.onSurface.withValues(alpha: 0.5), fontSize: 13),
           ),
         ],
       ),
