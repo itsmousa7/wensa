@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/farm_shift.dart';
+import 'package:future_riverpod/features/booking/domain/models/slot_availability.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
@@ -33,6 +34,30 @@ final _farmSelectedDateProvider =
 
 final _farmSelectedShiftProvider =
     NotifierProvider<_FarmShiftNotifier, FarmShift?>(_FarmShiftNotifier.new);
+
+/// Computes [SlotAvailability] for a farm shift.
+/// [isToday] must be true when the selected date is today (local device date).
+/// Uses Baghdad time (UTC+3) for expiry comparison since farm shifts are
+/// configured in local Baghdad time.
+SlotAvailability computeShiftAvailability(FarmShift shift, {required bool isToday}) {
+  if (shift.isClosed) return SlotAvailability.closed;
+  if (isToday) {
+    final parts = shift.startsTime.split(':');
+    if (parts.length >= 2) {
+      final baghdadNow = DateTime.now().toUtc().add(const Duration(hours: 3));
+      final shiftStart = DateTime(
+        baghdadNow.year,
+        baghdadNow.month,
+        baghdadNow.day,
+        int.tryParse(parts[0]) ?? 0,
+        int.tryParse(parts[1]) ?? 0,
+      );
+      if (!shiftStart.isAfter(baghdadNow)) return SlotAvailability.expired;
+    }
+  }
+  if (!shift.isAvailable) return SlotAvailability.booked;
+  return SlotAvailability.available;
+}
 
 // ---------------------------------------------------------------------------
 // FarmSection
@@ -164,6 +189,8 @@ class _FarmBookingFormView extends ConsumerWidget {
     final isLoading =
         submitState.maybeWhen(loading: () => true, orElse: () => false);
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final closedDatesAsync = ref.watch(placeClosedDatesProvider(placeId));
+    final closedDates = closedDatesAsync.value ?? const <String>{};
 
     return SingleChildScrollView(
       child: Column(
@@ -175,6 +202,7 @@ class _FarmBookingFormView extends ConsumerWidget {
           BookingSectionLabel(isAr ? 'اختر التاريخ' : 'Select Date'),
           BookingDateStrip(
             selected: selectedDate,
+            closedDates: closedDates,
             onSelect: (date) {
               ref.read(_farmSelectedDateProvider.notifier).set(date);
               ref.read(_farmSelectedShiftProvider.notifier).set(null);
@@ -214,18 +242,24 @@ class _FarmBookingFormView extends ConsumerWidget {
                   ),
                 );
               }
+              final now = DateTime.now();
+              final isToday = selectedDate.year == now.year &&
+                  selectedDate.month == now.month &&
+                  selectedDate.day == now.day;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: shifts.map((shift) {
                     final isSelected =
                         selectedShift?.shiftType == shift.shiftType;
+                    final availability =
+                        computeShiftAvailability(shift, isToday: isToday);
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: ShiftCard(
                         shift: shift,
                         isSelected: isSelected,
-                        isBooked: !shift.isAvailable,
+                        availability: availability,
                         onTap: () {
                           ref
                               .read(_farmSelectedShiftProvider.notifier)
