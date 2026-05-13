@@ -168,9 +168,9 @@ class _RestaurantBookingFormView extends ConsumerWidget {
                 : 'Select Time — ${bookingDisplayDate(selectedDate)}',
           ),
           if (isSelectedDateClosed)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: const _ClosedDay(),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: _ClosedDay(),
             )
           else if (slots.isEmpty)
             Padding(
