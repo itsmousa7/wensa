@@ -196,7 +196,8 @@ class _RestaurantBookingFormView extends ConsumerWidget {
                 child: Column(
                   children: slots.map((slot) {
                     final isSelected = selectedSlot == slot;
-                    final isExpired = DateTime.tryParse(slot)?.isBefore(DateTime.now().toUtc()) ?? false;
+                    final slotTime = DateTime.tryParse(slot)?.toLocal();
+                    final isExpired = slotTime != null && !slotTime.isAfter(DateTime.now());
                     final cs = Theme.of(context).colorScheme;
                     return ListTile(
                       title: Text(
