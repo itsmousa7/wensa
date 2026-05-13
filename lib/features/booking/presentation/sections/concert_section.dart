@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/event_tier.dart';
 import 'package:future_riverpod/features/booking/domain/models/seat.dart';
+import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/hold_provider.dart';
@@ -9,8 +10,8 @@ import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_
 import 'package:future_riverpod/features/booking/presentation/widgets/hold_countdown_banner.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/seat_map.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/tier_legend.dart';
-import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
-import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart' show bookingsRefreshProvider;
+import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
+    show bookingsRefreshProvider;
 import 'package:go_router/go_router.dart';
 
 // ---------------------------------------------------------------------------
@@ -57,9 +58,7 @@ class _ConcertSelectionNotifier extends Notifier<_ConcertState> {
     }
     final holdUntil = selected.isEmpty
         ? null
-        : DateTime.now()
-            .add(const Duration(seconds: 60))
-            .toIso8601String();
+        : DateTime.now().add(const Duration(seconds: 60)).toIso8601String();
     state = (
       selectedSeatIds: selected,
       filterTierKeys: state.filterTierKeys,
@@ -95,7 +94,8 @@ class _ConcertSelectionNotifier extends Notifier<_ConcertState> {
 
 final _concertSelectionProvider =
     NotifierProvider<_ConcertSelectionNotifier, _ConcertState>(
-        _ConcertSelectionNotifier.new);
+      _ConcertSelectionNotifier.new,
+    );
 
 // ---------------------------------------------------------------------------
 // ConcertSection
@@ -108,8 +108,6 @@ class ConcertSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final submitState = ref.watch(bookingSubmitProvider);
-
     ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
       next.maybeWhen(
         success: (bookingId, paymentUrl, holdUntil, waylReferenceId) {
@@ -125,7 +123,9 @@ class ConcertSection extends ConsumerWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Payment successful! Your tickets are confirmed.'),
+                      content: Text(
+                        'Payment successful! Your tickets are confirmed.',
+                      ),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -212,8 +212,9 @@ class _ConcertBookingView extends ConsumerWidget {
               tiers: tiers,
               tierColors: tierColors,
               selectedTierKeys: selection.filterTierKeys,
-              onToggle: (key) =>
-                  ref.read(_concertSelectionProvider.notifier).toggleTierFilter(key),
+              onToggle: (key) => ref
+                  .read(_concertSelectionProvider.notifier)
+                  .toggleTierFilter(key),
             ),
 
             // Tier legend
@@ -222,8 +223,7 @@ class _ConcertBookingView extends ConsumerWidget {
             // Seat map
             Expanded(
               child: seatsAsync.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text('Error loading seats: $e')),
                 data: (seats) => SeatMapWidget(
                   seats: seats,
@@ -392,36 +392,42 @@ class _SelectedSeatsBar extends ConsumerWidget {
         child: Row(
           children: [
             Expanded(
-              child: Builder(builder: (context) {
-                final isAr = Localizations.localeOf(context).languageCode == 'ar';
-                return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    isAr
-                        ? '$count ${count == 1 ? 'مقعد محدد' : 'مقاعد محددة'}'
-                        : '$count ${count == 1 ? 'seat selected' : 'seats selected'}',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  Text(
-                    '${(total / 1000).toStringAsFixed(0)}k IQD ${isAr ? 'إجمالي' : 'total'}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              child: Builder(
+                builder: (context) {
+                  final isAr =
+                      Localizations.localeOf(context).languageCode == 'ar';
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isAr
+                            ? '$count ${count == 1 ? 'مقعد محدد' : 'مقاعد محددة'}'
+                            : '$count ${count == 1 ? 'seat selected' : 'seats selected'}',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      Text(
+                        '${(total / 1000).toStringAsFixed(0)}k IQD ${isAr ? 'إجمالي' : 'total'}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.outline,
                         ),
-                  ),
-                ],
-              );
-              }),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
             const SizedBox(width: 12),
-            Builder(builder: (context) {
-              final isAr = Localizations.localeOf(context).languageCode == 'ar';
-              return FilledButton(
-                onPressed: () => _showReviewSheet(context, ref),
-                child: Text(isAr ? 'مراجعة' : 'Review'),
-              );
-            }),
+            Builder(
+              builder: (context) {
+                final isAr =
+                    Localizations.localeOf(context).languageCode == 'ar';
+                return FilledButton(
+                  onPressed: () => _showReviewSheet(context, ref),
+                  child: Text(isAr ? 'مراجعة' : 'Review'),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -430,8 +436,9 @@ class _SelectedSeatsBar extends ConsumerWidget {
 
   void _showReviewSheet(BuildContext context, WidgetRef ref) {
     final byKey = _tierByKey;
-    final selectedSeats =
-        seats.where((s) => selectedSeatIds.contains(s.seatId)).toList();
+    final selectedSeats = seats
+        .where((s) => selectedSeatIds.contains(s.seatId))
+        .toList();
 
     showModalBottomSheet<void>(
       context: context,
@@ -466,8 +473,10 @@ class _ReviewSheet extends ConsumerWidget {
   final String eventId;
   final VoidCallback onReset;
 
-  int get _total =>
-      selectedSeats.fold(0, (sum, s) => sum + (tierByKey[s.tierKey]?.priceIqd ?? 0));
+  int get _total => selectedSeats.fold(
+    0,
+    (sum, s) => sum + (tierByKey[s.tierKey]?.priceIqd ?? 0),
+  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -499,13 +508,15 @@ class _ReviewSheet extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Builder(builder: (ctx) {
-              final isAr = Localizations.localeOf(ctx).languageCode == 'ar';
-              return Text(
-                isAr ? 'مراجعة المقاعد' : 'Review Seats',
-                style: Theme.of(ctx).textTheme.titleLarge,
-              );
-            }),
+            Builder(
+              builder: (ctx) {
+                final isAr = Localizations.localeOf(ctx).languageCode == 'ar';
+                return Text(
+                  isAr ? 'مراجعة المقاعد' : 'Review Seats',
+                  style: Theme.of(ctx).textTheme.titleLarge,
+                );
+              },
+            ),
             const SizedBox(height: 12),
             Expanded(
               child: ListView.separated(
@@ -515,16 +526,25 @@ class _ReviewSheet extends ConsumerWidget {
                 itemBuilder: (context, i) {
                   final s = selectedSeats[i];
                   final tier = tierByKey[s.tierKey];
-                  final isAr = Localizations.localeOf(context).languageCode == 'ar';
+                  final isAr =
+                      Localizations.localeOf(context).languageCode == 'ar';
                   final tierName = tier != null
                       ? (isAr
-                          ? (tier.nameAr.isNotEmpty ? tier.nameAr : tier.nameEn)
-                          : (tier.nameEn.isNotEmpty ? tier.nameEn : tier.nameAr))
+                            ? (tier.nameAr.isNotEmpty
+                                  ? tier.nameAr
+                                  : tier.nameEn)
+                            : (tier.nameEn.isNotEmpty
+                                  ? tier.nameEn
+                                  : tier.nameAr))
                       : s.tierKey;
                   final price = tier?.priceIqd ?? 0;
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(isAr ? 'صف ${s.row} · مقعد ${s.seat}' : 'Row ${s.row} · Seat ${s.seat}'),
+                    title: Text(
+                      isAr
+                          ? 'صف ${s.row} · مقعد ${s.seat}'
+                          : 'Row ${s.row} · Seat ${s.seat}',
+                    ),
                     subtitle: Text(tierName),
                     trailing: Text(
                       '${(price / 1000).toStringAsFixed(0)}k IQD',
@@ -546,10 +566,9 @@ class _ReviewSheet extends ConsumerWidget {
                   ),
                   Text(
                     '${(_total / 1000).toStringAsFixed(0)}k IQD',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -564,8 +583,9 @@ class _ReviewSheet extends ConsumerWidget {
                           .read(bookingSubmitProvider.notifier)
                           .createConcertBooking(
                             eventId: eventId,
-                            seatIds:
-                                selectedSeats.map((s) => s.seatId).toList(),
+                            seatIds: selectedSeats
+                                .map((s) => s.seatId)
+                                .toList(),
                           );
                     },
               child: isLoading
