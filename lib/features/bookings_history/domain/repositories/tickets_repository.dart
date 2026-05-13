@@ -3,7 +3,6 @@
 // Thin wrapper around BookingRepository — kept separate for feature isolation.
 
 import 'package:future_riverpod/features/booking/domain/models/booking.dart';
-import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -14,8 +13,8 @@ class TicketsRepository {
   const TicketsRepository(this._repo);
   final BookingRepository _repo;
 
-  Future<List<Booking>> fetchAll({BookingCategory? category}) =>
-      _repo.fetchUserBookings(category: category);
+  Future<List<Booking>> fetchAll({List<String>? categories}) =>
+      _repo.fetchUserBookings(categories: categories);
 
   Future<Booking> fetchOne(String id) => _repo.fetchBooking(id);
 

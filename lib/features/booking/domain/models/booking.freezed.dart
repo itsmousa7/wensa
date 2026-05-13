@@ -226,7 +226,7 @@ return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.event
 @JsonSerializable()
 
 class _Booking implements Booking {
-  const _Booking({this.id = '', this.userId = '', this.merchantId = '', this.placeId, this.eventId, this.category = BookingCategory.padel, this.status = BookingStatus.pending, this.startsAt = '', this.endsAt = '', this.amountIqd = 0, this.paymentId, this.paymentStatus, this.qrToken = '', this.holdUntil, final  Map<String, dynamic> categoryData = const <String, dynamic>{}, this.groupId, this.createdAt, this.updatedAt}): _categoryData = categoryData;
+  const _Booking({this.id = '', this.userId = '', this.merchantId = '', this.placeId, this.eventId, this.category = BookingCategory.hourly, this.status = BookingStatus.pending, this.startsAt = '', this.endsAt = '', this.amountIqd = 0, this.paymentId, this.paymentStatus, this.qrToken = '', this.holdUntil, final  Map<String, dynamic> categoryData = const <String, dynamic>{}, this.groupId, this.createdAt, this.updatedAt}): _categoryData = categoryData;
   factory _Booking.fromJson(Map<String, dynamic> json) => _$BookingFromJson(json);
 
 @override@JsonKey() final  String id;

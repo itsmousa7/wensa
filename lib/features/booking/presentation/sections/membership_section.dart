@@ -5,9 +5,12 @@ import 'package:future_riverpod/features/booking/presentation/providers/availabi
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/membership_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_label.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/membership_plan_card.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
+import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart' show bookingsRefreshProvider;
 import 'package:go_router/go_router.dart';
 
 // ---------------------------------------------------------------------------
@@ -40,8 +43,6 @@ class MembershipSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final submitState = ref.watch(membershipSubmitProvider);
-
     ref.listen<BookingSubmitState>(membershipSubmitProvider, (prev, next) {
       next.maybeWhen(
         success: (bookingId, paymentUrl, holdUntil, waylReferenceId) {
@@ -52,22 +53,24 @@ class MembershipSection extends ConsumerWidget {
               referenceId: waylReferenceId,
               redirectionUrl: 'wansa://payment',
               onPaymentSuccess: (_, orderId) async {
-                  try {
-                    await ref
-                        .read(bookingRepositoryProvider)
-                        .confirmMembershipPayment(bookingId, orderId);
-                  } catch (_) {}
-                  ref.read(membershipSubmitProvider.notifier).reset();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Payment successful! Your membership is now active.'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    context.go('/bookings/m_$bookingId');
-                  }
-                },
+                try {
+                  await ref
+                      .read(bookingRepositoryProvider)
+                      .confirmMembershipPayment(bookingId, orderId);
+                } catch (_) {}
+                ref.read(membershipSubmitProvider.notifier).reset();
+                ref.read(bookingsRefreshProvider.notifier).bump();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          'Payment successful! Your membership is now active.'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  context.go('/bookings/m_$bookingId');
+                }
+              },
               onPaymentFailed: () {
                 ref.read(membershipSubmitProvider.notifier).reset();
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -115,210 +118,168 @@ class _MembershipFormView extends ConsumerWidget {
   final String placeId;
   final String placeName;
 
-  String _formatDate(DateTime dt) =>
-      '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+  static String _formatPrice(int priceIqd) {
+    final formatted = priceIqd.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
+    return 'IQD $formatted';
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedPlan = ref.watch(_selectedMembershipPlanProvider);
     final plansAsync = ref.watch(membershipPlansProvider(placeId));
     final submitState = ref.watch(membershipSubmitProvider);
-    final isLoading = submitState.maybeWhen(
-      loading: () => true,
-      orElse: () => false,
-    );
-
+    final isLoading =
+        submitState.maybeWhen(loading: () => true, orElse: () => false);
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
+    final today = DateTime.now();
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ---- Step 1: Plan list ----
-          Text(
-            isAr ? 'اختر خطة العضوية' : 'Select Membership Plan',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
           const SizedBox(height: 8),
+
+          // ── Plan list ──────────────────────────────────────────────
+          BookingSectionLabel(
+              isAr ? 'اختر خطة العضوية' : 'Select Membership Plan'),
           plansAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Text('Error loading plans: $e'),
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text('Error loading plans: $e'),
+            ),
             data: (plans) {
               if (plans.isEmpty) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(isAr ? 'لا توجد خطط عضوية متاحة لهذا الموقع.' : 'No membership plans available for this location.'),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 8),
+                  child: Text(
+                    isAr
+                        ? 'لا توجد خطط عضوية متاحة لهذا الموقع.'
+                        : 'No membership plans available for this location.',
+                    style: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.5)),
+                  ),
                 );
               }
-              return Column(
-                children: plans.map((plan) {
-                  final isSelected = selectedPlan?.id == plan.id;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: MembershipPlanCard(
-                      plan: plan,
-                      isSelected: isSelected,
-                      onTap: () {
-                        ref
-                            .read(_selectedMembershipPlanProvider.notifier)
-                            .set(isSelected ? null : plan);
-                      },
-                    ),
-                  );
-                }).toList(),
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: plans.map((plan) {
+                    final isSelected = selectedPlan?.id == plan.id;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: MembershipPlanCard(
+                        plan: plan,
+                        isSelected: isSelected,
+                        onTap: () {
+                          ref
+                              .read(_selectedMembershipPlanProvider.notifier)
+                              .set(isSelected ? null : plan);
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
               );
             },
           ),
           const SizedBox(height: 8),
 
-          // ---- Step 2: Review + Pay ----
-          if (selectedPlan != null) ...[
-            const Divider(),
-            const SizedBox(height: 12),
-            _MembershipReviewPanel(
-              selectedPlan: selectedPlan,
-              placeName: placeName,
-              placeId: placeId,
-              isLoading: isLoading,
-              formatDate: _formatDate,
+          // ── Membership summary card (animated) ─────────────────────
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.08),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
             ),
-          ],
+            child: selectedPlan != null
+                ? Padding(
+                    key: const ValueKey('summary-visible'),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: BookingSummaryCard(
+                      title: isAr ? 'ملخص العضوية' : 'Membership Summary',
+                      badgeText: isAr
+                          ? '${selectedPlan.durationDays} أيام'
+                          : '${selectedPlan.durationDays} days',
+                      rows: [
+                        BookingSummaryRow(
+                          icon: Icons.store_rounded,
+                          label: isAr ? 'المكان' : 'Venue',
+                          value: placeName,
+                        ),
+                        BookingSummaryRow(
+                          icon: Icons.card_membership_rounded,
+                          label: isAr ? 'الخطة' : 'Plan',
+                          valueWidget: BilingualLabel(
+                            ar: selectedPlan.nameAr,
+                            en: selectedPlan.nameEn,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        BookingSummaryRow(
+                          icon: Icons.date_range_rounded,
+                          label: isAr ? 'المدة' : 'Duration',
+                          value: isAr
+                              ? '${selectedPlan.durationDays} أيام'
+                              : '${selectedPlan.durationDays} days',
+                        ),
+                        BookingSummaryRow(
+                          icon: Icons.event_available_rounded,
+                          label: isAr ? 'تاريخ البداية' : 'Start Date',
+                          value: bookingFormatDate(today),
+                        ),
+                        BookingSummaryRow(
+                          icon: Icons.event_busy_rounded,
+                          label: isAr ? 'تاريخ الانتهاء' : 'End Date',
+                          value: bookingFormatDate(
+                              today.add(Duration(days: selectedPlan.durationDays))),
+                        ),
+                      ],
+                      totalLabel: isAr ? 'الإجمالي' : 'Total Amount',
+                      totalValue: _formatPrice(selectedPlan.priceIqd),
+                      actionLabel:
+                          isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
+                      onAction: () {
+                        final plan = selectedPlan;
+                        ref
+                            .read(membershipSubmitProvider.notifier)
+                            .createMembership(
+                              placeId: placeId,
+                              planId: plan.id,
+                            );
+                      },
+                      isLoading: isLoading,
+                    ),
+                  )
+                : const SizedBox.shrink(key: ValueKey('summary-hidden')),
+          ),
+
+          const SizedBox(height: 48),
         ],
       ),
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Review + Pay panel
-// ---------------------------------------------------------------------------
-
-class _MembershipReviewPanel extends ConsumerWidget {
-  const _MembershipReviewPanel({
-    required this.selectedPlan,
-    required this.placeName,
-    required this.placeId,
-    required this.isLoading,
-    required this.formatDate,
-  });
-
-  final MembershipPlan selectedPlan;
-  final String placeName;
-  final String placeId;
-  final bool isLoading;
-  final String Function(DateTime) formatDate;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final today = DateTime.now();
-    final endDate = today.add(Duration(days: selectedPlan.durationDays));
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          isAr ? 'ملخص العضوية' : 'Membership Summary',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 12),
-        _SummaryRow(label: isAr ? 'المكان' : 'Venue', value: placeName),
-        _SummaryRowBilingual(
-          label: isAr ? 'الخطة' : 'Plan',
-          arValue: selectedPlan.nameAr,
-          enValue: selectedPlan.nameEn,
-        ),
-        _SummaryRow(
-            label: isAr ? 'المدة' : 'Duration',
-            value: isAr ? '${selectedPlan.durationDays} أيام' : '${selectedPlan.durationDays} days'),
-        _SummaryRow(label: isAr ? 'تاريخ البداية' : 'Start Date', value: formatDate(today)),
-        _SummaryRow(label: isAr ? 'تاريخ الانتهاء' : 'End Date', value: formatDate(endDate)),
-        _SummaryRow(label: isAr ? 'الإجمالي' : 'Total', value: '${selectedPlan.priceIqd} IQD'),
-        const SizedBox(height: 16),
-        FilledButton(
-          onPressed: isLoading
-              ? null
-              : () {
-                  ref
-                      .read(membershipSubmitProvider.notifier)
-                      .createMembership(
-                        placeId: placeId,
-                        planId: selectedPlan.id,
-                      );
-                },
-          child: isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(isAr ? 'المتابعة للدفع' : 'Proceed to Payment'),
-        ),
-      ],
-    );
-  }
-}
-
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-          ),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryRowBilingual extends StatelessWidget {
-  const _SummaryRowBilingual({
-    required this.label,
-    required this.arValue,
-    required this.enValue,
-  });
-
-  final String label;
-  final String arValue;
-  final String enValue;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-          ),
-          BilingualLabel(
-            ar: arValue,
-            en: enValue,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------

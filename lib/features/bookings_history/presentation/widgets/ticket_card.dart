@@ -1,5 +1,6 @@
 // lib/features/bookings_history/presentation/widgets/ticket_card.dart
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking.dart';
@@ -31,11 +32,11 @@ class TicketCard extends StatelessWidget {
   static IconData _categoryIcon(BookingCategory cat) {
     switch (cat) {
       case BookingCategory.hourly:
-        return Icons.sports_rounded;
+        return CupertinoIcons.sportscourt;
       case BookingCategory.shift:
-        return Icons.landscape_rounded;
+        return Icons.place;
       case BookingCategory.venueSeat:
-        return Icons.music_note_rounded;
+        return CupertinoIcons.music_house;
       case BookingCategory.reservation:
         return Icons.restaurant_rounded;
       case BookingCategory.membership:
@@ -88,11 +89,15 @@ class TicketCard extends StatelessWidget {
     if (diff.isNegative) return '';
     if (diff.inDays >= 1) {
       final d = diff.inDays;
-      return isArabic ? 'خلال $d ${d == 1 ? 'يوم' : 'أيام'}' : 'in $d ${d == 1 ? 'day' : 'days'}';
+      return isArabic
+          ? 'خلال $d ${d == 1 ? 'يوم' : 'أيام'}'
+          : 'in $d ${d == 1 ? 'day' : 'days'}';
     }
     if (diff.inHours >= 1) {
       final h = diff.inHours;
-      return isArabic ? 'خلال $h ${h == 1 ? 'ساعة' : 'ساعات'}' : 'in $h ${h == 1 ? 'hour' : 'hours'}';
+      return isArabic
+          ? 'خلال $h ${h == 1 ? 'ساعة' : 'ساعات'}'
+          : 'in $h ${h == 1 ? 'hour' : 'hours'}';
     }
     final m = diff.inMinutes;
     if (m < 1) return isArabic ? 'الآن' : 'now';
@@ -102,7 +107,13 @@ class TicketCard extends StatelessWidget {
   // Informal Arabic weekday names (no ال prefix).
   // Index order: 0=Sunday, 1=Monday … 6=Saturday (matches dt.weekday % 7).
   static const _arWeekdays = [
-    'أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت',
+    'أحد',
+    'اثنين',
+    'ثلاثاء',
+    'أربعاء',
+    'خميس',
+    'جمعة',
+    'سبت',
   ];
 
   static String _formatWeekdayDate(String iso, bool isArabic) {
@@ -114,10 +125,22 @@ class TicketCard extends StatelessWidget {
       return '';
     }
     if (isArabic) {
-      final weekday = _arWeekdays[dt.weekday % 7]; // DateTime.sunday==7 → index 0
+      final weekday =
+          _arWeekdays[dt.weekday % 7]; // DateTime.sunday==7 → index 0
       const monthNames = [
-        '', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+        '',
+        'يناير',
+        'فبراير',
+        'مارس',
+        'أبريل',
+        'مايو',
+        'يونيو',
+        'يوليو',
+        'أغسطس',
+        'سبتمبر',
+        'أكتوبر',
+        'نوفمبر',
+        'ديسمبر',
       ];
       return '$weekday، ${dt.day} ${monthNames[dt.month]} ${dt.year}';
     } else {
@@ -144,7 +167,7 @@ class _BookingCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final cardColor = Theme.of(context).cardTheme.color ?? cs.surface;
+    final cardColor = Theme.of(context).colorScheme.surfaceContainer;
     final accent = TicketCard._categoryAccent(booking.category);
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
@@ -158,7 +181,8 @@ class _BookingCard extends ConsumerWidget {
             : (p.nameEn.isNotEmpty ? p.nameEn : p.nameAr),
         loading: () => '…',
         // ignore: avoid_types_on_closure_parameters
-        error: (e, st) => TicketCard._categoryFallback(booking.category, isArabic),
+        error: (e, st) =>
+            TicketCard._categoryFallback(booking.category, isArabic),
       );
     } else if (booking.eventId != null && booking.eventId!.isNotEmpty) {
       final ea = ref.watch(eventDetailsProvider(booking.eventId!));
@@ -168,7 +192,8 @@ class _BookingCard extends ConsumerWidget {
             : (e.titleEn.isNotEmpty ? e.titleEn : e.titleAr),
         loading: () => '…',
         // ignore: avoid_types_on_closure_parameters
-        error: (e, st) => TicketCard._categoryFallback(booking.category, isArabic),
+        error: (e, st) =>
+            TicketCard._categoryFallback(booking.category, isArabic),
       );
     } else {
       placeName = TicketCard._categoryFallback(booking.category, isArabic);
@@ -180,9 +205,9 @@ class _BookingCard extends ConsumerWidget {
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
         elevation: 0,
-        child: InkWell(
+        child: GestureDetector(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
@@ -214,36 +239,45 @@ class _BookingCard extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Row 1: place/event name + status badge
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              placeName,
-                              style: tt.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: cs.onSurface,
+                      Padding(
+                        padding: const EdgeInsets.only(top: 14),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                placeName,
+                                style: tt.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.onSurface,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          TicketStatusBadge.booking(status: booking.status),
-                        ],
+                            const SizedBox(width: 8),
+                            TicketStatusBadge.booking(
+                              status: booking.status,
+                              isArabic: isArabic,
+                            ),
+                          ],
+                        ),
                       ),
                       // Row 2: time remaining (only when in the future)
-                      Builder(builder: (context) {
-                        final remaining = TicketCard._formatTimeRemaining(
-                            booking.startsAt, isArabic);
-                        if (remaining.isEmpty) return const SizedBox.shrink();
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Row(
+                      Builder(
+                        builder: (context) {
+                          final remaining = TicketCard._formatTimeRemaining(
+                            booking.startsAt,
+                            isArabic,
+                          );
+                          if (remaining.isEmpty) return const SizedBox.shrink();
+                          return Row(
                             children: [
-                              Icon(Icons.access_time_rounded,
-                                  size: 12,
-                                  color: cs.onSurface.withValues(alpha: 0.45)),
+                              Icon(
+                                Icons.access_time_rounded,
+                                size: 12,
+                                color: cs.onSurface.withValues(alpha: 0.45),
+                              ),
                               const SizedBox(width: 3),
                               Text(
                                 remaining,
@@ -253,9 +287,9 @@ class _BookingCard extends ConsumerWidget {
                                 ),
                               ),
                             ],
-                          ),
-                        );
-                      }),
+                          );
+                        },
+                      ),
                       // Row 3: weekday+date (left) · amount (right)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
@@ -264,7 +298,9 @@ class _BookingCard extends ConsumerWidget {
                             Expanded(
                               child: Text(
                                 TicketCard._formatWeekdayDate(
-                                    booking.startsAt, isArabic),
+                                  booking.startsAt,
+                                  isArabic,
+                                ),
                                 style: tt.bodySmall?.copyWith(
                                   color: cs.onSurface.withValues(alpha: 0.5),
                                 ),
@@ -315,14 +351,17 @@ class _MembershipCard extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     final cardColor = Theme.of(context).cardTheme.color ?? cs.surface;
     const accent = Color(0xFF1E88E5);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     String validRange = '';
     if (membership.startsAt.isNotEmpty && membership.endsAt.isNotEmpty) {
       try {
-        final start = DateFormat('d MMM').format(
-            DateTime.parse(membership.startsAt).toLocal());
-        final end = DateFormat('d MMM yyyy').format(
-            DateTime.parse(membership.endsAt).toLocal());
+        final start = DateFormat(
+          'd MMM',
+        ).format(DateTime.parse(membership.startsAt).toLocal());
+        final end = DateFormat(
+          'd MMM yyyy',
+        ).format(DateTime.parse(membership.endsAt).toLocal());
         validRange = '$start – $end';
       } catch (_) {}
     }
@@ -333,9 +372,9 @@ class _MembershipCard extends StatelessWidget {
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
         elevation: 0,
-        child: InkWell(
+        child: GestureDetector(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
@@ -373,7 +412,7 @@ class _MembershipCard extends StatelessWidget {
                             child: Text(
                               membership.membershipType.isNotEmpty
                                   ? membership.membershipType
-                                  : 'Membership',
+                                  : (isArabic ? 'عضوية' : 'Membership'),
                               style: tt.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: cs.onSurface,
@@ -381,7 +420,10 @@ class _MembershipCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          TicketStatusBadge.membership(status: membership.status),
+                          TicketStatusBadge.membership(
+                            status: membership.status,
+                            isArabic: isArabic,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 5),

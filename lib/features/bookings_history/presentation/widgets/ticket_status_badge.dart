@@ -4,22 +4,45 @@ import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 
 class TicketStatusBadge extends StatelessWidget {
-  TicketStatusBadge.booking({
+  const TicketStatusBadge.booking({
     super.key,
     required BookingStatus status,
-  })  : _label = _labelFromBooking(status),
-        _color = _colorFromBooking(status);
+    this.isArabic = false,
+  })  : _bookingStatus = status,
+        _membershipStatus = null;
 
-  TicketStatusBadge.membership({
+  const TicketStatusBadge.membership({
     super.key,
     required MembershipStatus status,
-  })  : _label = _labelFromMembership(status),
-        _color = _colorFromMembership(status);
+    this.isArabic = false,
+  })  : _membershipStatus = status,
+        _bookingStatus = null;
 
-  final String _label;
-  final Color _color;
+  final BookingStatus? _bookingStatus;
+  final MembershipStatus? _membershipStatus;
+  final bool isArabic;
 
-  static String _labelFromBooking(BookingStatus s) {
+  // ── Booking ────────────────────────────────────────────────────────────────
+
+  static String _bookingLabel(BookingStatus s, bool ar) {
+    if (ar) {
+      switch (s) {
+        case BookingStatus.confirmed:
+          return 'قادم';
+        case BookingStatus.pending:
+          return 'قيد الانتظار';
+        case BookingStatus.completed:
+          return 'مكتمل';
+        case BookingStatus.cancelled:
+          return 'ملغى';
+        case BookingStatus.expired:
+          return 'منتهي';
+        case BookingStatus.noShow:
+          return 'لم يحضر';
+        case BookingStatus.used:
+          return 'مستخدم';
+      }
+    }
     switch (s) {
       case BookingStatus.confirmed:
         return 'Upcoming';
@@ -38,7 +61,7 @@ class TicketStatusBadge extends StatelessWidget {
     }
   }
 
-  static Color _colorFromBooking(BookingStatus s) {
+  static Color _bookingColor(BookingStatus s) {
     switch (s) {
       case BookingStatus.confirmed:
         return Colors.green;
@@ -54,7 +77,23 @@ class TicketStatusBadge extends StatelessWidget {
     }
   }
 
-  static String _labelFromMembership(MembershipStatus s) {
+  // ── Membership ─────────────────────────────────────────────────────────────
+
+  static String _membershipLabel(MembershipStatus s, bool ar) {
+    if (ar) {
+      switch (s) {
+        case MembershipStatus.active:
+          return 'نشط';
+        case MembershipStatus.frozen:
+          return 'مجمّد';
+        case MembershipStatus.expired:
+          return 'منتهي';
+        case MembershipStatus.cancelled:
+          return 'ملغى';
+        case MembershipStatus.used:
+          return 'مستخدم';
+      }
+    }
     switch (s) {
       case MembershipStatus.active:
         return 'Active';
@@ -69,7 +108,7 @@ class TicketStatusBadge extends StatelessWidget {
     }
   }
 
-  static Color _colorFromMembership(MembershipStatus s) {
+  static Color _membershipColor(MembershipStatus s) {
     switch (s) {
       case MembershipStatus.active:
         return Colors.green;
@@ -85,18 +124,33 @@ class TicketStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String label;
+    final Color color;
+
+    final bs = _bookingStatus;
+    if (bs != null) {
+      label = _bookingLabel(bs, isArabic);
+      color = _bookingColor(bs);
+    } else {
+      // _membershipStatus is guaranteed non-null when _bookingStatus is null
+      // (enforced by the named constructors).
+      final ms = _membershipStatus!;
+      label = _membershipLabel(ms, isArabic);
+      color = _membershipColor(ms);
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: _color.withValues(alpha: 0.15),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _color.withValues(alpha: 0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
-        _label,
+        label,
         style: TextStyle(
-          color: _color,
-          fontSize: 11,
+          color: color,
+          fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
       ),

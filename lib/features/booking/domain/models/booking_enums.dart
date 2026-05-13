@@ -1,4 +1,4 @@
-enum BookingCategory { padel, football, farm, concert, restaurant }
+enum BookingCategory { hourly, shift, reservation, venueSeat, membership }
 
 enum BookingStatus { pending, confirmed, completed, cancelled, expired, noShow, used }
 
@@ -12,18 +12,18 @@ enum SeatStatus { free, held, taken }
 extension BookingCategoryFromString on BookingCategory {
   static BookingCategory fromString(String value) {
     switch (value) {
-      case 'padel':
-        return BookingCategory.padel;
-      case 'football':
-        return BookingCategory.football;
+      case 'sports':
+        return BookingCategory.hourly;
       case 'farm':
-        return BookingCategory.farm;
-      case 'concert':
-        return BookingCategory.concert;
+        return BookingCategory.shift;
       case 'restaurant':
-        return BookingCategory.restaurant;
+        return BookingCategory.reservation;
+      case 'concert':
+        return BookingCategory.venueSeat;
+      case 'membership':
+        return BookingCategory.membership;
       default:
-        return BookingCategory.padel;
+        return BookingCategory.hourly;
     }
   }
 }

@@ -10,6 +10,7 @@ import 'package:future_riverpod/features/booking/presentation/widgets/hold_count
 import 'package:future_riverpod/features/booking/presentation/widgets/seat_map.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/tier_legend.dart';
 import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
+import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart' show bookingsRefreshProvider;
 import 'package:go_router/go_router.dart';
 
 // ---------------------------------------------------------------------------
@@ -120,6 +121,7 @@ class ConcertSection extends ConsumerWidget {
               redirectionUrl: 'wansa://payment',
               onPaymentSuccess: (_, _) {
                 ref.read(bookingSubmitProvider.notifier).reset();
+                ref.read(bookingsRefreshProvider.notifier).bump();
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(

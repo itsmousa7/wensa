@@ -12,7 +12,7 @@ abstract class Booking with _$Booking {
     @Default('') String merchantId,
     String? placeId,
     String? eventId,
-    @Default(BookingCategory.padel) BookingCategory category,
+    @Default(BookingCategory.hourly) BookingCategory category,
     @Default(BookingStatus.pending) BookingStatus status,
     @Default('') String startsAt,
     @Default('') String endsAt,

@@ -14,7 +14,7 @@ _Booking _$BookingFromJson(Map<String, dynamic> json) => _Booking(
   eventId: json['eventId'] as String?,
   category:
       $enumDecodeNullable(_$BookingCategoryEnumMap, json['category']) ??
-      BookingCategory.padel,
+      BookingCategory.hourly,
   status:
       $enumDecodeNullable(_$BookingStatusEnumMap, json['status']) ??
       BookingStatus.pending,
@@ -55,11 +55,11 @@ Map<String, dynamic> _$BookingToJson(_Booking instance) => <String, dynamic>{
 };
 
 const _$BookingCategoryEnumMap = {
-  BookingCategory.padel: 'padel',
-  BookingCategory.football: 'football',
-  BookingCategory.farm: 'farm',
-  BookingCategory.concert: 'concert',
-  BookingCategory.restaurant: 'restaurant',
+  BookingCategory.hourly: 'hourly',
+  BookingCategory.shift: 'shift',
+  BookingCategory.reservation: 'reservation',
+  BookingCategory.venueSeat: 'venueSeat',
+  BookingCategory.membership: 'membership',
 };
 
 const _$BookingStatusEnumMap = {

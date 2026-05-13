@@ -55,13 +55,13 @@ class BookingFlowPage extends ConsumerWidget {
 
           // Place-based booking — category comes from content.places.booking_category
           switch (category) {
-            case 'sports':
+            case 'hourly':
               return PadelSection(placeId: placeId);
-            case 'restaurant':
+            case 'reservation':
               return RestaurantSection(placeId: placeId, placeName: placeName);
-            case 'gym':
             case 'membership':
               return MembershipSection(placeId: placeId, placeName: placeName);
+            case 'shift':
             case 'farm':
               return FarmSection(placeId: placeId, placeName: placeName);
           }

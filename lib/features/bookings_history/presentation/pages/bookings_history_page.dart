@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking.dart';
-import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/ticket_card.dart';
@@ -12,13 +11,22 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 /// Semantic tab labels for the bookings history filter bar.
 /// Order must match the [TabController] index assignments in [_BookingsHistoryPageState].
-const kBookingHistoryTabs = [
+const kBookingHistoryTabsEn = [
   'All',
   'Sports',
   'Farm',
   'Concert',
   'Restaurant',
   'Memberships',
+];
+
+const kBookingHistoryTabsAr = [
+  'الكل',
+  'الرياضة',
+  'المزرعة',
+  'الحفلات',
+  'المطعم',
+  'العضويات',
 ];
 
 class BookingsHistoryPage extends ConsumerStatefulWidget {
@@ -37,7 +45,7 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: kBookingHistoryTabs.length,
+      length: kBookingHistoryTabsEn.length,
       vsync: this,
     );
   }
@@ -56,6 +64,9 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final tabs = isArabic ? kBookingHistoryTabsAr : kBookingHistoryTabsEn;
+
     // When any booking is made, invalidate all list providers from inside this page.
     ref.listen(bookingsRefreshProvider, (_, _) {
       ref.invalidate(userBookingsProvider);
@@ -68,29 +79,67 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         title: Text(
-          'My Bookings',
-          style: Theme.of(context).textTheme.titleLarge,
+          isArabic ? 'حجوزاتي' : 'My Bookings',
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(color: cs.onSurface),
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          labelColor: cs.primary,
-          unselectedLabelColor: cs.onSurface.withValues(alpha: 0.40),
-          labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.1,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: AnimatedBuilder(
+            animation: _tabController,
+            builder: (context, _) => SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Row(
+                children: List.generate(tabs.length, (i) {
+                  final selected = _tabController.index == i;
+                  return GestureDetector(
+                    onTap: () => _tabController.animateTo(i),
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: IntrinsicWidth(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: 12,
+                                bottom: 6,
+                              ),
+                              child: Text(
+                                tabs[i],
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(
+                                      color: selected
+                                          ? cs.primary
+                                          : cs.onSurface.withValues(
+                                              alpha: 0.40,
+                                            ),
+                                    ),
+                              ),
+                            ),
+                            Container(
+                              height: 3,
+                              decoration: BoxDecoration(
+                                color: selected
+                                    ? cs.primary
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
           ),
-          unselectedLabelStyle: Theme.of(context).textTheme.bodyMedium
-              ?.copyWith(fontWeight: FontWeight.w500, letterSpacing: 0.1),
-          indicator: UnderlineTabIndicator(
-            borderSide: BorderSide(width: 3, color: cs.primary),
-            borderRadius: BorderRadius.circular(3),
-          ),
-          indicatorSize: TabBarIndicatorSize.label,
-          dividerColor: Colors.transparent,
-          labelPadding: const EdgeInsets.symmetric(horizontal: 14),
-          tabs: kBookingHistoryTabs.map((t) => Tab(text: t)).toList(),
         ),
       ),
       body: TabBarView(
@@ -101,31 +150,31 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
             asyncValue: ref.watch(userBookingsProvider()),
             onTap: (id) => _navigateToDetail(context, id),
           ),
-          // Tab 1: Hourly (courts / padel / football)
+          // Tab 1: Sports
           _BookingsTab(
             asyncValue: ref.watch(
-              userBookingsProvider(category: BookingCategory.hourly),
+              userBookingsProvider(categories: const ['sports']),
             ),
             onTap: (id) => _navigateToDetail(context, id),
           ),
-          // Tab 2: Shift (farm)
+          // Tab 2: Farm
           _BookingsTab(
             asyncValue: ref.watch(
-              userBookingsProvider(category: BookingCategory.shift),
+              userBookingsProvider(categories: const ['farm']),
             ),
             onTap: (id) => _navigateToDetail(context, id),
           ),
-          // Tab 3: Venue / Seat (concerts)
+          // Tab 3: Concert
           _BookingsTab(
             asyncValue: ref.watch(
-              userBookingsProvider(category: BookingCategory.venueSeat),
+              userBookingsProvider(categories: const ['concert']),
             ),
             onTap: (id) => _navigateToDetail(context, id),
           ),
-          // Tab 4: Reservation (restaurant)
+          // Tab 4: Restaurant
           _BookingsTab(
             asyncValue: ref.watch(
-              userBookingsProvider(category: BookingCategory.reservation),
+              userBookingsProvider(categories: const ['restaurant']),
             ),
             onTap: (id) => _navigateToDetail(context, id),
           ),
@@ -159,7 +208,7 @@ class _BookingsTab extends ConsumerWidget {
       ),
       data: (bookings) {
         if (bookings.isEmpty) {
-          return const _EmptyView(message: 'No bookings found.');
+          return const _EmptyView();
         }
         return ListView.builder(
           padding: const EdgeInsets.only(top: 8, bottom: 24),
@@ -193,7 +242,7 @@ class _MembershipsTab extends ConsumerWidget {
       ),
       data: (memberships) {
         if (memberships.isEmpty) {
-          return const _EmptyView(message: 'No memberships found.');
+          return const _EmptyView();
         }
         return ListView.builder(
           padding: const EdgeInsets.only(top: 8, bottom: 24),
@@ -296,6 +345,7 @@ class _ErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -305,7 +355,7 @@ class _ErrorView extends StatelessWidget {
             Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
             const SizedBox(height: 12),
             Text(
-              'Something went wrong',
+              isArabic ? 'حدث خطأ ما' : 'Something went wrong',
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(color: cs.onSurface),
@@ -322,7 +372,10 @@ class _ErrorView extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 20),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(
+              onPressed: onRetry,
+              child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+            ),
           ],
         ),
       ),
@@ -334,13 +387,12 @@ class _ErrorView extends StatelessWidget {
 //  Empty view
 // ─────────────────────────────────────────────────────────────────────────────
 class _EmptyView extends StatelessWidget {
-  const _EmptyView({required this.message});
-
-  final String message;
+  const _EmptyView();
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -354,7 +406,7 @@ class _EmptyView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              message,
+              isArabic ? 'لا توجد حجوزات.' : 'No bookings found.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: cs.onSurface.withValues(alpha: 0.5),
               ),

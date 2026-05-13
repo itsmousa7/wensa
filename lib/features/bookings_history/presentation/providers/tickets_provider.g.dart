@@ -22,7 +22,7 @@ final class UserBookingsProvider
     with $FutureModifier<List<Booking>>, $FutureProvider<List<Booking>> {
   UserBookingsProvider._({
     required UserBookingsFamily super.from,
-    required BookingCategory? super.argument,
+    required List<String>? super.argument,
   }) : super(
          retry: null,
          name: r'userBookingsProvider',
@@ -49,8 +49,8 @@ final class UserBookingsProvider
 
   @override
   FutureOr<List<Booking>> create(Ref ref) {
-    final argument = this.argument as BookingCategory?;
-    return userBookings(ref, category: argument);
+    final argument = this.argument as List<String>?;
+    return userBookings(ref, categories: argument);
   }
 
   @override
@@ -64,10 +64,10 @@ final class UserBookingsProvider
   }
 }
 
-String _$userBookingsHash() => r'91abcd3efe588a7460f904b798453f6eddc6c7b6';
+String _$userBookingsHash() => r'4d5c33273299d6155faf043c99f75d1c2189737a';
 
 final class UserBookingsFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<List<Booking>>, BookingCategory?> {
+    with $FunctionalFamilyOverride<FutureOr<List<Booking>>, List<String>?> {
   UserBookingsFamily._()
     : super(
         retry: null,
@@ -77,8 +77,8 @@ final class UserBookingsFamily extends $Family
         isAutoDispose: true,
       );
 
-  UserBookingsProvider call({BookingCategory? category}) =>
-      UserBookingsProvider._(argument: category, from: this);
+  UserBookingsProvider call({List<String>? categories}) =>
+      UserBookingsProvider._(argument: categories, from: this);
 
   @override
   String toString() => r'userBookingsProvider';

@@ -180,7 +180,9 @@ class ShiftCard extends StatelessWidget {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 13),
+                      horizontal: 14,
+                      vertical: 13,
+                    ),
                     child: Row(
                       children: [
                         // Icon badge
@@ -194,10 +196,12 @@ class ShiftCard extends StatelessWidget {
                           ),
                           child: Icon(
                             switch (availability) {
-                              SlotAvailability.booked  => Icons.lock_outline_rounded,
-                              SlotAvailability.expired => Icons.schedule_rounded,
-                              SlotAvailability.closed  => Icons.block_rounded,
-                              _                        => _icon(),
+                              SlotAvailability.booked =>
+                                Icons.lock_outline_rounded,
+                              SlotAvailability.expired =>
+                                Icons.schedule_rounded,
+                              SlotAvailability.closed => Icons.block_rounded,
+                              _ => _icon(),
                             },
                             size: 22,
                             color: iconColor,
@@ -216,15 +220,16 @@ class ShiftCard extends StatelessWidget {
                                 children: [
                                   Flexible(
                                     child: AnimatedDefaultTextStyle(
-                                      duration:
-                                          const Duration(milliseconds: 200),
-                                      style: (tt.titleSmall ??
-                                              const TextStyle())
-                                          .copyWith(
-                                        color: labelColor,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.1,
+                                      duration: const Duration(
+                                        milliseconds: 200,
                                       ),
+                                      style:
+                                          (tt.titleSmall ?? const TextStyle())
+                                              .copyWith(
+                                                color: labelColor,
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 0.1,
+                                              ),
                                       child: Text(
                                         _label(isAr: isAr),
                                         overflow: TextOverflow.ellipsis,
@@ -235,37 +240,35 @@ class ShiftCard extends StatelessWidget {
                                     const SizedBox(width: 6),
                                     _Chip(
                                       label: switch (availability) {
-                                        SlotAvailability.booked  => isAr ? 'محجوز'  : 'Booked',
-                                        SlotAvailability.expired => isAr ? 'منتهي'  : 'Expired',
-                                        SlotAvailability.closed  => isAr ? 'مغلق'   : 'Closed',
-                                        _                        => '',
+                                        SlotAvailability.booked =>
+                                          isAr ? 'محجوز' : 'Booked',
+                                        SlotAvailability.expired =>
+                                          isAr ? 'منتهي' : 'Expired',
+                                        SlotAvailability.closed =>
+                                          isAr ? 'مغلق' : 'Closed',
+                                        _ => '',
                                       },
                                       bg: switch (availability) {
-                                        SlotAvailability.booked  => cs.errorContainer.withValues(alpha: 0.75),
-                                        SlotAvailability.expired => const Color(0xFFF59E0B).withValues(alpha: 0.18),
-                                        SlotAvailability.closed  => cs.surfaceContainerHighest,
-                                        _                        => cs.surfaceContainerHighest,
+                                        SlotAvailability.booked =>
+                                          cs.errorContainer.withValues(
+                                            alpha: 0.75,
+                                          ),
+                                        SlotAvailability.expired => const Color(
+                                          0xFFF59E0B,
+                                        ).withValues(alpha: 0.18),
+                                        SlotAvailability.closed =>
+                                          cs.surfaceContainerHighest,
+                                        _ => cs.surfaceContainerHighest,
                                       },
                                       fg: switch (availability) {
-                                        SlotAvailability.booked  => cs.onErrorContainer,
-                                        SlotAvailability.expired => const Color(0xFF92400E),
-                                        SlotAvailability.closed  => cs.onSurface.withValues(alpha: 0.55),
-                                        _                        => cs.onSurface,
+                                        SlotAvailability.booked => cs.error,
+                                        SlotAvailability.expired => const Color(
+                                          0xFF92400E,
+                                        ),
+                                        SlotAvailability.closed =>
+                                          cs.onSurface.withValues(alpha: 0.55),
+                                        _ => cs.onSurface,
                                       },
-                                    ),
-                                  ] else if (shift.shiftType == FarmShiftType.full) ...[
-                                    const SizedBox(width: 6),
-                                    _Chip(
-                                      label: isAr
-                                          ? 'يحجب اليوم كاملاً'
-                                          : 'Blocks full day',
-                                      bg: isSelected
-                                          ? cs.primary.withValues(alpha: 0.12)
-                                          : cs.primaryContainer
-                                              .withValues(alpha: 0.55),
-                                      fg: isSelected
-                                          ? cs.primary
-                                          : cs.onPrimaryContainer,
                                     ),
                                   ],
                                 ],
@@ -275,9 +278,9 @@ class ShiftCard extends StatelessWidget {
                                 duration: const Duration(milliseconds: 200),
                                 style: (tt.bodySmall ?? const TextStyle())
                                     .copyWith(
-                                  color: timeColor,
-                                  letterSpacing: 0.2,
-                                ),
+                                      color: timeColor,
+                                      letterSpacing: 0.2,
+                                    ),
                                 child: Text(timeStr),
                               ),
                             ],
@@ -294,20 +297,20 @@ class ShiftCard extends StatelessWidget {
                               duration: const Duration(milliseconds: 200),
                               style: (tt.titleMedium ?? const TextStyle())
                                   .copyWith(
-                                color: priceColor,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.5,
-                              ),
+                                    color: priceColor,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.5,
+                                  ),
                               child: Text(_formattedPrice()),
                             ),
                             AnimatedDefaultTextStyle(
                               duration: const Duration(milliseconds: 200),
                               style: (tt.labelSmall ?? const TextStyle())
                                   .copyWith(
-                                color: currencyColor,
-                                letterSpacing: 1.2,
-                                fontWeight: FontWeight.w600,
-                              ),
+                                    color: currencyColor,
+                                    letterSpacing: 1.2,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                               child: const Text('IQD'),
                             ),
                           ],
@@ -328,11 +331,7 @@ class ShiftCard extends StatelessWidget {
 // ── Badge chip ────────────────────────────────────────────────────────────────
 
 class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.label,
-    required this.bg,
-    required this.fg,
-  });
+  const _Chip({required this.label, required this.bg, required this.fg});
 
   final String label;
   final Color bg;
@@ -349,10 +348,10 @@ class _Chip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: fg,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.1,
-            ),
+          color: fg,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        ),
       ),
     );
   }

@@ -6,10 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership.dart';
+import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/qr_block.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/ticket_status_badge.dart';
-import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/events/presentation/providers/event_details_provider.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:intl/intl.dart';
@@ -43,8 +43,9 @@ class TicketDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final cs = Theme.of(context);
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: cs.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -52,7 +53,9 @@ class TicketDetailPage extends ConsumerWidget {
           _isMembership
               ? (isArabic ? 'العضوية' : 'Membership')
               : (isArabic ? 'تفاصيل الحجز' : 'Booking Details'),
-          style: Theme.of(context).textTheme.titleLarge,
+          style: cs.textTheme.titleLarge?.copyWith(
+            color: cs.colorScheme.onSurface,
+          ),
         ),
       ),
       body: _isMembership
@@ -106,8 +109,20 @@ class _BookingDetailBody extends ConsumerWidget {
     }
   }
 
-  static String _amount(int iqd) =>
-      '${NumberFormat('#,##0').format(iqd)} IQD';
+  static String _amount(int iqd) => '${NumberFormat('#,##0').format(iqd)} IQD';
+
+  static String _shiftTypeLabel(String raw, bool ar) {
+    switch (raw) {
+      case 'day':
+        return ar ? 'نهار' : 'Day';
+      case 'night':
+        return ar ? 'ليل' : 'Night';
+      case 'full':
+        return ar ? 'يوم كامل' : 'Full Day';
+      default:
+        return raw.isEmpty ? '—' : raw;
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -162,16 +177,17 @@ class _BookingDetailBody extends ConsumerWidget {
         } else {
           courtDisplay = courtId.isNotEmpty ? courtId : '—';
         }
-        extraCells.add(_InfoCell(
-          label: isArabic ? 'الملعب' : 'Court',
-          value: courtDisplay,
-        ));
+        extraCells.add(
+          _InfoCell(label: isArabic ? 'الملعب' : 'Court', value: courtDisplay),
+        );
 
       case BookingCategory.shift:
-        extraCells.add(_InfoCell(
-          label: isArabic ? 'الوردية' : 'Shift',
-          value: d['shift_type']?.toString() ?? '—',
-        ));
+        extraCells.add(
+          _InfoCell(
+            label: isArabic ? 'الوردية' : 'Shift',
+            value: _shiftTypeLabel(d['shift_type']?.toString() ?? '', isArabic),
+          ),
+        );
 
       case BookingCategory.venueSeat:
         extraCells.addAll([
@@ -186,19 +202,30 @@ class _BookingDetailBody extends ConsumerWidget {
         ]);
 
       case BookingCategory.reservation:
-        extraCells.add(_InfoCell(
-          label: isArabic ? 'عدد الأشخاص' : 'Party Size',
-          value: d['party_size']?.toString() ?? '—',
-        ));
+        extraCells.add(
+          _InfoCell(
+            label: isArabic ? 'عدد الأشخاص' : 'Party Size',
+            value: d['party_size']?.toString() ?? '—',
+          ),
+        );
 
       case BookingCategory.membership:
         break;
     }
 
     final cells = <_InfoCell>[
-      _InfoCell(label: isArabic ? 'التاريخ' : 'Date', value: _date(booking.startsAt)),
-      _InfoCell(label: isArabic ? 'الوقت' : 'Time', value: _time(booking.startsAt)),
-      _InfoCell(label: isArabic ? 'المبلغ' : 'Amount', value: _amount(booking.amountIqd)),
+      _InfoCell(
+        label: isArabic ? 'التاريخ' : 'Date',
+        value: _date(booking.startsAt),
+      ),
+      _InfoCell(
+        label: isArabic ? 'الوقت' : 'Time',
+        value: _time(booking.startsAt),
+      ),
+      _InfoCell(
+        label: isArabic ? 'المبلغ' : 'Amount',
+        value: _amount(booking.amountIqd),
+      ),
       ...extraCells,
     ];
 
@@ -206,7 +233,10 @@ class _BookingDetailBody extends ConsumerWidget {
       qrToken: booking.qrToken,
       displayName: name,
       isArabic: isArabic,
-      statusBadge: TicketStatusBadge.booking(status: booking.status, isArabic: isArabic),
+      statusBadge: TicketStatusBadge.booking(
+        status: booking.status,
+        isArabic: isArabic,
+      ),
       cells: cells,
       paymentId: booking.paymentId,
     );
@@ -235,7 +265,9 @@ class _MembershipDetail extends ConsumerWidget {
         if (match.isEmpty) {
           final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           return Center(
-            child: Text(isArabic ? 'العضوية غير موجودة' : 'Membership not found.'),
+            child: Text(
+              isArabic ? 'العضوية غير موجودة' : 'Membership not found.',
+            ),
           );
         }
         return _MembershipDetailBody(membership: match.first);
@@ -257,8 +289,7 @@ class _MembershipDetailBody extends StatelessWidget {
     }
   }
 
-  static String _amount(int iqd) =>
-      '${NumberFormat('#,##0').format(iqd)} IQD';
+  static String _amount(int iqd) => '${NumberFormat('#,##0').format(iqd)} IQD';
 
   @override
   Widget build(BuildContext context) {
@@ -286,7 +317,10 @@ class _MembershipDetailBody extends StatelessWidget {
       qrToken: membership.qrToken,
       displayName: displayName,
       isArabic: isArabic,
-      statusBadge: TicketStatusBadge.membership(status: membership.status, isArabic: isArabic),
+      statusBadge: TicketStatusBadge.membership(
+        status: membership.status,
+        isArabic: isArabic,
+      ),
       cells: cells,
     );
   }
@@ -344,8 +378,7 @@ class _TicketBodyState extends State<_TicketBody> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final cardColor = Theme.of(context).cardTheme.color ??
-        Theme.of(context).colorScheme.surface;
+    final cardColor = cs.surfaceContainer;
 
     // Notch is centered at the actual top-section height + half tear-line.
     final tearLineY = _tearLineY;
@@ -354,16 +387,7 @@ class _TicketBodyState extends State<_TicketBody> {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
       child: Container(
         // Shadow lives outside the clip so it renders around the full card.
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: cs.shadow.withValues(alpha: 0.10),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(24)),
         child: ClipPath(
           clipper: _TicketClipper(tearLineY),
           child: Container(
@@ -380,9 +404,9 @@ class _TicketBodyState extends State<_TicketBody> {
                     children: [
                       Text(
                         widget.displayName,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleLarge?.copyWith(color: cs.onSurface),
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -391,10 +415,19 @@ class _TicketBodyState extends State<_TicketBody> {
                       widget.statusBadge,
                       const SizedBox(height: 20),
                       _InfoGrid(cells: widget.cells),
-                      if (widget.paymentId != null && widget.paymentId!.isNotEmpty) ...[
+                      if (widget.paymentId != null &&
+                          widget.paymentId!.isNotEmpty) ...[
                         const SizedBox(height: 14),
-                        Divider(height: 1, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08)),
-                        _ReferenceRow(paymentId: widget.paymentId!, isArabic: widget.isArabic),
+                        Divider(
+                          height: 1,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.08),
+                        ),
+                        _ReferenceRow(
+                          paymentId: widget.paymentId!,
+                          isArabic: widget.isArabic,
+                        ),
                       ],
                     ],
                   ),
@@ -410,9 +443,9 @@ class _TicketBodyState extends State<_TicketBody> {
                     children: [
                       Text(
                         widget.isArabic ? 'امسح رمز QR' : 'Scan This QR',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleLarge?.copyWith(color: cs.onSurface),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 6),
@@ -421,8 +454,9 @@ class _TicketBodyState extends State<_TicketBody> {
                             ? 'وجّه الكاميرا إلى مكان المسح'
                             : 'Point This QR To The Scan Place',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: cs.onSurface.withValues(alpha: 0.5),
-                            ),
+                          color: cs.onSurface.withValues(alpha: 0.4),
+                          fontWeight: FontWeight.bold,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
@@ -529,32 +563,50 @@ class _TicketClipper extends CustomClipper<Path> {
       ..moveTo(r, 0)
       ..lineTo(w - r, 0)
       // top-right corner
-      ..arcToPoint(Offset(w, r),
-          radius: const Radius.circular(r), clockwise: true)
+      ..arcToPoint(
+        Offset(w, r),
+        radius: const Radius.circular(r),
+        clockwise: true,
+      )
       // right edge → notch top
       ..lineTo(w, tearLineY - nr)
       // right inward notch (counterclockwise = curves into the card)
-      ..arcToPoint(Offset(w, tearLineY + nr),
-          radius: const Radius.circular(nr), clockwise: false)
+      ..arcToPoint(
+        Offset(w, tearLineY + nr),
+        radius: const Radius.circular(nr),
+        clockwise: false,
+      )
       // right edge → bottom
       ..lineTo(w, h - r)
       // bottom-right corner
-      ..arcToPoint(Offset(w - r, h),
-          radius: const Radius.circular(r), clockwise: true)
+      ..arcToPoint(
+        Offset(w - r, h),
+        radius: const Radius.circular(r),
+        clockwise: true,
+      )
       ..lineTo(r, h)
       // bottom-left corner
-      ..arcToPoint(Offset(0, h - r),
-          radius: const Radius.circular(r), clockwise: true)
+      ..arcToPoint(
+        Offset(0, h - r),
+        radius: const Radius.circular(r),
+        clockwise: true,
+      )
       // left edge → notch bottom
       ..lineTo(0, tearLineY + nr)
       // left inward notch (counterclockwise = curves into the card)
-      ..arcToPoint(Offset(0, tearLineY - nr),
-          radius: const Radius.circular(nr), clockwise: false)
+      ..arcToPoint(
+        Offset(0, tearLineY - nr),
+        radius: const Radius.circular(nr),
+        clockwise: false,
+      )
       // left edge → top
       ..lineTo(0, r)
       // top-left corner
-      ..arcToPoint(Offset(r, 0),
-          radius: const Radius.circular(r), clockwise: true)
+      ..arcToPoint(
+        Offset(r, 0),
+        radius: const Radius.circular(r),
+        clockwise: true,
+      )
       ..close();
   }
 
@@ -584,10 +636,7 @@ class _InfoGrid extends StatelessWidget {
     // Group into rows of 2
     final rows = <List<_InfoCell>>[];
     for (var i = 0; i < cells.length; i += 2) {
-      rows.add([
-        cells[i],
-        if (i + 1 < cells.length) cells[i + 1],
-      ]);
+      rows.add([cells[i], if (i + 1 < cells.length) cells[i + 1]]);
     }
 
     return Column(
@@ -668,7 +717,7 @@ class _ReferenceRow extends StatelessWidget {
         child: Row(
           children: [
             Text(
-              isArabic ? 'المرجع' : 'Reference',
+              isArabic ? 'رقم الطلب' : 'Order Number',
               style: tt.labelSmall?.copyWith(
                 color: cs.primary,
                 fontWeight: FontWeight.w600,
@@ -711,8 +760,11 @@ class _ErrorBody extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline_rounded,
-                size: 48, color: Theme.of(context).colorScheme.error),
+            Icon(
+              Icons.error_outline_rounded,
+              size: 48,
+              color: Theme.of(context).colorScheme.error,
+            ),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),

@@ -38,7 +38,7 @@ class BookingSubmit extends _$BookingSubmit {
       final result = await client.functions.invoke(
         'create-booking',
         body: {
-          'category': 'sports',
+          'category': 'hourly',
           'place_id': placeId,
           'court_id': courtId,
           'starts_at': startsAt,
@@ -69,7 +69,7 @@ class BookingSubmit extends _$BookingSubmit {
       final result = await client.functions.invoke(
         'create-booking',
         body: {
-          'category': 'farm',
+          'category': 'shift',
           'place_id': placeId,
           'date': date,
           'shift_type': shiftType.name,
@@ -100,7 +100,7 @@ class BookingSubmit extends _$BookingSubmit {
       final result = await client.functions.invoke(
         'create-booking',
         body: {
-          'category': 'restaurant',
+          'category': 'reservation',
           'place_id': placeId,
           'starts_at': startsAt,
           'party_size': partySize,
@@ -130,7 +130,7 @@ class BookingSubmit extends _$BookingSubmit {
       final result = await client.functions.invoke(
         'create-booking',
         body: {
-          'category': 'concert',
+          'category': 'venue_seat',
           'event_id': eventId,
           'seat_ids': seatIds,
         },
