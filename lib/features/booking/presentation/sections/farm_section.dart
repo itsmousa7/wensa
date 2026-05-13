@@ -44,6 +44,10 @@ SlotAvailability computeShiftAvailability(FarmShift shift, {required bool isToda
   if (isToday) {
     final parts = shift.startsTime.split(':');
     if (parts.length >= 2) {
+      assert(
+        int.tryParse(parts[0]) != null && int.tryParse(parts[1]) != null,
+        'FarmShift.startsTime has unexpected format: "${shift.startsTime}"',
+      );
       final baghdadNow = DateTime.now().toUtc().add(const Duration(hours: 3));
       final shiftStart = DateTime(
         baghdadNow.year,
@@ -242,10 +246,10 @@ class _FarmBookingFormView extends ConsumerWidget {
                   ),
                 );
               }
-              final now = DateTime.now();
-              final isToday = selectedDate.year == now.year &&
-                  selectedDate.month == now.month &&
-                  selectedDate.day == now.day;
+              final baghdadNow = DateTime.now().toUtc().add(const Duration(hours: 3));
+              final isToday = selectedDate.year == baghdadNow.year &&
+                  selectedDate.month == baghdadNow.month &&
+                  selectedDate.day == baghdadNow.day;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
