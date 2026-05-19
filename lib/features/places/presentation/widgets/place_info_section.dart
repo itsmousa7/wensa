@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/widgets/discount_badge.dart';
 import 'package:future_riverpod/core/widgets/merchant_logo.dart';
+import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
 import 'package:future_riverpod/features/places/domain/models/place_model.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_app_bar_state.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
@@ -37,6 +39,12 @@ class PlaceInfoSection extends ConsumerWidget {
     final state = ref.watch(placeAppbarStateProvider(placeId));
     final notifier = ref.read(placeAppbarStateProvider(placeId).notifier);
     final tagsAsync = ref.watch(placeTagsProvider(placeId));
+    final autoDiscount = ref.watch(bestAutoDiscountProvider(AutoDiscountKey(
+      orderType: 'bookings',
+      placeId: place.id,
+      merchantId: place.merchantId,
+      categoryId: place.categoryId,
+    )));
 
     final name = isAr ? place.nameAr : place.nameEn;
     final desc = isAr ? place.descriptionAr : place.descriptionEn;
@@ -92,61 +100,70 @@ class PlaceInfoSection extends ConsumerWidget {
                         ],
                       ],
                     ),
-                    // Location chip
+                    // Location chip + discount badge
                     if (place.area != null || place.city.isNotEmpty) ...[
                       const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: place.latitude != null && place.longitude != null
-                            ? () => showLocationSheet(
-                                context: context,
-                                latitude: place.latitude!,
-                                longitude: place.longitude!,
-                                placeName: name,
-                                isAr: isAr,
-                              )
-                            : null,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: primaryChipDecoration(),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                height: 13,
-                                child: SvgPicture.asset(
-                                  'assets/icons/location.svg',
-                                ),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: place.latitude != null && place.longitude != null
+                                ? () => showLocationSheet(
+                                    context: context,
+                                    latitude: place.latitude!,
+                                    longitude: place.longitude!,
+                                    placeName: name,
+                                    isAr: isAr,
+                                  )
+                                : null,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
                               ),
-                              const SizedBox(width: 5),
-                              Flexible(
-                                child: Text(
-                                  [
-                                    if (place.area?.isNotEmpty == true)
-                                      place.area!,
-                                    if (place.city.isNotEmpty) place.city,
-                                  ].join(' · '),
-                                  style: tt.bodySmall?.copyWith(
-                                    color: cs.onSurface.withValues(alpha: 0.75),
-                                    fontWeight: FontWeight.bold,
+                              decoration: primaryChipDecoration(),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    height: 13,
+                                    child: SvgPicture.asset(
+                                      'assets/icons/location.svg',
+                                    ),
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                                  const SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      [
+                                        if (place.area?.isNotEmpty == true)
+                                          place.area!,
+                                        if (place.city.isNotEmpty) place.city,
+                                      ].join(' · '),
+                                      style: tt.bodySmall?.copyWith(
+                                        color: cs.onSurface.withValues(alpha: 0.75),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (place.latitude != null) ...[
+                                    const SizedBox(width: 5),
+                                    Icon(
+                                      CupertinoIcons.arrow_up_right_square,
+                                      size: 14,
+                                      color: cs.primary.withValues(alpha: 0.7),
+                                    ),
+                                  ],
+                                ],
                               ),
-                              if (place.latitude != null) ...[
-                                const SizedBox(width: 5),
-                                Icon(
-                                  CupertinoIcons.arrow_up_right_square,
-                                  size: 14,
-                                  color: cs.primary.withValues(alpha: 0.7),
-                                ),
-                              ],
-                            ],
+                            ),
                           ),
-                        ),
+                          if (autoDiscount != null)
+                            DiscountBadge(percent: autoDiscount.percent.round()),
+                        ],
                       ),
                     ],
                   ],
