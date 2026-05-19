@@ -57,7 +57,7 @@ class AutoDiscount {
         id: json['id'] as String,
         name: json['name'] as String,
         description: json['description'] as String?,
-        percent: (json['percent'] as num).toDouble(),
+        percent: num.parse(json['percent'].toString()).toDouble(),
         maxDiscountAmount: json['max_discount_amount'] == null
             ? null
             : num.tryParse(json['max_discount_amount'].toString()),

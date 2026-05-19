@@ -36,6 +36,11 @@ void main() {
       expect(d.startsAt, isNull);
       expect(d.endsAt, isNull);
     });
+
+    test('parses percent when delivered as string (RPC quirk)', () {
+      final d = AutoDiscount.fromJson({...base, 'percent': '15.5'});
+      expect(d.percent, 15.5);
+    });
   });
 
   group('appliesToOrder', () {
@@ -90,6 +95,24 @@ void main() {
       expect(
         d.appliesToOrder(orderType: 'bookings', placeId: 'p1', merchantId: 'm9', categoryId: null, now: now),
         isTrue,
+      );
+    });
+
+    test('targeted does not match when all caller ids are null', () {
+      final d = AutoDiscount.fromJson({
+        ...base,
+        'scope_type': 'targeted',
+        'target_place_ids': ['p1'],
+      });
+      expect(
+        d.appliesToOrder(
+          orderType: 'bookings',
+          placeId: null,
+          merchantId: null,
+          categoryId: null,
+          now: now,
+        ),
+        isFalse,
       );
     });
 
