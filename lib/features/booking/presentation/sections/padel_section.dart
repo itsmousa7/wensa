@@ -10,6 +10,7 @@ import 'package:future_riverpod/features/booking/presentation/widgets/slot_grid.
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart' show bookingsRefreshProvider;
+import 'package:future_riverpod/features/discounts/presentation/providers/user_purchase_history_provider.dart';
 import 'package:go_router/go_router.dart';
 
 // ---------------------------------------------------------------------------
@@ -62,63 +63,6 @@ class PadelSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
-      next.maybeWhen(
-        success: (bookingId, paymentUrl, holdUntil, waylReferenceId) {
-          if (paymentUrl.isNotEmpty) {
-            PaymentWebViewPage.push(
-              context,
-              paymentUrl,
-              referenceId: waylReferenceId,
-              redirectionUrl: 'wansa://payment',
-              onPaymentSuccess: (_, orderId) async {
-                try {
-                  await ref
-                      .read(bookingRepositoryProvider)
-                      .confirmPayment(bookingId, orderId);
-                } catch (_) {}
-                ref.read(bookingSubmitProvider.notifier).reset();
-                ref.read(bookingsRefreshProvider.notifier).bump();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Payment successful! Your booking is confirmed.'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  context.go('/bookings/$bookingId');
-                }
-              },
-              onPaymentFailed: () {
-                ref.read(bookingSubmitProvider.notifier).reset();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Payment failed. Please try again.'),
-                    backgroundColor: Color(0xFFE53935),
-                  ),
-                );
-              },
-              onPaymentCancelled: () {
-                ref.read(bookingSubmitProvider.notifier).reset();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Payment cancelled.')),
-                );
-              },
-            );
-          }
-        },
-        error: (message) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(message),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
-        },
-        orElse: () {},
-      );
-    });
-
     return _BookingFormView(placeId: placeId);
   }
 }
@@ -185,6 +129,72 @@ class _BookingFormView extends ConsumerWidget {
           ))
         : null;
 
+    // Opens the payment webview for the given booking details.
+    // Defined here so it can be reused by both ref.listen and onAction.
+    void openPaymentWebView(
+        String bookingId, String paymentUrl, String waylReferenceId) {
+      PaymentWebViewPage.push(
+        context,
+        paymentUrl,
+        referenceId: waylReferenceId,
+        redirectionUrl: 'wansa://payment',
+        onPaymentSuccess: (_, orderId) async {
+          try {
+            await ref
+                .read(bookingRepositoryProvider)
+                .confirmPayment(bookingId, orderId);
+          } catch (_) {}
+          ref.read(bookingSubmitProvider.notifier).reset();
+          ref.read(bookingsRefreshProvider.notifier).bump();
+          ref.invalidate(userPurchaseHistoryProvider);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Payment successful! Your booking is confirmed.'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            context.go('/bookings/$bookingId');
+          }
+        },
+        onPaymentFailed: () {
+          ref.read(bookingSubmitProvider.notifier).reset();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment failed. Please try again.'),
+              backgroundColor: Color(0xFFE53935),
+            ),
+          );
+        },
+        onPaymentCancelled: () {
+          // Don't reset — the pending booking stays alive so the user can
+          // retry without triggering a duplicate-booking constraint error.
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payment cancelled.')),
+          );
+        },
+      );
+    }
+
+    ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
+      next.maybeWhen(
+        success: (bookingId, paymentUrl, holdUntil, waylReferenceId) {
+          if (paymentUrl.isNotEmpty) {
+            openPaymentWebView(bookingId, paymentUrl, waylReferenceId);
+          }
+        },
+        error: (message) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        },
+        orElse: () {},
+      );
+    });
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,6 +209,8 @@ class _BookingFormView extends ConsumerWidget {
             onSelect: (date) {
               ref.read(_selectedDateProvider.notifier).set(date);
               ref.read(_selectedSlotsProvider.notifier).clear();
+              // Clear any pending booking when selection changes
+              ref.read(bookingSubmitProvider.notifier).reset();
             },
           ),
           const SizedBox(height: 28),
@@ -225,6 +237,8 @@ class _BookingFormView extends ConsumerWidget {
                     onSelect: (court) {
                       ref.read(_selectedCourtProvider.notifier).set(court);
                       ref.read(_selectedSlotsProvider.notifier).clear();
+                      // Clear any pending booking when selection changes
+                      ref.read(bookingSubmitProvider.notifier).reset();
                     },
                   ),
           ),
@@ -285,6 +299,10 @@ class _BookingFormView extends ConsumerWidget {
                                   ref
                                       .read(_selectedSlotsProvider.notifier)
                                       .toggle(slot.startsAt);
+                                  // Clear any pending booking when selection changes
+                                  ref
+                                      .read(bookingSubmitProvider.notifier)
+                                      .reset();
                                 },
                               ),
                             );
@@ -350,15 +368,29 @@ class _BookingFormView extends ConsumerWidget {
                       actionLabel:
                           isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
                       onAction: () {
-                        final sorted = selectedSlots.toList()..sort();
-                        ref
-                            .read(bookingSubmitProvider.notifier)
-                            .createPadelBooking(
-                              placeId: placeId,
-                              courtId: selectedCourt.id,
-                              startsAt: sorted.first,
-                              hours: selectedSlots.length,
-                            );
+                        // If a pending booking already exists, reuse its payment URL
+                        // instead of creating a new booking (avoids DB constraint error).
+                        final current = ref.read(bookingSubmitProvider);
+                        current.maybeWhen(
+                          success: (bookingId, paymentUrl, holdUntil,
+                              waylReferenceId) {
+                            if (paymentUrl.isNotEmpty) {
+                              openPaymentWebView(
+                                  bookingId, paymentUrl, waylReferenceId);
+                            }
+                          },
+                          orElse: () {
+                            final sorted = selectedSlots.toList()..sort();
+                            ref
+                                .read(bookingSubmitProvider.notifier)
+                                .createPadelBooking(
+                                  placeId: placeId,
+                                  courtId: selectedCourt.id,
+                                  startsAt: sorted.first,
+                                  hours: selectedSlots.length,
+                                );
+                          },
+                        );
                       },
                       isLoading: isLoading,
                     ),

@@ -31,6 +31,7 @@ class BookingSubmit extends _$BookingSubmit {
     required String courtId,
     required String startsAt, // ISO datetime string
     required int hours,
+    String? promoCode,
   }) async {
     state = const BookingSubmitState.loading();
     try {
@@ -43,6 +44,8 @@ class BookingSubmit extends _$BookingSubmit {
           'court_id': courtId,
           'starts_at': startsAt,
           'hours': hours,
+          if (promoCode != null && promoCode.isNotEmpty)
+            'promo_code': promoCode.toUpperCase(),
         },
       );
       if (result.status != 200) throw Exception(result.data.toString());
@@ -62,6 +65,7 @@ class BookingSubmit extends _$BookingSubmit {
     required String placeId,
     required String date, // 'yyyy-MM-dd'
     required FarmShiftType shiftType,
+    String? promoCode,
   }) async {
     state = const BookingSubmitState.loading();
     try {
@@ -73,6 +77,8 @@ class BookingSubmit extends _$BookingSubmit {
           'place_id': placeId,
           'date': date,
           'shift_type': shiftType.name,
+          if (promoCode != null && promoCode.isNotEmpty)
+            'promo_code': promoCode.toUpperCase(),
         },
       );
       if (result.status != 200) throw Exception(result.data.toString());
@@ -93,6 +99,7 @@ class BookingSubmit extends _$BookingSubmit {
     required String startsAt, // ISO datetime
     required int partySize,
     String? seatingOptionId,
+    String? promoCode,
   }) async {
     state = const BookingSubmitState.loading();
     try {
@@ -105,6 +112,8 @@ class BookingSubmit extends _$BookingSubmit {
           'starts_at': startsAt,
           'party_size': partySize,
           'seating_option_id': ?seatingOptionId,
+          if (promoCode != null && promoCode.isNotEmpty)
+            'promo_code': promoCode.toUpperCase(),
         },
       );
       if (result.status != 200) throw Exception(result.data.toString());

@@ -13,25 +13,27 @@ class MembershipSubmit extends _$MembershipSubmit {
   Future<void> createMembership({
     required String placeId,
     required String planId,
+    String? promoCode,
   }) async {
     state = const BookingSubmitState.loading();
     try {
       final client = Supabase.instance.client;
       final result = await client.functions.invoke(
-        'create-booking',
+        'create-membership',
         body: {
-          'category': 'membership',
           'place_id': placeId,
           'plan_id': planId,
+          if (promoCode != null && promoCode.isNotEmpty)
+            'promo_code': promoCode.toUpperCase(),
         },
       );
       if (result.status != 200) throw Exception(result.data.toString());
       final data = result.data as Map<String, dynamic>;
       state = BookingSubmitState.success(
-        bookingId: data['booking_id'] as String,
-        paymentUrl: data['payment_url'] as String,
+        bookingId: data['membership_id'] as String,
+        paymentUrl: data['payment_url'] as String? ?? '',
         holdUntil: '',
-        waylReferenceId: data['reference_id'] as String,
+        waylReferenceId: data['reference_id'] as String? ?? '',
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
