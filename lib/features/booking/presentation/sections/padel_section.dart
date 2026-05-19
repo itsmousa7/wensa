@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/court.dart';
+import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
+import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_label.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/slot_grid.dart';
-import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
-import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
-import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart' show bookingsRefreshProvider;
+import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
+    show bookingsRefreshProvider;
+import 'package:future_riverpod/features/discounts/domain/discount_math.dart';
+import 'package:future_riverpod/features/discounts/domain/models/auto_discount.dart';
+import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
 import 'package:future_riverpod/features/discounts/presentation/providers/user_purchase_history_provider.dart';
+import 'package:future_riverpod/features/discounts/presentation/widgets/promo_code_field.dart';
+import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:go_router/go_router.dart';
 
 // ---------------------------------------------------------------------------
@@ -51,7 +57,18 @@ final _selectedDateProvider =
 final _selectedCourtProvider =
     NotifierProvider.autoDispose<_CourtNotifier, Court?>(_CourtNotifier.new);
 final _selectedSlotsProvider =
-    NotifierProvider.autoDispose<_SlotsNotifier, Set<String>>(_SlotsNotifier.new);
+    NotifierProvider.autoDispose<_SlotsNotifier, Set<String>>(
+        _SlotsNotifier.new);
+
+final _padelPromoProvider =
+    NotifierProvider.autoDispose<_PadelPromoNotifier, PromoApplied?>(
+        _PadelPromoNotifier.new);
+
+class _PadelPromoNotifier extends Notifier<PromoApplied?> {
+  @override
+  PromoApplied? build() => null;
+  void set(PromoApplied? p) => state = p;
+}
 
 // ---------------------------------------------------------------------------
 // PadelSection
@@ -106,6 +123,41 @@ class _BookingFormView extends ConsumerWidget {
     return 'IQD $formatted';
   }
 
+  static String _formatIqd(int amount) {
+    final formatted = amount.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
+    return 'IQD $formatted';
+  }
+
+  static ({int discount, int finalAmount, String label}) _resolveEffective({
+    required int subtotal,
+    required PromoApplied? promo,
+    required AutoDiscount? autoDiscount,
+  }) {
+    if (promo != null) {
+      return (
+        discount: promo.discountAmount,
+        finalAmount: promo.finalAmount,
+        label: '${promo.percent.round()}% OFF · ${promo.code}',
+      );
+    }
+    if (autoDiscount != null) {
+      final r = computeDiscount(
+        subtotal: subtotal,
+        percent: autoDiscount.percent,
+        maxCap: autoDiscount.maxDiscountAmount,
+      );
+      return (
+        discount: r.discountAmount,
+        finalAmount: r.finalAmount,
+        label: '${autoDiscount.percent.round()}% OFF',
+      );
+    }
+    return (discount: 0, finalAmount: subtotal, label: '');
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedDate = ref.watch(_selectedDateProvider);
@@ -121,6 +173,16 @@ class _BookingFormView extends ConsumerWidget {
     final closedDates = closedDatesAsync.value ?? const <String>{};
     final selectedDateStr = bookingFormatDate(selectedDate);
     final isSelectedDateClosed = closedDates.contains(selectedDateStr);
+
+    final placeAsync = ref.watch(placeDetailsProvider(placeId));
+    final place = placeAsync.value;
+    final autoDiscount = ref.watch(bestAutoDiscountProvider(AutoDiscountKey(
+      orderType: 'bookings',
+      placeId: placeId,
+      merchantId: place?.merchantId,
+      categoryId: place?.categoryId,
+    )));
+    final promo = ref.watch(_padelPromoProvider);
 
     final slotsAsync = selectedCourt != null
         ? ref.watch(availableSlotsProvider(
@@ -228,8 +290,11 @@ class _BookingFormView extends ConsumerWidget {
             ),
             data: (courts) => courts.isEmpty
                 ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    child: Text(isAr ? 'لا توجد ملاعب متاحة.' : 'No courts available.'),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    child: Text(isAr
+                        ? 'لا توجد ملاعب متاحة.'
+                        : 'No courts available.'),
                   )
                 : _CourtsRow(
                     courts: courts,
@@ -331,69 +396,118 @@ class _BookingFormView extends ConsumerWidget {
               ),
             ),
             child: (selectedCourt != null && selectedSlots.isNotEmpty)
-                ? Padding(
+                ? Builder(
                     key: const ValueKey('summary-visible'),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: BookingSummaryCard(
-                      title: isAr ? 'ملخص الحجز' : 'Booking Summary',
-                      badgeText: isAr
-                          ? '${selectedSlots.length} ${selectedSlots.length == 1 ? 'ساعة' : 'ساعات'}'
-                          : '${selectedSlots.length} ${selectedSlots.length == 1 ? 'hour' : 'hours'}',
-                      rows: [
-                        BookingSummaryRow(
-                          icon: Icons.sports_tennis_rounded,
-                          label: isAr ? 'الملعب' : 'Court',
-                          valueWidget: BilingualLabel(
-                            ar: selectedCourt.nameAr,
-                            en: selectedCourt.nameEn,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ),
-                        BookingSummaryRow(
-                          icon: Icons.calendar_today_rounded,
-                          label: isAr ? 'التاريخ' : 'Date',
-                          value: bookingDisplayDate(selectedDate, isArabic: isAr),
-                        ),
-                        BookingSummaryRow(
-                          icon: Icons.schedule_rounded,
-                          label: isAr ? 'الوقت' : 'Time',
-                          value: _timeRange(selectedSlots),
-                        ),
-                      ],
-                      totalLabel: isAr ? 'المبلغ الإجمالي' : 'Total Amount',
-                      totalValue: _formatPrice(
-                          selectedCourt.pricePerHour, selectedSlots.length),
-                      actionLabel:
-                          isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
-                      onAction: () {
-                        // If a pending booking already exists, reuse its payment URL
-                        // instead of creating a new booking (avoids DB constraint error).
-                        final current = ref.read(bookingSubmitProvider);
-                        current.maybeWhen(
-                          success: (bookingId, paymentUrl, holdUntil,
-                              waylReferenceId) {
-                            if (paymentUrl.isNotEmpty) {
-                              openPaymentWebView(
-                                  bookingId, paymentUrl, waylReferenceId);
-                            }
-                          },
-                          orElse: () {
-                            final sorted = selectedSlots.toList()..sort();
-                            ref
-                                .read(bookingSubmitProvider.notifier)
-                                .createPadelBooking(
+                    builder: (context) {
+                      final hours = selectedSlots.length;
+                      final subtotal =
+                          (selectedCourt.pricePerHour * hours).toInt();
+                      // Re-validate promo on subtotal change.
+                      if (promo != null &&
+                          promo.finalAmount + promo.discountAmount != subtotal) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          ref.read(_padelPromoProvider.notifier).set(null);
+                        });
+                      }
+                      final eff = _BookingFormView._resolveEffective(
+                        subtotal: subtotal,
+                        promo: promo,
+                        autoDiscount: autoDiscount,
+                      );
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: BookingSummaryCard(
+                          title: isAr ? 'ملخص الحجز' : 'Booking Summary',
+                          badgeText: isAr
+                              ? '${selectedSlots.length} ${selectedSlots.length == 1 ? 'ساعة' : 'ساعات'}'
+                              : '${selectedSlots.length} ${selectedSlots.length == 1 ? 'hour' : 'hours'}',
+                          rows: [
+                            BookingSummaryRow(
+                              icon: Icons.sports_tennis_rounded,
+                              label: isAr ? 'الملعب' : 'Court',
+                              valueWidget: BilingualLabel(
+                                ar: selectedCourt.nameAr,
+                                en: selectedCourt.nameEn,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ),
+                            BookingSummaryRow(
+                              icon: Icons.calendar_today_rounded,
+                              label: isAr ? 'التاريخ' : 'Date',
+                              value: bookingDisplayDate(selectedDate,
+                                  isArabic: isAr),
+                            ),
+                            BookingSummaryRow(
+                              icon: Icons.schedule_rounded,
+                              label: isAr ? 'الوقت' : 'Time',
+                              value:
+                                  _BookingFormView._timeRange(selectedSlots),
+                            ),
+                          ],
+                          subtotalLabel: isAr ? 'المجموع' : 'Subtotal',
+                          subtotalValue: eff.discount > 0
+                              ? _BookingFormView._formatIqd(subtotal)
+                              : null,
+                          discountLabel:
+                              eff.discount > 0 ? eff.label : null,
+                          discountValue: eff.discount > 0
+                              ? '−${_BookingFormView._formatIqd(eff.discount)}'
+                              : null,
+                          totalLabel:
+                              isAr ? 'المبلغ الإجمالي' : 'Total Amount',
+                          totalValue:
+                              _BookingFormView._formatIqd(eff.finalAmount),
+                          extraSlot: subtotal > 0
+                              ? PromoCodeField(
+                                  orderType: 'bookings',
+                                  subtotal: subtotal,
                                   placeId: placeId,
-                                  courtId: selectedCourt.id,
-                                  startsAt: sorted.first,
-                                  hours: selectedSlots.length,
-                                );
+                                  merchantId: place?.merchantId,
+                                  categoryId: place?.categoryId,
+                                  applied: promo,
+                                  isAr: isAr,
+                                  onChange: (p) => ref
+                                      .read(_padelPromoProvider.notifier)
+                                      .set(p),
+                                )
+                              : null,
+                          actionLabel:
+                              isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
+                          onAction: () {
+                            // If a pending booking already exists, reuse its payment URL
+                            // instead of creating a new booking (avoids DB constraint error).
+                            final current = ref.read(bookingSubmitProvider);
+                            current.maybeWhen(
+                              success: (bookingId, paymentUrl, holdUntil,
+                                  waylReferenceId) {
+                                if (paymentUrl.isNotEmpty) {
+                                  openPaymentWebView(
+                                      bookingId, paymentUrl, waylReferenceId);
+                                }
+                              },
+                              orElse: () {
+                                final sorted = selectedSlots.toList()..sort();
+                                ref
+                                    .read(bookingSubmitProvider.notifier)
+                                    .createPadelBooking(
+                                      placeId: placeId,
+                                      courtId: selectedCourt.id,
+                                      startsAt: sorted.first,
+                                      hours: selectedSlots.length,
+                                      promoCode: promo?.code,
+                                    );
+                              },
+                            );
                           },
-                        );
-                      },
-                      isLoading: isLoading,
-                    ),
+                          isLoading: isLoading,
+                        ),
+                      );
+                    },
                   )
                 : const SizedBox.shrink(key: ValueKey('summary-hidden')),
           ),
@@ -439,11 +553,15 @@ class _CourtsRow extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeInOut,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? LinearGradient(
-                          colors: [colorScheme.primary, colorScheme.secondary],
+                          colors: [
+                            colorScheme.primary,
+                            colorScheme.secondary
+                          ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         )
@@ -486,7 +604,8 @@ class _CourtsRow extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
-                        color: isSelected ? Colors.white : colorScheme.onSurface,
+                        color:
+                            isSelected ? Colors.white : colorScheme.onSurface,
                       ),
                     ),
                     if (isSelected) ...[
