@@ -11,7 +11,12 @@ import 'package:future_riverpod/features/booking/presentation/widgets/shift_card
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart' show bookingsRefreshProvider;
+import 'package:future_riverpod/features/discounts/domain/discount_math.dart';
+import 'package:future_riverpod/features/discounts/domain/models/auto_discount.dart';
+import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
 import 'package:future_riverpod/features/discounts/presentation/providers/user_purchase_history_provider.dart';
+import 'package:future_riverpod/features/discounts/presentation/widgets/promo_code_field.dart';
+import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:go_router/go_router.dart';
 
 // ---------------------------------------------------------------------------
@@ -35,6 +40,16 @@ final _farmSelectedDateProvider =
 
 final _farmSelectedShiftProvider =
     NotifierProvider<_FarmShiftNotifier, FarmShift?>(_FarmShiftNotifier.new);
+
+final _farmPromoProvider =
+    NotifierProvider.autoDispose<_FarmPromoNotifier, PromoApplied?>(
+        _FarmPromoNotifier.new);
+
+class _FarmPromoNotifier extends Notifier<PromoApplied?> {
+  @override
+  PromoApplied? build() => null;
+  void set(PromoApplied? p) => state = p;
+}
 
 /// Computes [SlotAvailability] for a farm shift.
 /// [isToday] must be true when the selected date is today (local device date).
@@ -128,12 +143,39 @@ class _FarmBookingFormView extends ConsumerWidget {
     return '$h12:$m $period';
   }
 
-  static String _formatPrice(int priceIqd) {
-    final formatted = priceIqd.toString().replaceAllMapped(
+  static String _formatIqd(int amount) {
+    final formatted = amount.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (m) => '${m[1]},',
     );
     return 'IQD $formatted';
+  }
+
+  static ({int discount, int finalAmount, String label}) _resolveEffective({
+    required int subtotal,
+    required PromoApplied? promo,
+    required AutoDiscount? autoDiscount,
+  }) {
+    if (promo != null) {
+      return (
+        discount: promo.discountAmount,
+        finalAmount: promo.finalAmount,
+        label: '${promo.percent.round()}% OFF · ${promo.code}',
+      );
+    }
+    if (autoDiscount != null) {
+      final r = computeDiscount(
+        subtotal: subtotal,
+        percent: autoDiscount.percent,
+        maxCap: autoDiscount.maxDiscountAmount,
+      );
+      return (
+        discount: r.discountAmount,
+        finalAmount: r.finalAmount,
+        label: '${autoDiscount.percent.round()}% OFF',
+      );
+    }
+    return (discount: 0, finalAmount: subtotal, label: '');
   }
 
   @override
@@ -149,6 +191,16 @@ class _FarmBookingFormView extends ConsumerWidget {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final closedDatesAsync = ref.watch(placeClosedDatesProvider(placeId));
     final closedDates = closedDatesAsync.value ?? const <String>{};
+
+    final placeAsync = ref.watch(placeDetailsProvider(placeId));
+    final place = placeAsync.value;
+    final autoDiscount = ref.watch(bestAutoDiscountProvider(AutoDiscountKey(
+      orderType: 'bookings',
+      placeId: placeId,
+      merchantId: place?.merchantId,
+      categoryId: place?.categoryId,
+    )));
+    final promo = ref.watch(_farmPromoProvider);
 
     // Opens the payment webview for the given booking details.
     // Defined here so it can be reused by both ref.listen and onAction.
@@ -319,63 +371,106 @@ class _FarmBookingFormView extends ConsumerWidget {
               ),
             ),
             child: selectedShift != null
-                ? Padding(
+                ? Builder(
                     key: const ValueKey('summary-visible'),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: BookingSummaryCard(
-                      title: isAr ? 'ملخص الحجز' : 'Booking Summary',
-                      badgeText: _shiftLabel(selectedShift.shiftType,
-                          isArabic: isAr),
-                      rows: [
-                        BookingSummaryRow(
-                          icon: Icons.calendar_today_rounded,
-                          label: isAr ? 'التاريخ' : 'Date',
-                          value: bookingDisplayDate(selectedDate,
+                    builder: (context) {
+                      final subtotal = selectedShift.priceIqd;
+                      final eff = _FarmBookingFormView._resolveEffective(
+                        subtotal: subtotal,
+                        promo: promo,
+                        autoDiscount: autoDiscount,
+                      );
+
+                      // Re-validate promo on subtotal change.
+                      if (promo != null &&
+                          promo.finalAmount + promo.discountAmount != subtotal) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          ref.read(_farmPromoProvider.notifier).set(null);
+                        });
+                      }
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: BookingSummaryCard(
+                          title: isAr ? 'ملخص الحجز' : 'Booking Summary',
+                          badgeText: _shiftLabel(selectedShift.shiftType,
                               isArabic: isAr),
-                        ),
-                        BookingSummaryRow(
-                          icon: Icons.wb_sunny_rounded,
-                          label: isAr ? 'الوردية' : 'Shift',
-                          value: _shiftLabel(selectedShift.shiftType,
-                              isArabic: isAr),
-                        ),
-                        BookingSummaryRow(
-                          icon: Icons.schedule_rounded,
-                          label: isAr ? 'الوقت' : 'Time',
-                          value:
-                              '${_toTime12h(selectedShift.startsTime)} – ${_toTime12h(selectedShift.endsTime)}',
-                        ),
-                      ],
-                      totalLabel: isAr ? 'الإجمالي' : 'Total Amount',
-                      totalValue: _formatPrice(selectedShift.priceIqd),
-                      actionLabel:
-                          isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
-                      onAction: () {
-                        // If a pending booking already exists, reuse its payment URL
-                        // instead of creating a new booking (avoids DB constraint error).
-                        final current = ref.read(bookingSubmitProvider);
-                        current.maybeWhen(
-                          success: (bookingId, paymentUrl, holdUntil,
-                              waylReferenceId) {
-                            if (paymentUrl.isNotEmpty) {
-                              openPaymentWebView(
-                                  bookingId, paymentUrl, waylReferenceId);
-                            }
-                          },
-                          orElse: () {
-                            final shift = selectedShift;
-                            ref
-                                .read(bookingSubmitProvider.notifier)
-                                .createFarmBooking(
+                          rows: [
+                            BookingSummaryRow(
+                              icon: Icons.calendar_today_rounded,
+                              label: isAr ? 'التاريخ' : 'Date',
+                              value: bookingDisplayDate(selectedDate,
+                                  isArabic: isAr),
+                            ),
+                            BookingSummaryRow(
+                              icon: Icons.wb_sunny_rounded,
+                              label: isAr ? 'الوردية' : 'Shift',
+                              value: _shiftLabel(selectedShift.shiftType,
+                                  isArabic: isAr),
+                            ),
+                            BookingSummaryRow(
+                              icon: Icons.schedule_rounded,
+                              label: isAr ? 'الوقت' : 'Time',
+                              value:
+                                  '${_toTime12h(selectedShift.startsTime)} – ${_toTime12h(selectedShift.endsTime)}',
+                            ),
+                          ],
+                          subtotalLabel: isAr ? 'المجموع' : 'Subtotal',
+                          subtotalValue: eff.discount > 0
+                              ? _FarmBookingFormView._formatIqd(subtotal)
+                              : null,
+                          discountLabel: eff.discount > 0 ? eff.label : null,
+                          discountValue: eff.discount > 0
+                              ? '−${_FarmBookingFormView._formatIqd(eff.discount)}'
+                              : null,
+                          totalLabel: isAr ? 'الإجمالي' : 'Total Amount',
+                          totalValue:
+                              _FarmBookingFormView._formatIqd(eff.finalAmount),
+                          extraSlot: subtotal > 0
+                              ? PromoCodeField(
+                                  orderType: 'bookings',
+                                  subtotal: subtotal,
                                   placeId: placeId,
-                                  date: bookingFormatDate(selectedDate),
-                                  shiftType: shift.shiftType,
-                                );
+                                  merchantId: place?.merchantId,
+                                  categoryId: place?.categoryId,
+                                  applied: promo,
+                                  isAr: isAr,
+                                  onChange: (p) => ref
+                                      .read(_farmPromoProvider.notifier)
+                                      .set(p),
+                                )
+                              : null,
+                          actionLabel:
+                              isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
+                          onAction: () {
+                            // If a pending booking already exists, reuse its payment URL
+                            // instead of creating a new booking (avoids DB constraint error).
+                            final current = ref.read(bookingSubmitProvider);
+                            current.maybeWhen(
+                              success: (bookingId, paymentUrl, holdUntil,
+                                  waylReferenceId) {
+                                if (paymentUrl.isNotEmpty) {
+                                  openPaymentWebView(
+                                      bookingId, paymentUrl, waylReferenceId);
+                                }
+                              },
+                              orElse: () {
+                                final shift = selectedShift;
+                                ref
+                                    .read(bookingSubmitProvider.notifier)
+                                    .createFarmBooking(
+                                      placeId: placeId,
+                                      date: bookingFormatDate(selectedDate),
+                                      shiftType: shift.shiftType,
+                                      promoCode: promo?.code,
+                                    );
+                              },
+                            );
                           },
-                        );
-                      },
-                      isLoading: isLoading,
-                    ),
+                          isLoading: isLoading,
+                        ),
+                      );
+                    },
                   )
                 : const SizedBox.shrink(key: ValueKey('summary-hidden')),
           ),
