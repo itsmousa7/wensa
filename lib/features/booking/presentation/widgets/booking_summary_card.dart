@@ -39,6 +39,11 @@ class BookingSummaryCard extends StatelessWidget {
     required this.rows,
     this.totalLabel,
     this.totalValue,
+    this.subtotalLabel,
+    this.subtotalValue,
+    this.discountLabel,
+    this.discountValue,
+    this.extraSlot,
     required this.actionLabel,
     required this.onAction,
     required this.isLoading,
@@ -58,6 +63,20 @@ class BookingSummaryCard extends StatelessWidget {
 
   /// Formatted total value, e.g. "IQD 50,000" (omit for free bookings).
   final String? totalValue;
+
+  /// Optional pre-discount subtotal text (e.g. "IQD 40,000"). When set
+  /// alongside [discountValue], the total row renders with a struck-through
+  /// subtotal + a discount row above it.
+  final String? subtotalLabel;
+  final String? subtotalValue;
+
+  /// Optional discount line (e.g. label="10% OFF", value="−IQD 4,000").
+  final String? discountLabel;
+  final String? discountValue;
+
+  /// Optional slot rendered just above the action button (e.g. the
+  /// promo-code field).
+  final Widget? extraSlot;
 
   /// Text on the action button.
   final String actionLabel;
@@ -157,9 +176,25 @@ class BookingSummaryCard extends StatelessWidget {
                     ),
                 ],
 
-                // Total amount highlight (payment sections only)
+                // Subtotal + discount + total stack
                 if (totalValue != null) ...[
                   const SizedBox(height: 16),
+                  if (discountValue != null && subtotalValue != null) ...[
+                    _SummaryLineRow(
+                      label: subtotalLabel ?? 'Subtotal',
+                      value: subtotalValue!,
+                      strikethrough: true,
+                      color: colorScheme.outline,
+                    ),
+                    const SizedBox(height: 6),
+                    _SummaryLineRow(
+                      label: discountLabel ?? 'Discount',
+                      value: discountValue!,
+                      color: const Color(0xFFE53935),
+                      bold: true,
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                   Container(
                     padding: const EdgeInsets.symmetric(
                         vertical: 14, horizontal: 16),
@@ -202,6 +237,11 @@ class BookingSummaryCard extends StatelessWidget {
                       ],
                     ),
                   ),
+                ],
+
+                if (extraSlot != null) ...[
+                  const SizedBox(height: 14),
+                  extraSlot!,
                 ],
 
                 const SizedBox(height: 18),
@@ -315,6 +355,38 @@ class _DetailRow extends StatelessWidget {
                   .bodyMedium
                   ?.copyWith(fontWeight: FontWeight.w500),
             ),
+      ],
+    );
+  }
+}
+
+class _SummaryLineRow extends StatelessWidget {
+  const _SummaryLineRow({
+    required this.label,
+    required this.value,
+    this.strikethrough = false,
+    this.bold = false,
+    this.color,
+  });
+  final String label;
+  final String value;
+  final bool strikethrough;
+  final bool bold;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = Theme.of(context).textTheme.bodyMedium ?? const TextStyle();
+    final style = base.copyWith(
+      color: color,
+      decoration: strikethrough ? TextDecoration.lineThrough : null,
+      fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+    );
+    return Row(
+      children: [
+        Text(label, style: style),
+        const Spacer(),
+        Text(value, style: style),
       ],
     );
   }
