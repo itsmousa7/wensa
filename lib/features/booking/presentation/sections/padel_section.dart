@@ -113,16 +113,6 @@ class _BookingFormView extends ConsumerWidget {
     }
   }
 
-  static String _formatPrice(double pricePerHour, int hours) {
-    if (pricePerHour <= 0) return 'TBD';
-    final total = (pricePerHour * hours).toInt();
-    final formatted = total.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]},',
-    );
-    return 'IQD $formatted';
-  }
-
   static String _formatIqd(int amount) {
     final formatted = amount.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
