@@ -745,7 +745,7 @@ class _GASheetState extends ConsumerState<_GASheet> {
             ? (tier.nameAr.isNotEmpty ? tier.nameAr : tier.nameEn)
             : (tier.nameEn.isNotEmpty ? tier.nameEn : tier.nameAr))
         : widget.section.tierKey;
-    final maxQty = remaining > 10 ? 10 : remaining;
+    final maxQty = remaining > 4 ? 4 : remaining;
     final total = price * _quantity;
     final submitState = ref.watch(bookingSubmitProvider);
     final isLoading = submitState.maybeWhen(
