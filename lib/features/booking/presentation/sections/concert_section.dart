@@ -440,8 +440,13 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
 
             // Hold-expiry timer — mounted but invisible (zero-size widget).
             // Watches the countdown provider so the reset callback still
-            // fires when the user's hold runs out.
-            holdExpiryWatcher,
+            // fires when the user's hold runs out. Wrapped in Positioned
+            // so the Stack's StackFit.loose doesn't collapse to 0x0.
+            if (selection.holdUntil != null)
+              Positioned(
+                left: 0, top: 0,
+                child: holdExpiryWatcher,
+              ),
 
             // Selection summary + Review CTA (bottom)
             if (selectedSeats.isNotEmpty)
