@@ -232,7 +232,26 @@ class _ConcertBookingView extends ConsumerStatefulWidget {
 class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
   final GlobalKey<SeatMapWebViewState> _viewerKey =
       GlobalKey<SeatMapWebViewState>();
-  bool _orphanErrorVisible = false;
+  // Tracks the orphan set we last surfaced to the user. When a *new* seat
+  // becomes orphan (set grows), we fire a friendly snackbar so they realize
+  // the gap before they hit Review.
+  Set<String> _lastOrphanIds = const <String>{};
+
+  void _showOrphanSnackbar(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          isAr
+              ? 'لا تترك مقعدًا منفردًا بمفرده — اختره أو عدّل اختيارك.'
+              : "Please don't leave a single seat by itself — pick it or adjust your selection.",
+        ),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
 
   void _pushSelectionToViewer() {
     final ids = ref.read(_concertSelectionProvider).selectedSeatIds.toList();
@@ -283,13 +302,17 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
           selectedSeatIds: selection.selectedSeatIds,
         );
         final orphanIds = orphanSeats.map((s) => s.seatId).toList();
-        // Auto-hide the banner once orphans are resolved so the next Review tap
-        // starts from a clean slate.
-        if (orphanSeats.isEmpty && _orphanErrorVisible) {
+        final orphanIdSet = orphanIds.toSet();
+        // Fire a friendly snackbar the moment a seat first becomes orphan,
+        // so the user catches it before reaching Review. Only the *new*
+        // orphans trigger — already-known ones stay quiet.
+        final newOrphans = orphanIdSet.difference(_lastOrphanIds);
+        if (newOrphans.isNotEmpty) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) setState(() => _orphanErrorVisible = false);
+            if (mounted) _showOrphanSnackbar(context);
           });
         }
+        _lastOrphanIds = orphanIdSet;
         // Push pulse highlights to the viewer on every rebuild. The bridge is a
         // no-op until the page has finished loading, so it's safe to call eagerly.
         // Posted in a post-frame callback to avoid running JS during build.
@@ -362,13 +385,30 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
                       .toggleSeat(seat);
                   if (!added) {
                     final isAr = Localizations.localeOf(context).languageCode == 'ar';
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    final messenger = ScaffoldMessenger.of(context);
+                    messenger.hideCurrentSnackBar();
+                    messenger.showSnackBar(
                       SnackBar(
-                        content: Text(
-                          isAr
-                              ? 'يمكنك اختيار ٤ مقاعد كحد أقصى لكل حجز.'
-                              : 'You can select up to 4 seats per booking.',
+                        backgroundColor: const Color(0xFFB91C1C),
+                        content: Row(
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                isAr
+                                    ? 'يمكنك اختيار ٤ مقاعد كحد أقصى لكل حجز.'
+                                    : 'You can select up to 4 seats per booking.',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
                         ),
+                        duration: const Duration(seconds: 3),
                       ),
                     );
                     return;
@@ -388,19 +428,6 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
                 child: SafeArea(bottom: false, child: holdBanner),
               ),
 
-            // Orphan-seat error banner — only shown after the user pressed Review
-            // while orphans exist. The pulse on the orphan seats themselves is
-            // always on (driven by `orphanIds`) so users get live feedback even
-            // before they hit Review.
-            if (_orphanErrorVisible && orphanSeats.isNotEmpty)
-              Positioned(
-                left: 0, right: 0,
-                bottom: selectedSeats.isNotEmpty ? 88 : 0,
-                child: _OrphanErrorBanner(
-                  onDismiss: () => setState(() => _orphanErrorVisible = false),
-                ),
-              ),
-
             // Selection summary + Review CTA (bottom)
             if (selectedSeats.isNotEmpty)
               Positioned(
@@ -410,9 +437,9 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
                   tierByKey: tierByKey,
                   onReview: () {
                     if (orphanSeats.isNotEmpty) {
-                      // Surface the banner and keep the review sheet closed until
-                      // the user resolves the orphan situation.
-                      setState(() => _orphanErrorVisible = true);
+                      // Block the sheet from opening and re-surface the
+                      // friendly snackbar so the user knows why.
+                      _showOrphanSnackbar(context);
                       return;
                     }
                     _showReviewSheet(
@@ -910,92 +937,6 @@ class _GASheetState extends ConsumerState<_GASheet> {
                 ),
               ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Orphan-seat error banner
-// ---------------------------------------------------------------------------
-
-class _OrphanErrorBanner extends StatelessWidget {
-  const _OrphanErrorBanner({required this.onDismiss});
-
-  final VoidCallback onDismiss;
-
-  @override
-  Widget build(BuildContext context) {
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    final theme = Theme.of(context);
-    return Material(
-      color: Colors.transparent,
-      child: SafeArea(
-        top: false,
-        minimum: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFB91C1C),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                color: Colors.white,
-                size: 22,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      isAr
-                          ? 'اختيار المقاعد غير صالح. يرجى المحاولة مرة أخرى'
-                          : 'Invalid seat selection. Please try again.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      isAr
-                          ? 'لا يمكنك ترك مقعد منفرد بين المقاعد المحددة، يرجى اختيار المقاعد بحيث لا يبقى مقعد منفرد'
-                          : 'Your selection leaves an isolated seat with no free neighbor in its row. Please adjust so no seat is left orphaned.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.92),
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: onDismiss,
-                icon: const Icon(Icons.close, color: Colors.white, size: 20),
-                tooltip: isAr ? 'إغلاق' : 'Dismiss',
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: 32,
-                  minHeight: 32,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
