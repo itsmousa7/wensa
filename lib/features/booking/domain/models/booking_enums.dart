@@ -5,7 +5,7 @@ enum BookingStatus { pending, confirmed, completed, cancelled, expired, noShow, 
 
 enum FarmShiftType { day, night, full }
 
-enum MembershipStatus { active, frozen, expired, cancelled, used }
+enum MembershipStatus { pending, active, frozen, expired, cancelled, used }
 
 enum SeatStatus { free, held, taken }
 
@@ -69,6 +69,8 @@ extension FarmShiftTypeFromString on FarmShiftType {
 extension MembershipStatusFromString on MembershipStatus {
   static MembershipStatus fromString(String value) {
     switch (value) {
+      case 'pending':
+        return MembershipStatus.pending;
       case 'active':
         return MembershipStatus.active;
       case 'frozen':
@@ -80,7 +82,10 @@ extension MembershipStatusFromString on MembershipStatus {
       case 'used':
         return MembershipStatus.used;
       default:
-        return MembershipStatus.active;
+        // Unknown values must NEVER be treated as 'active' — that would grant
+        // service to an unverified row. Default to 'pending' so the membership
+        // stays invisible/unusable until something explicitly activates it.
+        return MembershipStatus.pending;
     }
   }
 }

@@ -82,6 +82,8 @@ class TicketStatusBadge extends StatelessWidget {
   static String _membershipLabel(MembershipStatus s, bool ar) {
     if (ar) {
       switch (s) {
+        case MembershipStatus.pending:
+          return 'قيد الانتظار';
         case MembershipStatus.active:
           return 'نشط';
         case MembershipStatus.frozen:
@@ -95,6 +97,8 @@ class TicketStatusBadge extends StatelessWidget {
       }
     }
     switch (s) {
+      case MembershipStatus.pending:
+        return 'Pending';
       case MembershipStatus.active:
         return 'Active';
       case MembershipStatus.frozen:
@@ -110,6 +114,8 @@ class TicketStatusBadge extends StatelessWidget {
 
   static Color _membershipColor(MembershipStatus s) {
     switch (s) {
+      case MembershipStatus.pending:
+        return Colors.orange;
       case MembershipStatus.active:
         return Colors.green;
       case MembershipStatus.frozen:

@@ -17,7 +17,15 @@ class BookingRepository {
   final SupabaseClient _client;
 
   Future<List<Booking>> fetchUserBookings({List<String>? categories}) async {
-    var query = _client.schema('bookings').from('bookings').select();
+    // Only surface paid bookings. Pending rows are either in-flight (user is in
+    // the payment webview) or abandoned (user cancelled / closed the sheet);
+    // either way they don't represent a real reservation and must not appear
+    // in history — otherwise staff could grant service against an unpaid row.
+    var query = _client
+        .schema('bookings')
+        .from('bookings')
+        .select()
+        .eq('payment_status', 'paid');
     if (categories != null && categories.isNotEmpty) {
       query = query.inFilter('category', categories);
     }
@@ -31,10 +39,16 @@ class BookingRepository {
   }
 
   Future<List<Membership>> fetchUserMemberships() async {
+    // create_membership inserts the row with status='pending' and
+    // payment_status='pending'; the row only becomes 'active' on a successful
+    // payment confirmation. Gate strictly on payment_status='paid' so that
+    // abandoned/cancelled payment attempts never surface in history and the
+    // status default never accidentally grants service.
     final data = await _client
         .schema('bookings')
         .from('memberships')
         .select()
+        .eq('payment_status', 'paid')
         .order('created_at', ascending: false);
     return data.map(Membership.fromJson).toList();
   }
@@ -162,6 +176,10 @@ class BookingRepository {
 
   Future<void> cancelBooking(String id) async {
     await _client.schema('bookings').rpc('cancel_booking', params: {'id': id});
+  }
+
+  Future<void> cancelMembership(String id) async {
+    await _client.schema('bookings').rpc('cancel_membership', params: {'p_id': id});
   }
 
   Future<void> freezeMembership(String id) async {
