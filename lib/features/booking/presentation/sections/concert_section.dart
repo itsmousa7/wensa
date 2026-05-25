@@ -692,11 +692,7 @@ class _ReviewSheet extends ConsumerWidget {
                       : s.tierKey;
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      isAr
-                          ? 'صف ${s.row} · مقعد ${s.seat}'
-                          : 'Row ${s.row} · Seat ${s.seat}',
-                    ),
+                    title: Text('${s.row}${s.seat}'),
                     subtitle: Text(tierName),
                     trailing: Text(
                       _formatIqd(_priceOf(s)),
