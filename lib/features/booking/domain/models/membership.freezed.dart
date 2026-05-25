@@ -223,7 +223,7 @@ return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.planI
 @JsonSerializable()
 
 class _Membership implements Membership {
-  const _Membership({this.id = '', this.userId = '', this.merchantId = '', this.placeId = '', this.planId = '', this.status = MembershipStatus.active, this.membershipType = '', this.startsAt = '', this.endsAt = '', this.amountIqd = 0, this.paymentId, this.paymentStatus, this.qrToken = '', this.isFrozen = false, this.createdAt});
+  const _Membership({this.id = '', this.userId = '', this.merchantId = '', this.placeId = '', this.planId = '', this.status = MembershipStatus.pending, this.membershipType = '', this.startsAt = '', this.endsAt = '', this.amountIqd = 0, this.paymentId, this.paymentStatus, this.qrToken = '', this.isFrozen = false, this.createdAt});
   factory _Membership.fromJson(Map<String, dynamic> json) => _$MembershipFromJson(json);
 
 @override@JsonKey() final  String id;

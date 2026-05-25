@@ -12,7 +12,7 @@ abstract class Membership with _$Membership {
     @Default('') String merchantId,
     @Default('') String placeId,
     @Default('') String planId,
-    @Default(MembershipStatus.active) MembershipStatus status,
+    @Default(MembershipStatus.pending) MembershipStatus status,
     @Default('') String membershipType,
     @Default('') String startsAt,
     @Default('') String endsAt,

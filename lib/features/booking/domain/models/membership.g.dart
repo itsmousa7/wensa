@@ -14,7 +14,7 @@ _Membership _$MembershipFromJson(Map<String, dynamic> json) => _Membership(
   planId: json['planId'] as String? ?? '',
   status:
       $enumDecodeNullable(_$MembershipStatusEnumMap, json['status']) ??
-      MembershipStatus.active,
+      MembershipStatus.pending,
   membershipType: json['membershipType'] as String? ?? '',
   startsAt: json['startsAt'] as String? ?? '',
   endsAt: json['endsAt'] as String? ?? '',
@@ -46,6 +46,7 @@ Map<String, dynamic> _$MembershipToJson(_Membership instance) =>
     };
 
 const _$MembershipStatusEnumMap = {
+  MembershipStatus.pending: 'pending',
   MembershipStatus.active: 'active',
   MembershipStatus.frozen: 'frozen',
   MembershipStatus.expired: 'expired',
