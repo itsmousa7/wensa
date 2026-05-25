@@ -11,7 +11,6 @@ import 'package:future_riverpod/features/booking/presentation/pages/payment_webv
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/hold_provider.dart';
-import 'package:future_riverpod/features/booking/presentation/widgets/hold_countdown_banner.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/seat_map_web_view.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
     show bookingsRefreshProvider;
@@ -102,7 +101,7 @@ class _ConcertSelectionNotifier extends Notifier<_ConcertState> {
       holdUntil: selected.isEmpty
           ? null
           : DateTime.now()
-              .add(const Duration(seconds: 60))
+              .add(const Duration(seconds: 120))
               .toIso8601String(),
     );
     return true;
@@ -243,10 +242,24 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(
-        content: Text(
-          isAr
-              ? 'لا تترك مقعدًا منفردًا بمفرده — اختره أو عدّل اختيارك.'
-              : "Please don't leave a single seat by itself — pick it or adjust your selection.",
+        backgroundColor: const Color(0xFFB91C1C),
+        content: Row(
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                isAr
+                    ? 'لا تترك مقعدًا منفردًا بمفرده — اختره أو عدّل اختيارك.'
+                    : "Please don't leave a single seat by itself — pick it or adjust your selection.",
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
         ),
         duration: const Duration(seconds: 3),
       ),
@@ -320,8 +333,12 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
           _pushWarningSeatsToViewer(orphanIds);
         });
 
-        final holdBanner = selection.holdUntil != null
-            ? _HoldBannerWithExpiry(
+        // Invisible expiry watcher — fires the reset callback when the
+        // user's seat hold runs out. We deliberately don't render a
+        // countdown banner; the hold is fast enough that surfacing the
+        // timer hurts the user's sense of urgency more than it helps.
+        final holdExpiryWatcher = selection.holdUntil != null
+            ? _HoldExpiryWatcher(
                 holdUntil: selection.holdUntil!,
                 onExpired: () {
                   ref.read(_concertSelectionProvider.notifier).reset();
@@ -421,12 +438,10 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
               ),
             ),
 
-            // Hold-expiry banner (top)
-            if (selection.holdUntil != null)
-              Positioned(
-                top: 0, left: 0, right: 0,
-                child: SafeArea(bottom: false, child: holdBanner),
-              ),
+            // Hold-expiry timer — mounted but invisible (zero-size widget).
+            // Watches the countdown provider so the reset callback still
+            // fires when the user's hold runs out.
+            holdExpiryWatcher,
 
             // Selection summary + Review CTA (bottom)
             if (selectedSeats.isNotEmpty)
@@ -579,8 +594,8 @@ class _SelectionBar extends StatelessWidget {
 // Hold banner that fires a callback when the timer reaches 0
 // ---------------------------------------------------------------------------
 
-class _HoldBannerWithExpiry extends ConsumerWidget {
-  const _HoldBannerWithExpiry({
+class _HoldExpiryWatcher extends ConsumerWidget {
+  const _HoldExpiryWatcher({
     required this.holdUntil,
     required this.onExpired,
   });
@@ -594,7 +609,7 @@ class _HoldBannerWithExpiry extends ConsumerWidget {
     if (seconds <= 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) => onExpired());
     }
-    return HoldCountdownBanner(holdUntil: holdUntil);
+    return const SizedBox.shrink();
   }
 }
 
