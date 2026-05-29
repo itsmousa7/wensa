@@ -27,15 +27,72 @@ class CategoryBar extends ConsumerWidget {
           physics: const BouncingScrollPhysics(),
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-          itemCount: cats.length,
+          itemCount: cats.length + 1,
           separatorBuilder: (_, _) => const SizedBox(width: 12),
           itemBuilder: (_, i) {
-            final isActive = selectedIndex == i;
-            final cat = cats[i];
+            // ── Synthetic "Discounts" chip (sentinel index -1) ──────────
+            if (i == 0) {
+              final isActive = selectedIndex == -1;
+              return GestureDetector(
+                onTap: () {
+                  ref.read(selectedCategoryProvider.notifier).select(-1);
+                },
+                child: Column(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isActive
+                              ? theme.colorScheme.primary.withValues(alpha: 0.3)
+                              : theme.colorScheme.surfaceContainerHigh,
+                          width: 1.5,
+                        ),
+                        boxShadow: isActive
+                            ? [
+                                BoxShadow(
+                                  color: theme.colorScheme.primary.withValues(
+                                    alpha: 0.25,
+                                  ),
+                                  blurRadius: 10,
+                                  spreadRadius: 1,
+                                ),
+                              ]
+                            : [],
+                      ),
+                      // Reuses _categoryIcon, which maps 'Discounts' →
+                      // assets/lottie/categories/discount.lottie.
+                      child: Center(
+                        child: _categoryIcon('Discounts', animate: isActive),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      isAr ? 'خصومات' : 'Discounts',
+                      style: tt.labelLarge?.copyWith(
+                        color: isActive
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.outline,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // ── Real DB category (offset by 1) ──────────────────────────
+            final catIndex = i - 1;
+            final isActive = selectedIndex == catIndex;
+            final cat = cats[catIndex];
 
             return GestureDetector(
               onTap: () {
-                ref.read(selectedCategoryProvider.notifier).select(i);
+                ref.read(selectedCategoryProvider.notifier).select(catIndex);
               },
               child: Column(
                 children: [
@@ -147,6 +204,9 @@ Widget _categoryIcon(String nameEn, {bool animate = true}) {
       break;
     case 'Festivals':
       asset = 'assets/lottie/categories/festival.json';
+      break;
+    case 'Discounts':
+      asset = 'assets/lottie/categories/discount.lottie';
       break;
   }
 
