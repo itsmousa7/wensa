@@ -65,7 +65,7 @@ class CategoryBar extends ConsumerWidget {
                             : [],
                       ),
                       // Reuses _categoryIcon, which maps 'Discounts' →
-                      // assets/lottie/categories/discount.lottie.
+                      // assets/lottie/categories/discount.json.
                       child: Center(
                         child: _categoryIcon('Discounts', animate: isActive),
                       ),
@@ -206,7 +206,7 @@ Widget _categoryIcon(String nameEn, {bool animate = true}) {
       asset = 'assets/lottie/categories/festival.json';
       break;
     case 'Discounts':
-      asset = 'assets/lottie/categories/discount.lottie';
+      asset = 'assets/lottie/categories/discount.json';
       break;
   }
 
