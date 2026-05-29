@@ -144,3 +144,127 @@ class CategoryFeedSection extends ConsumerWidget {
     );
   }
 }
+
+class DiscountsFeedSection extends ConsumerWidget {
+  const DiscountsFeedSection({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final feed = ref.watch(discountsFeedProvider);
+    final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
+    final cs = Theme.of(context).colorScheme;
+    final tt = AppTypography.getTextTheme(isAr ? 'ar' : 'en', context);
+
+    if (feed.isFirstLoad) {
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (_, _) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+            child: buildFullWidthSkeleton(context),
+          ),
+          childCount: 3,
+        ),
+      );
+    }
+
+    if (feed.hasError) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              height: 200,
+              child: Lottie.asset('assets/lottie/animation/no_internet.json'),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isAr ? 'تعذّر تحميل البيانات' : 'Failed to load',
+              style: tt.bodyMedium?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.4),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (feed.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 22),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                height: 200,
+                child: Lottie.asset('assets/lottie/animation/empty.json'),
+              ),
+              Text(
+                isAr
+                    ? 'لا توجد خصومات متاحة حالياً'
+                    : 'No discounts available right now',
+                textAlign: TextAlign.center,
+                style: tt.bodyLarge?.copyWith(
+                  color: cs.onSurface,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isAr ? 'تحقق لاحقاً!' : 'Check back later!',
+                textAlign: TextAlign.center,
+                style: tt.bodySmall?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate((context, index) {
+        if (index == feed.items.length) {
+          if (feed.hasMore) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              ref.read(discountsFeedProvider.notifier).loadMore();
+            });
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: cs.primary,
+                  ),
+                ),
+              ),
+            );
+          }
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: Text(
+                isAr ? '— لقد وصلت للنهاية —' : '— You\'ve reached the end —',
+                style: tt.labelMedium?.copyWith(
+                  color: cs.onTertiary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+          child: FullWidthFeedCard(item: feed.items[index]),
+        );
+      }, childCount: feed.items.length + 1),
+    );
+  }
+}
