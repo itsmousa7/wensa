@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/all_events_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
@@ -24,6 +25,8 @@ import 'package:future_riverpod/features/home/presentation/widgets/see_all_page.
 import 'package:future_riverpod/features/home/presentation/widgets/trending_feed_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/when_no_data_available.dart';
 import 'package:future_riverpod/core/widgets/profile_error.dart';
+
+const int kDiscountsCategoryIndex = -1;
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -51,6 +54,11 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.invalidate(allPlacesFeedProvider);
     ref.invalidate(favoritesFeedProvider);
     ref.invalidate(allEventsProvider);
+    // Re-fetch discounts so deactivated/expired offers drop off on pull-to-
+    // refresh rather than lingering until a hot restart.
+    ref.invalidate(merchantDiscountsProvider);
+    ref.invalidate(autoDiscountsProvider);
+    ref.invalidate(discountsFeedProvider);
 
     await Future.delayed(const Duration(milliseconds: 1200));
     if (mounted) setState(() => _isRefreshing = false);
@@ -97,6 +105,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final categories = ref.watch(categoriesProvider).value;
     final selectedCat =
         (selectedIdx != null &&
+            selectedIdx >= 0 &&
             categories != null &&
             selectedIdx < categories.length)
         ? categories[selectedIdx]
@@ -199,7 +208,12 @@ class _HomePageState extends ConsumerState<HomePage> {
                 SliverToBoxAdapter(child: _sectionTitle(_categoryLabel)),
                 SliverToBoxAdapter(child: CategoryBar(isAr: isAr)),
 
-                if (selectedCat == null) ...[
+                if (selectedIdx == kDiscountsCategoryIndex) ...[
+                  SliverToBoxAdapter(
+                    child: _sectionTitle(isAr ? 'خصومات' : 'Discounts'),
+                  ),
+                  const DiscountsFeedSection(),
+                ] else if (selectedCat == null) ...[
                   // ── Ad slot 0 ────────────────────────────────────────────
                   const SliverToBoxAdapter(
                     child: PromotedBannerInline(slotIndex: 0),
