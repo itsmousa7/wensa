@@ -36,6 +36,11 @@ class EventsRepository {
       // View recording is best-effort; never surface errors to the user.
     }
   }
+
+  /// Atomically increments events.shares_count (best-effort analytics).
+  Future<void> recordShare(String eventId) async {
+    await _client.rpc('increment_event_share_count', params: {'p_id': eventId});
+  }
 }
 
 @riverpod

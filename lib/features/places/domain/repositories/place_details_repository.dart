@@ -53,6 +53,11 @@ class PlaceDetailsRepository {
       params: {'p_place_id': placeId, 'p_user_id': userId},
     );
   }
+
+  /// Atomically increments places.shares_count (best-effort analytics).
+  Future<void> recordShare(String placeId) async {
+    await _client.rpc('increment_share_count', params: {'p_id': placeId});
+  }
 }
 
 @riverpod
