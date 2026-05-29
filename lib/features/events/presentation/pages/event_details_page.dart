@@ -13,7 +13,12 @@ import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/constants/theme/theme_provider.dart';
 import 'package:future_riverpod/core/constants/theme/theme_state.dart';
+import 'package:future_riverpod/core/share/content_share_card.dart';
+import 'package:future_riverpod/core/share/share_link.dart';
+import 'package:future_riverpod/core/share/share_service.dart';
 import 'package:future_riverpod/core/widgets/detail_error_page.dart';
+import 'package:future_riverpod/features/events/domain/models/event_model.dart';
+import 'package:future_riverpod/features/events/domain/repositories/events_repository.dart';
 import 'package:future_riverpod/features/events/presentation/providers/event_app_bar_state.dart';
 import 'package:future_riverpod/features/events/presentation/providers/event_details_provider.dart';
 import 'package:future_riverpod/features/events/presentation/widgets/event_details_skeleton.dart';
@@ -21,6 +26,8 @@ import 'package:future_riverpod/features/events/presentation/widgets/event_info_
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_appbar_button.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_image_carousel.dart';
+import 'package:intl/intl.dart' hide TextDirection;
+import 'package:share_plus/share_plus.dart';
 
 class EventDetailsPage extends ConsumerStatefulWidget {
   const EventDetailsPage({super.key, required this.eventId});
@@ -33,6 +40,17 @@ class EventDetailsPage extends ConsumerStatefulWidget {
 class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
   final _pageCtrl = PageController();
   late final ScrollController _scrollCtrl;
+  final ShareService _share = ShareService();
+  bool _sharing = false;
+
+  String _fmtDate(String iso) {
+    if (iso.isEmpty) return '';
+    try {
+      return DateFormat('dd MMM yyyy').format(DateTime.parse(iso).toLocal());
+    } catch (_) {
+      return iso;
+    }
+  }
 
   bool get _isAr => ref.watch(appLocaleProvider) is ArabicLocale;
 
@@ -55,6 +73,53 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
     _pageCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _onShare(EventModel event) async {
+    if (_sharing) return;
+    setState(() => _sharing = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final name = _isAr
+          ? (event.titleAr.isNotEmpty ? event.titleAr : event.titleEn)
+          : (event.titleEn.isNotEmpty ? event.titleEn : event.titleAr);
+      final subtitle = _fmtDate(event.startDate);
+      final cover = event.coverImageUrl;
+      final coverBytes = (cover != null && cover.isNotEmpty)
+          ? await _share.fetchImageBytes(cover)
+          : null;
+      if (!mounted) return;
+      final png = await _share.renderToPng(
+        context,
+        ContentShareCard(
+          name: name,
+          subtitle: subtitle,
+          coverBytes: coverBytes,
+          isAr: _isAr,
+          footerText: _isAr ? 'اكتشفه على ونسة' : 'Discover on Wensa',
+        ),
+        isAr: _isAr,
+      );
+      if (!mounted) return;
+      final result = await _share.shareImage(
+        context,
+        png,
+        caption: eventShareCaption(name: name, id: event.id, isAr: _isAr),
+        fileName: 'wensa_event.png',
+      );
+      if (result.status != ShareResultStatus.dismissed) {
+        ref.read(eventsRepositoryProvider).recordShare(event.id).ignore();
+      }
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_isAr ? 'تعذّرت المشاركة' : 'Couldn\'t share'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
   }
 
   void _openFullscreen(List<String> images, int index) {
@@ -186,6 +251,18 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
 
                   // ── Favourite button ────────────────────────────────────
                   actions: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, right: 4),
+                      child: PlaceAppBarButton(
+                        icon: Icon(
+                          CupertinoIcons.share,
+                          color: collapsed ? cs.onSurface : AppColors.white,
+                        ),
+                        onTap: () => _onShare(event),
+                        collapsed: collapsed,
+                        sfSymbol: 'square.and.arrow.up',
+                      ),
+                    ),
                     Padding(
                       padding: const EdgeInsets.only(left: 20, right: 20),
                       child: PlaceAppBarButton(
