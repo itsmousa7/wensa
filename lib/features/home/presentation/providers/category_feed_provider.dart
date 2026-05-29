@@ -13,14 +13,16 @@ class DiscountEligibility {
   const DiscountEligibility({
     required this.merchantIds,
     required this.placeIds,
+    required this.categoryIds,
     required this.appWide,
   });
 
   final Set<String> merchantIds;
   final Set<String> placeIds;
+  final Set<String> categoryIds;
   final bool appWide; // true → all places qualify (app-scope AutoDiscount exists)
 
-  bool get isEmpty => !appWide && merchantIds.isEmpty && placeIds.isEmpty;
+  bool get isEmpty => !appWide && merchantIds.isEmpty && placeIds.isEmpty && categoryIds.isEmpty;
 }
 
 /// Derives which places are eligible for a discount from the two discount lists.
@@ -33,6 +35,7 @@ DiscountEligibility buildDiscountEligibility({
   final t = now ?? DateTime.now();
   final merchantIds = <String>{};
   final placeIds = <String>{};
+  final categoryIds = <String>{};
 
   for (final d in merchantDiscounts) {
     if (!d.isCurrentlyActive(t)) continue;
@@ -48,16 +51,19 @@ DiscountEligibility buildDiscountEligibility({
       return DiscountEligibility(
         merchantIds: merchantIds,
         placeIds: placeIds,
+        categoryIds: categoryIds,
         appWide: true,
       );
     }
     merchantIds.addAll(d.targetMerchantIds);
     placeIds.addAll(d.targetPlaceIds);
+    categoryIds.addAll(d.targetCategoryIds);
   }
 
   return DiscountEligibility(
     merchantIds: merchantIds,
     placeIds: placeIds,
+    categoryIds: categoryIds,
     appWide: false,
   );
 }
@@ -316,6 +322,9 @@ class DiscountsFeed extends _$DiscountsFeed {
         }
         if (eligibility.placeIds.isNotEmpty) {
           filters.add('id.in.(${eligibility.placeIds.join(',')})');
+        }
+        if (eligibility.categoryIds.isNotEmpty) {
+          filters.add('category_id.in.(${eligibility.categoryIds.join(',')})');
         }
         query = query.or(filters.join(','));
       }

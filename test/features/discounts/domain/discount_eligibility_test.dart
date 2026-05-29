@@ -33,6 +33,7 @@ void main() {
     required String scopeType,
     List<String> targetMerchantIds = const [],
     List<String> targetPlaceIds = const [],
+    List<String> targetCategoryIds = const [],
     bool isActive = true,
     DateTime? startsAt,
     DateTime? endsAt,
@@ -43,7 +44,7 @@ void main() {
         percent: 5,
         appliesTo: const ['bookings'],
         scopeType: scopeType,
-        targetCategoryIds: const [],
+        targetCategoryIds: targetCategoryIds,
         targetMerchantIds: targetMerchantIds,
         targetPlaceIds: targetPlaceIds,
         isActive: isActive,
@@ -161,6 +162,19 @@ void main() {
         ],
         now: now,
       );
+      expect(e.appWide, isFalse);
+    });
+
+    test('category-scoped targeted AutoDiscount adds categoryIds', () {
+      final e = buildDiscountEligibility(
+        merchantDiscounts: [],
+        autoDiscounts: [
+          autoDiscount(scopeType: 'targeted', targetCategoryIds: ['c1']),
+        ],
+        now: now,
+      );
+      expect(e.categoryIds, contains('c1'));
+      expect(e.isEmpty, isFalse);
       expect(e.appWide, isFalse);
     });
   });
