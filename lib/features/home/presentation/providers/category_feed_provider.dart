@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:future_riverpod/features/discounts/domain/models/auto_discount.dart';
 import 'package:future_riverpod/features/discounts/domain/models/merchant_discount.dart';
+import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
 
 part 'category_feed_provider.g.dart';
 
@@ -240,6 +241,87 @@ class AllPlacesFeed extends _$AllPlacesFeed {
           .select('id, merchant_id, name_en, name_ar, area, cover_image_url, logo_url, is_verified')
           .eq('place_status', 'approved')
           .order('created_at', ascending: false)
+          .range(from, to);
+
+      final fetched = (rows as List)
+          .map((r) => CategoryFeedItem.fromRow(r as Map<String, dynamic>))
+          .toList();
+
+      state = state.copyWith(
+        items: [...state.items, ...fetched],
+        isLoading: false,
+        hasMore: fetched.length == _pageSize,
+        page: state.page + 1,
+      );
+    } catch (_) {
+      state = state.copyWith(isLoading: false, hasMore: false, hasError: true);
+    }
+  }
+
+  Future<void> refresh() async {
+    state = const CategoryFeedState();
+    await loadMore();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  DiscountsFeed — paginated places that have any active discount
+// ─────────────────────────────────────────────────────────────────────────────
+@riverpod
+class DiscountsFeed extends _$DiscountsFeed {
+  static const _pageSize = 10;
+
+  @override
+  CategoryFeedState build() {
+    Future.microtask(loadMore);
+    return const CategoryFeedState();
+  }
+
+  Future<void> loadMore() async {
+    if (state.isLoading && state.page > 0) return;
+    if (!state.hasMore) return;
+
+    state = state.copyWith(isLoading: true, hasError: false);
+
+    try {
+      final eligibility = buildDiscountEligibility(
+        merchantDiscounts: await ref.read(merchantDiscountsProvider.future),
+        autoDiscounts: await ref.read(autoDiscountsProvider.future),
+      );
+
+      if (eligibility.isEmpty) {
+        state = state.copyWith(
+          isLoading: false,
+          hasMore: false,
+          items: [],
+        );
+        return;
+      }
+
+      final from = state.page * _pageSize;
+      final to = from + _pageSize - 1;
+
+      var query = Supabase.instance.client
+          .schema('content')
+          .from('places_mobile')
+          .select(
+            'id, merchant_id, name_en, name_ar, area, cover_image_url, logo_url, is_verified',
+          )
+          .eq('place_status', 'approved');
+
+      if (!eligibility.appWide) {
+        final filters = <String>[];
+        if (eligibility.merchantIds.isNotEmpty) {
+          filters.add('merchant_id.in.(${eligibility.merchantIds.join(',')})');
+        }
+        if (eligibility.placeIds.isNotEmpty) {
+          filters.add('id.in.(${eligibility.placeIds.join(',')})');
+        }
+        query = query.or(filters.join(','));
+      }
+
+      final rows = await query
+          .order('hotness_score', ascending: false)
           .range(from, to);
 
       final fetched = (rows as List)

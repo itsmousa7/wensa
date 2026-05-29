@@ -58,7 +58,7 @@ final class CategoryFeedProvider
   }
 }
 
-String _$categoryFeedHash() => r'044938c60794835365ac3a8a23b803aed0d6e442';
+String _$categoryFeedHash() => r'461eef72bfe5d4198cf7df6c97f6e64f2d03eabb';
 
 final class CategoryFeedFamily extends $Family
     with
@@ -138,9 +138,61 @@ final class AllPlacesFeedProvider
   }
 }
 
-String _$allPlacesFeedHash() => r'b914c66bfa4d0e2c2f123f946094f47af505fe62';
+String _$allPlacesFeedHash() => r'e503eb58dd6598a0705c0b70c77939be74dff7eb';
 
 abstract class _$AllPlacesFeed extends $Notifier<CategoryFeedState> {
+  CategoryFeedState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<CategoryFeedState, CategoryFeedState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<CategoryFeedState, CategoryFeedState>,
+              CategoryFeedState,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(DiscountsFeed)
+final discountsFeedProvider = DiscountsFeedProvider._();
+
+final class DiscountsFeedProvider
+    extends $NotifierProvider<DiscountsFeed, CategoryFeedState> {
+  DiscountsFeedProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'discountsFeedProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$discountsFeedHash();
+
+  @$internal
+  @override
+  DiscountsFeed create() => DiscountsFeed();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CategoryFeedState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CategoryFeedState>(value),
+    );
+  }
+}
+
+String _$discountsFeedHash() => r'16300b1e781967ae02a075c4259515da0b450977';
+
+abstract class _$DiscountsFeed extends $Notifier<CategoryFeedState> {
   CategoryFeedState build();
   @$mustCallSuper
   @override
