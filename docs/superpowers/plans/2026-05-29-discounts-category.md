@@ -8,6 +8,13 @@
 
 **Tech Stack:** Flutter, Riverpod (riverpod_annotation / build_runner), Supabase Flutter client, `flutter_test`
 
+**Existing foundation (uncommitted in working tree — build ON it, do not revert):**
+- `category_bar.dart`: `_categoryIcon` already maps `case 'Discounts'` → `assets/lottie/categories/discount.lottie`. The chip MUST use `_categoryIcon('Discounts', animate: isActive)`, NOT a `CupertinoIcons` icon. Verified: `Lottie.asset` (no decoder) handles the dotLottie `.lottie` file automatically (defaults to `decodeZip`).
+- `category_feed_provider.dart`: `CategoryFeedItem` already has a `merchantId` field; `fromRow`/`fromTrendingRow` already read `merchant_id`; the `CategoryFeed`/`AllPlacesFeed` queries already select `merchant_id, logo_url`. The new `DiscountsFeed` query aligns with this.
+- `home_page.dart`: `_onRefresh` already invalidates `merchantDiscountsProvider` and `autoDiscountsProvider`, and already imports `merchant_discounts_provider.dart`. Only `discountsFeedProvider` invalidation needs adding.
+
+Commits land on `main` (user confirmed). Each commit stages only its own files — never `git add -A` (≈140 unrelated files are uncommitted in the tree).
+
 ---
 
 ## File Map
@@ -640,14 +647,10 @@ data: (cats) => SizedBox(
                         ]
                       : [],
                 ),
+                // Reuses the existing _categoryIcon path, which maps
+                // 'Discounts' → assets/lottie/categories/discount.lottie.
                 child: Center(
-                  child: Icon(
-                    CupertinoIcons.tag_fill,
-                    size: 28,
-                    color: isActive
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.outline,
-                  ),
+                  child: _categoryIcon('Discounts', animate: isActive),
                 ),
               ),
               const SizedBox(height: 6),
@@ -818,7 +821,7 @@ Replace with:
 
 - [ ] **Step 3: Invalidate `discountsFeedProvider` in `_onRefresh`**
 
-Find `_onRefresh()` (around line 42–61). Add inside the block, after the existing `ref.invalidate` calls:
+`_onRefresh()` already invalidates `merchantDiscountsProvider` and `autoDiscountsProvider` (existing foundation). Add one more line after the existing `ref.invalidate` calls so the discounts feed itself re-queries on pull-to-refresh:
 
 ```dart
 ref.invalidate(discountsFeedProvider);
