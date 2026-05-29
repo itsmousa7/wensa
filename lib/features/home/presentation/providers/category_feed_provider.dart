@@ -1,13 +1,72 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:future_riverpod/features/discounts/domain/models/auto_discount.dart';
+import 'package:future_riverpod/features/discounts/domain/models/merchant_discount.dart';
 
 part 'category_feed_provider.g.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  DiscountEligibility — result of buildDiscountEligibility
+// ─────────────────────────────────────────────────────────────────────────────
+class DiscountEligibility {
+  const DiscountEligibility({
+    required this.merchantIds,
+    required this.placeIds,
+    required this.appWide,
+  });
+
+  final Set<String> merchantIds;
+  final Set<String> placeIds;
+  final bool appWide; // true → all places qualify (app-scope AutoDiscount exists)
+
+  bool get isEmpty => !appWide && merchantIds.isEmpty && placeIds.isEmpty;
+}
+
+/// Derives which places are eligible for a discount from the two discount lists.
+/// Pure function — no I/O, easy to test.
+DiscountEligibility buildDiscountEligibility({
+  required List<MerchantDiscount> merchantDiscounts,
+  required List<AutoDiscount> autoDiscounts,
+  DateTime? now,
+}) {
+  final t = now ?? DateTime.now();
+  final merchantIds = <String>{};
+  final placeIds = <String>{};
+
+  for (final d in merchantDiscounts) {
+    if (!d.isCurrentlyActive(t)) continue;
+    merchantIds.add(d.merchantId);
+    if (!d.appliesToAllPlaces) placeIds.addAll(d.placeIds);
+  }
+
+  for (final d in autoDiscounts) {
+    if (!d.isActive) continue;
+    if (d.startsAt != null && t.isBefore(d.startsAt!)) continue;
+    if (d.endsAt != null && t.isAfter(d.endsAt!)) continue;
+    if (d.scopeType == 'app') {
+      return DiscountEligibility(
+        merchantIds: merchantIds,
+        placeIds: placeIds,
+        appWide: true,
+      );
+    }
+    merchantIds.addAll(d.targetMerchantIds);
+    placeIds.addAll(d.targetPlaceIds);
+  }
+
+  return DiscountEligibility(
+    merchantIds: merchantIds,
+    placeIds: placeIds,
+    appWide: false,
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  CategoryFeedItem
 // ─────────────────────────────────────────────────────────────────────────────
 class CategoryFeedItem {
   final String id;
+  final String? merchantId;
   final String titleEn;
   final String titleAr;
   final String? subtitleEn;
@@ -19,6 +78,7 @@ class CategoryFeedItem {
 
   const CategoryFeedItem({
     required this.id,
+    this.merchantId,
     required this.titleEn,
     required this.titleAr,
     this.subtitleEn,
@@ -32,6 +92,7 @@ class CategoryFeedItem {
   /// From places table (name_en / name_ar)
   factory CategoryFeedItem.fromRow(Map<String, dynamic> m) => CategoryFeedItem(
     id: m['id'] as String,
+    merchantId: m['merchant_id'] as String?,
     titleEn: m['name_en'] as String? ?? '',
     titleAr: m['name_ar'] as String? ?? '',
     subtitleEn: m['area'] as String?,
@@ -46,6 +107,7 @@ class CategoryFeedItem {
   factory CategoryFeedItem.fromTrendingRow(Map<String, dynamic> m) =>
       CategoryFeedItem(
         id: m['id'] as String,
+        merchantId: m['merchant_id'] as String?,
         titleEn: m['title_en'] as String? ?? '',
         titleAr: m['title_ar'] as String? ?? '',
         subtitleEn: m['subtitle_en'] as String?,
@@ -121,7 +183,7 @@ class CategoryFeed extends _$CategoryFeed {
       final rows = await Supabase.instance.client
           .schema('content')
           .from('places_mobile')
-          .select('id, name_en, name_ar, area, cover_image_url, is_verified')
+          .select('id, merchant_id, name_en, name_ar, area, cover_image_url, logo_url, is_verified')
           .eq('place_status', 'approved')
           .eq('category_id', categoryId)
           .order('hotness_score', ascending: false)
@@ -175,7 +237,7 @@ class AllPlacesFeed extends _$AllPlacesFeed {
       final rows = await Supabase.instance.client
           .schema('content')
           .from('places_mobile')
-          .select('id, name_en, name_ar, area, cover_image_url, is_verified')
+          .select('id, merchant_id, name_en, name_ar, area, cover_image_url, logo_url, is_verified')
           .eq('place_status', 'approved')
           .order('created_at', ascending: false)
           .range(from, to);
