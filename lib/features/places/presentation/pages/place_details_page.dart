@@ -6,14 +6,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/share/content_share_card.dart';
+import 'package:future_riverpod/core/share/share_link.dart';
+import 'package:future_riverpod/core/share/share_service.dart';
 import 'package:future_riverpod/core/widgets/detail_error_page.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
+import 'package:future_riverpod/features/places/domain/models/place_model.dart';
+import 'package:future_riverpod/features/places/domain/repositories/place_details_repository.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_app_bar_state.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_appbar_button.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_details_skeleton.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_image_carousel.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_info_section.dart';
+import 'package:share_plus/share_plus.dart';
 
 class PlaceDetailsPage extends ConsumerStatefulWidget {
   const PlaceDetailsPage({super.key, required this.placeId});
@@ -26,6 +32,8 @@ class PlaceDetailsPage extends ConsumerStatefulWidget {
 class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
   final _pageCtrl = PageController();
   late final ScrollController _scrollCtrl;
+  final ShareService _share = ShareService();
+  bool _sharing = false;
 
   bool get _isAr => ref.watch(appLocaleProvider) is ArabicLocale;
 
@@ -48,6 +56,56 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
     _pageCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _onShare(PlaceModel place) async {
+    if (_sharing) return;
+    setState(() => _sharing = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final name = _isAr
+          ? (place.nameAr.isNotEmpty ? place.nameAr : place.nameEn)
+          : (place.nameEn.isNotEmpty ? place.nameEn : place.nameAr);
+      final sep = _isAr ? '، ' : ', ';
+      final subtitle = [place.area, place.city]
+          .where((e) => e != null && e.isNotEmpty)
+          .join(sep);
+      final cover = place.coverImageUrl;
+      final coverBytes = (cover != null && cover.isNotEmpty)
+          ? await _share.fetchImageBytes(cover)
+          : null;
+      if (!mounted) return;
+      final png = await _share.renderToPng(
+        context,
+        ContentShareCard(
+          name: name,
+          subtitle: subtitle,
+          coverBytes: coverBytes,
+          isAr: _isAr,
+          footerText: _isAr ? 'اكتشفه على ونسة' : 'Discover on Wensa',
+        ),
+        isAr: _isAr,
+      );
+      if (!mounted) return;
+      final result = await _share.shareImage(
+        context,
+        png,
+        caption: placeShareCaption(name: name, id: place.id, isAr: _isAr),
+        fileName: 'wensa_place.png',
+      );
+      if (result.status != ShareResultStatus.dismissed) {
+        ref.read(placeDetailsRepositoryProvider).recordShare(place.id).ignore();
+      }
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_isAr ? 'تعذّرت المشاركة' : 'Couldn\'t share'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
   }
 
   void _openFullscreen(List<String> images, int index) {
@@ -169,6 +227,18 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
                   ),
 
                   actions: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, right: 4),
+                      child: PlaceAppBarButton(
+                        icon: Icon(
+                          CupertinoIcons.share,
+                          color: collapsed ? cs.onSurface : AppColors.white,
+                        ),
+                        onTap: () => _onShare(place),
+                        collapsed: collapsed,
+                        sfSymbol: 'square.and.arrow.up',
+                      ),
+                    ),
                     Padding(
                       padding: const EdgeInsets.only(left: 20, right: 20),
                       child: PlaceAppBarButton(
