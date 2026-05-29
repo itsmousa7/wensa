@@ -52,6 +52,9 @@ dependencies:
   intl: ^0.20.2
   firebase_core: ^4.7.0
   firebase_messaging: ^16.2.0
+  share_plus: ^13.1.0
+  path_provider: ^2.1.5
+  screenshot: ^3.0.0
 
 
 dev_dependencies:
@@ -76,6 +79,7 @@ flutter:
     - assets/fonts/
     - assets/lottie/animation/
     - assets/lottie/categories/
+    - assets/viewer/
     - .env
 
   fonts:
@@ -86,3 +90,11 @@ flutter:
     - family: Graphik-Light
       fonts:
         - asset: assets/fonts/graphik-light.ttf
+    
+    - family: Ibm-Bold
+      fonts:
+        - asset: assets/fonts/ibm-bold.ttf
+
+    - family: Graphik-Extra-Bold
+      fonts:
+        - asset: assets/fonts/graphik-extra-bold.ttf
