@@ -67,7 +67,7 @@ class CategoryBar extends ConsumerWidget {
                       // Reuses _categoryIcon, which maps 'Discounts' →
                       // assets/lottie/categories/discount.lottie.
                       child: Center(
-                        child: _categoryIcon('Discounts', animate: isActive),
+                        child: _categoryIcon('Discounts'),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -121,13 +121,8 @@ class CategoryBar extends ConsumerWidget {
                             ]
                           : [],
                     ),
-                    // PERFORMANCE FIX: only animate the selected item.
-                    // Previously every visible category ran its Lottie
-                    // animation simultaneously — typically 6 animations × 30fps
-                    // = a significant per-frame cost on low-end Android devices.
-                    // Non-selected items show a static first frame instead.
                     child: Center(
-                      child: _categoryIcon(cat.nameEn, animate: isActive),
+                      child: _categoryIcon(cat.nameEn),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -178,10 +173,7 @@ Widget _buildSkeleton(ThemeData theme) => Skeletonizer(
   ),
 );
 
-// PERFORMANCE FIX: added `animate` parameter.
-// When animate: false the Lottie widget renders only the first frame
-// (frameRate: FrameRate.max is kept on active items so they look snappy).
-Widget _categoryIcon(String nameEn, {bool animate = true}) {
+Widget _categoryIcon(String nameEn) {
   String? asset;
   switch (nameEn) {
     case 'Sports':
@@ -219,10 +211,8 @@ Widget _categoryIcon(String nameEn, {bool animate = true}) {
     width: 42,
     height: 42,
     fit: BoxFit.contain,
-    // When not selected: animate: false freezes on frame 0 with no loop.
-    // FrameRate(0) is NOT valid (asserts framesPerSecond > 0) — don't use it.
-    repeat: animate,
-    animate: animate,
-    frameRate: animate ? FrameRate.max : FrameRate.composition,
+    repeat: true,
+    animate: true,
+    frameRate: FrameRate.max,
   );
 }
