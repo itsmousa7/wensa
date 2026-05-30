@@ -32,7 +32,7 @@ final class ProfileProvider extends $AsyncNotifierProvider<Profile, UserModel> {
   Profile create() => Profile();
 }
 
-String _$profileHash() => r'94a0f9a78a33a75cb6887a5f9befeaa9a4a3a717';
+String _$profileHash() => r'f54ff0e89486724c7475331ac45078ff422e7819';
 
 abstract class _$Profile extends $AsyncNotifier<UserModel> {
   FutureOr<UserModel> build();
@@ -84,3 +84,44 @@ final class UserReviewsCountProvider
 }
 
 String _$userReviewsCountHash() => r'ba6335d1e0bcb60b91fef030e84b30d4cf4603a7';
+
+@ProviderFor(isProfileComplete)
+final isProfileCompleteProvider = IsProfileCompleteProvider._();
+
+final class IsProfileCompleteProvider
+    extends $FunctionalProvider<bool?, bool?, bool?>
+    with $Provider<bool?> {
+  IsProfileCompleteProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'isProfileCompleteProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$isProfileCompleteHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool? create(Ref ref) {
+    return isProfileComplete(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool?>(value),
+    );
+  }
+}
+
+String _$isProfileCompleteHash() => r'1d775df23503afcaa8a8d07959ca9e7978488b71';

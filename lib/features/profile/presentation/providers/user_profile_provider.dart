@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:future_riverpod/features/auth/domain/models/user_model.dart';
 import 'package:future_riverpod/features/auth/domain/repositories/profile_repository.dart';
+import 'package:future_riverpod/features/auth/presentation/providers/auth_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -16,8 +17,13 @@ part 'user_profile_provider.g.dart';
 class Profile extends _$Profile {
   @override
   Future<UserModel> build() async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) throw Exception('Not authenticated');
+    // Watch currentUserProvider so the profile rebuilds whenever the signed-in
+    // user changes — sign-in / sign-up / sign-out all flow through here. The
+    // previous implementation read currentUser directly, so the provider built
+    // once at app start with a null user, errored, and stayed errored after
+    // sign-up — leaving the redirect gate unable to evaluate completeness.
+    final user = ref.watch(currentUserProvider);
+    if (user == null) throw const _NotAuthenticated();
     return ref.read(profileRepositoryProvider).fetchProfile(user.id);
   }
 
@@ -71,4 +77,41 @@ Future<int> userReviewsCount(Ref ref) async {
   final user = Supabase.instance.client.auth.currentUser;
   if (user == null) return 0;
   return ref.watch(profileRepositoryProvider).fetchReviewsCount(user.id);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ProfileCompletion — sync view used by the router redirect.
+//
+//  Returns `null` while the profile is still loading (router should wait),
+//  `true` when the row has first_name + second_name + phone all filled,
+//  `false` otherwise (router should redirect to /complete-profile).
+// ─────────────────────────────────────────────────────────────────────────────
+
+@riverpod
+bool? isProfileComplete(Ref ref) {
+  // Without a signed-in user the question is meaningless — return null so the
+  // router falls through to its standard auth guards.
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return null;
+
+  final async = ref.watch(profileProvider);
+  return async.when(
+    data: (u) =>
+        u.firstName.trim().isNotEmpty &&
+        u.secondName.trim().isNotEmpty &&
+        (u.phone ?? '').trim().isNotEmpty,
+    loading: () => null,
+    // A genuine fetch failure (missing row, RLS issue, network) is treated as
+    // "incomplete" so the user is sent to /complete-profile, where the upsert
+    // path can repair the row instead of leaving them stranded on /home.
+    error: (_, _) => false,
+  );
+}
+
+/// Sentinel used by [Profile.build] when there is no signed-in user. Kept
+/// private so callers don't pattern-match on it; they just see AsyncError.
+class _NotAuthenticated implements Exception {
+  const _NotAuthenticated();
+  @override
+  String toString() => 'Not authenticated';
 }

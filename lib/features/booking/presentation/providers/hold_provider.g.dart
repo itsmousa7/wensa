@@ -58,7 +58,7 @@ final class HoldCountdownProvider
   }
 }
 
-String _$holdCountdownHash() => r'8ea1e6bc0ea4ebe89201d33fd624456e8c6edb0d';
+String _$holdCountdownHash() => r'7e9f9077958786057223b9ca8866b91bb806f6ca';
 
 final class HoldCountdownFamily extends $Family
     with $ClassFamilyOverride<HoldCountdown, int, int, int, String> {

@@ -190,7 +190,7 @@ final class DiscountsFeedProvider
   }
 }
 
-String _$discountsFeedHash() => r'16300b1e781967ae02a075c4259515da0b450977';
+String _$discountsFeedHash() => r'5540c41dd9939cf7b4130c88eaaa2103b0ea3c08';
 
 abstract class _$DiscountsFeed extends $Notifier<CategoryFeedState> {
   CategoryFeedState build();

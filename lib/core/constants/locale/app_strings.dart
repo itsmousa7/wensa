@@ -63,6 +63,11 @@ class AppStrings {
       'enter_second_name_field': 'Please enter your Second Name',
       'name_updated': 'Name updated successfully',
 
+      // Change Phone
+      'change_phone': 'Change Phone Number',
+      'update_phone': 'Update Phone Number',
+      'phone_updated': 'Phone number updated successfully',
+
       // OTP
       'otp_sent': 'OTP sent to',
       'check_inbox': 'please check your inbox',
@@ -74,6 +79,15 @@ class AppStrings {
       'error_resending': 'Error resending OTP',
       'error_prefix': 'Error',
       'no_email_found': 'No email found',
+
+      // Complete Profile
+      'complete_profile_title': 'Complete your profile',
+      'complete_profile_subtitle':
+          'We just need a few details to finish setting up your account.',
+      'enter_phone': 'Please enter your phone number',
+      'valid_phone': 'Please enter a valid phone number',
+      'save': 'Save',
+      'sign_out': 'Sign out',
     },
     'ar': {
       // Auth
@@ -135,6 +149,11 @@ class AppStrings {
       'enter_second_name_field': 'يرجى إدخال اسمك الثاني',
       'name_updated': 'تم تحديث الاسم بنجاح',
 
+      // Change Phone
+      'change_phone': 'تغيير رقم الهاتف',
+      'update_phone': 'تحديث رقم الهاتف',
+      'phone_updated': 'تم تحديث رقم الهاتف بنجاح',
+
       // OTP
       'otp_sent': 'تم إرسال الرمز إلى',
       'check_inbox': 'يرجى مراجعة بريدك الوارد',
@@ -146,6 +165,15 @@ class AppStrings {
       'error_resending': 'خطأ في إعادة إرسال الرمز',
       'error_prefix': 'خطأ',
       'no_email_found': 'لم يتم العثور على البريد الإلكتروني',
+
+      // Complete Profile
+      'complete_profile_title': 'أكمل ملفك الشخصي',
+      'complete_profile_subtitle':
+          'نحتاج فقط إلى بعض المعلومات لإكمال إعداد حسابك.',
+      'enter_phone': 'يرجى إدخال رقم الهاتف',
+      'valid_phone': 'يرجى إدخال رقم هاتف صحيح',
+      'save': 'حفظ',
+      'sign_out': 'تسجيل الخروج',
     },
   };
 

@@ -99,6 +99,36 @@ class ProfileRepository {
 
     return UserModel.fromJson(data);
   }
+
+  /// Upserts the core profile row used by the "complete profile" flow.
+  ///
+  /// This exists alongside [updateProfile] because the trigger that creates
+  /// `profiles.app_users` on `auth.users INSERT` is best-effort — if it ever
+  /// failed (or hasn't been deployed yet), an `UPDATE` would silently no-op
+  /// and the user could never finish signup. An `upsert` repairs the row.
+  Future<UserModel> upsertProfileBasics(
+    String userId, {
+    required String email,
+    required String firstName,
+    required String secondName,
+    required String phone,
+  }) async {
+    final data = await _client
+        .schema('profiles')
+        .from('app_users')
+        .upsert({
+          'id': userId,
+          'email': email,
+          'first_name': firstName,
+          'second_name': secondName,
+          'phone': phone,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        }, onConflict: 'id')
+        .select()
+        .single();
+
+    return UserModel.fromJson(data);
+  }
 }
 
 // ── Provider ──────────────────────────────────────────────────────────────────

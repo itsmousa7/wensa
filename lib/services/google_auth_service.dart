@@ -21,25 +21,21 @@ class GoogleAuthService {
 
     final GoogleSignInAccount googleUser = await google.authenticate();
 
-    // Must pass actual scopes — Android rejects empty list
-    const scopes = ['email', 'profile', 'openid'];
-
-    final auth = await googleUser.authorizationClient.authorizationForScopes(
-      scopes,
-    );
-
-    if (auth == null) throw Exception('Failed to get Google authorization');
-
     final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
     final idToken = googleAuth.idToken;
-    final accessToken = auth.accessToken;
     if (idToken == null) throw Exception('Missing Google ID Token');
 
-    return await _client.auth.signInWithIdToken(
-      provider: OAuthProvider.google,
-      idToken: idToken,
-      accessToken: accessToken,
-    );
+    return await _client.auth
+        .signInWithIdToken(
+          provider: OAuthProvider.google,
+          idToken: idToken,
+        )
+        .timeout(
+          const Duration(seconds: 30),
+          onTimeout: () => throw Exception(
+            'Sign-in timed out. Please try again.',
+          ),
+        );
   }
 }

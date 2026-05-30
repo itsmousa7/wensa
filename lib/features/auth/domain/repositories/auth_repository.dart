@@ -115,6 +115,19 @@ class AuthRepository {
     }
   }
 
+  Future<void> deleteAccount() async {
+    try {
+      await _client.rpc('delete_own_account');
+    } catch (e) {
+      throw handleException(e);
+    }
+    // Best-effort: user is already deleted from auth.users so signOut may 401.
+    // Either way the local session must be cleared so the router redirects.
+    try {
+      await _client.auth.signOut();
+    } catch (_) {}
+  }
+
   Future<bool> emailExists({required String email}) async {
     final result = await Supabase.instance.client.rpc(
       'email_exists',

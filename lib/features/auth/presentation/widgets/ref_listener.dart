@@ -64,9 +64,12 @@ void showLoadingDialog(BuildContext context) {
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Padding(
-          padding: EdgeInsets.all(15),
-          child: CircularProgressIndicator(strokeWidth: 2),
+        child: const Center(
+          child: SizedBox(
+            width: 36,
+            height: 36,
+            child: CircularProgressIndicator(),
+          ),
         ),
       ),
     ),

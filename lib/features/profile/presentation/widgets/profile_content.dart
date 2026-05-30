@@ -15,7 +15,9 @@ import 'package:future_riverpod/features/profile/presentation/providers/user_pro
 import 'package:future_riverpod/features/profile/presentation/widgets/profile_header.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/section_label.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/settings_card.dart';
+import 'package:future_riverpod/features/profile/presentation/widgets/delete_account_button.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/sign_out_button.dart';
+import 'package:future_riverpod/features/profile/presentation/widgets/support_button.dart';
 import 'package:go_router/go_router.dart';
 
 class ProfileContent extends ConsumerWidget {
@@ -157,6 +159,18 @@ class ProfileContent extends ConsumerWidget {
                       color: cs.onSurface.withValues(alpha: 0.08),
                     ),
                     SettingsTile(
+                      icon: Icons.phone_outlined,
+                      iconColor: cs.primary,
+                      title: isAr ? 'تغيير رقم الهاتف' : 'Change Phone Number',
+                      onTap: () => context.pushNamed(RouteNames.changePhone),
+                      showChevron: true,
+                    ),
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: cs.onSurface.withValues(alpha: 0.08),
+                    ),
+                    SettingsTile(
                       icon: Icons.lock_outline_rounded,
                       iconColor: cs.primary,
                       title: isAr ? 'تغيير كلمة المرور' : 'Change Password',
@@ -167,8 +181,16 @@ class ProfileContent extends ConsumerWidget {
                 ),
                 const SizedBox(height: 40),
 
+                // ── Delete Account ─────────────────────────────────────────
+                DeleteAccountButton(isAr: isAr),
+                const SizedBox(height: 12),
+
                 // ── Sign out ───────────────────────────────────────────────
                 SignOutButton(isAr: isAr),
+                const SizedBox(height: 20),
+
+                // ── Support ────────────────────────────────────────────────
+                SupportButton(isAr: isAr),
               ],
             ),
           ),

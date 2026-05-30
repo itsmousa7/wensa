@@ -39,7 +39,7 @@ class _PromotedBannerState extends ConsumerState<PromotedBanner> {
     _timerBannerCount = count;
     if (count < 2) return;
     _timer = Timer.periodic(const Duration(seconds: 4), (_) {
-      if (!mounted) return;
+      if (!mounted || !_ctrl.hasClients) return;
       final next = (_current + 1) % count;
       _ctrl.animateToPage(
         next,

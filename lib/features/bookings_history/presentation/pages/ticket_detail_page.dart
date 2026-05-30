@@ -3,18 +3,18 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:future_riverpod/core/share/share_service.dart';
 import 'package:future_riverpod/core/share/share_link.dart';
+import 'package:future_riverpod/core/share/share_service.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart';
-import 'package:future_riverpod/features/bookings_history/presentation/widgets/ticket_visual_card.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/ticket_status_badge.dart';
+import 'package:future_riverpod/features/bookings_history/presentation/widgets/ticket_visual_card.dart';
 import 'package:future_riverpod/features/events/presentation/providers/event_details_provider.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -182,7 +182,10 @@ class _BookingDetailBody extends ConsumerWidget {
           courtDisplay = courtId.isNotEmpty ? courtId : '—';
         }
         extraCells.add(
-          TicketInfoCell(label: isArabic ? 'الملعب' : 'Court', value: courtDisplay),
+          TicketInfoCell(
+            label: isArabic ? 'الملعب' : 'Court',
+            value: courtDisplay,
+          ),
         );
 
       case BookingCategory.shift:
@@ -199,14 +202,8 @@ class _BookingDetailBody extends ConsumerWidget {
         final seatLabel = (row.isEmpty && seat.isEmpty) ? '—' : '$row$seat';
         final tier = (d['tier_key'] ?? d['tier_id'])?.toString() ?? '—';
         extraCells.addAll([
-          TicketInfoCell(
-            label: isArabic ? 'المقعد' : 'Seat',
-            value: seatLabel,
-          ),
-          TicketInfoCell(
-            label: isArabic ? 'الدرجة' : 'Tier',
-            value: tier,
-          ),
+          TicketInfoCell(label: isArabic ? 'المقعد' : 'Seat', value: seatLabel),
+          TicketInfoCell(label: isArabic ? 'الدرجة' : 'Tier', value: tier),
         ]);
 
       case BookingCategory.reservation:
@@ -241,10 +238,8 @@ class _BookingDetailBody extends ConsumerWidget {
       qrToken: booking.qrToken,
       displayName: name,
       isArabic: isArabic,
-      buildStatusBadge: () => TicketStatusBadge.booking(
-        status: booking.status,
-        isArabic: isArabic,
-      ),
+      buildStatusBadge: () =>
+          TicketStatusBadge.booking(status: booking.status, isArabic: isArabic),
       cells: cells,
       waylCode: booking.waylCode,
     );
@@ -408,7 +403,8 @@ class _TicketScreenState extends State<_TicketScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
       child: Column(
@@ -424,28 +420,31 @@ class _TicketScreenState extends State<_TicketScreen> {
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
-            child: FilledButton.icon(
+            child: OutlinedButton.icon(
               onPressed: _sharing ? null : _onShare,
               icon: _sharing
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: cs.onPrimary,
+                        color: Colors.black,
                       ),
                     )
-                  : const Icon(CupertinoIcons.share, size: 20),
+                  : const Icon(Icons.share, size: 20, color: Colors.black),
               label: Text(
-                _sharing
-                    ? (widget.isArabic ? 'جارٍ التحضير…' : 'Preparing…')
-                    : (widget.isArabic ? 'مشاركة التذكرة' : 'Share Ticket'),
-              ),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                (widget.isArabic ? 'مشاركة التذكرة' : 'Share Ticket'),
+                style: TextStyle(
+                  color: Colors.black,
+                  fontFamily: widget.isArabic
+                      ? 'Graphik-Extra-Bold'
+                      : 'Ibm-Bold',
                 ),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: const StadiumBorder(),
+                side: BorderSide(color: cs.outline),
               ),
             ),
           ),

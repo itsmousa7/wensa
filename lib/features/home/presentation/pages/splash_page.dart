@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/router/router_provider.dart';
-import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  SplashPage — animation + navigation only
@@ -49,27 +47,12 @@ class _SplashPageState extends ConsumerState<SplashPage>
   }
 
   Future<void> _navigate() async {
-    // Minimum splash time so it doesn't flash
     await Future.delayed(const Duration(milliseconds: 600));
     if (!mounted) return;
-
-    // Mark ready — this unblocks _RouterNotifier and the redirect guard
+    // Marking ready triggers _RouterNotifier, which re-evaluates the /splash
+    // redirect and navigates to the correct destination (including waiting for
+    // profile completeness so /home is never shown before the check settles).
     ref.read(supabaseReadyProvider.notifier).setReady();
-
-    // Navigate based on current session (Supabase is already initialized)
-    final session = Supabase.instance.client.auth.currentSession;
-    final isVerified =
-        Supabase.instance.client.auth.currentUser?.emailConfirmedAt != null;
-
-    if (!mounted) return;
-
-    if (session != null && isVerified) {
-      context.go('/home');
-    } else if (session != null && !isVerified) {
-      context.go('/verify-email');
-    } else {
-      context.go('/signin');
-    }
   }
 
   @override

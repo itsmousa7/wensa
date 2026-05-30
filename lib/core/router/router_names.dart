@@ -6,7 +6,9 @@ class RouteNames {
   static const forgotPassword = 'forgotPassword';
   static const changePassword = 'changePassword';
   static const changeName = 'changeName';
+  static const changePhone = 'changePhone';
   static const verifyEmail = 'otpPage';
+  static const completeProfile = 'completeProfile';
   static const splash = 'splash';
   static const profile = 'profile';
   static const search = 'search';

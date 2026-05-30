@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_name_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_password_page.dart';
+import 'package:future_riverpod/features/auth/presentation/pages/change_phone_page.dart';
+import 'package:future_riverpod/features/auth/presentation/pages/complete_profile_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/signin_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/signup_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/verify_email_page.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_provider.dart';
+import 'package:future_riverpod/features/profile/presentation/providers/user_profile_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/booking_flow_page.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/pages/bookings_history_page.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/pages/ticket_detail_page.dart';
@@ -71,9 +74,19 @@ GoRouter router(Ref ref) {
         ),
       ),
       GoRoute(
+        path: '/complete-profile',
+        name: RouteNames.completeProfile,
+        builder: (_, _) => const CompleteProfilePage(),
+      ),
+      GoRoute(
         path: '/changeName',
         name: RouteNames.changeName,
         builder: (_, _) => const ChangeNamePage(),
+      ),
+      GoRoute(
+        path: '/changePhone',
+        name: RouteNames.changePhone,
+        builder: (_, _) => const ChangePhonePage(),
       ),
       GoRoute(
         path: '/changePassword',
@@ -126,14 +139,6 @@ GoRouter router(Ref ref) {
                 path: '/bookings',
                 name: RouteNames.bookingsHistory,
                 builder: (_, _) => const BookingsHistoryPage(),
-                routes: [
-                  GoRoute(
-                    path: ':id',
-                    name: RouteNames.ticketDetail,
-                    builder: (_, s) =>
-                        TicketDetailPage(id: s.pathParameters['id'] ?? ''),
-                  ),
-                ],
               ),
             ],
           ),
@@ -147,6 +152,12 @@ GoRouter router(Ref ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/bookings/:id',
+        name: RouteNames.ticketDetail,
+        builder: (_, s) =>
+            TicketDetailPage(id: s.pathParameters['id'] ?? ''),
       ),
       GoRoute(
         path: '/search',
@@ -172,15 +183,33 @@ GoRouter router(Ref ref) {
 }
 
 String? _redirect(Ref ref, GoRouterState state) {
-  if (state.matchedLocation == '/splash') return null;
+  if (state.matchedLocation == '/splash') {
+    if (!ref.read(supabaseReadyProvider)) return null; // still initialising
+    final isAuth = ref.read(isAuthenticatedProvider);
+    final isVerified = ref.read(isEmailVerifiedProvider);
+    if (!isAuth) return '/signin';
+    if (!isVerified) return '/verify-email';
+    // Wait here until profileProvider resolves — prevents /home from showing
+    // for a frame before we know the profile is incomplete.
+    final isComplete = ref.read(isProfileCompleteProvider);
+    if (isComplete == null) return null;
+    return isComplete ? '/home' : '/complete-profile';
+  }
+
   if (!ref.read(supabaseReadyProvider)) return '/splash';
 
   final isAuth = ref.read(isAuthenticatedProvider);
   final isVerified = ref.read(isEmailVerifiedProvider);
   final path = state.matchedLocation;
 
+  // Profile completeness gate. `null` while the profile is still loading —
+  // in that case we stay on the current location to avoid bouncing.
+  final isComplete = (isAuth && isVerified)
+      ? ref.read(isProfileCompleteProvider)
+      : null;
+
   // Check for pending FCM route (cold-start deep link from notification)
-  if (isAuth && isVerified) {
+  if (isAuth && isVerified && isComplete == true) {
     final pendingRoute = FcmService.instance.consumePendingRoute();
     if (pendingRoute != null) {
       return pendingRoute;
@@ -194,6 +223,18 @@ String? _redirect(Ref ref, GoRouterState state) {
     '/verify-email',
   ].any(path.startsWith);
 
+  // Signed-in + verified users with an incomplete profile must finish the
+  // /complete-profile flow before they can access any guarded route.
+  if (isAuth && isVerified && isComplete == false) {
+    return path == '/complete-profile' ? null : '/complete-profile';
+  }
+  // Once complete, keep them out of /complete-profile.
+  if (path == '/complete-profile') {
+    if (!isAuth || !isVerified) return '/signin';
+    if (isComplete == true) return '/home';
+    return null;
+  }
+
   for (final guarded in [
     '/placeDetails',
     '/eventDetails',
@@ -202,6 +243,7 @@ String? _redirect(Ref ref, GoRouterState state) {
     '/favorites',
     '/profile',
     '/changeName',
+    '/changePhone',
     '/theme-settings',
     '/place',
     '/event',
@@ -218,13 +260,28 @@ String? _redirect(Ref ref, GoRouterState state) {
   }
 
   if (path.startsWith('/verify-email')) {
-    if (isAuth && isVerified) return '/home';
+    if (isAuth && isVerified) {
+      // Don't bounce to /home until we know whether the profile is complete —
+      // otherwise the user lands on /home with a hung loading state while the
+      // redirect waits for profileProvider to settle. The completeness branch
+      // above handles isComplete==false; here we only act when known-true.
+      if (isComplete == true) return '/home';
+      return null; // stay on /verify-email until isComplete is known
+    }
     return (isAuth || state.uri.queryParameters.containsKey('email'))
         ? null
         : '/signin';
   }
 
-  if (isAuth && isVerified) return isPublic ? '/home' : null;
+  if (isAuth && isVerified) {
+    // Same rule as above for the other public auth pages — wait until we
+    // know the profile state before sending the user to /home.
+    if (isPublic) {
+      if (isComplete == true) return '/home';
+      return null;
+    }
+    return null;
+  }
   if (isAuth && !isVerified) return '/verify-email';
   return isPublic ? null : '/signin';
 }
@@ -260,6 +317,13 @@ class _RouterNotifier extends ChangeNotifier {
     ref.listen(currentUserProvider, (prev, next) {
       // Only notify GoRouter after Supabase is ready — prevents a redirect
       // attempt while still on the splash screen.
+      if (!ref.read(supabaseReadyProvider)) return;
+      if (prev != next) _notify();
+    });
+
+    // Profile-completion changes (null → true/false) drive the
+    // /complete-profile redirect — refresh GoRouter whenever it flips.
+    ref.listen(isProfileCompleteProvider, (prev, next) {
       if (!ref.read(supabaseReadyProvider)) return;
       if (prev != next) _notify();
     });
