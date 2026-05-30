@@ -1,13 +1,20 @@
 // lib/features/places/presentation/widgets/place_details/place_opening_hours.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:future_riverpod/features/discounts/domain/models/merchant_discount.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_details_helper.dart';
 
 class PlaceOpeningHours extends StatefulWidget {
-  const PlaceOpeningHours({super.key, required this.hours, required this.isAr});
+  const PlaceOpeningHours({
+    super.key,
+    required this.hours,
+    required this.isAr,
+    this.discount,
+  });
 
   final Map<String, dynamic> hours;
   final bool isAr;
+  final MerchantDiscount? discount;
 
   @override
   State<PlaceOpeningHours> createState() => _PlaceOpeningHoursState();
@@ -44,6 +51,17 @@ class _PlaceOpeningHoursState extends State<PlaceOpeningHours> {
     final today = DateTime.now().weekday;
     final todayIdx = _dart.indexOf(today).clamp(0, 6);
     final show = _expanded ? List.generate(7, (i) => i) : [todayIdx];
+
+    // For each visible weekday-index `i`, compute the calendar date of the
+    // next occurrence (today if it matches). The discount badge only shows
+    // when the discount applies on that exact date.
+    final now = DateTime.now();
+    final todayDateOnly = DateTime(now.year, now.month, now.day);
+    DateTime dateForRow(int i) {
+      final targetWeekday = _dart[i];
+      final diff = (targetWeekday - today + 7) % 7;
+      return todayDateOnly.add(Duration(days: diff));
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,6 +117,10 @@ class _PlaceOpeningHoursState extends State<PlaceOpeningHours> {
                 final raw = widget.hours[_keys[i]]?.toString() ?? '';
                 final isToday = _dart[i] == today;
                 final day = widget.isAr ? _ar[i] : _en[i];
+                final rowDate = dateForRow(i);
+                final dayHasDiscount =
+                    (widget.discount?.appliesDuringWindow(raw) ?? false) &&
+                        (widget.discount?.appliesOnDate(rowDate) ?? false);
 
                 return Padding(
                   padding: const EdgeInsets.symmetric(
@@ -120,6 +142,12 @@ class _PlaceOpeningHoursState extends State<PlaceOpeningHours> {
                         ),
                       ),
                       const Spacer(),
+                      if (dayHasDiscount) ...[
+                        _DiscountChip(
+                          percent: widget.discount!.percent.round(),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                       _buildTimeWidget(raw, isToday, cs, tt),
                     ],
                   ),
@@ -185,6 +213,41 @@ class _PlaceOpeningHoursState extends State<PlaceOpeningHours> {
     }
 
     return row;
+  }
+}
+
+// ── Discount chip: "-20%" pill on a day's row ────────────────────────────────
+
+class _DiscountChip extends StatelessWidget {
+  const _DiscountChip({required this.percent});
+  final int percent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE53935),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.local_offer_rounded,
+              size: 10, color: Colors.white),
+          const SizedBox(width: 3),
+          Text(
+            '$percent% OFF',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              height: 1.0,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

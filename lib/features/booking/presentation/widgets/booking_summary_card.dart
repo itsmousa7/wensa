@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:future_riverpod/core/constants/app_typography.dart';
 
 // ---------------------------------------------------------------------------
 // Data model for a single detail row
@@ -29,8 +30,8 @@ class BookingSummaryRow {
 
 /// Polished booking summary card shared across all booking sections.
 ///
-/// Shows a gradient header, detail rows, an optional total-amount highlight,
-/// and a gradient action button.
+/// Shows a primary-colored header, detail rows, an optional total-amount
+/// highlight, and a primary-colored action button.
 class BookingSummaryCard extends StatelessWidget {
   const BookingSummaryCard({
     super.key,
@@ -89,6 +90,7 @@ class BookingSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -111,11 +113,7 @@ class BookingSummaryCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [colorScheme.primary, colorScheme.secondary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: colorScheme.primary,
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(24)),
             ),
@@ -199,14 +197,7 @@ class BookingSummaryCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         vertical: 14, horizontal: 16),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          colorScheme.primary.withValues(alpha: 0.08),
-                          colorScheme.secondary.withValues(alpha: 0.06),
-                        ],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
+                      color: colorScheme.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                           color: colorScheme.primary.withValues(alpha: 0.15)),
@@ -246,36 +237,16 @@ class BookingSummaryCard extends StatelessWidget {
 
                 const SizedBox(height: 18),
 
-                // Gradient action button
+                // Action button
                 SizedBox(
                   width: double.infinity,
                   height: 54,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: isLoading
-                          ? null
-                          : LinearGradient(
-                              colors: [
-                                colorScheme.primary,
-                                colorScheme.secondary,
-                              ],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
                       color: isLoading
                           ? colorScheme.surfaceContainerHighest
-                          : null,
+                          : colorScheme.primary,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: isLoading
-                          ? null
-                          : [
-                              BoxShadow(
-                                color:
-                                    colorScheme.primary.withValues(alpha: 0.45),
-                                blurRadius: 14,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
                     ),
                     child: Material(
                       color: Colors.transparent,
@@ -293,22 +264,16 @@ class BookingSummaryCard extends StatelessWidget {
                                     color: Colors.white,
                                   ),
                                 )
-                              : Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.lock_outline_rounded,
-                                        color: Colors.white, size: 18),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      actionLabel,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 15,
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                  ],
+                              : Text(
+                                  actionLabel,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                    letterSpacing: 0.3,
+                                    fontFamily: AppTypography.buttonFontFamily(
+                                        isAr ? 'ar' : 'en'),
+                                  ),
                                 ),
                         ),
                       ),
@@ -350,10 +315,10 @@ class _DetailRow extends StatelessWidget {
         row.valueWidget ??
             Text(
               row.value ?? '',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w500),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: colorScheme.outline,
+                  ),
             ),
       ],
     );

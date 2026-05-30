@@ -13,6 +13,7 @@ import 'package:future_riverpod/features/bookings_history/presentation/providers
     show bookingsRefreshProvider;
 import 'package:future_riverpod/features/discounts/domain/discount_math.dart';
 import 'package:future_riverpod/features/discounts/domain/models/auto_discount.dart';
+import 'package:future_riverpod/features/discounts/domain/models/merchant_discount.dart';
 import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
 import 'package:future_riverpod/features/discounts/presentation/providers/user_purchase_history_provider.dart';
 import 'package:future_riverpod/features/discounts/presentation/widgets/promo_code_field.dart';
@@ -125,27 +126,76 @@ class _BookingFormView extends ConsumerWidget {
     required int subtotal,
     required PromoApplied? promo,
     required AutoDiscount? autoDiscount,
+    int merchantHourlyAmount = 0,
+    String merchantHourlyLabel = '',
   }) {
+    // Promo stacks on top of the merchant hourly discount. The promo widget
+    // validates against `subtotal - merchantHourlyAmount`, so promo.finalAmount
+    // is already the post-stack total — anything else is the combined discount.
     if (promo != null) {
+      final totalDiscount = subtotal - promo.finalAmount;
+      final label = merchantHourlyAmount > 0
+          ? '$merchantHourlyLabel + ${promo.percent.round()}% · ${promo.code}'
+          : '${promo.percent.round()}% OFF · ${promo.code}';
       return (
-        discount: promo.discountAmount,
+        discount: totalDiscount,
         finalAmount: promo.finalAmount,
-        label: '${promo.percent.round()}% OFF · ${promo.code}',
+        label: label,
       );
     }
+    int autoAmt = 0;
+    String autoLabel = '';
     if (autoDiscount != null) {
       final r = computeDiscount(
         subtotal: subtotal,
         percent: autoDiscount.percent,
         maxCap: autoDiscount.maxDiscountAmount,
       );
+      autoAmt = r.discountAmount;
+      autoLabel = '${autoDiscount.percent.round()}% OFF';
+    }
+    if (merchantHourlyAmount > 0 && merchantHourlyAmount >= autoAmt) {
       return (
-        discount: r.discountAmount,
-        finalAmount: r.finalAmount,
-        label: '${autoDiscount.percent.round()}% OFF',
+        discount: merchantHourlyAmount,
+        finalAmount: subtotal - merchantHourlyAmount,
+        label: merchantHourlyLabel,
+      );
+    }
+    if (autoAmt > 0) {
+      return (
+        discount: autoAmt,
+        finalAmount: subtotal - autoAmt,
+        label: autoLabel,
       );
     }
     return (discount: 0, finalAmount: subtotal, label: '');
+  }
+
+  static ({int amount, String label}) _computeMerchantHourly({
+    required MerchantDiscount? discount,
+    required Set<String> slots,
+    required int pricePerHour,
+    required int subtotal,
+  }) {
+    if (discount == null || slots.isEmpty || pricePerHour <= 0) {
+      return (amount: 0, label: '');
+    }
+    if (!discount.isCurrentlyActive()) return (amount: 0, label: '');
+    var discountedHours = 0;
+    for (final s in slots) {
+      try {
+        final dt = DateTime.parse(s).toLocal();
+        if (!discount.appliesOnDate(dt)) continue;
+        if (discount.appliesAtHour(dt.hour)) discountedHours++;
+      } catch (_) {}
+    }
+    if (discountedHours == 0) return (amount: 0, label: '');
+    var amt =
+        (pricePerHour * discountedHours * discount.percent / 100).round();
+    final cap = discount.maxDiscountAmount;
+    if (cap != null && amt > cap) amt = cap.round();
+    if (amt > subtotal) amt = subtotal;
+    return (amount: amt, label: '${discount.percent.round()}% OFF');
   }
 
   @override
@@ -172,6 +222,9 @@ class _BookingFormView extends ConsumerWidget {
       merchantId: place?.merchantId,
       categoryId: place?.categoryId,
     )));
+    final merchantDiscount = ref.watch(placeMerchantDiscountProvider(
+      PlaceDiscountKey(placeId: placeId, merchantId: place?.merchantId),
+    ));
     final promo = ref.watch(_padelPromoProvider);
 
     final slotsAsync = selectedCourt != null
@@ -180,6 +233,13 @@ class _BookingFormView extends ConsumerWidget {
             date: bookingFormatDate(selectedDate),
           ))
         : null;
+
+    // Cancels any pending booking row + resets local submit state.
+    // Awaits the server-side cancel so the next "Proceed" doesn't hit the
+    // no-overlap exclusion constraint while the prior `pending` row is still
+    // alive. State is `loading` during the cancel, which disables Proceed.
+    Future<void> resetPendingBooking() =>
+        ref.read(bookingSubmitProvider.notifier).cancelPending();
 
     // Opens the payment webview for the given booking details.
     // Defined here so it can be reused by both ref.listen and onAction.
@@ -209,8 +269,18 @@ class _BookingFormView extends ConsumerWidget {
             context.go('/bookings/$bookingId');
           }
         },
-        onPaymentFailed: () {
-          ref.read(bookingSubmitProvider.notifier).reset();
+        onPaymentFailed: () async {
+          // Release the pending row so the slot frees up immediately instead
+          // of staying "booked" until the expiry cron. The slot is only ever
+          // held by a confirmed (paid) booking.
+          await ref.read(bookingSubmitProvider.notifier).cancelPending();
+          if (selectedCourt != null) {
+            ref.invalidate(availableSlotsProvider(
+              courtId: selectedCourt.id,
+              date: bookingFormatDate(selectedDate),
+            ));
+          }
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Payment failed. Please try again.'),
@@ -218,9 +288,21 @@ class _BookingFormView extends ConsumerWidget {
             ),
           );
         },
-        onPaymentCancelled: () {
-          // Don't reset — the pending booking stays alive so the user can
-          // retry without triggering a duplicate-booking constraint error.
+        onPaymentCancelled: () async {
+          // Release the pending row server-side the moment the user closes the
+          // webview, so the slot becomes available again right away (no hot
+          // restart, no waiting on the expiry cron). cancelPending() reads the
+          // booking id from the success state, cancels via cancel_booking, then
+          // resets local state to idle — which also re-enables Proceed only
+          // after the row is gone, so a retry can't race the stale pending row.
+          await ref.read(bookingSubmitProvider.notifier).cancelPending();
+          if (selectedCourt != null) {
+            ref.invalidate(availableSlotsProvider(
+              courtId: selectedCourt.id,
+              date: bookingFormatDate(selectedDate),
+            ));
+          }
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Payment cancelled.')),
           );
@@ -262,7 +344,7 @@ class _BookingFormView extends ConsumerWidget {
               ref.read(_selectedDateProvider.notifier).set(date);
               ref.read(_selectedSlotsProvider.notifier).clear();
               // Clear any pending booking when selection changes
-              ref.read(bookingSubmitProvider.notifier).reset();
+              resetPendingBooking();
             },
           ),
           const SizedBox(height: 28),
@@ -293,7 +375,7 @@ class _BookingFormView extends ConsumerWidget {
                       ref.read(_selectedCourtProvider.notifier).set(court);
                       ref.read(_selectedSlotsProvider.notifier).clear();
                       // Clear any pending booking when selection changes
-                      ref.read(bookingSubmitProvider.notifier).reset();
+                      resetPendingBooking();
                     },
                   ),
           ),
@@ -350,14 +432,13 @@ class _BookingFormView extends ConsumerWidget {
                               child: SlotGrid(
                                 slots: slots,
                                 selectedStartTimes: selectedSlots,
+                                discount: merchantDiscount,
                                 onTap: (slot) {
                                   ref
                                       .read(_selectedSlotsProvider.notifier)
                                       .toggle(slot.startsAt);
                                   // Clear any pending booking when selection changes
-                                  ref
-                                      .read(bookingSubmitProvider.notifier)
-                                      .reset();
+                                  resetPendingBooking();
                                 },
                               ),
                             );
@@ -392,9 +473,19 @@ class _BookingFormView extends ConsumerWidget {
                       final hours = selectedSlots.length;
                       final subtotal =
                           (selectedCourt.pricePerHour * hours).toInt();
-                      // Re-validate promo on subtotal change.
+                      final merchantHourly =
+                          _BookingFormView._computeMerchantHourly(
+                        discount: merchantDiscount,
+                        slots: selectedSlots,
+                        pricePerHour: selectedCourt.pricePerHour.toInt(),
+                        subtotal: subtotal,
+                      );
+                      // Promo stacks on top of the hourly discount, so it
+                      // applies to (subtotal − merchantHourly).
+                      final promoBase = subtotal - merchantHourly.amount;
                       if (promo != null &&
-                          promo.finalAmount + promo.discountAmount != subtotal) {
+                          promo.finalAmount + promo.discountAmount !=
+                              promoBase) {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           ref.read(_padelPromoProvider.notifier).set(null);
                         });
@@ -403,6 +494,8 @@ class _BookingFormView extends ConsumerWidget {
                         subtotal: subtotal,
                         promo: promo,
                         autoDiscount: autoDiscount,
+                        merchantHourlyAmount: merchantHourly.amount,
+                        merchantHourlyLabel: merchantHourly.label,
                       );
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -423,6 +516,9 @@ class _BookingFormView extends ConsumerWidget {
                                     .bodyMedium
                                     ?.copyWith(
                                       fontWeight: FontWeight.w600,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outline,
                                     ),
                               ),
                             ),
@@ -452,18 +548,21 @@ class _BookingFormView extends ConsumerWidget {
                               isAr ? 'المبلغ الإجمالي' : 'Total Amount',
                           totalValue:
                               _BookingFormView._formatIqd(eff.finalAmount),
-                          extraSlot: subtotal > 0
+                          extraSlot: promoBase > 0
                               ? PromoCodeField(
                                   orderType: 'bookings',
-                                  subtotal: subtotal,
+                                  subtotal: promoBase,
                                   placeId: placeId,
                                   merchantId: place?.merchantId,
                                   categoryId: place?.categoryId,
                                   applied: promo,
                                   isAr: isAr,
-                                  onChange: (p) => ref
-                                      .read(_padelPromoProvider.notifier)
-                                      .set(p),
+                                  onChange: (p) {
+                                    ref
+                                        .read(_padelPromoProvider.notifier)
+                                        .set(p);
+                                    resetPendingBooking();
+                                  },
                                 )
                               : null,
                           actionLabel:
@@ -546,21 +645,11 @@ class _CourtsRow extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? LinearGradient(
-                          colors: [
-                            colorScheme.primary,
-                            colorScheme.secondary
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : null,
-                  color: isSelected ? null : colorScheme.surface,
+                  color: isSelected ? colorScheme.primary : colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected
-                        ? Colors.transparent
+                        ? colorScheme.primary
                         : colorScheme.outline.withValues(alpha: 0.3),
                   ),
                   boxShadow: isSelected

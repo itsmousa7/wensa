@@ -13,8 +13,6 @@ import 'package:future_riverpod/features/home/presentation/providers/home_provid
 import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-const _kOrange = Color(0xFFFF5E2C);
-const _kOrange2 = Color(0xFFFF8A5C);
 const _kSurface2 = Color(0xFF1E1E2E);
 const _kText = Color(0xFFFFFFFF);
 
@@ -115,13 +113,10 @@ class _HotEventsSectionState extends ConsumerState<HotEventsSection> {
       itemCount: null,
       onPageChanged: (abs) => setState(() => _eventIndex = abs % events.length),
       itemBuilder: (_, abs) {
-        final i = abs % events.length;
-        final event = events[i];
+        final event = events[abs % events.length];
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: i == 0
-              ? _HeroEventCard(event: event, isAr: _isAr, tt: _tt)
-              : _SmallEventCard(event: event, isAr: _isAr, tt: _tt),
+          child: _HeroEventCard(event: event, isAr: _isAr, tt: _tt),
         );
       },
     ),
@@ -279,13 +274,11 @@ class _HeroEventCard extends StatelessWidget {
                             vertical: 7,
                           ),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [_kOrange, _kOrange2],
-                            ),
+                            color: cs.primary,
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: _kOrange.withValues(alpha: 0.5),
+                                color: cs.primary.withValues(alpha: 0.5),
                                 blurRadius: 12,
                               ),
                             ],
@@ -310,95 +303,6 @@ class _HeroEventCard extends StatelessWidget {
   }
 }
 
-class _SmallEventCard extends StatelessWidget {
-  const _SmallEventCard({
-    required this.event,
-    required this.isAr,
-    required this.tt,
-  });
-
-  final EventModel event;
-  final bool isAr;
-  final TextTheme tt;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return GestureDetector(
-      onTap: () => context.pushNamed(
-        RouteNames.eventDetails,
-        queryParameters: {'eventId': event.id},
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          color: _kSurface2,
-        ),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: event.coverImageUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: event.coverImageUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (_, _) => Container(color: _kSurface2),
-                        errorWidget: (_, _, _) => Container(color: _kSurface2),
-                      )
-                    : Container(color: _kSurface2),
-              ),
-            ),
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.85),
-                      ],
-                      stops: const [0.4, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isAr ? event.titleAr : event.titleEn,
-                      style: tt.titleSmall?.copyWith(color: _kText),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '${_formatDate(event.startDate)} · ${event.city ?? ''}',
-                      style: tt.titleSmall?.copyWith(
-                        color: cs.onTertiary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 String _formatDate(String isoDate) {
   try {

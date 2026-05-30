@@ -5,7 +5,8 @@ import 'package:future_riverpod/features/booking/presentation/providers/availabi
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
-import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart' show bookingsRefreshProvider;
+import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
+    show bookingsRefreshProvider;
 import 'package:future_riverpod/features/discounts/presentation/providers/user_purchase_history_provider.dart';
 import 'package:go_router/go_router.dart';
 
@@ -38,20 +39,25 @@ class _RestaurantSeatingNotifier extends Notifier<RestaurantSeatingOption?> {
 }
 
 final _restaurantSelectedDateProvider =
-    NotifierProvider<_RestaurantDateNotifier, DateTime>(
-        _RestaurantDateNotifier.new);
+    NotifierProvider.autoDispose<_RestaurantDateNotifier, DateTime>(
+      _RestaurantDateNotifier.new,
+    );
 
 final _restaurantSelectedSlotProvider =
-    NotifierProvider<_RestaurantSlotNotifier, String?>(
-        _RestaurantSlotNotifier.new);
+    NotifierProvider.autoDispose<_RestaurantSlotNotifier, String?>(
+      _RestaurantSlotNotifier.new,
+    );
 
 final _restaurantPartySizeProvider =
-    NotifierProvider<_RestaurantPartySizeNotifier, int>(
-        _RestaurantPartySizeNotifier.new);
+    NotifierProvider.autoDispose<_RestaurantPartySizeNotifier, int>(
+      _RestaurantPartySizeNotifier.new,
+    );
 
 final _restaurantSeatingOptionProvider =
-    NotifierProvider<_RestaurantSeatingNotifier, RestaurantSeatingOption?>(
-        _RestaurantSeatingNotifier.new);
+    NotifierProvider.autoDispose<
+      _RestaurantSeatingNotifier,
+      RestaurantSeatingOption?
+    >(_RestaurantSeatingNotifier.new);
 
 // ---------------------------------------------------------------------------
 // RestaurantSection
@@ -92,10 +98,8 @@ class RestaurantSection extends ConsumerWidget {
     return submitState.maybeWhen(
       success: (bookingId, paymentUrl, holdUntil, waylReferenceId) =>
           const _RestaurantPendingView(),
-      orElse: () => _RestaurantBookingFormView(
-        placeId: placeId,
-        placeName: placeName,
-      ),
+      orElse: () =>
+          _RestaurantBookingFormView(placeId: placeId, placeName: placeName),
     );
   }
 }
@@ -133,8 +137,10 @@ class _RestaurantBookingFormView extends ConsumerWidget {
     final partySize = ref.watch(_restaurantPartySizeProvider);
     final selectedSeating = ref.watch(_restaurantSeatingOptionProvider);
     final submitState = ref.watch(bookingSubmitProvider);
-    final isLoading =
-        submitState.maybeWhen(loading: () => true, orElse: () => false);
+    final isLoading = submitState.maybeWhen(
+      loading: () => true,
+      orElse: () => false,
+    );
     final seatingAsync = ref.watch(seatingOptionsProvider(placeId));
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final closedDatesAsync = ref.watch(placeClosedDatesProvider(placeId));
@@ -182,10 +188,10 @@ class _RestaurantBookingFormView extends ConsumerWidget {
                     ? 'لا توجد أوقات متاحة لهذا التاريخ.'
                     : 'No available times for this date.',
                 style: TextStyle(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.5)),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
               ),
             )
           else
@@ -227,10 +233,13 @@ class _RestaurantBookingFormView extends ConsumerWidget {
             child: Card(
               margin: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -245,8 +254,8 @@ class _RestaurantBookingFormView extends ConsumerWidget {
                           onPressed: partySize <= 1
                               ? null
                               : () => ref
-                                  .read(_restaurantPartySizeProvider.notifier)
-                                  .set(partySize - 1),
+                                    .read(_restaurantPartySizeProvider.notifier)
+                                    .set(partySize - 1),
                         ),
                         SizedBox(
                           width: 36,
@@ -261,8 +270,8 @@ class _RestaurantBookingFormView extends ConsumerWidget {
                           onPressed: partySize >= 20
                               ? null
                               : () => ref
-                                  .read(_restaurantPartySizeProvider.notifier)
-                                  .set(partySize + 1),
+                                    .read(_restaurantPartySizeProvider.notifier)
+                                    .set(partySize + 1),
                         ),
                       ],
                     ),
@@ -283,7 +292,8 @@ class _RestaurantBookingFormView extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   BookingSectionLabel(
-                      isAr ? 'تفضيل الجلوس' : 'Seating Preference'),
+                    isAr ? 'تفضيل الجلوس' : 'Seating Preference',
+                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Wrap(
@@ -292,11 +302,11 @@ class _RestaurantBookingFormView extends ConsumerWidget {
                       children: options.map((option) {
                         final label = isAr
                             ? (option.labelAr.isNotEmpty
-                                ? option.labelAr
-                                : option.labelEn)
+                                  ? option.labelAr
+                                  : option.labelEn)
                             : (option.labelEn.isNotEmpty
-                                ? option.labelEn
-                                : option.labelAr);
+                                  ? option.labelEn
+                                  : option.labelAr);
                         final isSelected = selectedSeating?.id == option.id;
                         return ChoiceChip(
                           label: Text(label),
@@ -322,13 +332,16 @@ class _RestaurantBookingFormView extends ConsumerWidget {
             transitionBuilder: (child, animation) => FadeTransition(
               opacity: animation,
               child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.08),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
+                position:
+                    Tween<Offset>(
+                      begin: const Offset(0, 0.08),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      ),
+                    ),
                 child: child,
               ),
             ),
@@ -342,8 +355,10 @@ class _RestaurantBookingFormView extends ConsumerWidget {
                         BookingSummaryRow(
                           icon: Icons.calendar_today_rounded,
                           label: isAr ? 'التاريخ' : 'Date',
-                          value: bookingDisplayDate(selectedDate,
-                              isArabic: isAr),
+                          value: bookingDisplayDate(
+                            selectedDate,
+                            isArabic: isAr,
+                          ),
                         ),
                         BookingSummaryRow(
                           icon: Icons.schedule_rounded,
@@ -363,11 +378,11 @@ class _RestaurantBookingFormView extends ConsumerWidget {
                             label: isAr ? 'الجلوس' : 'Seating',
                             value: isAr
                                 ? (selectedSeating.labelAr.isNotEmpty
-                                    ? selectedSeating.labelAr
-                                    : selectedSeating.labelEn)
+                                      ? selectedSeating.labelAr
+                                      : selectedSeating.labelEn)
                                 : (selectedSeating.labelEn.isNotEmpty
-                                    ? selectedSeating.labelEn
-                                    : selectedSeating.labelAr),
+                                      ? selectedSeating.labelEn
+                                      : selectedSeating.labelAr),
                           ),
                       ],
                       // No total — restaurant uses request-based booking
@@ -463,15 +478,20 @@ class _ClosedDay extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(Icons.block_rounded,
-              size: 36, color: cs.error.withValues(alpha: 0.45)),
+          Icon(
+            Icons.block_rounded,
+            size: 36,
+            color: cs.error.withValues(alpha: 0.45),
+          ),
           const SizedBox(height: 8),
           Text(
             isAr
                 ? 'هذا المكان مغلق في هذا التاريخ.'
                 : 'This place is closed on this date.',
             style: TextStyle(
-                color: cs.onSurface.withValues(alpha: 0.5), fontSize: 13),
+              color: cs.onSurface.withValues(alpha: 0.5),
+              fontSize: 13,
+            ),
           ),
         ],
       ),
@@ -620,13 +640,17 @@ class _TimeSlotCard extends StatelessWidget {
                             vertical: 2.5,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B).withValues(alpha: 0.18),
+                            color: const Color(
+                              0xFFF59E0B,
+                            ).withValues(alpha: isDark ? 0.22 : 0.18),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             isAr ? 'منتهي' : 'Expired',
                             style: tt.labelSmall?.copyWith(
-                              color: const Color(0xFF92400E),
+                              color: isDark
+                                  ? const Color(0xFFFBBF24)
+                                  : const Color(0xFF92400E),
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.1,
                             ),
@@ -642,9 +666,7 @@ class _TimeSlotCard extends StatelessWidget {
                   AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 200),
                     style: (tt.labelSmall ?? const TextStyle()).copyWith(
-                      color: isSelected
-                          ? cs.primary
-                          : currencyColor,
+                      color: isSelected ? cs.primary : currencyColor,
                       letterSpacing: 0.5,
                       fontWeight: FontWeight.w600,
                     ),

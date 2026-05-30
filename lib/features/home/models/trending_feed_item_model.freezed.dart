@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TrendingFeedItemModel {
 
- String get id; String get type;// 'place' | 'event'
+ String get id; String? get merchantId; String get type;// 'place' | 'event'
  String get titleAr; String get titleEn; String? get coverImageUrl; String? get logoUrl; String? get city; String? get subtitleAr;// منطقة للمكان / تاريخ للحدث
  String? get subtitleEn; double get hotnessScore; bool get isVerified; bool get isFeatured; String? get eventStartDate;// null إذا كان place
  double? get ticketPrice;
@@ -31,16 +31,16 @@ $TrendingFeedItemModelCopyWith<TrendingFeedItemModel> get copyWith => _$Trending
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrendingFeedItemModel&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.titleAr, titleAr) || other.titleAr == titleAr)&&(identical(other.titleEn, titleEn) || other.titleEn == titleEn)&&(identical(other.coverImageUrl, coverImageUrl) || other.coverImageUrl == coverImageUrl)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.city, city) || other.city == city)&&(identical(other.subtitleAr, subtitleAr) || other.subtitleAr == subtitleAr)&&(identical(other.subtitleEn, subtitleEn) || other.subtitleEn == subtitleEn)&&(identical(other.hotnessScore, hotnessScore) || other.hotnessScore == hotnessScore)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.isFeatured, isFeatured) || other.isFeatured == isFeatured)&&(identical(other.eventStartDate, eventStartDate) || other.eventStartDate == eventStartDate)&&(identical(other.ticketPrice, ticketPrice) || other.ticketPrice == ticketPrice));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrendingFeedItemModel&&(identical(other.id, id) || other.id == id)&&(identical(other.merchantId, merchantId) || other.merchantId == merchantId)&&(identical(other.type, type) || other.type == type)&&(identical(other.titleAr, titleAr) || other.titleAr == titleAr)&&(identical(other.titleEn, titleEn) || other.titleEn == titleEn)&&(identical(other.coverImageUrl, coverImageUrl) || other.coverImageUrl == coverImageUrl)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.city, city) || other.city == city)&&(identical(other.subtitleAr, subtitleAr) || other.subtitleAr == subtitleAr)&&(identical(other.subtitleEn, subtitleEn) || other.subtitleEn == subtitleEn)&&(identical(other.hotnessScore, hotnessScore) || other.hotnessScore == hotnessScore)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.isFeatured, isFeatured) || other.isFeatured == isFeatured)&&(identical(other.eventStartDate, eventStartDate) || other.eventStartDate == eventStartDate)&&(identical(other.ticketPrice, ticketPrice) || other.ticketPrice == ticketPrice));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,type,titleAr,titleEn,coverImageUrl,logoUrl,city,subtitleAr,subtitleEn,hotnessScore,isVerified,isFeatured,eventStartDate,ticketPrice);
+int get hashCode => Object.hash(runtimeType,id,merchantId,type,titleAr,titleEn,coverImageUrl,logoUrl,city,subtitleAr,subtitleEn,hotnessScore,isVerified,isFeatured,eventStartDate,ticketPrice);
 
 @override
 String toString() {
-  return 'TrendingFeedItemModel(id: $id, type: $type, titleAr: $titleAr, titleEn: $titleEn, coverImageUrl: $coverImageUrl, logoUrl: $logoUrl, city: $city, subtitleAr: $subtitleAr, subtitleEn: $subtitleEn, hotnessScore: $hotnessScore, isVerified: $isVerified, isFeatured: $isFeatured, eventStartDate: $eventStartDate, ticketPrice: $ticketPrice)';
+  return 'TrendingFeedItemModel(id: $id, merchantId: $merchantId, type: $type, titleAr: $titleAr, titleEn: $titleEn, coverImageUrl: $coverImageUrl, logoUrl: $logoUrl, city: $city, subtitleAr: $subtitleAr, subtitleEn: $subtitleEn, hotnessScore: $hotnessScore, isVerified: $isVerified, isFeatured: $isFeatured, eventStartDate: $eventStartDate, ticketPrice: $ticketPrice)';
 }
 
 
@@ -51,7 +51,7 @@ abstract mixin class $TrendingFeedItemModelCopyWith<$Res>  {
   factory $TrendingFeedItemModelCopyWith(TrendingFeedItemModel value, $Res Function(TrendingFeedItemModel) _then) = _$TrendingFeedItemModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String type, String titleAr, String titleEn, String? coverImageUrl, String? logoUrl, String? city, String? subtitleAr, String? subtitleEn, double hotnessScore, bool isVerified, bool isFeatured, String? eventStartDate, double? ticketPrice
+ String id, String? merchantId, String type, String titleAr, String titleEn, String? coverImageUrl, String? logoUrl, String? city, String? subtitleAr, String? subtitleEn, double hotnessScore, bool isVerified, bool isFeatured, String? eventStartDate, double? ticketPrice
 });
 
 
@@ -68,10 +68,11 @@ class _$TrendingFeedItemModelCopyWithImpl<$Res>
 
 /// Create a copy of TrendingFeedItemModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? type = null,Object? titleAr = null,Object? titleEn = null,Object? coverImageUrl = freezed,Object? logoUrl = freezed,Object? city = freezed,Object? subtitleAr = freezed,Object? subtitleEn = freezed,Object? hotnessScore = null,Object? isVerified = null,Object? isFeatured = null,Object? eventStartDate = freezed,Object? ticketPrice = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? merchantId = freezed,Object? type = null,Object? titleAr = null,Object? titleEn = null,Object? coverImageUrl = freezed,Object? logoUrl = freezed,Object? city = freezed,Object? subtitleAr = freezed,Object? subtitleEn = freezed,Object? hotnessScore = null,Object? isVerified = null,Object? isFeatured = null,Object? eventStartDate = freezed,Object? ticketPrice = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as String,merchantId: freezed == merchantId ? _self.merchantId : merchantId // ignore: cast_nullable_to_non_nullable
+as String?,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as String,titleAr: null == titleAr ? _self.titleAr : titleAr // ignore: cast_nullable_to_non_nullable
 as String,titleEn: null == titleEn ? _self.titleEn : titleEn // ignore: cast_nullable_to_non_nullable
 as String,coverImageUrl: freezed == coverImageUrl ? _self.coverImageUrl : coverImageUrl // ignore: cast_nullable_to_non_nullable
@@ -169,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String type,  String titleAr,  String titleEn,  String? coverImageUrl,  String? logoUrl,  String? city,  String? subtitleAr,  String? subtitleEn,  double hotnessScore,  bool isVerified,  bool isFeatured,  String? eventStartDate,  double? ticketPrice)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? merchantId,  String type,  String titleAr,  String titleEn,  String? coverImageUrl,  String? logoUrl,  String? city,  String? subtitleAr,  String? subtitleEn,  double hotnessScore,  bool isVerified,  bool isFeatured,  String? eventStartDate,  double? ticketPrice)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TrendingFeedItemModel() when $default != null:
-return $default(_that.id,_that.type,_that.titleAr,_that.titleEn,_that.coverImageUrl,_that.logoUrl,_that.city,_that.subtitleAr,_that.subtitleEn,_that.hotnessScore,_that.isVerified,_that.isFeatured,_that.eventStartDate,_that.ticketPrice);case _:
+return $default(_that.id,_that.merchantId,_that.type,_that.titleAr,_that.titleEn,_that.coverImageUrl,_that.logoUrl,_that.city,_that.subtitleAr,_that.subtitleEn,_that.hotnessScore,_that.isVerified,_that.isFeatured,_that.eventStartDate,_that.ticketPrice);case _:
   return orElse();
 
 }
@@ -190,10 +191,10 @@ return $default(_that.id,_that.type,_that.titleAr,_that.titleEn,_that.coverImage
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String type,  String titleAr,  String titleEn,  String? coverImageUrl,  String? logoUrl,  String? city,  String? subtitleAr,  String? subtitleEn,  double hotnessScore,  bool isVerified,  bool isFeatured,  String? eventStartDate,  double? ticketPrice)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? merchantId,  String type,  String titleAr,  String titleEn,  String? coverImageUrl,  String? logoUrl,  String? city,  String? subtitleAr,  String? subtitleEn,  double hotnessScore,  bool isVerified,  bool isFeatured,  String? eventStartDate,  double? ticketPrice)  $default,) {final _that = this;
 switch (_that) {
 case _TrendingFeedItemModel():
-return $default(_that.id,_that.type,_that.titleAr,_that.titleEn,_that.coverImageUrl,_that.logoUrl,_that.city,_that.subtitleAr,_that.subtitleEn,_that.hotnessScore,_that.isVerified,_that.isFeatured,_that.eventStartDate,_that.ticketPrice);case _:
+return $default(_that.id,_that.merchantId,_that.type,_that.titleAr,_that.titleEn,_that.coverImageUrl,_that.logoUrl,_that.city,_that.subtitleAr,_that.subtitleEn,_that.hotnessScore,_that.isVerified,_that.isFeatured,_that.eventStartDate,_that.ticketPrice);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -210,10 +211,10 @@ return $default(_that.id,_that.type,_that.titleAr,_that.titleEn,_that.coverImage
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String type,  String titleAr,  String titleEn,  String? coverImageUrl,  String? logoUrl,  String? city,  String? subtitleAr,  String? subtitleEn,  double hotnessScore,  bool isVerified,  bool isFeatured,  String? eventStartDate,  double? ticketPrice)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? merchantId,  String type,  String titleAr,  String titleEn,  String? coverImageUrl,  String? logoUrl,  String? city,  String? subtitleAr,  String? subtitleEn,  double hotnessScore,  bool isVerified,  bool isFeatured,  String? eventStartDate,  double? ticketPrice)?  $default,) {final _that = this;
 switch (_that) {
 case _TrendingFeedItemModel() when $default != null:
-return $default(_that.id,_that.type,_that.titleAr,_that.titleEn,_that.coverImageUrl,_that.logoUrl,_that.city,_that.subtitleAr,_that.subtitleEn,_that.hotnessScore,_that.isVerified,_that.isFeatured,_that.eventStartDate,_that.ticketPrice);case _:
+return $default(_that.id,_that.merchantId,_that.type,_that.titleAr,_that.titleEn,_that.coverImageUrl,_that.logoUrl,_that.city,_that.subtitleAr,_that.subtitleEn,_that.hotnessScore,_that.isVerified,_that.isFeatured,_that.eventStartDate,_that.ticketPrice);case _:
   return null;
 
 }
@@ -225,10 +226,11 @@ return $default(_that.id,_that.type,_that.titleAr,_that.titleEn,_that.coverImage
 @JsonSerializable()
 
 class _TrendingFeedItemModel implements TrendingFeedItemModel {
-  const _TrendingFeedItemModel({this.id = '', this.type = 'place', this.titleAr = '', this.titleEn = '', this.coverImageUrl, this.logoUrl, this.city, this.subtitleAr, this.subtitleEn, this.hotnessScore = 0.0, this.isVerified = false, this.isFeatured = false, this.eventStartDate, this.ticketPrice});
+  const _TrendingFeedItemModel({this.id = '', this.merchantId, this.type = 'place', this.titleAr = '', this.titleEn = '', this.coverImageUrl, this.logoUrl, this.city, this.subtitleAr, this.subtitleEn, this.hotnessScore = 0.0, this.isVerified = false, this.isFeatured = false, this.eventStartDate, this.ticketPrice});
   factory _TrendingFeedItemModel.fromJson(Map<String, dynamic> json) => _$TrendingFeedItemModelFromJson(json);
 
 @override@JsonKey() final  String id;
+@override final  String? merchantId;
 @override@JsonKey() final  String type;
 // 'place' | 'event'
 @override@JsonKey() final  String titleAr;
@@ -259,16 +261,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrendingFeedItemModel&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.titleAr, titleAr) || other.titleAr == titleAr)&&(identical(other.titleEn, titleEn) || other.titleEn == titleEn)&&(identical(other.coverImageUrl, coverImageUrl) || other.coverImageUrl == coverImageUrl)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.city, city) || other.city == city)&&(identical(other.subtitleAr, subtitleAr) || other.subtitleAr == subtitleAr)&&(identical(other.subtitleEn, subtitleEn) || other.subtitleEn == subtitleEn)&&(identical(other.hotnessScore, hotnessScore) || other.hotnessScore == hotnessScore)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.isFeatured, isFeatured) || other.isFeatured == isFeatured)&&(identical(other.eventStartDate, eventStartDate) || other.eventStartDate == eventStartDate)&&(identical(other.ticketPrice, ticketPrice) || other.ticketPrice == ticketPrice));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TrendingFeedItemModel&&(identical(other.id, id) || other.id == id)&&(identical(other.merchantId, merchantId) || other.merchantId == merchantId)&&(identical(other.type, type) || other.type == type)&&(identical(other.titleAr, titleAr) || other.titleAr == titleAr)&&(identical(other.titleEn, titleEn) || other.titleEn == titleEn)&&(identical(other.coverImageUrl, coverImageUrl) || other.coverImageUrl == coverImageUrl)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.city, city) || other.city == city)&&(identical(other.subtitleAr, subtitleAr) || other.subtitleAr == subtitleAr)&&(identical(other.subtitleEn, subtitleEn) || other.subtitleEn == subtitleEn)&&(identical(other.hotnessScore, hotnessScore) || other.hotnessScore == hotnessScore)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.isFeatured, isFeatured) || other.isFeatured == isFeatured)&&(identical(other.eventStartDate, eventStartDate) || other.eventStartDate == eventStartDate)&&(identical(other.ticketPrice, ticketPrice) || other.ticketPrice == ticketPrice));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,type,titleAr,titleEn,coverImageUrl,logoUrl,city,subtitleAr,subtitleEn,hotnessScore,isVerified,isFeatured,eventStartDate,ticketPrice);
+int get hashCode => Object.hash(runtimeType,id,merchantId,type,titleAr,titleEn,coverImageUrl,logoUrl,city,subtitleAr,subtitleEn,hotnessScore,isVerified,isFeatured,eventStartDate,ticketPrice);
 
 @override
 String toString() {
-  return 'TrendingFeedItemModel(id: $id, type: $type, titleAr: $titleAr, titleEn: $titleEn, coverImageUrl: $coverImageUrl, logoUrl: $logoUrl, city: $city, subtitleAr: $subtitleAr, subtitleEn: $subtitleEn, hotnessScore: $hotnessScore, isVerified: $isVerified, isFeatured: $isFeatured, eventStartDate: $eventStartDate, ticketPrice: $ticketPrice)';
+  return 'TrendingFeedItemModel(id: $id, merchantId: $merchantId, type: $type, titleAr: $titleAr, titleEn: $titleEn, coverImageUrl: $coverImageUrl, logoUrl: $logoUrl, city: $city, subtitleAr: $subtitleAr, subtitleEn: $subtitleEn, hotnessScore: $hotnessScore, isVerified: $isVerified, isFeatured: $isFeatured, eventStartDate: $eventStartDate, ticketPrice: $ticketPrice)';
 }
 
 
@@ -279,7 +281,7 @@ abstract mixin class _$TrendingFeedItemModelCopyWith<$Res> implements $TrendingF
   factory _$TrendingFeedItemModelCopyWith(_TrendingFeedItemModel value, $Res Function(_TrendingFeedItemModel) _then) = __$TrendingFeedItemModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String type, String titleAr, String titleEn, String? coverImageUrl, String? logoUrl, String? city, String? subtitleAr, String? subtitleEn, double hotnessScore, bool isVerified, bool isFeatured, String? eventStartDate, double? ticketPrice
+ String id, String? merchantId, String type, String titleAr, String titleEn, String? coverImageUrl, String? logoUrl, String? city, String? subtitleAr, String? subtitleEn, double hotnessScore, bool isVerified, bool isFeatured, String? eventStartDate, double? ticketPrice
 });
 
 
@@ -296,10 +298,11 @@ class __$TrendingFeedItemModelCopyWithImpl<$Res>
 
 /// Create a copy of TrendingFeedItemModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? type = null,Object? titleAr = null,Object? titleEn = null,Object? coverImageUrl = freezed,Object? logoUrl = freezed,Object? city = freezed,Object? subtitleAr = freezed,Object? subtitleEn = freezed,Object? hotnessScore = null,Object? isVerified = null,Object? isFeatured = null,Object? eventStartDate = freezed,Object? ticketPrice = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? merchantId = freezed,Object? type = null,Object? titleAr = null,Object? titleEn = null,Object? coverImageUrl = freezed,Object? logoUrl = freezed,Object? city = freezed,Object? subtitleAr = freezed,Object? subtitleEn = freezed,Object? hotnessScore = null,Object? isVerified = null,Object? isFeatured = null,Object? eventStartDate = freezed,Object? ticketPrice = freezed,}) {
   return _then(_TrendingFeedItemModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as String,merchantId: freezed == merchantId ? _self.merchantId : merchantId // ignore: cast_nullable_to_non_nullable
+as String?,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as String,titleAr: null == titleAr ? _self.titleAr : titleAr // ignore: cast_nullable_to_non_nullable
 as String,titleEn: null == titleEn ? _self.titleEn : titleEn // ignore: cast_nullable_to_non_nullable
 as String,coverImageUrl: freezed == coverImageUrl ? _self.coverImageUrl : coverImageUrl // ignore: cast_nullable_to_non_nullable

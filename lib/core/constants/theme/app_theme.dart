@@ -237,7 +237,7 @@ class AppTheme {
       // Navigation Bar Theme (Material 3)
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.white,
-        indicatorColor: AppColors.lightGreenPrimary.withOpacity(0.2),
+        indicatorColor: AppColors.lightGreenPrimary.withValues(alpha: 0.2),
         elevation: AppSpacing.elevationSM,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -288,7 +288,7 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.lightSecondary,
         selectedColor: AppColors.lightGreenPrimary,
-        disabledColor: AppColors.lightSecondary.withOpacity(0.5),
+        disabledColor: AppColors.lightSecondary.withValues(alpha: 0.5),
         labelStyle: textTheme.bodySmall,
         padding: AppSpacing.paddingAllSM,
         shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusSM),
@@ -449,7 +449,7 @@ class AppTheme {
         disabledBorder: OutlineInputBorder(
           borderRadius: AppSpacing.borderRadiusMD,
           borderSide: BorderSide(
-            color: AppColors.darkSecondary.withOpacity(0.5),
+            color: AppColors.darkSecondary.withValues(alpha: 0.5),
             width: AppSpacing.borderThin,
           ),
         ),
@@ -572,7 +572,7 @@ class AppTheme {
       // Navigation Bar Theme (Material 3)
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.darkSecondary,
-        indicatorColor: AppColors.darkGreenPrimary.withOpacity(0.3),
+        indicatorColor: AppColors.darkGreenPrimary.withValues(alpha: 0.3),
         elevation: AppSpacing.elevationSM,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -623,7 +623,7 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.darkSecondary,
         selectedColor: AppColors.darkGreenPrimary,
-        disabledColor: AppColors.darkSecondary.withOpacity(0.5),
+        disabledColor: AppColors.darkSecondary.withValues(alpha: 0.5),
         labelStyle: textTheme.bodySmall,
         padding: AppSpacing.paddingAllSM,
         shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusSM),

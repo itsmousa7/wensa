@@ -8,11 +8,13 @@ part of 'seat.dart';
 
 _Seat _$SeatFromJson(Map<String, dynamic> json) => _Seat(
   seatId: json['seatId'] as String? ?? '',
+  sectionId: json['sectionId'] as String? ?? '',
   row: json['row'] as String? ?? '',
   seat: json['seat'] as String? ?? '',
   tierKey: json['tierKey'] as String? ?? '',
   x: (json['x'] as num?)?.toInt() ?? 0,
   y: (json['y'] as num?)?.toInt() ?? 0,
+  priceIqd: (json['priceIqd'] as num?)?.toInt() ?? 0,
   status:
       $enumDecodeNullable(_$SeatStatusEnumMap, json['status']) ??
       SeatStatus.free,
@@ -20,11 +22,13 @@ _Seat _$SeatFromJson(Map<String, dynamic> json) => _Seat(
 
 Map<String, dynamic> _$SeatToJson(_Seat instance) => <String, dynamic>{
   'seatId': instance.seatId,
+  'sectionId': instance.sectionId,
   'row': instance.row,
   'seat': instance.seat,
   'tierKey': instance.tierKey,
   'x': instance.x,
   'y': instance.y,
+  'priceIqd': instance.priceIqd,
   'status': _$SeatStatusEnumMap[instance.status]!,
 };
 

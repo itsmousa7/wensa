@@ -9,6 +9,7 @@ part of 'event_tier.dart';
 _EventTier _$EventTierFromJson(Map<String, dynamic> json) => _EventTier(
   id: json['id'] as String? ?? '',
   eventId: json['eventId'] as String? ?? '',
+  tierKey: json['tierKey'] as String? ?? '',
   nameAr: json['nameAr'] as String? ?? '',
   nameEn: json['nameEn'] as String? ?? '',
   priceIqd: (json['priceIqd'] as num?)?.toInt() ?? 0,
@@ -20,6 +21,7 @@ Map<String, dynamic> _$EventTierToJson(_EventTier instance) =>
     <String, dynamic>{
       'id': instance.id,
       'eventId': instance.eventId,
+      'tierKey': instance.tierKey,
       'nameAr': instance.nameAr,
       'nameEn': instance.nameEn,
       'priceIqd': instance.priceIqd,

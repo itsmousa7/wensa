@@ -101,7 +101,7 @@ class BookingDateStrip extends StatefulWidget {
 class _BookingDateStripState extends State<BookingDateStrip> {
   late final ScrollController _scroll;
 
-  static const double _itemW = 60;
+  static const double _itemW = 76;
   static const double _spacing = 8;
   static const double _padding = 16;
 
@@ -130,16 +130,20 @@ class _BookingDateStripState extends State<BookingDateStrip> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
-    // Short 2-3 char abbreviations that fit in a 60px pill
-    const dayAbbrevEn = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    // Arabic 2-letter abbreviations
-    const dayAbbrevAr = ['إث', 'ث', 'أر', 'خ', 'ج', 'س', 'أح'];
-
-    final dayAbbrev = isAr ? dayAbbrevAr : dayAbbrevEn;
     final todayLabel = isAr ? 'اليوم' : 'Today';
 
+    const monthEn = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    const monthAr = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+    ];
+    final months = isAr ? monthAr : monthEn;
+
     return SizedBox(
-      height: 96,
+      height: 78,
       child: ListView.builder(
         controller: _scroll,
         scrollDirection: Axis.horizontal,
@@ -155,64 +159,54 @@ class _BookingDateStripState extends State<BookingDateStrip> {
           final isToday = i == 0;
           final dateStr = bookingFormatDate(date);
           final isClosed = widget.closedDates.contains(dateStr);
+          final month = months[date.month - 1];
 
-          final Color dayNumColor;
-          final Color dayNameColor;
-
-          if (isSel) {
-            dayNumColor = Colors.white;
-            dayNameColor = Colors.white.withValues(alpha: 0.85);
-          } else if (isClosed) {
-            dayNumColor = cs.onSurface.withValues(alpha: 0.35);
-            dayNameColor = cs.error.withValues(alpha: 0.55);
+          final String headline;
+          final String sub;
+          if (isClosed) {
+            headline = '${date.day}';
+            sub = isAr ? 'مغلق' : 'Closed';
           } else if (isToday) {
-            dayNumColor = cs.primary;
-            dayNameColor = cs.primary.withValues(alpha: 0.75);
+            headline = todayLabel;
+            sub = '${date.day} $month';
           } else {
-            dayNumColor = cs.onSurface.withValues(alpha: 0.80);
-            dayNameColor = cs.onSurface.withValues(alpha: 0.45);
+            headline = '${date.day}';
+            sub = month;
           }
+
+          final Color headlineColor = isClosed
+              ? cs.onSurface.withValues(alpha: 0.35)
+              : cs.onSurface;
+          final Color subColor = isClosed
+              ? cs.error.withValues(alpha: 0.6)
+              : cs.onSurface.withValues(alpha: 0.5);
 
           return Padding(
             padding: EdgeInsetsDirectional.only(end: _spacing),
             child: GestureDetector(
-              onTap: () => widget.onSelect(date),
+              onTap: isClosed ? null : () => widget.onSelect(date),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 240),
-                curve: Curves.easeOutCubic,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
                 width: _itemW,
                 decoration: BoxDecoration(
-                  gradient: isSel
-                      ? LinearGradient(
-                          colors: [cs.primary, cs.secondary],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        )
-                      : null,
-                  color: isSel
-                      ? null
-                      : isClosed
-                          ? cs.error.withValues(alpha: isDark ? 0.10 : 0.06)
-                          : isToday
-                              ? cs.primary.withValues(
-                                  alpha: isDark ? 0.18 : 0.08)
-                              : cs.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(18),
+                  color: isClosed
+                      ? cs.error.withValues(alpha: isDark ? 0.10 : 0.05)
+                      : cs.surface,
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSel
-                        ? Colors.transparent
+                        ? cs.primary
                         : isClosed
                             ? cs.error.withValues(alpha: 0.25)
-                            : isToday
-                                ? cs.primary.withValues(alpha: 0.35)
-                                : cs.outlineVariant.withValues(alpha: 0.6),
-                    width: (!isSel && (isToday || isClosed)) ? 1.5 : 1.0,
+                            : cs.outlineVariant.withValues(alpha: 0.7),
+                    width: isSel ? 2 : 1.2,
                   ),
                   boxShadow: isSel
                       ? [
                           BoxShadow(
-                            color: cs.primary.withValues(alpha: 0.30),
-                            blurRadius: 12,
+                            color: cs.primary.withValues(alpha: 0.15),
+                            blurRadius: 10,
                             spreadRadius: -1,
                             offset: const Offset(0, 4),
                           ),
@@ -222,44 +216,25 @@ class _BookingDateStripState extends State<BookingDateStrip> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Day name / "Today" label
                     Text(
-                      isClosed
-                          ? (isAr ? 'مغلق' : 'Closed')
-                          : isToday
-                              ? todayLabel
-                              : dayAbbrev[date.weekday - 1],
+                      headline,
                       style: TextStyle(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w700,
-                        color: dayNameColor,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    // Day number
-                    Text(
-                      '${date.day}',
-                      style: TextStyle(
-                        fontSize: 22,
+                        fontSize: (isToday && !isClosed) ? 17 : 21,
                         fontWeight: FontWeight.w800,
                         height: 1.0,
-                        color: dayNumColor,
+                        color: headlineColor,
                       ),
                     ),
                     const SizedBox(height: 5),
-                    // Selection dot / bar
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      width: isSel ? 20 : (isToday ? 5 : 3),
-                      height: 3,
-                      decoration: BoxDecoration(
-                        color: isSel
-                            ? Colors.white.withValues(alpha: 0.65)
-                            : isToday
-                                ? cs.primary.withValues(alpha: 0.55)
-                                : Colors.transparent,
-                        borderRadius: BorderRadius.circular(2),
+                    Text(
+                      sub,
+                      maxLines: 1,
+                      overflow: TextOverflow.clip,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        height: 1.0,
+                        color: subColor,
                       ),
                     ),
                   ],

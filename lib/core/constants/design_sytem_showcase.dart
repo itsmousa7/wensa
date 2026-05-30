@@ -435,7 +435,7 @@ class _DesignSystemShowcaseState extends State<DesignSystemShowcase> {
               children: [
                 Text(name, style: Theme.of(context).textTheme.bodyMedium),
                 Text(
-                  '#${color.value.toRadixString(16).substring(2).toUpperCase()}',
+                  '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],

@@ -24,12 +24,16 @@ final bookingsRefreshProvider =
 );
 
 @riverpod
-Future<List<Booking>> userBookings(Ref ref, {List<String>? categories}) =>
-    ref.watch(ticketsRepositoryProvider).fetchAll(categories: categories);
+Future<List<Booking>> userBookings(Ref ref, {List<String>? categories}) {
+  ref.watch(bookingsRefreshProvider);
+  return ref.watch(ticketsRepositoryProvider).fetchAll(categories: categories);
+}
 
 @riverpod
-Future<List<Membership>> userMemberships(Ref ref) =>
-    ref.watch(ticketsRepositoryProvider).fetchMemberships();
+Future<List<Membership>> userMemberships(Ref ref) {
+  ref.watch(bookingsRefreshProvider);
+  return ref.watch(ticketsRepositoryProvider).fetchMemberships();
+}
 
 @riverpod
 Future<Booking> bookingDetail(Ref ref, String id) =>

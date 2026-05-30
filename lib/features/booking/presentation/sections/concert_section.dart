@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/event_tier.dart';
 import 'package:future_riverpod/features/booking/domain/models/seat.dart';
@@ -31,9 +32,9 @@ String _formatIqd(int amount) {
 const String _concertCheckoutSheetRoute = '_concert_checkout_sheet';
 
 void _dismissCheckoutSheet(BuildContext context) {
-  Navigator.of(context).popUntil(
-    (route) => route.settings.name != _concertCheckoutSheetRoute,
-  );
+  Navigator.of(
+    context,
+  ).popUntil((route) => route.settings.name != _concertCheckoutSheetRoute);
 }
 
 // ---------------------------------------------------------------------------
@@ -50,35 +51,34 @@ typedef _ConcertState = ({
 class _ConcertSelectionNotifier extends Notifier<_ConcertState> {
   @override
   _ConcertState build() => (
-        selectedSeatIds: {},
-        activeSectionId: null,
-        focusedSeatId: null,
-        holdUntil: null,
-      );
+    selectedSeatIds: {},
+    activeSectionId: null,
+    focusedSeatId: null,
+    holdUntil: null,
+  );
 
   void openSection(String sectionId) => state = (
-        selectedSeatIds: state.selectedSeatIds,
-        activeSectionId: sectionId,
-        focusedSeatId: state.focusedSeatId,
-        holdUntil: state.holdUntil,
-      );
+    selectedSeatIds: state.selectedSeatIds,
+    activeSectionId: sectionId,
+    focusedSeatId: state.focusedSeatId,
+    holdUntil: state.holdUntil,
+  );
 
   /// Open a section, or close it if it's already the active one. Lets the
   /// viewer's tap-the-same-tier-to-toggle UX flow back into Flutter state.
   void toggleSection(String sectionId) => state = (
-        selectedSeatIds: state.selectedSeatIds,
-        activeSectionId:
-            state.activeSectionId == sectionId ? null : sectionId,
-        focusedSeatId: state.focusedSeatId,
-        holdUntil: state.holdUntil,
-      );
+    selectedSeatIds: state.selectedSeatIds,
+    activeSectionId: state.activeSectionId == sectionId ? null : sectionId,
+    focusedSeatId: state.focusedSeatId,
+    holdUntil: state.holdUntil,
+  );
 
   void closeSection() => state = (
-        selectedSeatIds: state.selectedSeatIds,
-        activeSectionId: null,
-        focusedSeatId: state.focusedSeatId,
-        holdUntil: state.holdUntil,
-      );
+    selectedSeatIds: state.selectedSeatIds,
+    activeSectionId: null,
+    focusedSeatId: state.focusedSeatId,
+    holdUntil: state.holdUntil,
+  );
 
   /// Returns `true` if the seat was added or removed, `false` if the tap was
   /// rejected (currently: tried to add a 5th seat when already at the 4-seat
@@ -88,7 +88,9 @@ class _ConcertSelectionNotifier extends Notifier<_ConcertState> {
     String? focused = state.focusedSeatId;
     if (selected.contains(seat.seatId)) {
       selected.remove(seat.seatId);
-      if (focused == seat.seatId) focused = selected.isEmpty ? null : selected.last;
+      if (focused == seat.seatId) {
+        focused = selected.isEmpty ? null : selected.last;
+      }
     } else {
       if (selected.length >= 4) return false;
       selected.add(seat.seatId);
@@ -100,25 +102,32 @@ class _ConcertSelectionNotifier extends Notifier<_ConcertState> {
       focusedSeatId: focused,
       holdUntil: selected.isEmpty
           ? null
-          : DateTime.now()
-              .add(const Duration(seconds: 120))
-              .toIso8601String(),
+          : DateTime.now().add(const Duration(minutes: 3)).toIso8601String(),
     );
     return true;
   }
 
+  /// Re-anchors the local hold timer to the server-returned hold_until so
+  /// the client expiry matches the actual booking expiry on the server.
+  void setHoldUntil(String newHoldUntil) => state = (
+    selectedSeatIds: state.selectedSeatIds,
+    activeSectionId: state.activeSectionId,
+    focusedSeatId: state.focusedSeatId,
+    holdUntil: newHoldUntil,
+  );
+
   void reset() => state = (
-        selectedSeatIds: {},
-        activeSectionId: null,
-        focusedSeatId: null,
-        holdUntil: null,
-      );
+    selectedSeatIds: {},
+    activeSectionId: null,
+    focusedSeatId: null,
+    holdUntil: null,
+  );
 }
 
 final _concertSelectionProvider =
-    NotifierProvider<_ConcertSelectionNotifier, _ConcertState>(
-  _ConcertSelectionNotifier.new,
-);
+    NotifierProvider.autoDispose<_ConcertSelectionNotifier, _ConcertState>(
+      _ConcertSelectionNotifier.new,
+    );
 
 // ---------------------------------------------------------------------------
 // ConcertSection — payment listener wrapper
@@ -135,6 +144,14 @@ class ConcertSection extends ConsumerWidget {
       next.maybeWhen(
         success: (groupId, paymentUrl, holdUntil, waylReferenceId) {
           if (paymentUrl.isNotEmpty) {
+            // Re-anchor local hold timer to the server's actual expiry so
+            // the client-side watcher doesn't fire a false "expired" message
+            // while the user is inside the payment webview.
+            if (holdUntil.isNotEmpty) {
+              ref
+                  .read(_concertSelectionProvider.notifier)
+                  .setHoldUntil(holdUntil);
+            }
             // The review / GA sheet stays open with its loading spinner
             // while create-booking runs; dismiss it now that we have the
             // Wayl URL so the webview lands cleanly on the booking page.
@@ -173,8 +190,14 @@ class ConcertSection extends ConsumerWidget {
                   }
                 }
               },
-              onPaymentFailed: () {
-                ref.read(bookingSubmitProvider.notifier).reset();
+              onPaymentFailed: () async {
+                // Cancel the group so seats are released immediately rather
+                // than waiting up to 3 min for the cron to expire them.
+                await ref
+                    .read(bookingSubmitProvider.notifier)
+                    .cancelConcertGroup(groupId);
+                ref.invalidate(availableSeatsProvider(eventId));
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Payment failed. Please try again.'),
@@ -183,12 +206,9 @@ class ConcertSection extends ConsumerWidget {
                 );
               },
               onPaymentCancelled: () async {
-                // Await the server-side cancel before releasing the Proceed
-                // button — otherwise the next tap races the still-`pending`
-                // concert group and hits a seat-hold or overlap conflict.
                 await ref
                     .read(bookingSubmitProvider.notifier)
-                    .cancelPending();
+                    .cancelConcertGroup(groupId);
                 ref.invalidate(availableSeatsProvider(eventId));
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -231,6 +251,26 @@ class _ConcertBookingView extends ConsumerStatefulWidget {
 class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
   final GlobalKey<SeatMapWebViewState> _viewerKey =
       GlobalKey<SeatMapWebViewState>();
+  // The seat-map WebView is a native platform view, so a Flutter modal
+  // barrier (review / GA sheet) can't stop touches from reaching it. We gate
+  // it behind IgnorePointer and flip this off while any sheet is open.
+  bool _mapInteractive = true;
+  // The bottom selection bar is also a Flutter widget overlaid on the native
+  // WebView — taps over it would still fall through to the map. So we shrink
+  // the WebView to stop at the top of the bar instead of relying on overlay
+  // hit-testing. This holds the bar's measured height (0 when hidden).
+  final GlobalKey _selectionBarKey = GlobalKey();
+  double _selectionBarHeight = 0;
+
+  void _measureSelectionBar() {
+    final box =
+        _selectionBarKey.currentContext?.findRenderObject() as RenderBox?;
+    final h = box?.size.height ?? 0;
+    if ((h - _selectionBarHeight).abs() > 0.5) {
+      setState(() => _selectionBarHeight = h);
+    }
+  }
+
   // Tracks the orphan set we last surfaced to the user. When a *new* seat
   // becomes orphan (set grows), we fire a friendly snackbar so they realize
   // the gap before they hit Review.
@@ -245,11 +285,7 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
         backgroundColor: const Color(0xFFB91C1C),
         content: Row(
           children: [
-            const Icon(
-              Icons.error_outline,
-              color: Colors.white,
-              size: 20,
-            ),
+            const Icon(Icons.error_outline, color: Colors.white, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -269,6 +305,9 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
   void _pushSelectionToViewer() {
     final ids = ref.read(_concertSelectionProvider).selectedSeatIds.toList();
     _viewerKey.currentState?.setSelectedSeats(ids);
+    // The WebView itself is now inset to stop at the top of the selection bar,
+    // so the viewer no longer needs an internal bottom inset for its buttons.
+    _viewerKey.currentState?.setBottomInset(0);
   }
 
   void _pushWarningSeatsToViewer(List<String> ids) {
@@ -333,6 +372,17 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
           _pushWarningSeatsToViewer(orphanIds);
         });
 
+        // After layout, measure the bar so we can inset the WebView to match
+        // its height — keeping the native map out from under the bar.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          if (selectedSeats.isNotEmpty) {
+            _measureSelectionBar();
+          } else if (_selectionBarHeight != 0) {
+            setState(() => _selectionBarHeight = 0);
+          }
+        });
+
         // Invisible expiry watcher — fires the reset callback when the
         // user's seat hold runs out. We deliberately don't render a
         // countdown banner; the hold is fast enough that surfacing the
@@ -359,82 +409,93 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
         return Stack(
           children: [
             // The dashboard-identical SVG map, served from a bundled HTML
-            // viewer. Owns pan / pinch / drill-in entirely.
-            Positioned.fill(
-              child: SeatMapWebView(
-                key: _viewerKey,
-                eventId: widget.eventId,
-                onSectionTap: (event) {
-                  if (event.isGeneralAdmission) {
-                    final section = layout.sections
-                        .where((s) => s.id == event.sectionId)
-                        .firstOrNull;
-                    if (section != null) {
-                      _showGASheet(
-                        context,
-                        ref,
-                        section: section,
-                        tierByKey: tierByKey,
+            // viewer. Owns pan / pinch / drill-in entirely. We stop it at the
+            // top of the selection bar so taps on the bar can't reach the
+            // native view beneath it.
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: selectedSeats.isNotEmpty ? _selectionBarHeight : 0,
+              child: IgnorePointer(
+                ignoring: !_mapInteractive,
+                child: SeatMapWebView(
+                  key: _viewerKey,
+                  eventId: widget.eventId,
+                  onSectionTap: (event) {
+                    if (event.isGeneralAdmission) {
+                      final section = layout.sections
+                          .where((s) => s.id == event.sectionId)
+                          .firstOrNull;
+                      if (section != null) {
+                        _showGASheet(
+                          context,
+                          ref,
+                          section: section,
+                          tierByKey: tierByKey,
+                        );
+                      }
+                    } else {
+                      final notifier = ref.read(
+                        _concertSelectionProvider.notifier,
+                      );
+                      final wasActive =
+                          ref.read(_concertSelectionProvider).activeSectionId ==
+                          event.sectionId;
+                      notifier.toggleSection(event.sectionId);
+                      // Mirror the new state into the viewer so it can collapse
+                      // the drill-in / zoom-out when the user re-taps the tier.
+                      _viewerKey.currentState?.openSection(
+                        wasActive ? null : event.sectionId,
                       );
                     }
-                  } else {
-                    final notifier =
-                        ref.read(_concertSelectionProvider.notifier);
-                    final wasActive = ref
-                            .read(_concertSelectionProvider)
-                            .activeSectionId ==
-                        event.sectionId;
-                    notifier.toggleSection(event.sectionId);
-                    // Mirror the new state into the viewer so it can collapse
-                    // the drill-in / zoom-out when the user re-taps the tier.
-                    _viewerKey.currentState
-                        ?.openSection(wasActive ? null : event.sectionId);
-                  }
-                },
-                onSeatTap: (event) {
-                  final seat = seats
-                      .where((s) => s.seatId == event.seatId)
-                      .firstOrNull;
-                  if (seat == null) return;
-                  if (seat.status != SeatStatus.free) return;
-                  final added = ref
-                      .read(_concertSelectionProvider.notifier)
-                      .toggleSeat(seat);
-                  if (!added) {
-                    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-                    final messenger = ScaffoldMessenger.of(context);
-                    messenger.hideCurrentSnackBar();
-                    messenger.showSnackBar(
-                      SnackBar(
-                        backgroundColor: const Color(0xFFB91C1C),
-                        content: Row(
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                isAr
-                                    ? 'يمكنك اختيار ٤ مقاعد كحد أقصى لكل حجز.'
-                                    : 'You can select up to 4 seats per booking.',
-                                style: const TextStyle(color: Colors.white),
+                  },
+                  onSeatTap: (event) {
+                    final seat = seats
+                        .where((s) => s.seatId == event.seatId)
+                        .firstOrNull;
+                    if (seat == null) return;
+                    if (seat.status != SeatStatus.free) return;
+                    final added = ref
+                        .read(_concertSelectionProvider.notifier)
+                        .toggleSeat(seat);
+                    if (!added) {
+                      final isAr =
+                          Localizations.localeOf(context).languageCode == 'ar';
+                      final messenger = ScaffoldMessenger.of(context);
+                      messenger.hideCurrentSnackBar();
+                      messenger.showSnackBar(
+                        SnackBar(
+                          backgroundColor: const Color(0xFFB91C1C),
+                          content: Row(
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.white,
+                                size: 20,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  isAr
+                                      ? 'يمكنك اختيار ٤ مقاعد كحد أقصى لكل حجز.'
+                                      : 'You can select up to 4 seats per booking.',
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                          duration: const Duration(seconds: 3),
                         ),
-                        duration: const Duration(seconds: 3),
-                      ),
-                    );
-                    return;
-                  }
-                  _pushSelectionToViewer();
-                },
-                onBack: () => ref
-                    .read(_concertSelectionProvider.notifier)
-                    .closeSection(),
+                      );
+                      return;
+                    }
+                    _pushSelectionToViewer();
+                  },
+                  onBack: () => ref
+                      .read(_concertSelectionProvider.notifier)
+                      .closeSection(),
+                ),
               ),
             ),
 
@@ -443,16 +504,16 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
             // fires when the user's hold runs out. Wrapped in Positioned
             // so the Stack's StackFit.loose doesn't collapse to 0x0.
             if (selection.holdUntil != null)
-              Positioned(
-                left: 0, top: 0,
-                child: holdExpiryWatcher,
-              ),
+              Positioned(left: 0, top: 0, child: holdExpiryWatcher),
 
             // Selection summary + Review CTA (bottom)
             if (selectedSeats.isNotEmpty)
               Positioned(
-                left: 0, right: 0, bottom: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
                 child: _SelectionBar(
+                  key: _selectionBarKey,
                   selectedSeats: selectedSeats,
                   tierByKey: tierByKey,
                   onReview: () {
@@ -487,6 +548,8 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
     required List<Seat> selectedSeats,
     required Map<String, EventTier> tierByKey,
   }) {
+    setState(() => _mapInteractive = false);
+    _viewerKey.currentState?.setInteractive(false);
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -499,7 +562,25 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
         tierByKey: tierByKey,
         eventId: widget.eventId,
       ),
-    );
+    ).then((_) {
+      _viewerKey.currentState?.setInteractive(true);
+      if (mounted) setState(() => _mapInteractive = true);
+      // Dragging the sheet down (or tapping the scrim) dismisses the modal
+      // but must NOT discard the held seats — the user is going back to the
+      // map to view it or add more seats. Keep the selection intact so the
+      // collapsed selection bar reappears at the bottom, and re-sync the
+      // viewer highlights. Clearing is still available via the bar's X.
+      final isPaymentActive = ref
+          .read(bookingSubmitProvider)
+          .maybeWhen(
+            loading: () => true,
+            success: (_, _, _, _) => true,
+            orElse: () => false,
+          );
+      if (!isPaymentActive) {
+        _pushSelectionToViewer();
+      }
+    });
   }
 
   void _showGASheet(
@@ -508,6 +589,8 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
     required VenueSection section,
     required Map<String, EventTier> tierByKey,
   }) {
+    setState(() => _mapInteractive = false);
+    _viewerKey.currentState?.setInteractive(false);
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -520,7 +603,10 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
         section: section,
         tier: tierByKey[section.tierKey],
       ),
-    );
+    ).then((_) {
+      _viewerKey.currentState?.setInteractive(true);
+      if (mounted) setState(() => _mapInteractive = true);
+    });
   }
 }
 
@@ -530,6 +616,7 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
 
 class _SelectionBar extends StatelessWidget {
   const _SelectionBar({
+    super.key,
     required this.selectedSeats,
     required this.tierByKey,
     required this.onReview,
@@ -550,45 +637,61 @@ class _SelectionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final theme = Theme.of(context);
-    return Material(
-      elevation: 12,
-      color: theme.colorScheme.surface,
-      child: SafeArea(
-        top: false,
-        minimum: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: onClear,
-              tooltip: isAr ? 'مسح' : 'Clear',
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    isAr
-                        ? '${selectedSeats.length} مقعد محدد'
-                        : '${selectedSeats.length} seat${selectedSeats.length == 1 ? '' : 's'} selected',
-                    style: theme.textTheme.labelMedium,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _total > 0 ? _formatIqd(_total) : '—',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+    return GestureDetector(
+      // Absorb taps over the whole bar so they don't fall through to the
+      // platform seat-map WebView sitting behind it in the Stack.
+      behavior: HitTestBehavior.opaque,
+      onTap: () {},
+      child: Material(
+        elevation: 12,
+        color: theme.colorScheme.surface,
+        child: SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: onClear,
+                tooltip: isAr ? 'مسح' : 'Clear',
               ),
-            ),
-            FilledButton(
-              onPressed: onReview,
-              child: Text(isAr ? 'مراجعة' : 'Review'),
-            ),
-          ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isAr
+                          ? '${selectedSeats.length} مقعد محدد'
+                          : '${selectedSeats.length} seat${selectedSeats.length == 1 ? '' : 's'} selected',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onTertiary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _total > 0 ? _formatIqd(_total) : '—',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.outline,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              FilledButton(
+                onPressed: onReview,
+                child: Text(
+                  isAr ? 'مراجعة' : 'Review',
+                  style: TextStyle(
+                    fontFamily:
+                        AppTypography.buttonFontFamily(isAr ? 'ar' : 'en') ??
+                        AppTypography.ibmPlexSansBold(),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -600,18 +703,26 @@ class _SelectionBar extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _HoldExpiryWatcher extends ConsumerWidget {
-  const _HoldExpiryWatcher({
-    required this.holdUntil,
-    required this.onExpired,
-  });
+  const _HoldExpiryWatcher({required this.holdUntil, required this.onExpired});
 
   final String holdUntil;
   final VoidCallback onExpired;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Never fire the expiry callback while a booking create is in-flight or
+    // has already succeeded (i.e. the user is inside the payment webview).
+    // The local pre-booking timer is irrelevant once the server holds the seat.
+    final isBookingActive = ref
+        .watch(bookingSubmitProvider)
+        .maybeWhen(
+          loading: () => true,
+          success: (_, _, _, _) => true,
+          orElse: () => false,
+        );
+
     final seconds = ref.watch(holdCountdownProvider(holdUntil));
-    if (seconds <= 0) {
+    if (!isBookingActive && seconds <= 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) => onExpired());
     }
     return const SizedBox.shrink();
@@ -662,7 +773,7 @@ class _ReviewSheet extends ConsumerWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: Theme.of(context).colorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -670,7 +781,10 @@ class _ReviewSheet extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(
               isAr ? 'مراجعة المقاعد' : 'Review Seats',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontFamily: AppTypography.ibmPlexSansBold(),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -683,20 +797,34 @@ class _ReviewSheet extends ConsumerWidget {
                   final tier = tierByKey[s.tierKey];
                   final tierName = tier != null
                       ? (isAr
-                          ? (tier.nameAr.isNotEmpty
-                              ? tier.nameAr
-                              : tier.nameEn)
-                          : (tier.nameEn.isNotEmpty
-                              ? tier.nameEn
-                              : tier.nameAr))
+                            ? (tier.nameAr.isNotEmpty
+                                  ? tier.nameAr
+                                  : tier.nameEn)
+                            : (tier.nameEn.isNotEmpty
+                                  ? tier.nameEn
+                                  : tier.nameAr))
                       : s.tierKey;
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text('${s.row}${s.seat}'),
-                    subtitle: Text(tierName),
+                    title: Text(
+                      '${s.row}${s.seat}',
+                      style: TextStyle(
+                        fontFamily: AppTypography.ibmPlexSansBold(),
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                    subtitle: Text(
+                      tierName,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onTertiary,
+                      ),
+                    ),
                     trailing: Text(
                       _formatIqd(_priceOf(s)),
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontFamily: AppTypography.ibmPlexSansBold(),
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                     ),
                   );
                 },
@@ -710,14 +838,18 @@ class _ReviewSheet extends ConsumerWidget {
                 children: [
                   Text(
                     isAr ? 'الإجمالي' : 'Total',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontFamily: AppTypography.ibmPlexSansBold(),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                   Text(
                     _formatIqd(_total),
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontFamily: AppTypography.ibmPlexSansBold(),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                 ],
               ),
@@ -734,8 +866,9 @@ class _ReviewSheet extends ConsumerWidget {
                           .read(bookingSubmitProvider.notifier)
                           .createConcertBooking(
                             eventId: eventId,
-                            seatIds:
-                                selectedSeats.map((s) => s.seatId).toList(),
+                            seatIds: selectedSeats
+                                .map((s) => s.seatId)
+                                .toList(),
                           );
                     },
               child: isLoading
@@ -744,7 +877,16 @@ class _ReviewSheet extends ConsumerWidget {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(isAr ? 'المتابعة للدفع' : 'Proceed to Payment'),
+                  : Text(
+                      isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
+                      style: TextStyle(
+                        fontFamily:
+                            AppTypography.buttonFontFamily(
+                              isAr ? 'ar' : 'en',
+                            ) ??
+                            AppTypography.ibmPlexSansBold(),
+                      ),
+                    ),
             ),
             const SizedBox(height: 16),
           ],
@@ -753,7 +895,6 @@ class _ReviewSheet extends ConsumerWidget {
     );
   }
 }
-
 
 // ---------------------------------------------------------------------------
 // General Admission bottom sheet — quantity picker + buy CTA
@@ -785,8 +926,8 @@ class _GASheetState extends ConsumerState<_GASheet> {
     final tier = widget.tier;
     final tierName = tier != null
         ? (isAr
-            ? (tier.nameAr.isNotEmpty ? tier.nameAr : tier.nameEn)
-            : (tier.nameEn.isNotEmpty ? tier.nameEn : tier.nameAr))
+              ? (tier.nameAr.isNotEmpty ? tier.nameAr : tier.nameEn)
+              : (tier.nameEn.isNotEmpty ? tier.nameEn : tier.nameAr))
         : widget.section.tierKey;
     final maxQty = remaining > 4 ? 4 : remaining;
     final total = price * _quantity;
@@ -808,7 +949,7 @@ class _GASheetState extends ConsumerState<_GASheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: Theme.of(context).colorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -817,19 +958,24 @@ class _GASheetState extends ConsumerState<_GASheet> {
             Text(
               isAr
                   ? (widget.section.nameAr.isNotEmpty
-                      ? widget.section.nameAr
-                      : widget.section.nameEn)
+                        ? widget.section.nameAr
+                        : widget.section.nameEn)
                   : (widget.section.nameEn.isNotEmpty
-                      ? widget.section.nameEn
-                      : widget.section.nameAr),
-              style: Theme.of(context).textTheme.titleLarge,
+                        ? widget.section.nameEn
+                        : widget.section.nameAr),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
-              isAr ? "مقاعد عامة — الجلوس حر" : "General admission — open seating",
+              isAr
+                  ? "مقاعد عامة — الجلوس حر"
+                  : "General admission — open seating",
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 16),
             Container(
@@ -841,15 +987,21 @@ class _GASheetState extends ConsumerState<_GASheet> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(tierName, style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    tierName,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w100,
+                      color: Theme.of(context).colorScheme.onTertiary,
+                    ),
+                  ),
                   Text(
                     price > 0
                         ? _formatIqd(price)
                         : (isAr ? "السعر قيد التحديد" : "Price TBD"),
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w800),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                 ],
               ),
@@ -858,8 +1010,12 @@ class _GASheetState extends ConsumerState<_GASheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(isAr ? "الكمية" : "Quantity",
-                    style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  isAr ? "الكمية" : "Quantity",
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
                 Row(
                   children: [
                     IconButton.outlined(
@@ -872,7 +1028,9 @@ class _GASheetState extends ConsumerState<_GASheet> {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         "$_quantity",
-                        style: Theme.of(context).textTheme.headlineSmall,
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
                       ),
                     ),
                     IconButton.outlined(
@@ -893,8 +1051,9 @@ class _GASheetState extends ConsumerState<_GASheet> {
                     ? "$remaining تذكرة متاحة"
                     : "$remaining tickets remaining",
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
+                  color: Theme.of(context).colorScheme.outline,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -904,14 +1063,18 @@ class _GASheetState extends ConsumerState<_GASheet> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(isAr ? "الإجمالي" : "Total",
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    isAr ? "الإجمالي" : "Total",
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                  ),
                   Text(
                     total > 0 ? _formatIqd(total) : "—",
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                 ],
               ),
@@ -937,7 +1100,16 @@ class _GASheetState extends ConsumerState<_GASheet> {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(isAr ? "متابعة للدفع" : "Proceed to Payment"),
+                  : Text(
+                      isAr ? "متابعة للدفع" : "Proceed to Payment",
+                      style: TextStyle(
+                        fontFamily:
+                            AppTypography.buttonFontFamily(
+                              isAr ? 'ar' : 'en',
+                            ) ??
+                            AppTypography.ibmPlexSansBold(),
+                      ),
+                    ),
             ),
             if (price <= 0)
               Padding(
@@ -947,8 +1119,8 @@ class _GASheetState extends ConsumerState<_GASheet> {
                       ? "لم يتم تحديد السعر لهذه المنطقة بعد. تواصل مع الإدارة."
                       : "Price has not been configured for this zone yet.",
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -958,4 +1130,3 @@ class _GASheetState extends ConsumerState<_GASheet> {
     );
   }
 }
-

@@ -6,7 +6,9 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
+import 'package:future_riverpod/core/widgets/discount_badge.dart';
 import 'package:future_riverpod/core/widgets/merchant_logo.dart';
+import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/new_opening_badge.dart';
 import 'package:gap/gap.dart';
@@ -27,6 +29,8 @@ class FeedCard extends ConsumerWidget {
     this.badge = FeedCardBadge.trending,
     this.isVerified = false,
     this.itemType = 'place', // ✅ NEW — 'place' | 'event'
+    this.merchantId,
+    this.discountPercent,
     this.onTap,
   });
 
@@ -40,6 +44,8 @@ class FeedCard extends ConsumerWidget {
   final FeedCardBadge badge;
   final bool isVerified;
   final String itemType; // ✅ NEW
+  final String? merchantId;
+  final int? discountPercent;
   final VoidCallback? onTap;
 
   @override
@@ -49,14 +55,24 @@ class FeedCard extends ConsumerWidget {
     final isFav =
         ref.watch(favoritesProvider).value?.contains(placeId) ?? false;
 
+    final int? resolvedDiscountPercent =
+        discountPercent ??
+        (itemType == 'place'
+            ? ref.watch(
+                bestDiscountPercentProvider(
+                  PlaceDiscountKey(placeId: placeId, merchantId: merchantId),
+                ),
+              )
+            : null);
+
     final (badgeColor, badgeText) = switch (badge) {
       FeedCardBadge.trending => (
         AppColors.darkRedSecondary,
-        isAr ? '🔥 رائج' : '🔥 Hot',
+        isAr ? 'رائج' : 'Hot',
       ),
       FeedCardBadge.event => (
         AppColors.headline2,
-        isAr ? '🎉 حدث' : '🎉 Event',
+        isAr ? 'حدث' : 'Event',
       ),
       FeedCardBadge.newOpening => (
         theme.colorScheme.primary,
@@ -64,7 +80,7 @@ class FeedCard extends ConsumerWidget {
       ),
       FeedCardBadge.featured => (
         const Color(0xFFFFB800),
-        isAr ? '⭐ مميز' : '⭐ Featured',
+        isAr ? 'مميز' : 'Featured',
       ),
     };
 
@@ -196,12 +212,6 @@ class FeedCard extends ConsumerWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            SizedBox(
-                              height: 12,
-                              child: itemType == 'place'
-                                  ? SvgPicture.asset('assets/icons/location.svg')
-                                  : Image.asset('assets/icons/calendar.png'),
-                            ),
                             const Gap(5),
                             Flexible(
                               child: Text(
@@ -215,6 +225,11 @@ class FeedCard extends ConsumerWidget {
                                 ),
                               ),
                             ),
+                            if (resolvedDiscountPercent != null &&
+                                resolvedDiscountPercent > 0) ...[
+                              const Gap(6),
+                              DiscountBadge(percent: resolvedDiscountPercent),
+                            ],
                           ],
                         ),
                       ],

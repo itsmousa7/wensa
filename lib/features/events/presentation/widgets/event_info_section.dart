@@ -6,16 +6,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/widgets/merchant_logo.dart';
+import 'package:future_riverpod/core/widgets/place_statistic_chip.dart';
+import 'package:future_riverpod/core/widgets/primary_action_button.dart';
 import 'package:future_riverpod/features/events/domain/models/event_model.dart';
 import 'package:future_riverpod/features/events/presentation/providers/event_app_bar_state.dart';
 import 'package:future_riverpod/features/events/presentation/widgets/event_date_section.dart';
 import 'package:future_riverpod/features/events/presentation/widgets/event_ticket_section.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_details_helper.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_location_sheet.dart';
-import 'package:future_riverpod/core/widgets/place_statistic_chip.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class EventInfoSection extends ConsumerWidget {
   const EventInfoSection({
@@ -69,7 +69,7 @@ class EventInfoSection extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title + featured badge
+                    // Title + verified badge (Pro merchants)
                     Row(
                       children: [
                         Flexible(
@@ -82,7 +82,7 @@ class EventInfoSection extends ConsumerWidget {
                             ),
                           ),
                         ),
-                        if (event.isFeatured) ...[
+                        if (event.isVerified) ...[
                           const Gap(10),
                           SizedBox(
                             height: 20,
@@ -181,7 +181,7 @@ class EventInfoSection extends ConsumerWidget {
               const SizedBox(width: 10),
               PlaceStatisticChip(
                 icon: CupertinoIcons.person_2_fill,
-                value: compactNumber(event.checkinsCount),
+                value: compactNumber(event.bookingsCount),
                 label: isAr ? 'حضور' : 'Going',
                 accentColor: cs.primary,
                 textColor: cs.primary,
@@ -238,61 +238,12 @@ class EventInfoSection extends ConsumerWidget {
 
           // ── CTAs ───────────────────────────────────────────────────────
           const SizedBox(height: 28),
-          _EventBookButton(eventId: eventId, isAr: isAr),
-          const SizedBox(height: 12),
-          _EventCtaButton(ticketUrl: event.ticketUrl, isAr: isAr),
-        ],
-      ),
-    );
-  }
-}
-
-// ── In-app booking button ──────────────────────────────────────────────────────
-
-class _EventBookButton extends StatelessWidget {
-  const _EventBookButton({required this.eventId, required this.isAr});
-
-  final String eventId;
-  final bool isAr;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return GestureDetector(
-      onTap: () => context.push('/event/$eventId/book'),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [cs.primary, AppColors.lightGreenSecondary],
+          PrimaryActionButton(
+            label: isAr ? 'احجز مقعدك' : 'Book a Seat',
+            onTap: () => context.push('/event/$eventId/book'),
           ),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: cs.primary.withValues(alpha: 0.35),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.event_seat_outlined,
-                color: Colors.white, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              isAr ? 'احجز مقعدك' : 'Book a Seat',
-              style: tt.titleMedium?.copyWith(
-                color: Colors.white,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ],
-        ),
+          const SizedBox(height: 12),
+        ],
       ),
     );
   }
@@ -328,79 +279,5 @@ class _EventSectionHeader extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-// ── CTA button ─────────────────────────────────────────────────────────────────
-
-class _EventCtaButton extends StatelessWidget {
-  const _EventCtaButton({required this.ticketUrl, required this.isAr});
-
-  final String? ticketUrl;
-  final bool isAr;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final hasUrl = ticketUrl != null && ticketUrl!.isNotEmpty;
-
-    return GestureDetector(
-      onTap: hasUrl ? () => _launch(ticketUrl!) : null,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: hasUrl
-              ? LinearGradient(
-                  colors: [cs.primary, AppColors.lightGreenSecondary],
-                )
-              : null,
-          color: hasUrl ? null : cs.surfaceContainer,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: hasUrl
-              ? [
-                  BoxShadow(
-                    color: cs.primary.withValues(alpha: 0.35),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              hasUrl
-                  ? Icons.confirmation_num_outlined
-                  : Icons.event_busy_outlined,
-              color: hasUrl
-                  ? AppColors.white
-                  : cs.onSurface.withValues(alpha: 0.4),
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              hasUrl
-                  ? (isAr ? 'احجز تذكرتك الآن' : 'Get Your Tickets')
-                  : (isAr ? 'لا تتوفر تذاكر حالياً' : 'No Tickets Available'),
-              style: tt.titleMedium?.copyWith(
-                color: hasUrl
-                    ? AppColors.white
-                    : cs.onSurface.withValues(alpha: 0.4),
-                letterSpacing: 0.3,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _launch(String url) async {
-    try {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } catch (_) {}
   }
 }

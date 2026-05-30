@@ -246,6 +246,7 @@ class _BookingDetailBody extends ConsumerWidget {
         isArabic: isArabic,
       ),
       cells: cells,
+      waylCode: booking.waylCode,
     );
   }
 }
@@ -329,6 +330,7 @@ class _MembershipDetailBody extends StatelessWidget {
         isArabic: isArabic,
       ),
       cells: cells,
+      waylCode: membership.waylCode,
     );
   }
 }
@@ -344,6 +346,7 @@ class _TicketScreen extends StatefulWidget {
     required this.isArabic,
     required this.buildStatusBadge,
     required this.cells,
+    this.waylCode,
   });
 
   final String qrToken;
@@ -351,6 +354,7 @@ class _TicketScreen extends StatefulWidget {
   final bool isArabic;
   final Widget Function() buildStatusBadge;
   final List<TicketInfoCell> cells;
+  final String? waylCode;
 
   @override
   State<_TicketScreen> createState() => _TicketScreenState();
@@ -373,6 +377,7 @@ class _TicketScreenState extends State<_TicketScreen> {
           isArabic: widget.isArabic,
           statusBadge: widget.buildStatusBadge(),
           cells: widget.cells,
+          waylCode: widget.waylCode,
         ),
         isAr: widget.isArabic,
         delay: const Duration(milliseconds: 300),
@@ -414,6 +419,7 @@ class _TicketScreenState extends State<_TicketScreen> {
             isArabic: widget.isArabic,
             statusBadge: widget.buildStatusBadge(),
             cells: widget.cells,
+            waylCode: widget.waylCode,
           ),
           const SizedBox(height: 20),
           SizedBox(

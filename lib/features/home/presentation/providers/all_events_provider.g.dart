@@ -80,7 +80,7 @@ final class AllEventsSeeAllProvider
   }
 }
 
-String _$allEventsSeeAllHash() => r'37eaf9a5431980eadb7532c3100a62c3a0cdad0f';
+String _$allEventsSeeAllHash() => r'203cda1e38e2c460a2dc6afd3d8c182dae1f380b';
 
 abstract class _$AllEventsSeeAll extends $Notifier<CategoryFeedState> {
   CategoryFeedState build();

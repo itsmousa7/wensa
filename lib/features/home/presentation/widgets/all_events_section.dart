@@ -84,6 +84,7 @@ class AllEventsSection extends ConsumerWidget {
         subtitleEn: event.city,
         subtitleAr: event.city,
         badge: FeedCardBadge.event,
+        isVerified: event.isVerified,
         itemType: 'event',
         onTap: () => context.pushNamed(
           RouteNames.eventDetails,

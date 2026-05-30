@@ -12,7 +12,7 @@ class HoldCountdown extends _$HoldCountdown {
   int build(String holdUntil) {
     final expiresAt = DateTime.parse(holdUntil).toLocal();
     final remaining =
-        expiresAt.difference(DateTime.now()).inSeconds.clamp(0, 60);
+        expiresAt.difference(DateTime.now()).inSeconds.clamp(0, 600);
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       final secs = expiresAt.difference(DateTime.now()).inSeconds;

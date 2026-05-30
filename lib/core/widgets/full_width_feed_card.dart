@@ -6,7 +6,9 @@ import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
+import 'package:future_riverpod/core/widgets/discount_badge.dart';
 import 'package:future_riverpod/core/widgets/merchant_logo.dart';
+import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/wensa_badge.dart';
@@ -19,11 +21,13 @@ class FullWidthFeedCard extends ConsumerWidget {
     super.key,
     required this.item,
     this.badge,
+    this.discountPercent,
     this.onTap,
   });
 
   final CategoryFeedItem item;
   final WensaBadgeType? badge; // null = no badge shown
+  final int? discountPercent;
   final VoidCallback? onTap;
 
   @override
@@ -33,6 +37,16 @@ class FullWidthFeedCard extends ConsumerWidget {
     final tt = AppTypography.getTextTheme(isAr ? 'ar' : 'en', context);
     final isFav =
         ref.watch(favoritesProvider).value?.contains(item.id) ?? false;
+
+    final int? resolvedDiscountPercent = discountPercent ??
+        (item.type == 'place'
+            ? ref.watch(bestDiscountPercentProvider(
+                PlaceDiscountKey(
+                  placeId: item.id,
+                  merchantId: item.merchantId,
+                ),
+              ))
+            : null);
 
     return GestureDetector(
       onTap:
@@ -154,12 +168,21 @@ class FullWidthFeedCard extends ConsumerWidget {
                               ),
                             ),
                             const Gap(4),
-                            Text(
-                              isAr ? item.subtitleAr! : item.subtitleEn!,
-                              style: tt.bodySmall?.copyWith(
-                                color: cs.onSurface.withValues(alpha: 0.55),
+                            Flexible(
+                              child: Text(
+                                isAr ? item.subtitleAr! : item.subtitleEn!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: tt.bodySmall?.copyWith(
+                                  color: cs.onSurface.withValues(alpha: 0.55),
+                                ),
                               ),
                             ),
+                            if (resolvedDiscountPercent != null &&
+                                resolvedDiscountPercent > 0) ...[
+                              const Gap(6),
+                              DiscountBadge(percent: resolvedDiscountPercent, size: DiscountBadgeSize.medium),
+                            ],
                           ],
                         ),
                       ],

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -29,7 +28,7 @@ class WensaBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color,
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(10),
       ),
       alignment: Alignment.center,
@@ -37,10 +36,10 @@ class WensaBadge extends StatelessWidget {
         text,
         textAlign: TextAlign.center,
         style: TextStyle(
-          color: AppColors.white,
+          color: color,
           fontSize: 11,
-          fontWeight: FontWeight.w700,
-          fontFamily: AppTypography.getBodyFontFamily(isAr ? 'ar' : 'en'),
+          fontWeight: FontWeight.w900,
+          fontFamily: 'Ibm-Bold',
           height: 1.4,
         ),
       ),
@@ -56,19 +55,19 @@ class WensaBadge extends StatelessWidget {
     return switch (type) {
       WensaBadgeType.trending => (
         AppColors.darkRedSecondary,
-        isAr ? '🔥 رائج' : '🔥 Hot',
+        isAr ? 'تريند' : 'Trend',
       ),
       WensaBadgeType.event => (
         const Color(0xFF3E3E9B),
-        isAr ? '🎉 حدث' : '🎉 Event',
+        isAr ? 'حدث' : 'Event',
       ),
       WensaBadgeType.newOpening => (
         cs.primary,
-        isAr ? 'افتتح مؤخراً' : 'Just Opened',
+        isAr ? 'جديد' : 'New',
       ),
       WensaBadgeType.hotEvent => (
         AppColors.darkRedSecondary,
-        isAr ? '🔥 الأكثر سخونة' : '🔥 Hot',
+        isAr ? 'الأكثر سخونة' : 'Hot',
       ),
     };
   }

@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
+import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -129,6 +130,39 @@ class BookingSubmit extends _$BookingSubmit {
     }
   }
 
+  /// Creates a pending general-admission booking (no seat picking) and
+  /// returns a Wayl payment URL. The webhook flips the row to confirmed
+  /// on payment success.
+  Future<void> createGeneralAdmissionBooking({
+    required String eventId,
+    required String sectionId,
+    required int quantity,
+  }) async {
+    state = const BookingSubmitState.loading();
+    try {
+      final client = Supabase.instance.client;
+      final result = await client.functions.invoke(
+        'create-booking',
+        body: {
+          'category': 'general_admission',
+          'event_id': eventId,
+          'section_id': sectionId,
+          'quantity': quantity,
+        },
+      );
+      if (result.status != 200) throw Exception(result.data.toString());
+      final data = result.data as Map<String, dynamic>;
+      state = BookingSubmitState.success(
+        bookingId: (data['booking_id'] ?? '') as String,
+        paymentUrl: (data['payment_url'] ?? '') as String,
+        holdUntil: (data['hold_until'] ?? '') as String? ?? '',
+        waylReferenceId: (data['reference_id'] ?? '') as String,
+      );
+    } catch (e) {
+      state = BookingSubmitState.error(e.toString());
+    }
+  }
+
   Future<void> createConcertBooking({
     required String eventId,
     required List<String> seatIds,
@@ -159,4 +193,44 @@ class BookingSubmit extends _$BookingSubmit {
   }
 
   void reset() => state = const BookingSubmitState.idle();
+
+  /// Cancels all pending rows for a concert group and releases seat holds.
+  /// Use this instead of [cancelPending] for concert bookings because the
+  /// concert success state stores the group_id, not an individual booking id.
+  Future<void> cancelConcertGroup(String groupId) async {
+    if (groupId.isEmpty) {
+      state = const BookingSubmitState.idle();
+      return;
+    }
+    state = const BookingSubmitState.loading();
+    try {
+      await ref.read(bookingRepositoryProvider).cancelConcertGroup(groupId);
+    } catch (_) {
+      // Non-fatal: the 3-minute cron will expire the pending rows anyway.
+    }
+    state = const BookingSubmitState.idle();
+  }
+
+  /// Cancels any pending booking row server-side, keeping the Proceed
+  /// button disabled (state = loading) until the cancel completes. This
+  /// avoids a race where the user re-taps "Proceed" before the prior
+  /// `pending` row is released and hits the no-overlap exclusion constraint.
+  Future<void> cancelPending() async {
+    final current = state;
+    final bookingId = current.maybeWhen(
+      success: (id, _, _, _) => id,
+      orElse: () => null,
+    );
+    if (bookingId == null || bookingId.isEmpty) {
+      state = const BookingSubmitState.idle();
+      return;
+    }
+    state = const BookingSubmitState.loading();
+    try {
+      await ref.read(bookingRepositoryProvider).cancelBooking(bookingId);
+    } catch (_) {
+      // Non-fatal: the server-side hold expires on its own.
+    }
+    state = const BookingSubmitState.idle();
+  }
 }

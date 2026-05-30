@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Booking {
 
- String get id; String get userId; String get merchantId; String? get placeId; String? get eventId; BookingCategory get category; BookingStatus get status; String get startsAt; String get endsAt; int get amountIqd; String? get paymentId; String? get paymentStatus; String get qrToken; String? get holdUntil; Map<String, dynamic> get categoryData; String? get groupId; String? get createdAt; String? get updatedAt;
+ String get id; String get userId; String get merchantId; String? get placeId; String? get eventId; BookingCategory get category; BookingStatus get status; String get startsAt; String get endsAt; int get amountIqd; String? get paymentId; String? get paymentStatus; String? get waylCode; String get qrToken; String? get holdUntil; Map<String, dynamic> get categoryData; String? get groupId; String? get createdAt; String? get updatedAt;
 /// Create a copy of Booking
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $BookingCopyWith<Booking> get copyWith => _$BookingCopyWithImpl<Booking>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Booking&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.merchantId, merchantId) || other.merchantId == merchantId)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.category, category) || other.category == category)&&(identical(other.status, status) || other.status == status)&&(identical(other.startsAt, startsAt) || other.startsAt == startsAt)&&(identical(other.endsAt, endsAt) || other.endsAt == endsAt)&&(identical(other.amountIqd, amountIqd) || other.amountIqd == amountIqd)&&(identical(other.paymentId, paymentId) || other.paymentId == paymentId)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.qrToken, qrToken) || other.qrToken == qrToken)&&(identical(other.holdUntil, holdUntil) || other.holdUntil == holdUntil)&&const DeepCollectionEquality().equals(other.categoryData, categoryData)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Booking&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.merchantId, merchantId) || other.merchantId == merchantId)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.category, category) || other.category == category)&&(identical(other.status, status) || other.status == status)&&(identical(other.startsAt, startsAt) || other.startsAt == startsAt)&&(identical(other.endsAt, endsAt) || other.endsAt == endsAt)&&(identical(other.amountIqd, amountIqd) || other.amountIqd == amountIqd)&&(identical(other.paymentId, paymentId) || other.paymentId == paymentId)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.waylCode, waylCode) || other.waylCode == waylCode)&&(identical(other.qrToken, qrToken) || other.qrToken == qrToken)&&(identical(other.holdUntil, holdUntil) || other.holdUntil == holdUntil)&&const DeepCollectionEquality().equals(other.categoryData, categoryData)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,merchantId,placeId,eventId,category,status,startsAt,endsAt,amountIqd,paymentId,paymentStatus,qrToken,holdUntil,const DeepCollectionEquality().hash(categoryData),groupId,createdAt,updatedAt);
+int get hashCode => Object.hashAll([runtimeType,id,userId,merchantId,placeId,eventId,category,status,startsAt,endsAt,amountIqd,paymentId,paymentStatus,waylCode,qrToken,holdUntil,const DeepCollectionEquality().hash(categoryData),groupId,createdAt,updatedAt]);
 
 @override
 String toString() {
-  return 'Booking(id: $id, userId: $userId, merchantId: $merchantId, placeId: $placeId, eventId: $eventId, category: $category, status: $status, startsAt: $startsAt, endsAt: $endsAt, amountIqd: $amountIqd, paymentId: $paymentId, paymentStatus: $paymentStatus, qrToken: $qrToken, holdUntil: $holdUntil, categoryData: $categoryData, groupId: $groupId, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Booking(id: $id, userId: $userId, merchantId: $merchantId, placeId: $placeId, eventId: $eventId, category: $category, status: $status, startsAt: $startsAt, endsAt: $endsAt, amountIqd: $amountIqd, paymentId: $paymentId, paymentStatus: $paymentStatus, waylCode: $waylCode, qrToken: $qrToken, holdUntil: $holdUntil, categoryData: $categoryData, groupId: $groupId, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $BookingCopyWith<$Res>  {
   factory $BookingCopyWith(Booking value, $Res Function(Booking) _then) = _$BookingCopyWithImpl;
 @useResult
 $Res call({
- String id, String userId, String merchantId, String? placeId, String? eventId, BookingCategory category, BookingStatus status, String startsAt, String endsAt, int amountIqd, String? paymentId, String? paymentStatus, String qrToken, String? holdUntil, Map<String, dynamic> categoryData, String? groupId, String? createdAt, String? updatedAt
+ String id, String userId, String merchantId, String? placeId, String? eventId, BookingCategory category, BookingStatus status, String startsAt, String endsAt, int amountIqd, String? paymentId, String? paymentStatus, String? waylCode, String qrToken, String? holdUntil, Map<String, dynamic> categoryData, String? groupId, String? createdAt, String? updatedAt
 });
 
 
@@ -65,7 +65,7 @@ class _$BookingCopyWithImpl<$Res>
 
 /// Create a copy of Booking
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? merchantId = null,Object? placeId = freezed,Object? eventId = freezed,Object? category = null,Object? status = null,Object? startsAt = null,Object? endsAt = null,Object? amountIqd = null,Object? paymentId = freezed,Object? paymentStatus = freezed,Object? qrToken = null,Object? holdUntil = freezed,Object? categoryData = null,Object? groupId = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? merchantId = null,Object? placeId = freezed,Object? eventId = freezed,Object? category = null,Object? status = null,Object? startsAt = null,Object? endsAt = null,Object? amountIqd = null,Object? paymentId = freezed,Object? paymentStatus = freezed,Object? waylCode = freezed,Object? qrToken = null,Object? holdUntil = freezed,Object? categoryData = null,Object? groupId = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -79,6 +79,7 @@ as String,endsAt: null == endsAt ? _self.endsAt : endsAt // ignore: cast_nullabl
 as String,amountIqd: null == amountIqd ? _self.amountIqd : amountIqd // ignore: cast_nullable_to_non_nullable
 as int,paymentId: freezed == paymentId ? _self.paymentId : paymentId // ignore: cast_nullable_to_non_nullable
 as String?,paymentStatus: freezed == paymentStatus ? _self.paymentStatus : paymentStatus // ignore: cast_nullable_to_non_nullable
+as String?,waylCode: freezed == waylCode ? _self.waylCode : waylCode // ignore: cast_nullable_to_non_nullable
 as String?,qrToken: null == qrToken ? _self.qrToken : qrToken // ignore: cast_nullable_to_non_nullable
 as String,holdUntil: freezed == holdUntil ? _self.holdUntil : holdUntil // ignore: cast_nullable_to_non_nullable
 as String?,categoryData: null == categoryData ? _self.categoryData : categoryData // ignore: cast_nullable_to_non_nullable
@@ -170,10 +171,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String userId,  String merchantId,  String? placeId,  String? eventId,  BookingCategory category,  BookingStatus status,  String startsAt,  String endsAt,  int amountIqd,  String? paymentId,  String? paymentStatus,  String qrToken,  String? holdUntil,  Map<String, dynamic> categoryData,  String? groupId,  String? createdAt,  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String userId,  String merchantId,  String? placeId,  String? eventId,  BookingCategory category,  BookingStatus status,  String startsAt,  String endsAt,  int amountIqd,  String? paymentId,  String? paymentStatus,  String? waylCode,  String qrToken,  String? holdUntil,  Map<String, dynamic> categoryData,  String? groupId,  String? createdAt,  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Booking() when $default != null:
-return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.eventId,_that.category,_that.status,_that.startsAt,_that.endsAt,_that.amountIqd,_that.paymentId,_that.paymentStatus,_that.qrToken,_that.holdUntil,_that.categoryData,_that.groupId,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.eventId,_that.category,_that.status,_that.startsAt,_that.endsAt,_that.amountIqd,_that.paymentId,_that.paymentStatus,_that.waylCode,_that.qrToken,_that.holdUntil,_that.categoryData,_that.groupId,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -191,10 +192,10 @@ return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.event
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String userId,  String merchantId,  String? placeId,  String? eventId,  BookingCategory category,  BookingStatus status,  String startsAt,  String endsAt,  int amountIqd,  String? paymentId,  String? paymentStatus,  String qrToken,  String? holdUntil,  Map<String, dynamic> categoryData,  String? groupId,  String? createdAt,  String? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String userId,  String merchantId,  String? placeId,  String? eventId,  BookingCategory category,  BookingStatus status,  String startsAt,  String endsAt,  int amountIqd,  String? paymentId,  String? paymentStatus,  String? waylCode,  String qrToken,  String? holdUntil,  Map<String, dynamic> categoryData,  String? groupId,  String? createdAt,  String? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Booking():
-return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.eventId,_that.category,_that.status,_that.startsAt,_that.endsAt,_that.amountIqd,_that.paymentId,_that.paymentStatus,_that.qrToken,_that.holdUntil,_that.categoryData,_that.groupId,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.eventId,_that.category,_that.status,_that.startsAt,_that.endsAt,_that.amountIqd,_that.paymentId,_that.paymentStatus,_that.waylCode,_that.qrToken,_that.holdUntil,_that.categoryData,_that.groupId,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -211,10 +212,10 @@ return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.event
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String userId,  String merchantId,  String? placeId,  String? eventId,  BookingCategory category,  BookingStatus status,  String startsAt,  String endsAt,  int amountIqd,  String? paymentId,  String? paymentStatus,  String qrToken,  String? holdUntil,  Map<String, dynamic> categoryData,  String? groupId,  String? createdAt,  String? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String userId,  String merchantId,  String? placeId,  String? eventId,  BookingCategory category,  BookingStatus status,  String startsAt,  String endsAt,  int amountIqd,  String? paymentId,  String? paymentStatus,  String? waylCode,  String qrToken,  String? holdUntil,  Map<String, dynamic> categoryData,  String? groupId,  String? createdAt,  String? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Booking() when $default != null:
-return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.eventId,_that.category,_that.status,_that.startsAt,_that.endsAt,_that.amountIqd,_that.paymentId,_that.paymentStatus,_that.qrToken,_that.holdUntil,_that.categoryData,_that.groupId,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.eventId,_that.category,_that.status,_that.startsAt,_that.endsAt,_that.amountIqd,_that.paymentId,_that.paymentStatus,_that.waylCode,_that.qrToken,_that.holdUntil,_that.categoryData,_that.groupId,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -226,7 +227,7 @@ return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.event
 @JsonSerializable()
 
 class _Booking implements Booking {
-  const _Booking({this.id = '', this.userId = '', this.merchantId = '', this.placeId, this.eventId, this.category = BookingCategory.hourly, this.status = BookingStatus.pending, this.startsAt = '', this.endsAt = '', this.amountIqd = 0, this.paymentId, this.paymentStatus, this.qrToken = '', this.holdUntil, final  Map<String, dynamic> categoryData = const <String, dynamic>{}, this.groupId, this.createdAt, this.updatedAt}): _categoryData = categoryData;
+  const _Booking({this.id = '', this.userId = '', this.merchantId = '', this.placeId, this.eventId, this.category = BookingCategory.hourly, this.status = BookingStatus.pending, this.startsAt = '', this.endsAt = '', this.amountIqd = 0, this.paymentId, this.paymentStatus, this.waylCode, this.qrToken = '', this.holdUntil, final  Map<String, dynamic> categoryData = const <String, dynamic>{}, this.groupId, this.createdAt, this.updatedAt}): _categoryData = categoryData;
   factory _Booking.fromJson(Map<String, dynamic> json) => _$BookingFromJson(json);
 
 @override@JsonKey() final  String id;
@@ -241,6 +242,7 @@ class _Booking implements Booking {
 @override@JsonKey() final  int amountIqd;
 @override final  String? paymentId;
 @override final  String? paymentStatus;
+@override final  String? waylCode;
 @override@JsonKey() final  String qrToken;
 @override final  String? holdUntil;
  final  Map<String, dynamic> _categoryData;
@@ -267,16 +269,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Booking&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.merchantId, merchantId) || other.merchantId == merchantId)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.category, category) || other.category == category)&&(identical(other.status, status) || other.status == status)&&(identical(other.startsAt, startsAt) || other.startsAt == startsAt)&&(identical(other.endsAt, endsAt) || other.endsAt == endsAt)&&(identical(other.amountIqd, amountIqd) || other.amountIqd == amountIqd)&&(identical(other.paymentId, paymentId) || other.paymentId == paymentId)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.qrToken, qrToken) || other.qrToken == qrToken)&&(identical(other.holdUntil, holdUntil) || other.holdUntil == holdUntil)&&const DeepCollectionEquality().equals(other._categoryData, _categoryData)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Booking&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.merchantId, merchantId) || other.merchantId == merchantId)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.category, category) || other.category == category)&&(identical(other.status, status) || other.status == status)&&(identical(other.startsAt, startsAt) || other.startsAt == startsAt)&&(identical(other.endsAt, endsAt) || other.endsAt == endsAt)&&(identical(other.amountIqd, amountIqd) || other.amountIqd == amountIqd)&&(identical(other.paymentId, paymentId) || other.paymentId == paymentId)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.waylCode, waylCode) || other.waylCode == waylCode)&&(identical(other.qrToken, qrToken) || other.qrToken == qrToken)&&(identical(other.holdUntil, holdUntil) || other.holdUntil == holdUntil)&&const DeepCollectionEquality().equals(other._categoryData, _categoryData)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,merchantId,placeId,eventId,category,status,startsAt,endsAt,amountIqd,paymentId,paymentStatus,qrToken,holdUntil,const DeepCollectionEquality().hash(_categoryData),groupId,createdAt,updatedAt);
+int get hashCode => Object.hashAll([runtimeType,id,userId,merchantId,placeId,eventId,category,status,startsAt,endsAt,amountIqd,paymentId,paymentStatus,waylCode,qrToken,holdUntil,const DeepCollectionEquality().hash(_categoryData),groupId,createdAt,updatedAt]);
 
 @override
 String toString() {
-  return 'Booking(id: $id, userId: $userId, merchantId: $merchantId, placeId: $placeId, eventId: $eventId, category: $category, status: $status, startsAt: $startsAt, endsAt: $endsAt, amountIqd: $amountIqd, paymentId: $paymentId, paymentStatus: $paymentStatus, qrToken: $qrToken, holdUntil: $holdUntil, categoryData: $categoryData, groupId: $groupId, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Booking(id: $id, userId: $userId, merchantId: $merchantId, placeId: $placeId, eventId: $eventId, category: $category, status: $status, startsAt: $startsAt, endsAt: $endsAt, amountIqd: $amountIqd, paymentId: $paymentId, paymentStatus: $paymentStatus, waylCode: $waylCode, qrToken: $qrToken, holdUntil: $holdUntil, categoryData: $categoryData, groupId: $groupId, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -287,7 +289,7 @@ abstract mixin class _$BookingCopyWith<$Res> implements $BookingCopyWith<$Res> {
   factory _$BookingCopyWith(_Booking value, $Res Function(_Booking) _then) = __$BookingCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String userId, String merchantId, String? placeId, String? eventId, BookingCategory category, BookingStatus status, String startsAt, String endsAt, int amountIqd, String? paymentId, String? paymentStatus, String qrToken, String? holdUntil, Map<String, dynamic> categoryData, String? groupId, String? createdAt, String? updatedAt
+ String id, String userId, String merchantId, String? placeId, String? eventId, BookingCategory category, BookingStatus status, String startsAt, String endsAt, int amountIqd, String? paymentId, String? paymentStatus, String? waylCode, String qrToken, String? holdUntil, Map<String, dynamic> categoryData, String? groupId, String? createdAt, String? updatedAt
 });
 
 
@@ -304,7 +306,7 @@ class __$BookingCopyWithImpl<$Res>
 
 /// Create a copy of Booking
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? merchantId = null,Object? placeId = freezed,Object? eventId = freezed,Object? category = null,Object? status = null,Object? startsAt = null,Object? endsAt = null,Object? amountIqd = null,Object? paymentId = freezed,Object? paymentStatus = freezed,Object? qrToken = null,Object? holdUntil = freezed,Object? categoryData = null,Object? groupId = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? merchantId = null,Object? placeId = freezed,Object? eventId = freezed,Object? category = null,Object? status = null,Object? startsAt = null,Object? endsAt = null,Object? amountIqd = null,Object? paymentId = freezed,Object? paymentStatus = freezed,Object? waylCode = freezed,Object? qrToken = null,Object? holdUntil = freezed,Object? categoryData = null,Object? groupId = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_Booking(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -318,6 +320,7 @@ as String,endsAt: null == endsAt ? _self.endsAt : endsAt // ignore: cast_nullabl
 as String,amountIqd: null == amountIqd ? _self.amountIqd : amountIqd // ignore: cast_nullable_to_non_nullable
 as int,paymentId: freezed == paymentId ? _self.paymentId : paymentId // ignore: cast_nullable_to_non_nullable
 as String?,paymentStatus: freezed == paymentStatus ? _self.paymentStatus : paymentStatus // ignore: cast_nullable_to_non_nullable
+as String?,waylCode: freezed == waylCode ? _self.waylCode : waylCode // ignore: cast_nullable_to_non_nullable
 as String?,qrToken: null == qrToken ? _self.qrToken : qrToken // ignore: cast_nullable_to_non_nullable
 as String,holdUntil: freezed == holdUntil ? _self.holdUntil : holdUntil // ignore: cast_nullable_to_non_nullable
 as String?,categoryData: null == categoryData ? _self._categoryData : categoryData // ignore: cast_nullable_to_non_nullable

@@ -105,8 +105,14 @@ class _MembershipSectionState extends ConsumerState<MembershipSection> {
                   ),
                 );
               },
-              onPaymentCancelled: () {
-                ref.read(membershipSubmitProvider.notifier).reset();
+              onPaymentCancelled: () async {
+                // Await the server-side cancel before releasing the Proceed
+                // button — otherwise the next tap races the still-`pending`
+                // membership row and hits a constraint conflict.
+                await ref
+                    .read(membershipSubmitProvider.notifier)
+                    .cancelPending();
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Payment cancelled.')),
                 );

@@ -339,32 +339,85 @@ class _BookingCard extends ConsumerWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _MembershipCard extends StatelessWidget {
+class _MembershipCard extends ConsumerWidget {
   const _MembershipCard({required this.membership, required this.onTap});
 
   final Membership membership;
   final VoidCallback onTap;
 
+  static const _accent = Color(0xFF1E88E5);
+
+  /// "expires in N days" shown only on active memberships, mirrors
+  /// _BookingCard's _formatTimeRemaining.
+  static String _formatExpiresIn(String endsAt, bool isArabic) {
+    if (endsAt.isEmpty) return '';
+    final DateTime dt;
+    try {
+      dt = DateTime.parse(endsAt);
+    } catch (_) {
+      return '';
+    }
+    final diff = dt.difference(DateTime.now());
+    if (diff.isNegative) return '';
+    if (diff.inDays >= 1) {
+      final d = diff.inDays;
+      return isArabic
+          ? 'ينتهي خلال $d ${d == 1 ? 'يوم' : 'أيام'}'
+          : 'expires in $d ${d == 1 ? 'day' : 'days'}';
+    }
+    return isArabic ? 'ينتهي اليوم' : 'expires today';
+  }
+
+  static String _formatDateRange(
+      String startsAt, String endsAt, bool isArabic) {
+    if (startsAt.isEmpty || endsAt.isEmpty) return '';
+    try {
+      final start = DateTime.parse(startsAt);
+      final end = DateTime.parse(endsAt);
+      if (isArabic) {
+        const months = [
+          '',
+          'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+          'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+        ];
+        return '${start.day} ${months[start.month]} – '
+            '${end.day} ${months[end.month]} ${end.year}';
+      } else {
+        return '${DateFormat('d MMM').format(start)} – '
+            '${DateFormat('d MMM yyyy').format(end)}';
+      }
+    } catch (_) {
+      return '';
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final cardColor = Theme.of(context).cardTheme.color ?? cs.surface;
-    const accent = Color(0xFF1E88E5);
+    final cardColor = Theme.of(context).colorScheme.surfaceContainer;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    String validRange = '';
-    if (membership.startsAt.isNotEmpty && membership.endsAt.isNotEmpty) {
-      try {
-        final start = DateFormat(
-          'd MMM',
-        ).format(DateTime.parse(membership.startsAt).toLocal());
-        final end = DateFormat(
-          'd MMM yyyy',
-        ).format(DateTime.parse(membership.endsAt).toLocal());
-        validRange = '$start – $end';
-      } catch (_) {}
+    // Resolve place name — same pattern as _BookingCard
+    final String placeName;
+    if (membership.placeId.isNotEmpty) {
+      final pa = ref.watch(placeDetailsProvider(membership.placeId));
+      placeName = pa.when(
+        data: (p) => isArabic
+            ? (p.nameAr.isNotEmpty ? p.nameAr : p.nameEn)
+            : (p.nameEn.isNotEmpty ? p.nameEn : p.nameAr),
+        loading: () => '…',
+        error: (_, _) => isArabic ? 'عضوية' : 'Membership',
+      );
+    } else {
+      placeName = isArabic ? 'عضوية' : 'Membership';
     }
+
+    final expiresIn = membership.status == MembershipStatus.active
+        ? _formatExpiresIn(membership.endsAt, isArabic)
+        : '';
+    final dateRange =
+        _formatDateRange(membership.startsAt, membership.endsAt, isArabic);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
@@ -374,7 +427,6 @@ class _MembershipCard extends StatelessWidget {
         elevation: 0,
         child: GestureDetector(
           onTap: onTap,
-
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
@@ -384,78 +436,95 @@ class _MembershipCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Icon square
+                // Icon square — identical to _BookingCard
                 Container(
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.12),
+                    color: _accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.fitness_center_rounded,
-                    color: accent,
+                    color: _accent,
                     size: 22,
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              membership.membershipType.isNotEmpty
-                                  ? membership.membershipType
-                                  : (isArabic ? 'عضوية' : 'Membership'),
-                              style: tt.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: cs.onSurface,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          TicketStatusBadge.membership(
-                            status: membership.status,
-                            isArabic: isArabic,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 5),
-                      Row(
-                        children: [
-                          if (validRange.isNotEmpty) ...[
-                            Icon(
-                              Icons.calendar_today_rounded,
-                              size: 12,
-                              color: cs.onSurface.withValues(alpha: 0.4),
-                            ),
-                            const SizedBox(width: 3),
-                            Flexible(
+                      // Row 1: place name + status badge
+                      Padding(
+                        padding: const EdgeInsets.only(top: 14),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
                               child: Text(
-                                validRange,
-                                style: tt.bodySmall?.copyWith(
-                                  color: cs.onSurface.withValues(alpha: 0.5),
+                                placeName,
+                                style: tt.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.onSurface,
                                 ),
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const SizedBox(width: 8),
-                          ],
-                          const Spacer(),
-                          Text(
-                            TicketCard._formatAmount(membership.amountIqd),
-                            style: tt.bodySmall?.copyWith(
-                              color: accent,
-                              fontWeight: FontWeight.w700,
+                            TicketStatusBadge.membership(
+                              status: membership.status,
+                              isArabic: isArabic,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                      // Row 2: expires countdown (active only)
+                      if (expiresIn.isNotEmpty)
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time_rounded,
+                              size: 12,
+                              color: cs.onSurface.withValues(alpha: 0.45),
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              expiresIn,
+                              style: tt.bodySmall?.copyWith(
+                                color: _accent,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      // Row 3: date range (left) · amount (right)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                dateRange,
+                                style: tt.bodySmall?.copyWith(
+                                  color: cs.onSurface.withValues(alpha: 0.5),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              TicketCard._formatAmount(membership.amountIqd),
+                              style: tt.bodySmall?.copyWith(
+                                color: _accent,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

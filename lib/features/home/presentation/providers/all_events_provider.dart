@@ -72,6 +72,7 @@ class AllEventsSeeAll extends _$AllEventsSeeAll {
               subtitleEn: e.city,
               subtitleAr: e.city,
               coverImageUrl: e.coverImageUrl,
+              isVerified: e.isVerified,
               type: 'event',
             ),
           )

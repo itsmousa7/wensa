@@ -70,6 +70,7 @@ class FeaturedSection extends ConsumerWidget {
 
   Widget _feedCard(TrendingFeedItemModel item) => FeedCard(
         placeId: item.id,
+        merchantId: item.merchantId,
         coverImageUrl: item.coverImageUrl,
         logoUrl: item.logoUrl,
         titleEn: item.titleEn,
