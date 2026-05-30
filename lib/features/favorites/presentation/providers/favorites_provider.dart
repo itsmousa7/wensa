@@ -116,35 +116,15 @@ class FavoritesFeed extends _$FavoritesFeed {
 
     state = const CategoryFeedState(isLoading: true);
 
-    final items = <CategoryFeedItem>[];
-
-    // ── Places ───────────────────────────────────────────────────────────────
+    // ── Favorites ordered by when they were added (newest first) ───────────
+    final List favRows;
     try {
-      final placeRows = await db
+      favRows = await db
           .schema('profiles')
           .from('favorites')
-          .select('place_id')
+          .select('place_id, event_id, created_at')
           .eq('user_id', user.id)
-          .not('place_id', 'is', null);
-
-      final placeIds = (placeRows as List)
-          .map((r) => r['place_id'] as String?)
-          .whereType<String>()
-          .toList();
-
-      if (placeIds.isNotEmpty) {
-        final places = await db
-            .schema('content')
-            .from('places_mobile')
-            .select('id, name_en, name_ar, area, cover_image_url, is_verified')
-            .inFilter('id', placeIds);
-
-        items.addAll(
-          (places as List).map(
-            (p) => CategoryFeedItem.fromRow(p as Map<String, dynamic>),
-          ),
-        );
-      }
+          .order('created_at', ascending: false);
     } catch (_) {
       state = const CategoryFeedState(
         isLoading: false,
@@ -154,50 +134,80 @@ class FavoritesFeed extends _$FavoritesFeed {
       return;
     }
 
-    // ── Events ───────────────────────────────────────────────────────────────
-    // events table columns: id, title_en, title_ar, city, cover_image_url
-    // subtitle_en / subtitle_ar do NOT exist on events — use city instead
-    try {
-      final eventRows = await db
-          .schema('profiles')
-          .from('favorites')
-          .select('event_id')
-          .eq('user_id', user.id)
-          .not('event_id', 'is', null);
+    final placeIds = <String>[];
+    final eventIds = <String>[];
+    for (final r in favRows) {
+      final p = r['place_id'] as String?;
+      final e = r['event_id'] as String?;
+      if (p != null) placeIds.add(p);
+      if (e != null) eventIds.add(e);
+    }
 
-      final eventIds = (eventRows as List)
-          .map((r) => r['event_id'] as String?)
-          .whereType<String>()
-          .toList();
+    final placeById = <String, CategoryFeedItem>{};
+    final eventById = <String, CategoryFeedItem>{};
 
-      if (eventIds.isNotEmpty) {
-        // ✅ Only select columns that actually exist on the events table
+    if (placeIds.isNotEmpty) {
+      try {
+        final places = await db
+            .schema('content')
+            .from('places_mobile')
+            .select(
+              'id, merchant_id, name_en, name_ar, area, cover_image_url, logo_url, is_verified',
+            )
+            .inFilter('id', placeIds);
+        for (final p in places as List) {
+          final m = p as Map<String, dynamic>;
+          placeById[m['id'] as String] = CategoryFeedItem.fromRow(m);
+        }
+      } catch (_) {
+        state = const CategoryFeedState(
+          isLoading: false,
+          hasMore: false,
+          hasError: true,
+        );
+        return;
+      }
+    }
+
+    if (eventIds.isNotEmpty) {
+      try {
         final events = await db
             .schema('content')
             .from('events_mobile')
-            .select('id, title_en, title_ar, city, cover_image_url')
+            .select('id, title_en, title_ar, city, cover_image_url, logo_url, is_verified')
             .inFilter('id', eventIds)
             .eq('event_status', 'approved');
-
-        items.addAll(
-          (events as List).map((e) {
-            final m = e as Map<String, dynamic>;
-            // Map city → subtitle since events have no subtitle_en/ar column
-            return CategoryFeedItem(
-              id: m['id'] as String,
-              titleEn: m['title_en'] as String? ?? '',
-              titleAr: m['title_ar'] as String? ?? '',
-              subtitleEn: m['city'] as String?,
-              subtitleAr: m['city'] as String?,
-              coverImageUrl: m['cover_image_url'] as String?,
-              isVerified: false,
-              type: 'event',
-            );
-          }),
-        );
+        for (final e in events as List) {
+          final m = e as Map<String, dynamic>;
+          eventById[m['id'] as String] = CategoryFeedItem(
+            id: m['id'] as String,
+            titleEn: m['title_en'] as String? ?? '',
+            titleAr: m['title_ar'] as String? ?? '',
+            subtitleEn: m['city'] as String?,
+            subtitleAr: m['city'] as String?,
+            coverImageUrl: m['cover_image_url'] as String?,
+            logoUrl: m['logo_url'] as String?,
+            isVerified: m['is_verified'] as bool? ?? false,
+            type: 'event',
+          );
+        }
+      } catch (_) {
+        // Events load failed — places still shown
       }
-    } catch (_) {
-      // Events load failed — places already in list, still show them
+    }
+
+    // Preserve the favorites order (newest → oldest) when assembling items.
+    final items = <CategoryFeedItem>[];
+    for (final r in favRows) {
+      final p = r['place_id'] as String?;
+      final e = r['event_id'] as String?;
+      if (p != null) {
+        final item = placeById[p];
+        if (item != null) items.add(item);
+      } else if (e != null) {
+        final item = eventById[e];
+        if (item != null) items.add(item);
+      }
     }
 
     state = CategoryFeedState(items: items, isLoading: false, hasMore: false);
@@ -244,7 +254,7 @@ class SeeAllFeed extends _$SeeAllFeed {
               .schema('content')
               .from('trending_feed')
               .select(
-                'id, title_en, title_ar, subtitle_en, subtitle_ar, cover_image_url, is_verified, type',
+                'id, merchant_id, title_en, title_ar, subtitle_en, subtitle_ar, cover_image_url, logo_url, is_verified, type',
               )
               .order('created_at', ascending: false)
               .range(from, to);
@@ -253,7 +263,7 @@ class SeeAllFeed extends _$SeeAllFeed {
               .schema('content')
               .from('places_mobile')
               .select(
-                'id, name_en, name_ar, area, cover_image_url, is_verified',
+                'id, merchant_id, name_en, name_ar, area, cover_image_url, logo_url, is_verified',
               )
               .eq('is_new', true)
               .order('created_at', ascending: false)
@@ -262,7 +272,7 @@ class SeeAllFeed extends _$SeeAllFeed {
           rows = await Supabase.instance.client
               .schema('content')
               .from('events_mobile')
-              .select('id, title_en, title_ar, city, cover_image_url')
+              .select('id, title_en, title_ar, city, cover_image_url, logo_url')
               .eq('event_status', 'approved')
               .or(
                 'end_date.is.null,end_date.gt.${DateTime.now().toUtc().toIso8601String()}',
@@ -274,7 +284,7 @@ class SeeAllFeed extends _$SeeAllFeed {
               .schema('content')
               .from('trending_feed')
               .select(
-                'id, title_en, title_ar, subtitle_en, subtitle_ar, cover_image_url, is_verified, type',
+                'id, merchant_id, title_en, title_ar, subtitle_en, subtitle_ar, cover_image_url, logo_url, is_verified, type',
               )
               .eq('is_featured', true)
               .order('hotness_score', ascending: false)

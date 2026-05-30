@@ -25,7 +25,7 @@ class MerchantLogo extends StatelessWidget {
       height: size + borderWidth * 2,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: Colors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.14),

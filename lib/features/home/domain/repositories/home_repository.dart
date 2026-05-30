@@ -28,13 +28,13 @@ class HomeRepository {
 
   // ── 2. Trending Feed (places + events mixed) ───────────────────────────────
   // يجلب من الـ View اللي بنيناه في Supabase — يدمج الأماكن والأحداث تلقائياً
-  // مرتب من الأعلى hotness_score للأدنى
+  // مرتب من الأحدث للأقدم (نفس ترتيب See All)
   Future<List<TrendingFeedItemModel>> getTrendingFeed() async {
     final data = await _supabase
         .schema('content')
         .from('trending_feed')
         .select()
-        .order('hotness_score', ascending: false)
+        .order('created_at', ascending: false)
         .limit(10);
 
     return data.map((e) => TrendingFeedItemModel.fromJson(e)).toList();

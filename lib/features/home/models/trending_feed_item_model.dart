@@ -9,6 +9,7 @@ part 'trending_feed_item_model.g.dart';
 abstract class TrendingFeedItemModel with _$TrendingFeedItemModel {
   const factory TrendingFeedItemModel({
     @Default('') String id,
+    String? merchantId,
     @Default('place') String type, // 'place' | 'event'
     @Default('') String titleAr,
     @Default('') String titleEn,
@@ -27,6 +28,7 @@ abstract class TrendingFeedItemModel with _$TrendingFeedItemModel {
   factory TrendingFeedItemModel.fromJson(Map<String, dynamic> json) =>
       TrendingFeedItemModel(
         id: json['id'] ?? '',
+        merchantId: json['merchant_id'] as String?,
         type: json['type'] ?? 'place',
         titleAr: json['title_ar'] ?? '',
         titleEn: json['title_en'] ?? '',

@@ -76,6 +76,7 @@ flutter:
     - assets/fonts/
     - assets/lottie/animation/
     - assets/lottie/categories/
+    - assets/viewer/
     - .env
 
   fonts:
@@ -86,3 +87,11 @@ flutter:
     - family: Graphik-Light
       fonts:
         - asset: assets/fonts/graphik-light.ttf
+    
+    - family: Ibm-Bold
+      fonts:
+        - asset: assets/fonts/ibm-bold.ttf
+
+    - family: Graphik-Extra-Bold
+      fonts:
+        - asset: assets/fonts/graphik-extra-bold.ttf

@@ -7,6 +7,7 @@ import 'package:future_riverpod/features/booking/domain/models/membership_plan.d
 import 'package:future_riverpod/features/booking/domain/models/restaurant_seating_option.dart';
 import 'package:future_riverpod/features/booking/domain/models/seat.dart';
 import 'package:future_riverpod/features/booking/domain/models/slot.dart';
+import 'package:future_riverpod/features/booking/domain/models/venue_layout.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -39,11 +40,9 @@ class BookingRepository {
   }
 
   Future<List<Membership>> fetchUserMemberships() async {
-    // create_membership inserts the row with status='pending' and
-    // payment_status='pending'; the row only becomes 'active' on a successful
-    // payment confirmation. Gate strictly on payment_status='paid' so that
-    // abandoned/cancelled payment attempts never surface in history and the
-    // status default never accidentally grants service.
+    // create_membership inserts the row with status='active' and
+    // payment_status='pending', so filtering by status alone would expose
+    // unpaid memberships as active. Gate strictly on payment_status='paid'.
     final data = await _client
         .schema('bookings')
         .from('memberships')
@@ -131,11 +130,33 @@ class BookingRepository {
   }
 
   Future<List<Seat>> fetchAvailableSeats(String eventId) async {
+    // PostgREST caps a single response at ~1000 rows. Arenas with more seats
+    // would silently lose their tail and the matching tap would resolve to a
+    // missing Seat (null) in selection state, making those seats look "dead".
+    // Match the viewer's `api.ts` pagination so both sides see every seat.
+    const page = 1000;
+    final all = <Seat>[];
+    for (var offset = 0;; offset += page) {
+      final data = await _client
+          .schema('bookings')
+          .rpc('available_seats', params: {'p_event_id': eventId})
+          .range(offset, offset + page - 1);
+      final batch = (data as List)
+          .map((e) => Seat.fromJson(e as Map<String, dynamic>))
+          .toList();
+      all.addAll(batch);
+      if (batch.length < page) break;
+    }
+    return all;
+  }
+
+  Future<VenueLayout> fetchVenueLayout(String eventId) async {
     final data = await _client.schema('bookings').rpc(
-      'available_seats',
-      params: {'event_id': eventId},
+      'event_venue_layout',
+      params: {'p_event_id': eventId},
     );
-    return (data as List).map((e) => Seat.fromJson(e as Map<String, dynamic>)).toList();
+    if (data == null) return const VenueLayout();
+    return VenueLayout.fromJson((data as Map).cast<String, dynamic>());
   }
 
   Future<List<MembershipPlan>> fetchMembershipPlans(String placeId) async {
@@ -166,6 +187,18 @@ class BookingRepository {
     });
   }
 
+  /// Flips every pending row in a concert group to confirmed/paid for the
+  /// caller, returning the first booking_id so the app can navigate to a
+  /// ticket detail page exactly like the single-booking flow.
+  Future<String?> confirmConcertGroupPayment(
+      String groupId, String paymentId) async {
+    final data = await _client.rpc('confirm_concert_group_payment', params: {
+      'p_group_id': groupId,
+      if (paymentId.isNotEmpty) 'p_payment_id': paymentId,
+    });
+    return data as String?;
+  }
+
   Future<void> confirmMembershipPayment(
       String membershipId, String paymentId) async {
     await _client.rpc('confirm_membership_payment', params: {
@@ -175,19 +208,39 @@ class BookingRepository {
   }
 
   Future<void> cancelBooking(String id) async {
-    await _client.schema('bookings').rpc('cancel_booking', params: {'id': id});
+    await _client.schema('bookings').rpc('cancel_booking', params: {'p_id': id});
+  }
+
+  Future<void> cancelConcertGroup(String groupId) async {
+    await _client.schema('bookings').rpc(
+      'cancel_concert_group_booking',
+      params: {'p_group_id': groupId},
+    );
   }
 
   Future<void> cancelMembership(String id) async {
     await _client.schema('bookings').rpc('cancel_membership', params: {'p_id': id});
   }
 
+  /// Quote pricing for a GA section (no booking row created).
+  Future<({int priceIqd, int remaining})> previewGABooking({
+    required String eventId,
+    required String sectionId,
+  }) async {
+    final layout = await fetchVenueLayout(eventId);
+    final section = layout.sections.where((s) => s.id == sectionId).firstOrNull;
+    if (section == null) {
+      return (priceIqd: 0, remaining: 0);
+    }
+    return (priceIqd: section.priceIqd, remaining: section.freeCount);
+  }
+
   Future<void> freezeMembership(String id) async {
-    await _client.schema('bookings').rpc('freeze_membership', params: {'id': id});
+    await _client.schema('bookings').rpc('freeze_membership', params: {'p_id': id});
   }
 
   Future<void> resumeMembership(String id) async {
-    await _client.schema('bookings').rpc('resume_membership', params: {'id': id});
+    await _client.schema('bookings').rpc('resume_membership', params: {'p_id': id});
   }
 }
 

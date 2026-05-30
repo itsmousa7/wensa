@@ -137,6 +137,7 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
                               widget.isAr ? 'التقييمات' : 'Reviews',
                               style: tt.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w800,
+                                color: cs.outline,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -211,9 +212,7 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
                                         : 'Be the first to review',
                                     style: tt.bodyMedium?.copyWith(
                                       fontWeight: FontWeight.w600,
-                                      color: cs.onSurface.withValues(
-                                        alpha: 0.4,
-                                      ),
+                                      color: cs.onTertiary,
                                     ),
                                   ),
                                 ],
@@ -406,7 +405,7 @@ class _AlreadyReviewedBanner extends StatelessWidget {
                   ? 'لقد قيّمت هذا المكان مسبقاً. يمكنك حذف تقييمك بالتمرير يميناً.'
                   : 'You already reviewed this place. Swipe your review left to delete it.',
               style: tt.bodySmall?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.65),
+                color: cs.onTertiary,
               ),
             ),
           ),
@@ -480,7 +479,7 @@ class _AddReviewInput extends StatelessWidget {
                   decoration: InputDecoration(
                     hintText: isAr ? 'أضف تعليقاً...' : 'Add a comment...',
                     hintStyle: tt.bodyMedium?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.4),
+                      color: cs.onTertiary,
                       fontWeight: FontWeight.bold,
                     ),
                     filled: true,

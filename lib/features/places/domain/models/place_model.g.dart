@@ -8,6 +8,7 @@ part of 'place_model.dart';
 
 _PlaceModel _$PlaceModelFromJson(Map<String, dynamic> json) => _PlaceModel(
   id: json['id'] as String? ?? '',
+  merchantId: json['merchantId'] as String?,
   nameAr: json['nameAr'] as String? ?? '',
   nameEn: json['nameEn'] as String? ?? '',
   descriptionAr: json['descriptionAr'] as String?,
@@ -47,6 +48,7 @@ _PlaceModel _$PlaceModelFromJson(Map<String, dynamic> json) => _PlaceModel(
 Map<String, dynamic> _$PlaceModelToJson(_PlaceModel instance) =>
     <String, dynamic>{
       'id': instance.id,
+      'merchantId': instance.merchantId,
       'nameAr': instance.nameAr,
       'nameEn': instance.nameEn,
       'descriptionAr': instance.descriptionAr,

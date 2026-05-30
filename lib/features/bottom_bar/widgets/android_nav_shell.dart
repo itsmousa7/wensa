@@ -23,6 +23,8 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/bottom_bar/pages/bottom_bar.dart';
+import 'package:future_riverpod/features/bookings_history/presentation/providers/bookings_scroll_signal.dart';
+import 'package:future_riverpod/features/favorites/presentation/providers/favorites_scroll_signal.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_scroll_controller.dart';
 import 'package:go_router/go_router.dart';
 
@@ -53,15 +55,22 @@ class AndroidNavShell extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
 
   void _handleTap(int barIndex, BuildContext context, WidgetRef ref) {
-    // Re-tapping the active Home tab scrolls to top.
-    if (barIndex == 0 && navigationShell.currentIndex == 0) {
-      final ctrl = ref.read(homeScrollControllerProvider);
-      if (ctrl.hasClients) {
-        ctrl.animateTo(
-          0,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOutCubic,
-        );
+    // Re-tapping the active tab scrolls to top.
+    final branchForBar = _barToBranch(barIndex);
+    if (branchForBar != null && branchForBar == navigationShell.currentIndex) {
+      if (branchForBar == 0) {
+        final ctrl = ref.read(homeScrollControllerProvider);
+        if (ctrl.hasClients) {
+          ctrl.animateTo(
+            0,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOutCubic,
+          );
+        }
+      } else if (branchForBar == 1) {
+        ref.read(favoritesScrollToTopProvider.notifier).trigger();
+      } else if (branchForBar == 2) {
+        ref.read(bookingsScrollToTopProvider.notifier).trigger();
       }
       return;
     }

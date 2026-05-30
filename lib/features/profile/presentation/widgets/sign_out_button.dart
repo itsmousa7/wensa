@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_repository_provider.dart';
 
@@ -70,6 +71,8 @@ class SignOutButton extends ConsumerWidget {
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
+                    fontFamily:
+                        AppTypography.buttonFontFamily(isAr ? 'ar' : 'en'),
                   ),
                 ),
               ),
@@ -86,6 +89,8 @@ class SignOutButton extends ConsumerWidget {
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w600,
+                    fontFamily:
+                        AppTypography.buttonFontFamily(isAr ? 'ar' : 'en'),
                   ),
                 ),
               ),
@@ -122,6 +127,7 @@ class SignOutButton extends ConsumerWidget {
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: AppColors.alert,
                 fontWeight: FontWeight.w700,
+                fontFamily: AppTypography.buttonFontFamily(isAr ? 'ar' : 'en'),
               ),
             ),
           ],

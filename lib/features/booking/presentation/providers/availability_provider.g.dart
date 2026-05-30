@@ -625,6 +625,81 @@ final class EventTiersFamily extends $Family
   String toString() => r'eventTiersProvider';
 }
 
+@ProviderFor(venueLayout)
+final venueLayoutProvider = VenueLayoutFamily._();
+
+final class VenueLayoutProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<VenueLayout>,
+          VenueLayout,
+          FutureOr<VenueLayout>
+        >
+    with $FutureModifier<VenueLayout>, $FutureProvider<VenueLayout> {
+  VenueLayoutProvider._({
+    required VenueLayoutFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'venueLayoutProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$venueLayoutHash();
+
+  @override
+  String toString() {
+    return r'venueLayoutProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<VenueLayout> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<VenueLayout> create(Ref ref) {
+    final argument = this.argument as String;
+    return venueLayout(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VenueLayoutProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$venueLayoutHash() => r'99a20fd1b20c0b21dc280713469df02906f2739c';
+
+final class VenueLayoutFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<VenueLayout>, String> {
+  VenueLayoutFamily._()
+    : super(
+        retry: null,
+        name: r'venueLayoutProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  VenueLayoutProvider call(String eventId) =>
+      VenueLayoutProvider._(argument: eventId, from: this);
+
+  @override
+  String toString() => r'venueLayoutProvider';
+}
+
 /// Generates 30-minute time slots from 10:00 to 22:00 (Asia/Baghdad, UTC+3).
 /// Returns ISO datetime strings stored as UTC (Baghdad - 3h).
 

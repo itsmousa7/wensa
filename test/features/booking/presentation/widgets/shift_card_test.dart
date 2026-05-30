@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/farm_shift.dart';
+import 'package:future_riverpod/features/booking/domain/models/slot_availability.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/shift_card.dart';
 
 void main() {
@@ -14,13 +15,14 @@ void main() {
     isAvailable: false,
   );
 
-  Widget buildCard({required bool isBooked, required VoidCallback onTap}) {
+  Widget buildCard(
+      {required SlotAvailability availability, required VoidCallback onTap}) {
     return MaterialApp(
       home: Scaffold(
         body: ShiftCard(
           shift: shift,
           isSelected: false,
-          isBooked: isBooked,
+          availability: availability,
           onTap: onTap,
         ),
       ),
@@ -28,29 +30,33 @@ void main() {
   }
 
   group('ShiftCard booked state', () {
-    testWidgets('shows "Booked" chip when isBooked is true', (tester) async {
-      await tester.pumpWidget(buildCard(isBooked: true, onTap: () {}));
+    testWidgets('shows "Booked" chip when booked', (tester) async {
+      await tester.pumpWidget(
+          buildCard(availability: SlotAvailability.booked, onTap: () {}));
       expect(find.text('Booked'), findsOneWidget);
     });
 
-    testWidgets('does not show "Booked" chip when isBooked is false', (tester) async {
-      await tester.pumpWidget(buildCard(isBooked: false, onTap: () {}));
+    testWidgets('does not show "Booked" chip when available', (tester) async {
+      await tester.pumpWidget(
+          buildCard(availability: SlotAvailability.available, onTap: () {}));
       expect(find.text('Booked'), findsNothing);
     });
 
-    testWidgets('does not call onTap when isBooked is true', (tester) async {
+    testWidgets('does not call onTap when booked', (tester) async {
       var tapped = false;
-      await tester.pumpWidget(
-          buildCard(isBooked: true, onTap: () => tapped = true));
+      await tester.pumpWidget(buildCard(
+          availability: SlotAvailability.booked,
+          onTap: () => tapped = true));
       await tester.tap(find.byType(ShiftCard));
       await tester.pump();
       expect(tapped, isFalse);
     });
 
-    testWidgets('calls onTap when isBooked is false', (tester) async {
+    testWidgets('calls onTap when available', (tester) async {
       var tapped = false;
-      await tester.pumpWidget(
-          buildCard(isBooked: false, onTap: () => tapped = true));
+      await tester.pumpWidget(buildCard(
+          availability: SlotAvailability.available,
+          onTap: () => tapped = true));
       await tester.tap(find.byType(ShiftCard));
       await tester.pump();
       expect(tapped, isTrue);

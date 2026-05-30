@@ -23,6 +23,7 @@ class FeedListSection extends ConsumerWidget {
     this.emptySubtitleEn = 'Check back later!',
     this.emptySubtitleAr = 'تحقق لاحقاً!',
     this.skeletonCount = 3,
+    this.showFooter = true,
   });
 
   final CategoryFeedState feed;
@@ -34,6 +35,7 @@ class FeedListSection extends ConsumerWidget {
   final String emptySubtitleEn;
   final String emptySubtitleAr;
   final int skeletonCount;
+  final bool showFooter;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -111,8 +113,8 @@ class FeedListSection extends ConsumerWidget {
     final n = feed.items.length;
     // One banner after each complete group of 5 real items.
     final bannerCount = hasBanners ? n ~/ 5 : 0;
-    // Total virtual slots: items + banners + 1 load-more indicator
-    final virtualCount = n + bannerCount + 1;
+    // Total virtual slots: items + banners (+ 1 load-more indicator if shown)
+    final virtualCount = n + bannerCount + (showFooter ? 1 : 0);
 
     return SliverList(
       delegate: SliverChildBuilderDelegate(

@@ -190,14 +190,18 @@ class _BookingDetailBody extends ConsumerWidget {
         );
 
       case BookingCategory.venueSeat:
+        final row = d['row']?.toString() ?? '';
+        final seat = d['seat']?.toString() ?? '';
+        final seatLabel = (row.isEmpty && seat.isEmpty) ? '—' : '$row$seat';
+        final tier = (d['tier_key'] ?? d['tier_id'])?.toString() ?? '—';
         extraCells.addAll([
           _InfoCell(
             label: isArabic ? 'المقعد' : 'Seat',
-            value: d['seat_id']?.toString() ?? '—',
+            value: seatLabel,
           ),
           _InfoCell(
             label: isArabic ? 'الدرجة' : 'Tier',
-            value: d['tier_id']?.toString() ?? '—',
+            value: tier,
           ),
         ]);
 
@@ -238,7 +242,7 @@ class _BookingDetailBody extends ConsumerWidget {
         isArabic: isArabic,
       ),
       cells: cells,
-      paymentId: booking.paymentId,
+      waylCode: booking.waylCode,
     );
   }
 }
@@ -322,6 +326,7 @@ class _MembershipDetailBody extends StatelessWidget {
         isArabic: isArabic,
       ),
       cells: cells,
+      waylCode: membership.waylCode,
     );
   }
 }
@@ -337,7 +342,7 @@ class _TicketBody extends StatefulWidget {
     required this.isArabic,
     required this.statusBadge,
     required this.cells,
-    this.paymentId,
+    this.waylCode,
   });
 
   final String qrToken;
@@ -345,7 +350,7 @@ class _TicketBody extends StatefulWidget {
   final bool isArabic;
   final Widget statusBadge;
   final List<_InfoCell> cells;
-  final String? paymentId;
+  final String? waylCode;
 
   @override
   State<_TicketBody> createState() => _TicketBodyState();
@@ -415,17 +420,11 @@ class _TicketBodyState extends State<_TicketBody> {
                       widget.statusBadge,
                       const SizedBox(height: 20),
                       _InfoGrid(cells: widget.cells),
-                      if (widget.paymentId != null &&
-                          widget.paymentId!.isNotEmpty) ...[
-                        const SizedBox(height: 14),
-                        Divider(
-                          height: 1,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.08),
-                        ),
-                        _ReferenceRow(
-                          paymentId: widget.paymentId!,
+                      if (widget.waylCode != null &&
+                          widget.waylCode!.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        _CodePill(
+                          code: widget.waylCode!,
                           isArabic: widget.isArabic,
                         ),
                       ],
@@ -684,58 +683,101 @@ class _InfoGrid extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Reference row — shows Wayl transaction ID with tap-to-copy
+//  Code pill — pill-shaped field with "Code" label, value, and copy button
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ReferenceRow extends StatelessWidget {
-  const _ReferenceRow({required this.paymentId, required this.isArabic});
+class _CodePill extends StatelessWidget {
+  const _CodePill({required this.code, required this.isArabic});
 
-  final String paymentId;
+  final String code;
   final bool isArabic;
 
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
-    final mutedColor = cs.onSurface.withValues(alpha: 0.55);
+    final borderColor = cs.onSurface.withValues(alpha: 0.18);
+    final labelColor = cs.onSurface.withValues(alpha: 0.55);
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () async {
-        await Clipboard.setData(ClipboardData(text: paymentId));
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isArabic ? 'تم النسخ' : 'Copied!'),
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 8, 6, 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor, width: 1.2),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isArabic ? 'الرمز' : 'Code',
+                  style: tt.labelMedium?.copyWith(
+                    color: labelColor,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  code,
+                  style: tt.bodyMedium?.copyWith(
+                    color: cs.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Row(
-          children: [
-            Text(
-              isArabic ? 'رقم الطلب' : 'Order Number',
-              style: tt.labelSmall?.copyWith(
-                color: cs.primary,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.4,
-              ),
+          const SizedBox(width: 8),
+          _CopyButton(value: code, isArabic: isArabic),
+        ],
+      ),
+    );
+  }
+}
+
+class _CopyButton extends StatelessWidget {
+  const _CopyButton({required this.value, required this.isArabic});
+
+  final String value;
+  final bool isArabic;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final borderColor = cs.onSurface.withValues(alpha: 0.18);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: () async {
+          await Clipboard.setData(ClipboardData(text: value));
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(isArabic ? 'تم النسخ' : 'Copied!'),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
             ),
-            const Spacer(),
-            Flexible(
-              child: Text(
-                paymentId,
-                style: tt.bodySmall?.copyWith(color: mutedColor),
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.end,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Icon(Icons.copy_rounded, size: 16, color: mutedColor),
-          ],
+          );
+        },
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: borderColor, width: 1.2),
+          ),
+          child: Icon(
+            Icons.copy_rounded,
+            size: 18,
+            color: cs.onSurface.withValues(alpha: 0.7),
+          ),
         ),
       ),
     );

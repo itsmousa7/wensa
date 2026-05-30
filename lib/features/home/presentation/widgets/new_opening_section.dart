@@ -56,6 +56,7 @@ class NewOpeningSection extends ConsumerWidget {
                 final item = items[idx];
                 return FeedCard(
                   placeId: item.id,
+                  merchantId: item.merchantId,
                   coverImageUrl: item.coverImageUrl,
                   logoUrl: item.logoUrl,
                   titleEn: item.nameEn,

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Seat {
 
- String get seatId; String get row; String get seat; String get tierKey; int get x; int get y; SeatStatus get status;
+ String get seatId; String get sectionId; String get row; String get seat; String get tierKey; int get x; int get y; int get priceIqd; SeatStatus get status;
 /// Create a copy of Seat
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $SeatCopyWith<Seat> get copyWith => _$SeatCopyWithImpl<Seat>(this as Seat, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Seat&&(identical(other.seatId, seatId) || other.seatId == seatId)&&(identical(other.row, row) || other.row == row)&&(identical(other.seat, seat) || other.seat == seat)&&(identical(other.tierKey, tierKey) || other.tierKey == tierKey)&&(identical(other.x, x) || other.x == x)&&(identical(other.y, y) || other.y == y)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Seat&&(identical(other.seatId, seatId) || other.seatId == seatId)&&(identical(other.sectionId, sectionId) || other.sectionId == sectionId)&&(identical(other.row, row) || other.row == row)&&(identical(other.seat, seat) || other.seat == seat)&&(identical(other.tierKey, tierKey) || other.tierKey == tierKey)&&(identical(other.x, x) || other.x == x)&&(identical(other.y, y) || other.y == y)&&(identical(other.priceIqd, priceIqd) || other.priceIqd == priceIqd)&&(identical(other.status, status) || other.status == status));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,seatId,row,seat,tierKey,x,y,status);
+int get hashCode => Object.hash(runtimeType,seatId,sectionId,row,seat,tierKey,x,y,priceIqd,status);
 
 @override
 String toString() {
-  return 'Seat(seatId: $seatId, row: $row, seat: $seat, tierKey: $tierKey, x: $x, y: $y, status: $status)';
+  return 'Seat(seatId: $seatId, sectionId: $sectionId, row: $row, seat: $seat, tierKey: $tierKey, x: $x, y: $y, priceIqd: $priceIqd, status: $status)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $SeatCopyWith<$Res>  {
   factory $SeatCopyWith(Seat value, $Res Function(Seat) _then) = _$SeatCopyWithImpl;
 @useResult
 $Res call({
- String seatId, String row, String seat, String tierKey, int x, int y, SeatStatus status
+ String seatId, String sectionId, String row, String seat, String tierKey, int x, int y, int priceIqd, SeatStatus status
 });
 
 
@@ -65,14 +65,16 @@ class _$SeatCopyWithImpl<$Res>
 
 /// Create a copy of Seat
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? seatId = null,Object? row = null,Object? seat = null,Object? tierKey = null,Object? x = null,Object? y = null,Object? status = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? seatId = null,Object? sectionId = null,Object? row = null,Object? seat = null,Object? tierKey = null,Object? x = null,Object? y = null,Object? priceIqd = null,Object? status = null,}) {
   return _then(_self.copyWith(
 seatId: null == seatId ? _self.seatId : seatId // ignore: cast_nullable_to_non_nullable
+as String,sectionId: null == sectionId ? _self.sectionId : sectionId // ignore: cast_nullable_to_non_nullable
 as String,row: null == row ? _self.row : row // ignore: cast_nullable_to_non_nullable
 as String,seat: null == seat ? _self.seat : seat // ignore: cast_nullable_to_non_nullable
 as String,tierKey: null == tierKey ? _self.tierKey : tierKey // ignore: cast_nullable_to_non_nullable
 as String,x: null == x ? _self.x : x // ignore: cast_nullable_to_non_nullable
 as int,y: null == y ? _self.y : y // ignore: cast_nullable_to_non_nullable
+as int,priceIqd: null == priceIqd ? _self.priceIqd : priceIqd // ignore: cast_nullable_to_non_nullable
 as int,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as SeatStatus,
   ));
@@ -159,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String seatId,  String row,  String seat,  String tierKey,  int x,  int y,  SeatStatus status)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String seatId,  String sectionId,  String row,  String seat,  String tierKey,  int x,  int y,  int priceIqd,  SeatStatus status)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Seat() when $default != null:
-return $default(_that.seatId,_that.row,_that.seat,_that.tierKey,_that.x,_that.y,_that.status);case _:
+return $default(_that.seatId,_that.sectionId,_that.row,_that.seat,_that.tierKey,_that.x,_that.y,_that.priceIqd,_that.status);case _:
   return orElse();
 
 }
@@ -180,10 +182,10 @@ return $default(_that.seatId,_that.row,_that.seat,_that.tierKey,_that.x,_that.y,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String seatId,  String row,  String seat,  String tierKey,  int x,  int y,  SeatStatus status)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String seatId,  String sectionId,  String row,  String seat,  String tierKey,  int x,  int y,  int priceIqd,  SeatStatus status)  $default,) {final _that = this;
 switch (_that) {
 case _Seat():
-return $default(_that.seatId,_that.row,_that.seat,_that.tierKey,_that.x,_that.y,_that.status);case _:
+return $default(_that.seatId,_that.sectionId,_that.row,_that.seat,_that.tierKey,_that.x,_that.y,_that.priceIqd,_that.status);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -200,10 +202,10 @@ return $default(_that.seatId,_that.row,_that.seat,_that.tierKey,_that.x,_that.y,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String seatId,  String row,  String seat,  String tierKey,  int x,  int y,  SeatStatus status)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String seatId,  String sectionId,  String row,  String seat,  String tierKey,  int x,  int y,  int priceIqd,  SeatStatus status)?  $default,) {final _that = this;
 switch (_that) {
 case _Seat() when $default != null:
-return $default(_that.seatId,_that.row,_that.seat,_that.tierKey,_that.x,_that.y,_that.status);case _:
+return $default(_that.seatId,_that.sectionId,_that.row,_that.seat,_that.tierKey,_that.x,_that.y,_that.priceIqd,_that.status);case _:
   return null;
 
 }
@@ -215,15 +217,17 @@ return $default(_that.seatId,_that.row,_that.seat,_that.tierKey,_that.x,_that.y,
 @JsonSerializable()
 
 class _Seat implements Seat {
-  const _Seat({this.seatId = '', this.row = '', this.seat = '', this.tierKey = '', this.x = 0, this.y = 0, this.status = SeatStatus.free});
+  const _Seat({this.seatId = '', this.sectionId = '', this.row = '', this.seat = '', this.tierKey = '', this.x = 0, this.y = 0, this.priceIqd = 0, this.status = SeatStatus.free});
   factory _Seat.fromJson(Map<String, dynamic> json) => _$SeatFromJson(json);
 
 @override@JsonKey() final  String seatId;
+@override@JsonKey() final  String sectionId;
 @override@JsonKey() final  String row;
 @override@JsonKey() final  String seat;
 @override@JsonKey() final  String tierKey;
 @override@JsonKey() final  int x;
 @override@JsonKey() final  int y;
+@override@JsonKey() final  int priceIqd;
 @override@JsonKey() final  SeatStatus status;
 
 /// Create a copy of Seat
@@ -239,16 +243,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Seat&&(identical(other.seatId, seatId) || other.seatId == seatId)&&(identical(other.row, row) || other.row == row)&&(identical(other.seat, seat) || other.seat == seat)&&(identical(other.tierKey, tierKey) || other.tierKey == tierKey)&&(identical(other.x, x) || other.x == x)&&(identical(other.y, y) || other.y == y)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Seat&&(identical(other.seatId, seatId) || other.seatId == seatId)&&(identical(other.sectionId, sectionId) || other.sectionId == sectionId)&&(identical(other.row, row) || other.row == row)&&(identical(other.seat, seat) || other.seat == seat)&&(identical(other.tierKey, tierKey) || other.tierKey == tierKey)&&(identical(other.x, x) || other.x == x)&&(identical(other.y, y) || other.y == y)&&(identical(other.priceIqd, priceIqd) || other.priceIqd == priceIqd)&&(identical(other.status, status) || other.status == status));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,seatId,row,seat,tierKey,x,y,status);
+int get hashCode => Object.hash(runtimeType,seatId,sectionId,row,seat,tierKey,x,y,priceIqd,status);
 
 @override
 String toString() {
-  return 'Seat(seatId: $seatId, row: $row, seat: $seat, tierKey: $tierKey, x: $x, y: $y, status: $status)';
+  return 'Seat(seatId: $seatId, sectionId: $sectionId, row: $row, seat: $seat, tierKey: $tierKey, x: $x, y: $y, priceIqd: $priceIqd, status: $status)';
 }
 
 
@@ -259,7 +263,7 @@ abstract mixin class _$SeatCopyWith<$Res> implements $SeatCopyWith<$Res> {
   factory _$SeatCopyWith(_Seat value, $Res Function(_Seat) _then) = __$SeatCopyWithImpl;
 @override @useResult
 $Res call({
- String seatId, String row, String seat, String tierKey, int x, int y, SeatStatus status
+ String seatId, String sectionId, String row, String seat, String tierKey, int x, int y, int priceIqd, SeatStatus status
 });
 
 
@@ -276,14 +280,16 @@ class __$SeatCopyWithImpl<$Res>
 
 /// Create a copy of Seat
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? seatId = null,Object? row = null,Object? seat = null,Object? tierKey = null,Object? x = null,Object? y = null,Object? status = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? seatId = null,Object? sectionId = null,Object? row = null,Object? seat = null,Object? tierKey = null,Object? x = null,Object? y = null,Object? priceIqd = null,Object? status = null,}) {
   return _then(_Seat(
 seatId: null == seatId ? _self.seatId : seatId // ignore: cast_nullable_to_non_nullable
+as String,sectionId: null == sectionId ? _self.sectionId : sectionId // ignore: cast_nullable_to_non_nullable
 as String,row: null == row ? _self.row : row // ignore: cast_nullable_to_non_nullable
 as String,seat: null == seat ? _self.seat : seat // ignore: cast_nullable_to_non_nullable
 as String,tierKey: null == tierKey ? _self.tierKey : tierKey // ignore: cast_nullable_to_non_nullable
 as String,x: null == x ? _self.x : x // ignore: cast_nullable_to_non_nullable
 as int,y: null == y ? _self.y : y // ignore: cast_nullable_to_non_nullable
+as int,priceIqd: null == priceIqd ? _self.priceIqd : priceIqd // ignore: cast_nullable_to_non_nullable
 as int,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as SeatStatus,
   ));

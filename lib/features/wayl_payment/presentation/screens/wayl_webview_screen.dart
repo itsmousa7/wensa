@@ -55,6 +55,14 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
   @override
   void dispose() {
     _pollingTimer?.cancel();
+    // If we leave the screen without success/failure (X button, system back,
+    // gesture, OS pop), treat it as a user cancel so the parent can release
+    // any pending booking row server-side. Guarded by `_resultHandled` to
+    // avoid double-firing alongside success/failure.
+    if (!_resultHandled) {
+      _resultHandled = true;
+      widget.onPaymentCancelled?.call();
+    }
     super.dispose();
   }
 
@@ -271,12 +279,24 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
+          // Fire the cancel callback BEFORE pop so the parent's state reset +
+          // snackbar happen immediately, rather than waiting ~300ms for the
+          // pop animation to complete before dispose() fires. System-back /
+          // gesture pops still get caught by the guarded dispose() handler.
           onPressed: () {
-            widget.onPaymentCancelled?.call();
+            if (!_resultHandled) {
+              _resultHandled = true;
+              widget.onPaymentCancelled?.call();
+            }
             Navigator.pop(context);
           },
         ),
-        title: const Text('Online Payment'),
+        title: Text(
+          'Online Payment',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.outline,
+          ),
+        ),
         centerTitle: true,
       ),
       body: Stack(

@@ -64,7 +64,7 @@ final class UserBookingsProvider
   }
 }
 
-String _$userBookingsHash() => r'4d5c33273299d6155faf043c99f75d1c2189737a';
+String _$userBookingsHash() => r'128c4bcbf519f51229ec83f07e6123ee2a6ce5c5';
 
 final class UserBookingsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<Booking>>, List<String>?> {
@@ -121,7 +121,7 @@ final class UserMembershipsProvider
   }
 }
 
-String _$userMembershipsHash() => r'394a3570795852afcba55455f5590269d36d5af0';
+String _$userMembershipsHash() => r'ea5418f5d7ed8432c677324e396bb9369c033ec1';
 
 @ProviderFor(bookingDetail)
 final bookingDetailProvider = BookingDetailFamily._();

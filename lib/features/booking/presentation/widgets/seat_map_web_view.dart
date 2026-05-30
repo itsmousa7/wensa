@@ -138,6 +138,39 @@ class SeatMapWebViewState extends State<SeatMapWebView> {
         'window.wensaSetSelectedSeats && window.wensaSetSelectedSeats($payload);');
   }
 
+  /// Shifts the zoom/reset button bar up by [px] so it clears any Flutter
+  /// widget (e.g. the selection summary bar) overlaid at the bottom.
+  Future<void> setBottomInset(double px) async {
+    final c = _controller;
+    if (c == null || !_ready) return;
+    await c.runJavaScript(
+        'window.wensaSetBottomInset && window.wensaSetBottomInset($px);');
+  }
+
+  /// Enable/disable interaction with the map. While a Flutter sheet is open
+  /// over the map, the native WebView would still receive touches (iOS
+  /// platform views release unclaimed touches to the native view, so a
+  /// Flutter IgnorePointer / modal barrier can't block them). We inject a
+  /// transparent full-viewport overlay *inside* the web content that swallows
+  /// every pointer event, leaving the map visible but inert.
+  Future<void> setInteractive(bool interactive) async {
+    final c = _controller;
+    if (c == null || !_ready) return;
+    if (interactive) {
+      await c.runJavaScript(
+        "(function(){var b=document.getElementById('__wensa_block__');if(b)b.remove();})();",
+      );
+    } else {
+      await c.runJavaScript(
+        "(function(){if(document.getElementById('__wensa_block__'))return;"
+        "var d=document.createElement('div');d.id='__wensa_block__';"
+        "d.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;"
+        "z-index:2147483647;background:transparent;touch-action:none;';"
+        "document.body.appendChild(d);})();",
+      );
+    }
+  }
+
   /// Push the seats that should render with the red "orphan / warning"
   /// highlight (pulsing ring). Called after every change to either the
   /// selection or the available seats list.

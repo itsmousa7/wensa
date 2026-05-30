@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$EventTier {
 
- String get id; String get eventId; String get nameAr; String get nameEn; int get priceIqd; int get capacity; int get sortOrder;
+ String get id; String get eventId; String get tierKey; String get nameAr; String get nameEn; int get priceIqd; int get capacity; int get sortOrder;
 /// Create a copy of EventTier
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $EventTierCopyWith<EventTier> get copyWith => _$EventTierCopyWithImpl<EventTier>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is EventTier&&(identical(other.id, id) || other.id == id)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.nameAr, nameAr) || other.nameAr == nameAr)&&(identical(other.nameEn, nameEn) || other.nameEn == nameEn)&&(identical(other.priceIqd, priceIqd) || other.priceIqd == priceIqd)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is EventTier&&(identical(other.id, id) || other.id == id)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.tierKey, tierKey) || other.tierKey == tierKey)&&(identical(other.nameAr, nameAr) || other.nameAr == nameAr)&&(identical(other.nameEn, nameEn) || other.nameEn == nameEn)&&(identical(other.priceIqd, priceIqd) || other.priceIqd == priceIqd)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,eventId,nameAr,nameEn,priceIqd,capacity,sortOrder);
+int get hashCode => Object.hash(runtimeType,id,eventId,tierKey,nameAr,nameEn,priceIqd,capacity,sortOrder);
 
 @override
 String toString() {
-  return 'EventTier(id: $id, eventId: $eventId, nameAr: $nameAr, nameEn: $nameEn, priceIqd: $priceIqd, capacity: $capacity, sortOrder: $sortOrder)';
+  return 'EventTier(id: $id, eventId: $eventId, tierKey: $tierKey, nameAr: $nameAr, nameEn: $nameEn, priceIqd: $priceIqd, capacity: $capacity, sortOrder: $sortOrder)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $EventTierCopyWith<$Res>  {
   factory $EventTierCopyWith(EventTier value, $Res Function(EventTier) _then) = _$EventTierCopyWithImpl;
 @useResult
 $Res call({
- String id, String eventId, String nameAr, String nameEn, int priceIqd, int capacity, int sortOrder
+ String id, String eventId, String tierKey, String nameAr, String nameEn, int priceIqd, int capacity, int sortOrder
 });
 
 
@@ -65,10 +65,11 @@ class _$EventTierCopyWithImpl<$Res>
 
 /// Create a copy of EventTier
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? eventId = null,Object? nameAr = null,Object? nameEn = null,Object? priceIqd = null,Object? capacity = null,Object? sortOrder = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? eventId = null,Object? tierKey = null,Object? nameAr = null,Object? nameEn = null,Object? priceIqd = null,Object? capacity = null,Object? sortOrder = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,eventId: null == eventId ? _self.eventId : eventId // ignore: cast_nullable_to_non_nullable
+as String,tierKey: null == tierKey ? _self.tierKey : tierKey // ignore: cast_nullable_to_non_nullable
 as String,nameAr: null == nameAr ? _self.nameAr : nameAr // ignore: cast_nullable_to_non_nullable
 as String,nameEn: null == nameEn ? _self.nameEn : nameEn // ignore: cast_nullable_to_non_nullable
 as String,priceIqd: null == priceIqd ? _self.priceIqd : priceIqd // ignore: cast_nullable_to_non_nullable
@@ -159,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String eventId,  String nameAr,  String nameEn,  int priceIqd,  int capacity,  int sortOrder)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String eventId,  String tierKey,  String nameAr,  String nameEn,  int priceIqd,  int capacity,  int sortOrder)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _EventTier() when $default != null:
-return $default(_that.id,_that.eventId,_that.nameAr,_that.nameEn,_that.priceIqd,_that.capacity,_that.sortOrder);case _:
+return $default(_that.id,_that.eventId,_that.tierKey,_that.nameAr,_that.nameEn,_that.priceIqd,_that.capacity,_that.sortOrder);case _:
   return orElse();
 
 }
@@ -180,10 +181,10 @@ return $default(_that.id,_that.eventId,_that.nameAr,_that.nameEn,_that.priceIqd,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String eventId,  String nameAr,  String nameEn,  int priceIqd,  int capacity,  int sortOrder)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String eventId,  String tierKey,  String nameAr,  String nameEn,  int priceIqd,  int capacity,  int sortOrder)  $default,) {final _that = this;
 switch (_that) {
 case _EventTier():
-return $default(_that.id,_that.eventId,_that.nameAr,_that.nameEn,_that.priceIqd,_that.capacity,_that.sortOrder);case _:
+return $default(_that.id,_that.eventId,_that.tierKey,_that.nameAr,_that.nameEn,_that.priceIqd,_that.capacity,_that.sortOrder);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -200,10 +201,10 @@ return $default(_that.id,_that.eventId,_that.nameAr,_that.nameEn,_that.priceIqd,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String eventId,  String nameAr,  String nameEn,  int priceIqd,  int capacity,  int sortOrder)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String eventId,  String tierKey,  String nameAr,  String nameEn,  int priceIqd,  int capacity,  int sortOrder)?  $default,) {final _that = this;
 switch (_that) {
 case _EventTier() when $default != null:
-return $default(_that.id,_that.eventId,_that.nameAr,_that.nameEn,_that.priceIqd,_that.capacity,_that.sortOrder);case _:
+return $default(_that.id,_that.eventId,_that.tierKey,_that.nameAr,_that.nameEn,_that.priceIqd,_that.capacity,_that.sortOrder);case _:
   return null;
 
 }
@@ -215,11 +216,12 @@ return $default(_that.id,_that.eventId,_that.nameAr,_that.nameEn,_that.priceIqd,
 @JsonSerializable()
 
 class _EventTier implements EventTier {
-  const _EventTier({this.id = '', this.eventId = '', this.nameAr = '', this.nameEn = '', this.priceIqd = 0, this.capacity = 0, this.sortOrder = 0});
+  const _EventTier({this.id = '', this.eventId = '', this.tierKey = '', this.nameAr = '', this.nameEn = '', this.priceIqd = 0, this.capacity = 0, this.sortOrder = 0});
   factory _EventTier.fromJson(Map<String, dynamic> json) => _$EventTierFromJson(json);
 
 @override@JsonKey() final  String id;
 @override@JsonKey() final  String eventId;
+@override@JsonKey() final  String tierKey;
 @override@JsonKey() final  String nameAr;
 @override@JsonKey() final  String nameEn;
 @override@JsonKey() final  int priceIqd;
@@ -239,16 +241,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _EventTier&&(identical(other.id, id) || other.id == id)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.nameAr, nameAr) || other.nameAr == nameAr)&&(identical(other.nameEn, nameEn) || other.nameEn == nameEn)&&(identical(other.priceIqd, priceIqd) || other.priceIqd == priceIqd)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _EventTier&&(identical(other.id, id) || other.id == id)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.tierKey, tierKey) || other.tierKey == tierKey)&&(identical(other.nameAr, nameAr) || other.nameAr == nameAr)&&(identical(other.nameEn, nameEn) || other.nameEn == nameEn)&&(identical(other.priceIqd, priceIqd) || other.priceIqd == priceIqd)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,eventId,nameAr,nameEn,priceIqd,capacity,sortOrder);
+int get hashCode => Object.hash(runtimeType,id,eventId,tierKey,nameAr,nameEn,priceIqd,capacity,sortOrder);
 
 @override
 String toString() {
-  return 'EventTier(id: $id, eventId: $eventId, nameAr: $nameAr, nameEn: $nameEn, priceIqd: $priceIqd, capacity: $capacity, sortOrder: $sortOrder)';
+  return 'EventTier(id: $id, eventId: $eventId, tierKey: $tierKey, nameAr: $nameAr, nameEn: $nameEn, priceIqd: $priceIqd, capacity: $capacity, sortOrder: $sortOrder)';
 }
 
 
@@ -259,7 +261,7 @@ abstract mixin class _$EventTierCopyWith<$Res> implements $EventTierCopyWith<$Re
   factory _$EventTierCopyWith(_EventTier value, $Res Function(_EventTier) _then) = __$EventTierCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String eventId, String nameAr, String nameEn, int priceIqd, int capacity, int sortOrder
+ String id, String eventId, String tierKey, String nameAr, String nameEn, int priceIqd, int capacity, int sortOrder
 });
 
 
@@ -276,10 +278,11 @@ class __$EventTierCopyWithImpl<$Res>
 
 /// Create a copy of EventTier
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? eventId = null,Object? nameAr = null,Object? nameEn = null,Object? priceIqd = null,Object? capacity = null,Object? sortOrder = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? eventId = null,Object? tierKey = null,Object? nameAr = null,Object? nameEn = null,Object? priceIqd = null,Object? capacity = null,Object? sortOrder = null,}) {
   return _then(_EventTier(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,eventId: null == eventId ? _self.eventId : eventId // ignore: cast_nullable_to_non_nullable
+as String,tierKey: null == tierKey ? _self.tierKey : tierKey // ignore: cast_nullable_to_non_nullable
 as String,nameAr: null == nameAr ? _self.nameAr : nameAr // ignore: cast_nullable_to_non_nullable
 as String,nameEn: null == nameEn ? _self.nameEn : nameEn // ignore: cast_nullable_to_non_nullable
 as String,priceIqd: null == priceIqd ? _self.priceIqd : priceIqd // ignore: cast_nullable_to_non_nullable

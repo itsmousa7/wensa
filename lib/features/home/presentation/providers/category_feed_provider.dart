@@ -8,6 +8,7 @@ part 'category_feed_provider.g.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 class CategoryFeedItem {
   final String id;
+  final String? merchantId;
   final String titleEn;
   final String titleAr;
   final String? subtitleEn;
@@ -19,6 +20,7 @@ class CategoryFeedItem {
 
   const CategoryFeedItem({
     required this.id,
+    this.merchantId,
     required this.titleEn,
     required this.titleAr,
     this.subtitleEn,
@@ -32,6 +34,7 @@ class CategoryFeedItem {
   /// From places table (name_en / name_ar)
   factory CategoryFeedItem.fromRow(Map<String, dynamic> m) => CategoryFeedItem(
     id: m['id'] as String,
+    merchantId: m['merchant_id'] as String?,
     titleEn: m['name_en'] as String? ?? '',
     titleAr: m['name_ar'] as String? ?? '',
     subtitleEn: m['area'] as String?,
@@ -46,6 +49,7 @@ class CategoryFeedItem {
   factory CategoryFeedItem.fromTrendingRow(Map<String, dynamic> m) =>
       CategoryFeedItem(
         id: m['id'] as String,
+        merchantId: m['merchant_id'] as String?,
         titleEn: m['title_en'] as String? ?? '',
         titleAr: m['title_ar'] as String? ?? '',
         subtitleEn: m['subtitle_en'] as String?,
@@ -121,7 +125,7 @@ class CategoryFeed extends _$CategoryFeed {
       final rows = await Supabase.instance.client
           .schema('content')
           .from('places_mobile')
-          .select('id, name_en, name_ar, area, cover_image_url, is_verified')
+          .select('id, merchant_id, name_en, name_ar, area, cover_image_url, logo_url, is_verified')
           .eq('place_status', 'approved')
           .eq('category_id', categoryId)
           .order('hotness_score', ascending: false)
@@ -175,7 +179,7 @@ class AllPlacesFeed extends _$AllPlacesFeed {
       final rows = await Supabase.instance.client
           .schema('content')
           .from('places_mobile')
-          .select('id, name_en, name_ar, area, cover_image_url, is_verified')
+          .select('id, merchant_id, name_en, name_ar, area, cover_image_url, logo_url, is_verified')
           .eq('place_status', 'approved')
           .order('created_at', ascending: false)
           .range(from, to);

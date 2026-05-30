@@ -85,7 +85,7 @@ final class FavoritesFeedProvider
   }
 }
 
-String _$favoritesFeedHash() => r'45084b1ab00d26043a287d1c4e1b9adb0b678f3b';
+String _$favoritesFeedHash() => r'29a36a2cf2fe48effcf879fa85e71452634c497c';
 
 abstract class _$FavoritesFeed extends $Notifier<CategoryFeedState> {
   CategoryFeedState build();
@@ -154,7 +154,7 @@ final class SeeAllFeedProvider
   }
 }
 
-String _$seeAllFeedHash() => r'838c7fedbef22f05f7c2ab171d86d4b599b859e6';
+String _$seeAllFeedHash() => r'04da117b61386c62e69397ce4e1b923b9815d06b';
 
 final class SeeAllFeedFamily extends $Family
     with

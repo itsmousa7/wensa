@@ -10,6 +10,7 @@ _TrendingFeedItemModel _$TrendingFeedItemModelFromJson(
   Map<String, dynamic> json,
 ) => _TrendingFeedItemModel(
   id: json['id'] as String? ?? '',
+  merchantId: json['merchantId'] as String?,
   type: json['type'] as String? ?? 'place',
   titleAr: json['titleAr'] as String? ?? '',
   titleEn: json['titleEn'] as String? ?? '',
@@ -29,6 +30,7 @@ Map<String, dynamic> _$TrendingFeedItemModelToJson(
   _TrendingFeedItemModel instance,
 ) => <String, dynamic>{
   'id': instance.id,
+  'merchantId': instance.merchantId,
   'type': instance.type,
   'titleAr': instance.titleAr,
   'titleEn': instance.titleEn,

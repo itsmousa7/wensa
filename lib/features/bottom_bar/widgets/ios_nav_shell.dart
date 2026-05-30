@@ -22,6 +22,8 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/bottom_bar/pages/bottom_bar.dart';
+import 'package:future_riverpod/features/bookings_history/presentation/providers/bookings_scroll_signal.dart';
+import 'package:future_riverpod/features/favorites/presentation/providers/favorites_scroll_signal.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_scroll_controller.dart';
 import 'package:go_router/go_router.dart';
 
@@ -51,15 +53,21 @@ class IosNavShell extends ConsumerWidget {
   void _handleTap(int barIndex, WidgetRef ref, BuildContext context) {
     final branch = _barToBranch[barIndex];
 
-    // Re-tapping Home scrolls to top instead of re-navigating.
-    if (branch == 0 && navigationShell.currentIndex == 0) {
-      final scrollCtrl = ref.read(homeScrollControllerProvider);
-      if (scrollCtrl.hasClients) {
-        scrollCtrl.animateTo(
-          0,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOutCubic,
-        );
+    // Re-tapping the active tab scrolls to top instead of re-navigating.
+    if (branch == navigationShell.currentIndex) {
+      if (branch == 0) {
+        final scrollCtrl = ref.read(homeScrollControllerProvider);
+        if (scrollCtrl.hasClients) {
+          scrollCtrl.animateTo(
+            0,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOutCubic,
+          );
+        }
+      } else if (branch == 1) {
+        ref.read(favoritesScrollToTopProvider.notifier).trigger();
+      } else if (branch == 2) {
+        ref.read(bookingsScrollToTopProvider.notifier).trigger();
       }
       return;
     }
@@ -74,6 +82,11 @@ class IosNavShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
     final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+    // Hide native bar while a route is pushed on top of the shell (e.g.
+    // place/event detail pages). Native UIKit views (CNTabBar, CNButton) bleed
+    // through Flutter's rendering during the slide-in transition, producing a
+    // white frosted-glass rectangle visible at the bottom of the screen.
+    final isShellCurrent = ModalRoute.of(context)?.isCurrent ?? true;
 
     // Convert the current shell branch back to a bar visual index so the
     // correct tab is highlighted.
@@ -87,7 +100,7 @@ class IosNavShell extends ConsumerWidget {
           children: [
             navigationShell,
 
-            if (!keyboardOpen)
+            if (!keyboardOpen && isShellCurrent)
               Positioned(
                 bottom: 0,
                 left: 0,

@@ -33,6 +33,24 @@ class PlaceDiscountKey {
   int get hashCode => Object.hash(placeId, merchantId);
 }
 
+/// Returns the best applicable [MerchantDiscount] for the given place
+/// (largest percent, currently within the validity window). Returns null
+/// when no merchant discount matches.
+final placeMerchantDiscountProvider =
+    Provider.family<MerchantDiscount?, PlaceDiscountKey>((ref, key) {
+  final list = ref.watch(merchantDiscountsProvider).value;
+  if (list == null) return null;
+  MerchantDiscount? best;
+  for (final d in list) {
+    if (!d.isCurrentlyActive()) continue;
+    if (!d.appliesToPlace(placeId: key.placeId, merchantId: key.merchantId)) {
+      continue;
+    }
+    if (best == null || d.percent > best.percent) best = d;
+  }
+  return best;
+});
+
 /// Returns the best applicable percent for the given place (largest percent,
 /// ignoring the hours window — that's evaluated at checkout). Returns null
 /// when no discount matches.
@@ -43,6 +61,7 @@ final bestDiscountPercentProvider =
   final merchant = ref.watch(merchantDiscountsProvider).value;
   if (merchant != null) {
     for (final d in merchant) {
+      if (!d.isCurrentlyActive()) continue;
       if (!d.appliesToPlace(placeId: key.placeId, merchantId: key.merchantId)) {
         continue;
       }

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:future_riverpod/core/constants/app_typography.dart';
-import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 
 Container newOpeningBadge(bool isAr, BuildContext context) {
   return feedBadge(
@@ -11,7 +9,6 @@ Container newOpeningBadge(bool isAr, BuildContext context) {
   );
 }
 
-// ✅ دالة عامة يستخدمها feed_card.dart لكل الـ badges
 Container feedBadge({
   required bool isAr,
   required BuildContext context,
@@ -19,26 +16,21 @@ Container feedBadge({
   required String text,
 }) {
   return Container(
-    padding: const EdgeInsets.symmetric(
-      horizontal: 6,
-      vertical: 4,
-    ), // ← vertical: 7 → 4
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     decoration: BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.circular(10),
+      color: color.withValues(alpha: 0.15),
+      borderRadius: BorderRadius.circular(999),
     ),
-    // ✅ أضف alignment للـ Container
     alignment: Alignment.center,
     child: Text(
       text,
-      textAlign: TextAlign.center, // ✅ يحل مشكلة المحاذاة
-      // ✅ TextStyle مباشر بدل copyWith — يحل مشكلة التكرار
+      textAlign: TextAlign.center,
       style: TextStyle(
-        color: AppColors.black,
+        color: color,
         fontSize: 11,
-        fontWeight: FontWeight.w700,
-        fontFamily: AppTypography.getBodyFontFamily(isAr ? 'ar' : 'en'),
-        height: 1.4, // ← يمنع أي line height إضافي يسبب ظهور مزدوج
+        fontWeight: FontWeight.w900,
+        fontFamily: 'Ibm-Bold',
+        height: 1.4,
       ),
     ),
   );

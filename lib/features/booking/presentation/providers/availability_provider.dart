@@ -5,6 +5,7 @@ import 'package:future_riverpod/features/booking/domain/models/membership_plan.d
 import 'package:future_riverpod/features/booking/domain/models/restaurant_seating_option.dart';
 import 'package:future_riverpod/features/booking/domain/models/seat.dart';
 import 'package:future_riverpod/features/booking/domain/models/slot.dart';
+import 'package:future_riverpod/features/booking/domain/models/venue_layout.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -58,6 +59,10 @@ Future<List<Seat>> availableSeats(Ref ref, String eventId) =>
 @riverpod
 Future<List<EventTier>> eventTiers(Ref ref, String eventId) =>
     ref.watch(bookingRepositoryProvider).fetchEventTiers(eventId);
+
+@riverpod
+Future<VenueLayout> venueLayout(Ref ref, String eventId) =>
+    ref.watch(bookingRepositoryProvider).fetchVenueLayout(eventId);
 
 /// Generates 30-minute time slots from 10:00 to 22:00 (Asia/Baghdad, UTC+3).
 /// Returns ISO datetime strings stored as UTC (Baghdad - 3h).

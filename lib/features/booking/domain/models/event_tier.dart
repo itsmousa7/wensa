@@ -8,6 +8,7 @@ abstract class EventTier with _$EventTier {
   const factory EventTier({
     @Default('') String id,
     @Default('') String eventId,
+    @Default('') String tierKey,
     @Default('') String nameAr,
     @Default('') String nameEn,
     @Default(0) int priceIqd,
@@ -18,6 +19,7 @@ abstract class EventTier with _$EventTier {
   factory EventTier.fromJson(Map<String, dynamic> json) => EventTier(
     id: json['id'] ?? '',
     eventId: json['event_id'] ?? '',
+    tierKey: json['tier_key'] ?? '',
     nameAr: json['name_ar'] ?? '',
     nameEn: json['name_en'] ?? '',
     priceIqd: (json['price_iqd'] as num?)?.toInt() ?? 0,

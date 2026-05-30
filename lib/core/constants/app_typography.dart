@@ -7,23 +7,38 @@ class AppTypography {
   static const String _roboto = 'Roboto';
   static const String _graphikBold = 'Graphik-Bold';
   static const String _graphikLight = 'Graphik-Light';
+  static const String _graphikExtraBold = 'Graphik-Extra-Bold';
 
   // Arabic fonts are always in the fallback so Arabic characters render
   // correctly even when the app language is English.
   static const List<String> _titleFallback = [_graphikBold, _graphikLight];
   static const List<String> _bodyFallback = [_graphikLight, _graphikBold];
 
+  static String _ibmPlexSans() => GoogleFonts.ibmPlexSans().fontFamily!;
+  static String ibmPlexSansBold() =>
+      GoogleFonts.ibmPlexSans(fontWeight: FontWeight.bold).fontFamily!;
+
+  /// Font family override for button labels. Arabic buttons use the Graphik
+  /// Extra Bold Arabic face; returns null for other languages so the inherited
+  /// family applies. Use this for custom-rendered buttons that bypass the
+  /// Material button themes.
+  static String? buttonFontFamily(String languageCode) =>
+      languageCode == 'ar' ? _graphikExtraBold : null;
+
+  // English uses IBM Plex Sans; other languages keep Roboto as the primary so
+  // Graphik Arabic in the fallback covers Arabic-script characters.
   static String getTitleFontFamily(String languageCode) =>
-      languageCode == 'ar' ? _graphikBold : _roboto;
+      languageCode == 'en' ? _ibmPlexSans() : _roboto;
 
   static String getBodyFontFamily(String languageCode) =>
-      languageCode == 'ar' ? _graphikLight : _roboto;
+      languageCode == 'en' ? _ibmPlexSans() : _roboto;
 
   static TextTheme getTextTheme(String languageCode, BuildContext context) {
     final titleFont = getTitleFontFamily(languageCode);
     final bodyFont = getBodyFontFamily(languageCode);
     final base = GoogleFonts.robotoTextTheme();
     final textColor = Theme.of(context).colorScheme.onSurface;
+    final mutedColor = Theme.of(context).colorScheme.onSurfaceVariant;
 
     return base.copyWith(
       // ── Display ───────────────────────────────────────────────────────────
@@ -45,7 +60,7 @@ class AppTypography {
       ),
       displaySmall: base.displaySmall?.copyWith(
         fontSize: 36,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         letterSpacing: 0,
         color: textColor,
         fontFamily: titleFont,
@@ -55,7 +70,7 @@ class AppTypography {
       // ── Headline ──────────────────────────────────────────────────────────
       headlineLarge: base.headlineLarge?.copyWith(
         fontSize: 32,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         letterSpacing: 0,
         color: textColor,
         fontFamily: titleFont,
@@ -63,7 +78,7 @@ class AppTypography {
       ),
       headlineMedium: base.headlineMedium?.copyWith(
         fontSize: 28,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         letterSpacing: 0,
         color: textColor,
         fontFamily: titleFont,
@@ -71,7 +86,7 @@ class AppTypography {
       ),
       headlineSmall: base.headlineSmall?.copyWith(
         fontSize: 24,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         letterSpacing: 0,
         color: textColor,
         fontFamily: titleFont,
@@ -81,7 +96,7 @@ class AppTypography {
       // ── Title ─────────────────────────────────────────────────────────────
       titleLarge: base.titleLarge?.copyWith(
         fontSize: 22,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w700,
         letterSpacing: 0,
         color: textColor,
         fontFamily: titleFont,
@@ -89,7 +104,7 @@ class AppTypography {
       ),
       titleMedium: base.titleMedium?.copyWith(
         fontSize: 16,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         letterSpacing: 0.15,
         color: textColor,
         fontFamily: titleFont,
@@ -97,7 +112,7 @@ class AppTypography {
       ),
       titleSmall: base.titleSmall?.copyWith(
         fontSize: 14,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w700,
         letterSpacing: 0.1,
         color: textColor,
         fontFamily: titleFont,
@@ -141,9 +156,9 @@ class AppTypography {
       ),
       labelMedium: base.labelMedium?.copyWith(
         fontSize: 12,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w300,
         letterSpacing: 0.5,
-        color: textColor,
+        color: mutedColor,
         fontFamily: bodyFont,
         fontFamilyFallback: _bodyFallback,
       ),
@@ -151,7 +166,7 @@ class AppTypography {
         fontSize: 11,
         fontWeight: FontWeight.w300,
         letterSpacing: 0.5,
-        color: textColor,
+        color: mutedColor,
         fontFamily: bodyFont,
         fontFamilyFallback: _bodyFallback,
       ),
@@ -163,14 +178,18 @@ class AppTypography {
   static TextStyle button({
     required BuildContext context,
     String languageCode = 'en',
-  }) => TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0.5,
-    color: Theme.of(context).colorScheme.onPrimary,
-    fontFamily: getBodyFontFamily(languageCode),
-    fontFamilyFallback: _bodyFallback,
-  );
+  }) {
+    final isAr = languageCode == 'ar';
+    return TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.w400,
+      letterSpacing: 0.5,
+      color: Theme.of(context).colorScheme.onPrimary,
+      // Arabic buttons use the Graphik Extra Bold Arabic face.
+      fontFamily: isAr ? _graphikExtraBold : getBodyFontFamily(languageCode),
+      fontFamilyFallback: isAr ? const [_graphikExtraBold] : _bodyFallback,
+    );
+  }
 
   static TextStyle input({
     required BuildContext context,

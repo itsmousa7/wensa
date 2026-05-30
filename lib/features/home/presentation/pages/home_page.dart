@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/all_events_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/category_feed_provider.dart';
@@ -51,6 +52,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.invalidate(allPlacesFeedProvider);
     ref.invalidate(favoritesFeedProvider);
     ref.invalidate(allEventsProvider);
+    // Re-fetch discounts so deactivated/expired offers drop off on pull-to-
+    // refresh rather than lingering until a hot restart.
+    ref.invalidate(merchantDiscountsProvider);
+    ref.invalidate(autoDiscountsProvider);
 
     await Future.delayed(const Duration(milliseconds: 1200));
     if (mounted) setState(() => _isRefreshing = false);

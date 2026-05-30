@@ -5,18 +5,19 @@ import 'package:flutter_svg/svg.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/widgets/discount_badge.dart';
 import 'package:future_riverpod/core/widgets/merchant_logo.dart';
+import 'package:future_riverpod/core/widgets/place_statistic_chip.dart';
+import 'package:future_riverpod/core/widgets/primary_action_button.dart';
 import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
 import 'package:future_riverpod/features/places/domain/models/place_model.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_app_bar_state.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_contact_section.dart';
-import 'package:go_router/go_router.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_details_helper.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_location_sheet.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_opening_hours.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_reviews_sheet.dart';
-import 'package:future_riverpod/core/widgets/place_statistic_chip.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 
 class PlaceInfoSection extends ConsumerWidget {
   const PlaceInfoSection({
@@ -39,12 +40,33 @@ class PlaceInfoSection extends ConsumerWidget {
     final state = ref.watch(placeAppbarStateProvider(placeId));
     final notifier = ref.read(placeAppbarStateProvider(placeId).notifier);
     final tagsAsync = ref.watch(placeTagsProvider(placeId));
-    final autoDiscount = ref.watch(bestAutoDiscountProvider(AutoDiscountKey(
-      orderType: 'bookings',
-      placeId: place.id,
-      merchantId: place.merchantId,
-      categoryId: place.categoryId,
-    )));
+    final autoDiscount = ref.watch(
+      bestAutoDiscountProvider(
+        AutoDiscountKey(
+          orderType: 'bookings',
+          placeId: place.id,
+          merchantId: place.merchantId,
+          categoryId: place.categoryId,
+        ),
+      ),
+    );
+    final merchantDiscount = ref.watch(
+      placeMerchantDiscountProvider(
+        PlaceDiscountKey(placeId: place.id, merchantId: place.merchantId),
+      ),
+    );
+    // Highest-percent discount for the header badge — merchant discount may
+    // beat the auto-discount, and we always want to surface the best offer.
+    final autoPercent = autoDiscount?.percent ?? 0;
+    final merchPercent = merchantDiscount?.percent ?? 0;
+    final bestPercent = autoPercent > merchPercent ? autoPercent : merchPercent;
+    final headerDiscountPercent = bestPercent > 0 ? bestPercent.round() : null;
+    // Spending cap of whichever offer is being surfaced (the winning one).
+    final headerMaxDiscount = bestPercent <= 0
+        ? null
+        : (autoPercent > merchPercent
+              ? autoDiscount?.maxDiscountAmount
+              : merchantDiscount?.maxDiscountAmount);
 
     final name = isAr ? place.nameAr : place.nameEn;
     final desc = isAr ? place.descriptionAr : place.descriptionEn;
@@ -109,7 +131,9 @@ class PlaceInfoSection extends ConsumerWidget {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           GestureDetector(
-                            onTap: place.latitude != null && place.longitude != null
+                            onTap:
+                                place.latitude != null &&
+                                    place.longitude != null
                                 ? () => showLocationSheet(
                                     context: context,
                                     latitude: place.latitude!,
@@ -142,7 +166,9 @@ class PlaceInfoSection extends ConsumerWidget {
                                         if (place.city.isNotEmpty) place.city,
                                       ].join(' · '),
                                       style: tt.bodySmall?.copyWith(
-                                        color: cs.onSurface.withValues(alpha: 0.75),
+                                        color: cs.onSurface.withValues(
+                                          alpha: 0.75,
+                                        ),
                                         fontWeight: FontWeight.bold,
                                       ),
                                       maxLines: 1,
@@ -161,8 +187,14 @@ class PlaceInfoSection extends ConsumerWidget {
                               ),
                             ),
                           ),
-                          if (autoDiscount != null)
-                            DiscountBadge(percent: autoDiscount.percent.round()),
+                          if (headerDiscountPercent != null)
+                            DiscountBadge(percent: headerDiscountPercent),
+                          if (headerMaxDiscount != null &&
+                              headerMaxDiscount > 0)
+                            MaxDiscountBadge(
+                              maxAmount: headerMaxDiscount,
+                              isAr: isAr,
+                            ),
                         ],
                       ),
                     ],
@@ -200,11 +232,11 @@ class PlaceInfoSection extends ConsumerWidget {
                   isAr: isAr,
                 ),
                 child: PlaceStatisticChip(
-                  icon: Icons.star,
+                  icon: Icons.star_rounded,
                   value: compactNumber(place.reviewsCount),
                   label: isAr ? 'تقييم' : 'Reviews',
-                  highlighted: true,
-                  textColor: cs.secondary,
+                  accentColor: const Color(0xFFFFC107),
+                  textColor: cs.onSurface.withValues(alpha: 0.65),
                 ),
               ),
             ],
@@ -285,7 +317,16 @@ class PlaceInfoSection extends ConsumerWidget {
           // ── Opening hours ─────────────────────────────────────────────
           if (place.openingHours != null && place.openingHours!.isNotEmpty) ...[
             const SizedBox(height: 24),
-            PlaceOpeningHours(hours: place.openingHours!, isAr: isAr),
+            PlaceOpeningHours(
+              hours: place.openingHours!,
+              isAr: isAr,
+              // Per-day discount badges only make sense for hourly bookings —
+              // the merchant_discounts.hour_slots window has no effect on
+              // shift/day-based bookings.
+              discount: place.bookingCategory == 'hourly'
+                  ? merchantDiscount
+                  : null,
+            ),
           ],
 
           // ── Contact ───────────────────────────────────────────────────
@@ -298,81 +339,102 @@ class PlaceInfoSection extends ConsumerWidget {
             PlaceContactSection(place: place, isAr: isAr),
           ],
 
-          // ── CTAs ──────────────────────────────────────────────────────
-          const SizedBox(height: 28),
-          if (place.bookingCategory != null) ...[
-            // Book Now button
-            GestureDetector(
-              onTap: () => context.push(
-                '/place/$placeId/book?category=${place.bookingCategory}',
-              ),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [cs.primary, AppColors.lightGreenSecondary],
-                  ),
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
-                    BoxShadow(
-                      color: cs.primary.withValues(alpha: 0.35),
-                      blurRadius: 18,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.calendar_today_outlined,
-                        color: Colors.white, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      isAr ? 'احجز الآن' : 'Book Now',
-                      style: tt.titleMedium?.copyWith(
-                        color: Colors.white,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          // ── Reviews card ──────────────────────────────────────────────
+          const SizedBox(height: 24),
+          Container(
+            decoration: BoxDecoration(
+              color: cs.surfaceContainer,
+              borderRadius: BorderRadius.circular(16),
             ),
-            const SizedBox(height: 12),
-          ],
-          // Reviews button
-          GestureDetector(
-            onTap: () => showReviewsSheet(
-              context: context,
-              placeId: placeId,
-              placeName: name,
-              isAr: isAr,
-            ),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: cs.surfaceContainer,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.star_outline_rounded,
-                      color: cs.onSurface.withValues(alpha: 0.6), size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    isAr ? 'التقييمات' : 'Reviews',
-                    style: tt.titleMedium?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.7),
-                      letterSpacing: 0.3,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => showReviewsSheet(
+                    context: context,
+                    placeId: placeId,
+                    placeName: name,
+                    isAr: isAr,
+                  ),
+                  splashColor: cs.primary.withValues(alpha: 0.07),
+                  highlightColor: cs.primary.withValues(alpha: 0.04),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 13, 12, 13),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          color: Color(0xFFFFC107),
+                          size: 22,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isAr ? 'التقييمات' : 'Reviews',
+                                style: tt.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: cs.onSurface,
+                                  letterSpacing: -0.2,
+                                  height: 1.15,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                isAr
+                                    ? '${compactNumber(place.reviewsCount)} تقييم'
+                                    : '${compactNumber(place.reviewsCount)} ratings',
+                                style: tt.bodySmall?.copyWith(
+                                  color: cs.outline,
+                                  fontSize: 11,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              isAr ? 'عرض الكل' : 'See all',
+                              style: tt.labelSmall?.copyWith(
+                                color: cs.primary,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.1,
+                              ),
+                            ),
+                            const SizedBox(width: 3),
+                            Icon(
+                              isAr
+                                  ? CupertinoIcons.chevron_left
+                                  : CupertinoIcons.chevron_right,
+                              size: 13,
+                              color: cs.primary,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
+
+          // ── CTAs ──────────────────────────────────────────────────────
+          const SizedBox(height: 28),
+          if (place.bookingCategory != null) ...[
+            PrimaryActionButton(
+              label: isAr ? 'احجز الآن' : 'Book Now',
+              onTap: () => context.push(
+                '/place/$placeId/book?category=${place.bookingCategory}',
+              ),
+            ),
+          ],
         ],
       ),
     );

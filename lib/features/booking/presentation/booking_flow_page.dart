@@ -21,37 +21,51 @@ class BookingFlowPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final isEventFlow = eventId != null && eventId!.isNotEmpty;
+
+    // Event-based booking has no placeId — render ConcertSection without
+    // fetching place details (which would query Supabase with an empty UUID
+    // and fail with 22P02).
+    if (isEventFlow) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(
+            isAr ? 'الحجز' : 'Booking',
+            style: TextStyle(color: Theme.of(context).colorScheme.outline),
+          ),
+        ),
+        body: ConcertSection(eventId: eventId!),
+      );
+    }
+
     final placeAsync = ref.watch(placeDetailsProvider(placeId));
 
     return Scaffold(
       appBar: AppBar(
         title: placeAsync.maybeWhen(
           data: (place) {
-            final isAr = Localizations.localeOf(context).languageCode == 'ar';
             final name = isAr
                 ? (place.nameAr.isNotEmpty ? place.nameAr : place.nameEn)
                 : (place.nameEn.isNotEmpty ? place.nameEn : place.nameAr);
-            return Text(name);
+            return Text(
+              name,
+              style: TextStyle(color: Theme.of(context).colorScheme.outline),
+            );
           },
-          orElse: () {
-            final isAr = Localizations.localeOf(context).languageCode == 'ar';
-            return Text(isAr ? 'الحجز' : 'Booking');
-          },
+          orElse: () => Text(
+            isAr ? 'الحجز' : 'Booking',
+            style: TextStyle(color: Theme.of(context).colorScheme.outline),
+          ),
         ),
       ),
       body: placeAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (place) {
-          final isAr = Localizations.localeOf(context).languageCode == 'ar';
           final placeName = isAr
               ? (place.nameAr.isNotEmpty ? place.nameAr : place.nameEn)
               : (place.nameEn.isNotEmpty ? place.nameEn : place.nameAr);
-
-          // Event-based booking (concert route)
-          if (eventId != null && eventId!.isNotEmpty) {
-            return ConcertSection(eventId: eventId!);
-          }
 
           // Place-based booking — category comes from content.places.booking_category
           switch (category) {

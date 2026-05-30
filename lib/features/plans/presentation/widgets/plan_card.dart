@@ -18,7 +18,7 @@ class PlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isPro       = plan.tier == PlanTier.pro;
     final accentColor = isPro ? const Color(0xFF7C3AED) : const Color(0xFF2196F3);
-    final bgColor     = isCurrentPlan ? accentColor.withOpacity(0.08) : Colors.white;
+    final bgColor     = isCurrentPlan ? accentColor.withValues(alpha: 0.08) : Colors.white;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -85,7 +85,7 @@ class PlanCard extends StatelessWidget {
   Widget _pill(String text, Color color) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
+          color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 13)),

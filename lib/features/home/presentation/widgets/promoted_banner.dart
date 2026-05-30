@@ -245,8 +245,6 @@ class _BannerCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 18),
                 child: Row(
                   children: [
-                    const Text('🎉', style: TextStyle(fontSize: 30)),
-                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,

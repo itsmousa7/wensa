@@ -7,6 +7,7 @@ part 'place_model.g.dart';
 abstract class PlaceModel with _$PlaceModel {
   const factory PlaceModel({
     @Default('') String id,
+    String? merchantId,
     @Default('') String nameAr,
     @Default('') String nameEn,
     String? descriptionAr,
@@ -41,6 +42,7 @@ abstract class PlaceModel with _$PlaceModel {
 
   factory PlaceModel.fromJson(Map<String, dynamic> json) => PlaceModel(
     id: json['id'] ?? '',
+    merchantId: json['merchant_id'] as String?,
     nameAr: json['name_ar'] ?? '',
     nameEn: json['name_en'] ?? '',
     descriptionAr: json['description_ar'],

@@ -36,10 +36,12 @@ class _FarmShiftNotifier extends Notifier<FarmShift?> {
 }
 
 final _farmSelectedDateProvider =
-    NotifierProvider<_FarmDateNotifier, DateTime>(_FarmDateNotifier.new);
+    NotifierProvider.autoDispose<_FarmDateNotifier, DateTime>(
+        _FarmDateNotifier.new);
 
 final _farmSelectedShiftProvider =
-    NotifierProvider<_FarmShiftNotifier, FarmShift?>(_FarmShiftNotifier.new);
+    NotifierProvider.autoDispose<_FarmShiftNotifier, FarmShift?>(
+        _FarmShiftNotifier.new);
 
 final _farmPromoProvider =
     NotifierProvider.autoDispose<_FarmPromoNotifier, PromoApplied?>(
@@ -230,8 +232,14 @@ class _FarmBookingFormView extends ConsumerWidget {
             context.go('/bookings/$bookingId');
           }
         },
-        onPaymentFailed: () {
-          ref.read(bookingSubmitProvider.notifier).reset();
+        onPaymentFailed: () async {
+          // Release the pending row so the shift frees up immediately instead
+          // of staying "booked" until the expiry cron. The shift is only ever
+          // held by a confirmed (paid) booking.
+          await ref.read(bookingSubmitProvider.notifier).cancelPending();
+          ref.invalidate(
+              farmShiftsProvider(placeId, bookingFormatDate(selectedDate)));
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Payment failed. Please try again.'),
@@ -239,9 +247,17 @@ class _FarmBookingFormView extends ConsumerWidget {
             ),
           );
         },
-        onPaymentCancelled: () {
-          // Don't reset — the pending booking stays alive so the user can
-          // retry without triggering a duplicate-booking constraint error.
+        onPaymentCancelled: () async {
+          // Release the pending row server-side the moment the user closes the
+          // webview, so the shift becomes available again right away (no hot
+          // restart, no waiting on the expiry cron). cancelPending() reads the
+          // booking id from the success state, cancels via cancel_booking, then
+          // resets local state to idle — which also re-enables Proceed only
+          // after the row is gone, so a retry can't race the stale pending row.
+          await ref.read(bookingSubmitProvider.notifier).cancelPending();
+          ref.invalidate(
+              farmShiftsProvider(placeId, bookingFormatDate(selectedDate)));
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Payment cancelled.')),
           );
@@ -282,8 +298,9 @@ class _FarmBookingFormView extends ConsumerWidget {
             onSelect: (date) {
               ref.read(_farmSelectedDateProvider.notifier).set(date);
               ref.read(_farmSelectedShiftProvider.notifier).set(null);
-              // Clear any pending booking when selection changes
-              ref.read(bookingSubmitProvider.notifier).reset();
+              // Release any pending booking row server-side so the next
+              // Proceed doesn't collide with it.
+              ref.read(bookingSubmitProvider.notifier).cancelPending();
             },
           ),
           const SizedBox(height: 28),
@@ -342,8 +359,10 @@ class _FarmBookingFormView extends ConsumerWidget {
                           ref
                               .read(_farmSelectedShiftProvider.notifier)
                               .set(isSelected ? null : shift);
-                          // Clear any pending booking when selection changes
-                          ref.read(bookingSubmitProvider.notifier).reset();
+                          // Release any pending booking row server-side.
+                          ref
+                              .read(bookingSubmitProvider.notifier)
+                              .cancelPending();
                         },
                       ),
                     );

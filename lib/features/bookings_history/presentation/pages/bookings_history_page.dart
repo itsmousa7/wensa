@@ -6,6 +6,7 @@ import 'package:future_riverpod/features/booking/domain/models/booking.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/ticket_card.dart';
+import 'package:future_riverpod/features/bookings_history/presentation/providers/bookings_scroll_signal.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -40,6 +41,7 @@ class BookingsHistoryPage extends ConsumerStatefulWidget {
 class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  late final List<ScrollController> _scrollCtrls;
 
   @override
   void initState() {
@@ -48,12 +50,30 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
       length: kBookingHistoryTabsEn.length,
       vsync: this,
     );
+    _scrollCtrls = List.generate(
+      kBookingHistoryTabsEn.length,
+      (_) => ScrollController(),
+    );
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    for (final c in _scrollCtrls) {
+      c.dispose();
+    }
     super.dispose();
+  }
+
+  void _scrollActiveTabToTop() {
+    final ctrl = _scrollCtrls[_tabController.index];
+    if (ctrl.hasClients) {
+      ctrl.animateTo(
+        0,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOutCubic,
+      );
+    }
   }
 
   void _navigateToDetail(BuildContext context, String id) {
@@ -62,6 +82,8 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(bookingsScrollToTopProvider, (_, _) => _scrollActiveTabToTop());
+
     final cs = Theme.of(context).colorScheme;
 
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -145,20 +167,27 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
       body: TabBarView(
         controller: _tabController,
         children: [
-          // Tab 0: All
-          _BookingsTab(
-            asyncValue: ref.watch(userBookingsProvider()),
-            onTap: (id) => _navigateToDetail(context, id),
+          // Tab 0: All — bookings + memberships combined
+          _CombinedTab(
+            scrollController: _scrollCtrls[0],
+            bookingsAsync: ref.watch(userBookingsProvider()),
+            membershipsAsync: ref.watch(userMembershipsProvider),
+            onBookingTap: (id) => _navigateToDetail(context, id),
+            onMembershipTap: (id) => _navigateToDetail(context, 'm_$id'),
           ),
-          // Tab 1: Sports
-          _BookingsTab(
-            asyncValue: ref.watch(
+          // Tab 1: Sports — sports bookings + memberships (gym is sports)
+          _CombinedTab(
+            scrollController: _scrollCtrls[1],
+            bookingsAsync: ref.watch(
               userBookingsProvider(categories: const ['sports']),
             ),
-            onTap: (id) => _navigateToDetail(context, id),
+            membershipsAsync: ref.watch(userMembershipsProvider),
+            onBookingTap: (id) => _navigateToDetail(context, id),
+            onMembershipTap: (id) => _navigateToDetail(context, 'm_$id'),
           ),
           // Tab 2: Farm
           _BookingsTab(
+            scrollController: _scrollCtrls[2],
             asyncValue: ref.watch(
               userBookingsProvider(categories: const ['farm']),
             ),
@@ -166,6 +195,7 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
           ),
           // Tab 3: Concert
           _BookingsTab(
+            scrollController: _scrollCtrls[3],
             asyncValue: ref.watch(
               userBookingsProvider(categories: const ['concert']),
             ),
@@ -173,6 +203,7 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
           ),
           // Tab 4: Restaurant
           _BookingsTab(
+            scrollController: _scrollCtrls[4],
             asyncValue: ref.watch(
               userBookingsProvider(categories: const ['restaurant']),
             ),
@@ -180,6 +211,7 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
           ),
           // Tab 5: Memberships
           _MembershipsTab(
+            scrollController: _scrollCtrls[5],
             asyncValue: ref.watch(userMembershipsProvider),
             onTap: (id) => _navigateToDetail(context, 'm_$id'),
           ),
@@ -190,11 +222,37 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  _BookingsTab
+//  _TicketItem — union type for combined booking + membership lists
+// ─────────────────────────────────────────────────────────────────────────────
+sealed class _TicketItem {
+  String get sortKey;
+}
+
+final class _BookingItem extends _TicketItem {
+  _BookingItem(this.booking);
+  final Booking booking;
+  @override
+  String get sortKey => booking.createdAt ?? booking.startsAt;
+}
+
+final class _MembershipItem extends _TicketItem {
+  _MembershipItem(this.membership);
+  final Membership membership;
+  @override
+  String get sortKey => membership.createdAt ?? membership.startsAt;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  _BookingsTab — bookings only (Farm, Concert, Restaurant)
 // ─────────────────────────────────────────────────────────────────────────────
 class _BookingsTab extends ConsumerWidget {
-  const _BookingsTab({required this.asyncValue, required this.onTap});
+  const _BookingsTab({
+    required this.scrollController,
+    required this.asyncValue,
+    required this.onTap,
+  });
 
+  final ScrollController scrollController;
   final AsyncValue<List<Booking>> asyncValue;
   final void Function(String id) onTap;
 
@@ -211,7 +269,8 @@ class _BookingsTab extends ConsumerWidget {
           return const _EmptyView();
         }
         return ListView.builder(
-          padding: const EdgeInsets.only(top: 8, bottom: 24),
+          controller: scrollController,
+          padding: const EdgeInsets.only(top: 8, bottom: 110),
           itemCount: bookings.length,
           itemBuilder: (_, i) => TicketCard.booking(
             booking: bookings[i],
@@ -224,11 +283,93 @@ class _BookingsTab extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  _CombinedTab — bookings + memberships merged (All, Sports)
+// ─────────────────────────────────────────────────────────────────────────────
+class _CombinedTab extends ConsumerWidget {
+  const _CombinedTab({
+    required this.scrollController,
+    required this.bookingsAsync,
+    required this.membershipsAsync,
+    required this.onBookingTap,
+    required this.onMembershipTap,
+  });
+
+  final ScrollController scrollController;
+  final AsyncValue<List<Booking>> bookingsAsync;
+  final AsyncValue<List<Membership>> membershipsAsync;
+  final void Function(String id) onBookingTap;
+  final void Function(String id) onMembershipTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (bookingsAsync.isLoading || membershipsAsync.isLoading) {
+      return _BookingsSkeleton();
+    }
+
+    final bookingsError = bookingsAsync.error;
+    if (bookingsError != null) {
+      return _ErrorView(
+        message: bookingsError.toString(),
+        onRetry: () {
+          ref.invalidate(userBookingsProvider);
+          ref.invalidate(userMembershipsProvider);
+        },
+      );
+    }
+
+    final membershipsError = membershipsAsync.error;
+    if (membershipsError != null) {
+      return _ErrorView(
+        message: membershipsError.toString(),
+        onRetry: () {
+          ref.invalidate(userBookingsProvider);
+          ref.invalidate(userMembershipsProvider);
+        },
+      );
+    }
+
+    final bookings = bookingsAsync.value ?? [];
+    final memberships = membershipsAsync.value ?? [];
+
+    final List<_TicketItem> items = [
+      ...bookings.map(_BookingItem.new),
+      ...memberships.map(_MembershipItem.new),
+    ]..sort((a, b) => b.sortKey.compareTo(a.sortKey));
+
+    if (items.isEmpty) return const _EmptyView();
+
+    return ListView.builder(
+      controller: scrollController,
+      padding: const EdgeInsets.only(top: 8, bottom: 110),
+      itemCount: items.length,
+      itemBuilder: (_, i) {
+        final item = items[i];
+        return switch (item) {
+          _BookingItem(:final booking) => TicketCard.booking(
+            booking: booking,
+            onTap: () => onBookingTap(booking.id),
+          ),
+          _MembershipItem(:final membership) => TicketCard.membership(
+            membership: membership,
+            onTap: () => onMembershipTap(membership.id),
+          ),
+        };
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  _MembershipsTab
 // ─────────────────────────────────────────────────────────────────────────────
 class _MembershipsTab extends ConsumerWidget {
-  const _MembershipsTab({required this.asyncValue, required this.onTap});
+  const _MembershipsTab({
+    required this.scrollController,
+    required this.asyncValue,
+    required this.onTap,
+  });
 
+  final ScrollController scrollController;
   final AsyncValue<List<Membership>> asyncValue;
   final void Function(String id) onTap;
 
@@ -245,7 +386,8 @@ class _MembershipsTab extends ConsumerWidget {
           return const _EmptyView();
         }
         return ListView.builder(
-          padding: const EdgeInsets.only(top: 8, bottom: 24),
+          controller: scrollController,
+          padding: const EdgeInsets.only(top: 8, bottom: 110),
           itemCount: memberships.length,
           itemBuilder: (_, i) => TicketCard.membership(
             membership: memberships[i],
@@ -264,66 +406,91 @@ class _BookingsSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final cardColor = Theme.of(context).cardTheme.color ?? cs.surface;
-    return Skeletonizer(
-      enabled: true,
-      effect: ShimmerEffect(
-        baseColor: cs.surfaceContainer,
-        highlightColor: cs.surfaceContainerHighest,
-        duration: const Duration(milliseconds: 1200),
-      ),
-      child: ListView.builder(
-        padding: const EdgeInsets.only(top: 8),
-        itemCount: 5,
-        itemBuilder: (_, _) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-          child: Container(
-            height: 82,
-            decoration: BoxDecoration(
-              color: cardColor,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: cs.onSurface.withValues(alpha: 0.07)),
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 8, bottom: 110),
+      itemCount: 8,
+      itemBuilder: (_, _) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+        // Card frame is outside Skeletonizer so it always renders as a real
+        // card — not a flat bone — between shimmer pulses.
+        child: Container(
+          decoration: BoxDecoration(
+            color: cs.surfaceContainer,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cs.onSurface.withValues(alpha: 0.07)),
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Skeletonizer(
+            enabled: true,
+            effect: ShimmerEffect(
+              baseColor: cs.surfaceContainerHighest,
+              highlightColor: cs.surface,
+              duration: const Duration(milliseconds: 1200),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // icon panel placeholder
-                Container(
-                  width: 60,
-                  decoration: BoxDecoration(
-                    color: cs.surfaceContainerHighest,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(15),
-                      bottomLeft: Radius.circular(15),
-                    ),
-                  ),
+                // Icon square — mirrors actual 48×48 r12 icon container
+                Bone(
+                  width: 48,
+                  height: 48,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        height: 13,
-                        width: 150,
-                        decoration: BoxDecoration(
-                          color: cs.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(6),
+                      // Row 1: name + status badge
+                      Padding(
+                        padding: const EdgeInsets.only(top: 14),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Bone(
+                                height: 13,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Bone(
+                              width: 72,
+                              height: 24,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Container(
-                        height: 11,
-                        width: 90,
-                        decoration: BoxDecoration(
-                          color: cs.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(6),
+                      // Row 2: date (left) + amount (right)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Row(
+                          children: [
+                            Bone(
+                              width: 110,
+                              height: 11,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            const Spacer(),
+                            Bone(
+                              width: 70,
+                              height: 11,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
+                Bone(
+                  width: 16,
+                  height: 16,
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ],
             ),
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/booking/domain/models/slot.dart';
 import 'package:future_riverpod/features/booking/domain/models/slot_availability.dart';
+import 'package:future_riverpod/features/discounts/domain/models/merchant_discount.dart';
 
 class SlotGrid extends StatelessWidget {
   const SlotGrid({
@@ -8,11 +9,13 @@ class SlotGrid extends StatelessWidget {
     required this.slots,
     required this.selectedStartTimes,
     required this.onTap,
+    this.discount,
   });
 
   final List<Slot> slots;
   final Set<String> selectedStartTimes;
   final void Function(Slot) onTap;
+  final MerchantDiscount? discount;
 
   String _formatTime(String isoString) {
     try {
@@ -35,9 +38,9 @@ class SlotGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        childAspectRatio: 1.9,
-        crossAxisSpacing: 7,
-        mainAxisSpacing: 7,
+        childAspectRatio: 1.55,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
       ),
       itemCount: slots.length,
       itemBuilder: (context, index) {
@@ -60,11 +63,23 @@ class SlotGrid extends StatelessWidget {
               : SlotAvailability.booked;
         }
 
+        int? discountPercent;
+        if (discount != null && availability == SlotAvailability.available) {
+          try {
+            final dt = DateTime.parse(slot.startsAt).toLocal();
+            if (discount!.appliesOnDate(dt) &&
+                discount!.appliesAtHour(dt.hour)) {
+              discountPercent = discount!.percent.round();
+            }
+          } catch (_) {}
+        }
+
         return _SlotTile(
           isSelected: isSelected,
           availability: availability,
           startLabel: _formatTime(slot.startsAt),
           endLabel: slot.endsAt.isNotEmpty ? _formatTime(slot.endsAt) : '',
+          discountPercent: discountPercent,
           onTap: availability == SlotAvailability.available
               ? () => onTap(slot)
               : null,
@@ -80,6 +95,7 @@ class _SlotTile extends StatelessWidget {
     required this.availability,
     required this.startLabel,
     required this.endLabel,
+    this.discountPercent,
     this.onTap,
   });
 
@@ -87,13 +103,63 @@ class _SlotTile extends StatelessWidget {
   final SlotAvailability availability;
   final String startLabel;
   final String endLabel;
+  final int? discountPercent;
   final VoidCallback? onTap;
+
+  /// Renders a time like "7:00 AM" with the am/pm part as a small superscript.
+  Widget _timeText(
+    String label, {
+    required Color color,
+    required double numSize,
+    required FontWeight weight,
+    TextDecoration? decoration,
+  }) {
+    final parts = label.split(' ');
+    final time = parts.first;
+    final period = parts.length > 1 ? parts[1].toLowerCase() : '';
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: time,
+            style: TextStyle(
+              fontSize: numSize,
+              fontWeight: weight,
+              color: color,
+              decoration: decoration,
+              decorationColor: color,
+            ),
+          ),
+          if (period.isNotEmpty)
+            WidgetSpan(
+              alignment: PlaceholderAlignment.bottom,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 1.5),
+                child: Text(
+                  period,
+                  style: TextStyle(
+                    fontSize: numSize * 0.62,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                    decoration: decoration,
+                    decorationColor: color,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+      textDirection: TextDirection.ltr,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final isUnavailable = availability != SlotAvailability.available;
+    final hasDiscount = discountPercent != null && !isUnavailable;
+    const dealColor = Color(0xFFE5484D);
 
     String? statusLabel;
     if (availability == SlotAvailability.booked) {
@@ -104,74 +170,53 @@ class _SlotTile extends StatelessWidget {
       statusLabel = isAr ? 'مغلق' : 'Closed';
     }
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeInOut,
+    final startColor = isUnavailable
+        ? cs.onSurface.withValues(alpha: 0.28)
+        : cs.onSurface;
+    final endColor = isUnavailable
+        ? cs.onSurface.withValues(alpha: 0.20)
+        : cs.onSurface.withValues(alpha: 0.5);
+    final strike = isUnavailable ? TextDecoration.lineThrough : null;
+
+    final tile = AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
       decoration: BoxDecoration(
-        gradient: isSelected
-            ? LinearGradient(
-                colors: [cs.primary, cs.secondary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : null,
-        color: isSelected
-            ? null
-            : isUnavailable
-                ? cs.surfaceContainerHighest
-                : cs.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: isSelected
-            ? null
-            : Border.all(
-                color: isUnavailable
-                    ? cs.outline.withValues(alpha: 0.12)
-                    : cs.outline.withValues(alpha: 0.3),
-              ),
+        color: isUnavailable ? cs.surfaceContainerHighest : cs.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected
+              ? cs.primary
+              : isUnavailable
+                  ? cs.outline.withValues(alpha: 0.12)
+                  : cs.outlineVariant.withValues(alpha: 0.7),
+          width: isSelected ? 2 : 1.2,
+        ),
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: cs.primary.withValues(alpha: 0.3),
+                  color: cs.primary.withValues(alpha: 0.15),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
               ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 3,
-                  offset: const Offset(0, 1),
-                ),
-              ],
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          splashColor: isSelected
-              ? Colors.white.withValues(alpha: 0.2)
-              : cs.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          splashColor: cs.primary.withValues(alpha: 0.1),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
+              _timeText(
                 startLabel,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: isSelected
-                      ? Colors.white
-                      : isUnavailable
-                          ? cs.onSurface.withValues(alpha: 0.28)
-                          : cs.onSurface,
-                  decoration: isSelected
-                      ? null
-                      : isUnavailable
-                          ? TextDecoration.lineThrough
-                          : null,
-                  decorationColor: cs.onSurface.withValues(alpha: 0.28),
-                ),
+                color: startColor,
+                numSize: 17,
+                weight: FontWeight.w800,
+                decoration: strike,
               ),
               if (statusLabel != null) ...[
                 const SizedBox(height: 2),
@@ -180,40 +225,67 @@ class _SlotTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 8.5,
                     fontWeight: FontWeight.w600,
-                    color: isSelected
-                        ? Colors.white.withValues(alpha: 0.85)
-                        : availability == SlotAvailability.booked
-                            ? cs.error.withValues(alpha: 0.7)
-                            : availability == SlotAvailability.expired
-                                ? const Color(0xFF92400E).withValues(alpha: 0.8)
-                                : cs.onSurface.withValues(alpha: 0.40),
+                    color: availability == SlotAvailability.booked
+                        ? cs.error.withValues(alpha: 0.7)
+                        : availability == SlotAvailability.expired
+                            ? const Color(0xFF92400E).withValues(alpha: 0.8)
+                            : cs.onSurface.withValues(alpha: 0.40),
                   ),
                 ),
               ] else if (endLabel.isNotEmpty) ...[
-                const SizedBox(height: 1),
-                Text(
+                const SizedBox(height: 2),
+                _timeText(
                   endLabel,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected
-                        ? Colors.white.withValues(alpha: 0.75)
-                        : isUnavailable
-                            ? cs.onSurface.withValues(alpha: 0.20)
-                            : cs.onSurface.withValues(alpha: 0.45),
-                    decoration: isSelected
-                        ? null
-                        : isUnavailable
-                            ? TextDecoration.lineThrough
-                            : null,
-                    decorationColor: cs.onSurface.withValues(alpha: 0.25),
-                  ),
+                  color: endColor,
+                  numSize: 13,
+                  weight: FontWeight.w600,
+                  decoration: strike,
                 ),
               ],
             ],
           ),
         ),
       ),
+    );
+
+    if (!hasDiscount) return tile;
+
+    // Tile stays identical to a normal slot; the deal badge floats as a
+    // separate pill stacked above the top-right corner.
+    return Stack(
+      clipBehavior: Clip.none,
+      fit: StackFit.expand,
+      children: [
+        tile,
+        Positioned(
+          top: -8,
+          right: -6,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+            decoration: BoxDecoration(
+              color: dealColor,
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: [
+                BoxShadow(
+                  color: dealColor.withValues(alpha: 0.35),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Text(
+              '$discountPercent%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+                height: 1.0,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
