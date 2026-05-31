@@ -20,7 +20,6 @@ class PaymentWebViewPage {
   }) {
     return Navigator.of(context).push<void>(
       MaterialPageRoute(
-        fullscreenDialog: true,
         builder: (_) => WaylWebViewScreen(
           paymentUrl: paymentUrl,
           referenceId: referenceId,

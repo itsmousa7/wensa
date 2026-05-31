@@ -3,6 +3,7 @@
 // Reusable ticket visual (info section, tear line, QR), used both on the ticket
 // detail screen and inside the shareable ticket image.
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:future_riverpod/core/share/branded_header.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/qr_block.dart';
 
@@ -27,6 +28,7 @@ class TicketVisualCard extends StatefulWidget {
     required this.statusBadge,
     required this.cells,
     this.waylCode,
+    this.shareMode = false,
   });
 
   final String qrToken;
@@ -35,6 +37,7 @@ class TicketVisualCard extends StatefulWidget {
   final Widget statusBadge;
   final List<TicketInfoCell> cells;
   final String? waylCode;
+  final bool shareMode;
 
   @override
   State<TicketVisualCard> createState() => _TicketVisualCardState();
@@ -98,10 +101,16 @@ class _TicketVisualCardState extends State<TicketVisualCard> {
                     if (widget.waylCode != null &&
                         widget.waylCode!.isNotEmpty) ...[
                       const SizedBox(height: 16),
-                      _CodePill(
-                        code: widget.waylCode!,
-                        isArabic: widget.isArabic,
-                      ),
+                      if (widget.shareMode)
+                        _CodePill(
+                          code: widget.waylCode!,
+                          isArabic: widget.isArabic,
+                        )
+                      else
+                        _CodeFieldRow(
+                          code: widget.waylCode!,
+                          isArabic: widget.isArabic,
+                        ),
                     ],
                   ],
                 ),
@@ -202,6 +211,7 @@ class ShareableTicketVisualCard extends StatelessWidget {
             statusBadge: statusBadge,
             cells: cells,
             waylCode: waylCode,
+            shareMode: true,
           ),
         ],
       ),
@@ -263,6 +273,95 @@ class _InfoGrid extends StatelessWidget {
           ],
         );
       }),
+    );
+  }
+}
+
+class _CodeFieldRow extends StatelessWidget {
+  const _CodeFieldRow({required this.code, required this.isArabic});
+  final String code;
+  final bool isArabic;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final borderColor = cs.onSurface.withValues(alpha: 0.18);
+    final labelColor = cs.primary;
+
+    final copyButton = GestureDetector(
+      onTap: () {
+        Clipboard.setData(ClipboardData(text: code));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isArabic ? 'تم النسخ' : 'Copied'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      },
+      child: Container(
+        width: 50,
+        height: 34,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor, width: 1.2),
+        ),
+        child: Icon(
+          Icons.content_copy_rounded,
+          size: 20,
+          color: cs.onSurface.withValues(alpha: 0.55),
+        ),
+      ),
+    );
+
+    final textColumn = Expanded(
+      child: Column(
+        crossAxisAlignment:
+            isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            isArabic ? 'الرمز' : 'Code',
+            style: tt.labelSmall?.copyWith(
+              color: labelColor,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
+            ),
+            textDirection:
+                isArabic ? TextDirection.rtl : TextDirection.ltr,
+          ),
+          const SizedBox(height: 3),
+          Text(
+            code,
+            style: tt.titleSmall?.copyWith(
+              color: cs.onSurface,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+            textDirection:
+                isArabic ? TextDirection.rtl : TextDirection.ltr,
+          ),
+        ],
+      ),
+    );
+
+    // Force LTR on the Row so the explicit child order is visually respected
+    // regardless of the app's text direction (Arabic RTL would otherwise flip it).
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: borderColor, width: 1.2),
+        ),
+        child: Row(
+          children: isArabic
+              ? [copyButton, const SizedBox(width: 12), textColumn]
+              : [textColumn, const SizedBox(width: 12), copyButton],
+        ),
+      ),
     );
   }
 }
@@ -368,7 +467,11 @@ class _TicketClipper extends CustomClipper<Path> {
     return Path()
       ..moveTo(r, 0)
       ..lineTo(w - r, 0)
-      ..arcToPoint(Offset(w, r), radius: const Radius.circular(r), clockwise: true)
+      ..arcToPoint(
+        Offset(w, r),
+        radius: const Radius.circular(r),
+        clockwise: true,
+      )
       ..lineTo(w, tearLineY - nr)
       ..arcToPoint(
         Offset(w, tearLineY + nr),
@@ -394,7 +497,11 @@ class _TicketClipper extends CustomClipper<Path> {
         clockwise: false,
       )
       ..lineTo(0, r)
-      ..arcToPoint(Offset(r, 0), radius: const Radius.circular(r), clockwise: true)
+      ..arcToPoint(
+        Offset(r, 0),
+        radius: const Radius.circular(r),
+        clockwise: true,
+      )
       ..close();
   }
 

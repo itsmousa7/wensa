@@ -22,6 +22,7 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/bottom_bar/pages/bottom_bar.dart';
+import 'package:future_riverpod/features/bottom_bar/providers/bottom_bar_providers.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/bookings_scroll_signal.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_scroll_signal.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_scroll_controller.dart';
@@ -82,6 +83,7 @@ class IosNavShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isAr = ref.watch(appLocaleProvider) is ArabicLocale;
     final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+    final barHidden = ref.watch(bottomBarHiddenProvider);
     // Hide native bar while a route is pushed on top of the shell (e.g.
     // place/event detail pages). Native UIKit views (CNTabBar, CNButton) bleed
     // through Flutter's rendering during the slide-in transition, producing a
@@ -100,7 +102,7 @@ class IosNavShell extends ConsumerWidget {
           children: [
             navigationShell,
 
-            if (!keyboardOpen && isShellCurrent)
+            if (!keyboardOpen && isShellCurrent && !barHidden)
               Positioned(
                 bottom: 0,
                 left: 0,

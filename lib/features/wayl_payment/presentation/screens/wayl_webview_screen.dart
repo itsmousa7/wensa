@@ -278,7 +278,7 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
           // Fire the cancel callback BEFORE pop so the parent's state reset +
           // snackbar happen immediately, rather than waiting ~300ms for the
           // pop animation to complete before dispose() fires. System-back /

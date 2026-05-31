@@ -423,19 +423,19 @@ class _TicketScreenState extends State<_TicketScreen> {
             child: OutlinedButton.icon(
               onPressed: _sharing ? null : _onShare,
               icon: _sharing
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.black,
+                        color: cs.outline,
                       ),
                     )
-                  : const Icon(Icons.share, size: 20, color: Colors.black),
+                  : Icon(Icons.share, size: 20, color: cs.outline),
               label: Text(
                 (widget.isArabic ? 'مشاركة التذكرة' : 'Share Ticket'),
                 style: TextStyle(
-                  color: Colors.black,
+                  color: cs.outline,
                   fontFamily: widget.isArabic
                       ? 'Graphik-Extra-Bold'
                       : 'Ibm-Bold',
