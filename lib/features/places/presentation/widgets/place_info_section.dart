@@ -161,9 +161,12 @@ class PlaceInfoSection extends ConsumerWidget {
                                   Flexible(
                                     child: Text(
                                       [
-                                        if (place.area?.isNotEmpty == true)
-                                          place.area!,
-                                        if (place.city.isNotEmpty) place.city,
+                                        if (isAr
+                                            ? (place.areaAr ?? place.area)?.isNotEmpty == true
+                                            : place.area?.isNotEmpty == true)
+                                          (isAr ? (place.areaAr ?? place.area)! : place.area!),
+                                        if ((isAr ? (place.cityAr ?? place.city) : place.city).isNotEmpty)
+                                          isAr ? (place.cityAr ?? place.city) : place.city,
                                       ].join(' · '),
                                       style: tt.bodySmall?.copyWith(
                                         color: cs.onSurface.withValues(

@@ -67,9 +67,10 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
           ? (place.nameAr.isNotEmpty ? place.nameAr : place.nameEn)
           : (place.nameEn.isNotEmpty ? place.nameEn : place.nameAr);
       final sep = _isAr ? '، ' : ', ';
-      final subtitle = [place.area, place.city]
-          .where((e) => e != null && e.isNotEmpty)
-          .join(sep);
+      final subtitle = [
+        _isAr ? (place.areaAr ?? place.area) : place.area,
+        _isAr ? (place.cityAr ?? place.city) : place.city,
+      ].where((e) => e != null && e.isNotEmpty).join(sep);
       final cover = place.coverImageUrl;
       final coverBytes = (cover != null && cover.isNotEmpty)
           ? await _share.fetchImageBytes(cover)

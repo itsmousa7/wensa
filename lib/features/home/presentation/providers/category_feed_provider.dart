@@ -103,7 +103,7 @@ class CategoryFeedItem {
     titleEn: m['name_en'] as String? ?? '',
     titleAr: m['name_ar'] as String? ?? '',
     subtitleEn: m['area'] as String?,
-    subtitleAr: m['area'] as String?,
+    subtitleAr: (m['area_ar'] ?? m['area']) as String?,
     coverImageUrl: m['cover_image_url'] as String?,
     logoUrl: m['logo_url'] as String?,
     isVerified: m['is_verified'] as bool? ?? false,
@@ -190,7 +190,7 @@ class CategoryFeed extends _$CategoryFeed {
       final rows = await Supabase.instance.client
           .schema('content')
           .from('places_mobile')
-          .select('id, merchant_id, name_en, name_ar, area, cover_image_url, logo_url, is_verified')
+          .select('id, merchant_id, name_en, name_ar, area, area_ar, cover_image_url, logo_url, is_verified')
           .eq('place_status', 'approved')
           .eq('category_id', categoryId)
           .order('hotness_score', ascending: false)
@@ -244,7 +244,7 @@ class AllPlacesFeed extends _$AllPlacesFeed {
       final rows = await Supabase.instance.client
           .schema('content')
           .from('places_mobile')
-          .select('id, merchant_id, name_en, name_ar, area, cover_image_url, logo_url, is_verified')
+          .select('id, merchant_id, name_en, name_ar, area, area_ar, cover_image_url, logo_url, is_verified')
           .eq('place_status', 'approved')
           .order('created_at', ascending: false)
           .range(from, to);
@@ -311,7 +311,7 @@ class DiscountsFeed extends _$DiscountsFeed {
           .schema('content')
           .from('places_mobile')
           .select(
-            'id, merchant_id, name_en, name_ar, area, cover_image_url, logo_url, is_verified',
+            'id, merchant_id, name_en, name_ar, area, area_ar, cover_image_url, logo_url, is_verified',
           )
           .eq('place_status', 'approved');
 

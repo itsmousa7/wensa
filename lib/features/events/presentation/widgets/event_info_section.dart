@@ -121,7 +121,7 @@ class EventInfoSection extends ConsumerWidget {
                               const SizedBox(width: 5),
                               Flexible(
                                 child: Text(
-                                  event.city!,
+                                  isAr ? (event.cityAr ?? event.city!) : event.city!,
                                   style: tt.bodySmall?.copyWith(
                                     color: cs.onSurface.withValues(alpha: 0.75),
                                     fontWeight: FontWeight.bold,

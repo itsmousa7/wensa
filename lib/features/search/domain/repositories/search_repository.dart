@@ -36,7 +36,7 @@ class SearchRepository {
         .schema('content')
         .from('places_mobile')
         .select(
-          'id, merchant_id, name_en, name_ar, area, city, cover_image_url, logo_url, is_verified',
+          'id, merchant_id, name_en, name_ar, area, area_ar, city, cover_image_url, logo_url, is_verified',
         )
         .eq('place_status', 'approved')
         .or('name_en.ilike.$pattern,name_ar.ilike.$pattern')
@@ -54,7 +54,7 @@ class SearchRepository {
     final rows = await _client
         .schema('content')
         .from('events_mobile')
-        .select('id, title_en, title_ar, city, cover_image_url, logo_url, is_verified')
+        .select('id, title_en, title_ar, city, city_ar, cover_image_url, logo_url, is_verified')
         .eq('event_status', 'approved')
         .or('title_en.ilike.$pattern,title_ar.ilike.$pattern')
         .limit(limit);
@@ -66,7 +66,7 @@ class SearchRepository {
         titleEn: m['title_en'] as String? ?? '',
         titleAr: m['title_ar'] as String? ?? '',
         subtitleEn: m['city'] as String?,
-        subtitleAr: m['city'] as String?,
+        subtitleAr: (m['city_ar'] ?? m['city']) as String?,
         coverImageUrl: m['cover_image_url'] as String?,
         logoUrl: m['logo_url'] as String?,
         isVerified: m['is_verified'] as bool? ?? false,

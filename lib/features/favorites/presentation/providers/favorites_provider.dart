@@ -152,7 +152,7 @@ class FavoritesFeed extends _$FavoritesFeed {
             .schema('content')
             .from('places_mobile')
             .select(
-              'id, merchant_id, name_en, name_ar, area, cover_image_url, logo_url, is_verified',
+              'id, merchant_id, name_en, name_ar, area, area_ar, cover_image_url, logo_url, is_verified',
             )
             .inFilter('id', placeIds);
         for (final p in places as List) {
@@ -174,7 +174,7 @@ class FavoritesFeed extends _$FavoritesFeed {
         final events = await db
             .schema('content')
             .from('events_mobile')
-            .select('id, title_en, title_ar, city, cover_image_url, logo_url, is_verified')
+            .select('id, title_en, title_ar, city, city_ar, cover_image_url, logo_url, is_verified')
             .inFilter('id', eventIds)
             .eq('event_status', 'approved');
         for (final e in events as List) {
@@ -184,7 +184,7 @@ class FavoritesFeed extends _$FavoritesFeed {
             titleEn: m['title_en'] as String? ?? '',
             titleAr: m['title_ar'] as String? ?? '',
             subtitleEn: m['city'] as String?,
-            subtitleAr: m['city'] as String?,
+            subtitleAr: (m['city_ar'] ?? m['city']) as String?,
             coverImageUrl: m['cover_image_url'] as String?,
             logoUrl: m['logo_url'] as String?,
             isVerified: m['is_verified'] as bool? ?? false,
@@ -263,7 +263,7 @@ class SeeAllFeed extends _$SeeAllFeed {
               .schema('content')
               .from('places_mobile')
               .select(
-                'id, merchant_id, name_en, name_ar, area, cover_image_url, logo_url, is_verified',
+                'id, merchant_id, name_en, name_ar, area, area_ar, cover_image_url, logo_url, is_verified',
               )
               .eq('is_new', true)
               .order('created_at', ascending: false)
@@ -272,7 +272,7 @@ class SeeAllFeed extends _$SeeAllFeed {
           rows = await Supabase.instance.client
               .schema('content')
               .from('events_mobile')
-              .select('id, title_en, title_ar, city, cover_image_url, logo_url')
+              .select('id, title_en, title_ar, city, city_ar, cover_image_url, logo_url')
               .eq('event_status', 'approved')
               .or(
                 'end_date.is.null,end_date.gt.${DateTime.now().toUtc().toIso8601String()}',
@@ -293,9 +293,22 @@ class SeeAllFeed extends _$SeeAllFeed {
 
       final fetched = rows.map((r) {
         final m = r as Map<String, dynamic>;
-        return (type == SeeAllType.trending || type == SeeAllType.featured)
-            ? CategoryFeedItem.fromTrendingRow(m)
-            : CategoryFeedItem.fromRow(m);
+        if (type == SeeAllType.trending || type == SeeAllType.featured) {
+          return CategoryFeedItem.fromTrendingRow(m);
+        }
+        if (type == SeeAllType.allEvents) {
+          return CategoryFeedItem(
+            id: m['id'] as String,
+            titleEn: m['title_en'] as String? ?? '',
+            titleAr: m['title_ar'] as String? ?? '',
+            subtitleEn: m['city'] as String?,
+            subtitleAr: (m['city_ar'] ?? m['city']) as String?,
+            coverImageUrl: m['cover_image_url'] as String?,
+            logoUrl: m['logo_url'] as String?,
+            type: 'event',
+          );
+        }
+        return CategoryFeedItem.fromRow(m);
       }).toList();
 
       state = state.copyWith(

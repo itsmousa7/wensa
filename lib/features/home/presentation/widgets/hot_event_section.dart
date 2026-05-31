@@ -260,7 +260,7 @@ class _HeroEventCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        event.city ?? '',
+                        isAr ? (event.cityAr ?? event.city ?? '') : (event.city ?? ''),
                         style: tt.titleSmall?.copyWith(
                           color: cs.onTertiary,
                           fontSize: 12,

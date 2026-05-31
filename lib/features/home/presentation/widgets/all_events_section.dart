@@ -82,7 +82,7 @@ class AllEventsSection extends ConsumerWidget {
         titleEn: event.titleEn,
         titleAr: event.titleAr,
         subtitleEn: event.city,
-        subtitleAr: event.city,
+        subtitleAr: event.cityAr ?? event.city,
         badge: FeedCardBadge.event,
         isVerified: event.isVerified,
         itemType: 'event',
