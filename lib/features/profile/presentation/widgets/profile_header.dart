@@ -48,6 +48,22 @@ class ProfileHeader extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
 
+            // Phone (optional) — always LTR so the + stays at the start in RTL layouts
+            if (user.phone != null && user.phone!.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Text(
+                  user.phone!,
+                  style: tt.bodySmall?.copyWith(
+                    color: cs.outline,
+                    letterSpacing: 0.2,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+
             // City (optional)
             if (user.city != null && user.city!.isNotEmpty) ...[
               const SizedBox(height: 6),
