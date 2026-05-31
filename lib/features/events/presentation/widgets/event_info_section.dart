@@ -46,7 +46,6 @@ class EventInfoSection extends ConsumerWidget {
     BoxDecoration primaryChipDecoration() => BoxDecoration(
       color: cs.primary.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
     );
 
     final descStyle = tt.labelLarge?.copyWith(

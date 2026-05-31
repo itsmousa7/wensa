@@ -60,7 +60,6 @@ class EventDateSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: cs.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

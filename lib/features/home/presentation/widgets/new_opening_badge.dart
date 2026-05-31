@@ -18,7 +18,7 @@ Container feedBadge({
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.15),
+      color: color.withValues(alpha: 0.28),
       borderRadius: BorderRadius.circular(999),
     ),
     alignment: Alignment.center,

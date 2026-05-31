@@ -35,7 +35,6 @@ class PlaceStatisticChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
