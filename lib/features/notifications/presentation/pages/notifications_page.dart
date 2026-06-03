@@ -79,26 +79,80 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
             style: tt.titleLarge?.copyWith(color: cs.onSurface),
           ),
         ),
-        body: asyncList.when(
-          loading: () => const _NotificationsSkeleton(),
-          error: (e, _) => _ErrorView(
-            message: e.toString(),
-            onRetry: _refresh,
-          ),
-          data: (items) {
-            if (items.isEmpty) return const _EmptyView();
-            return RefreshIndicator(
-              onRefresh: _refresh,
-              color: cs.primary,
-              child: ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.only(top: 6, bottom: 32),
-                itemCount: items.length,
-                itemBuilder: (_, i) => _NotificationTile(
-                  notification: items[i],
-                  isAr: isAr,
-                ),
+        body: Builder(
+          builder: (context) {
+            final items = asyncList.value;
+            final isFirstLoad = asyncList.isLoading && items == null;
+            final hasError = asyncList.hasError && items == null;
+
+            // First load: full-page skeleton (no refresh control yet)
+            if (isFirstLoad) return const _NotificationsSkeleton();
+
+            // Always render the scroll view so the refresh control
+            // stays in the tree throughout refresh cycles.
+            return CustomScrollView(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
               ),
+              slivers: [
+                CupertinoSliverRefreshControl(
+                  refreshTriggerPullDistance: 80,
+                  refreshIndicatorExtent: 50,
+                  onRefresh: _refresh,
+                  builder: (context, mode, pulledExtent, triggerDistance, _) {
+                    final progress =
+                        (pulledExtent / triggerDistance).clamp(0.0, 1.0);
+                    final loading =
+                        mode == RefreshIndicatorMode.refresh ||
+                        mode == RefreshIndicatorMode.armed;
+                    return Center(
+                      child: loading
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: cs.primary,
+                              ),
+                            )
+                          : Opacity(
+                              opacity: progress,
+                              child: Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                size: 24,
+                                color: cs.onSurface.withValues(alpha: 0.5),
+                              ),
+                            ),
+                    );
+                  },
+                ),
+                if (hasError)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _ErrorView(
+                      message: asyncList.error.toString(),
+                      onRetry: _refresh,
+                    ),
+                  )
+                else if (items == null || items.isEmpty)
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _EmptyView(),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.only(top: 6, bottom: 32),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (_, i) => _NotificationTile(
+                          notification: items[i],
+                          isAr: isAr,
+                        ),
+                        childCount: items.length,
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         ),

@@ -1,5 +1,6 @@
 // lib/features/bookings_history/presentation/pages/ticket_detail_page.dart
 
+import 'package:cupertino_native/cupertino_native.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,21 +39,23 @@ class TicketDetailPage extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: GestureDetector(
-          onTap: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/bookings');
-            }
-          },
-          child: Icon(
-            isArabic
-                ? CupertinoIcons.chevron_right
-                : CupertinoIcons.chevron_left,
-            color: cs.colorScheme.onSurface,
-          ),
-        ),
+        leading: Navigator.of(context).canPop()
+            ? GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Icon(
+                  isArabic
+                      ? CupertinoIcons.chevron_right
+                      : CupertinoIcons.chevron_left,
+                  color: cs.colorScheme.onSurface,
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: CNButton.icon(
+                  icon: const CNSymbol('xmark'),
+                  onPressed: () => context.go('/bookings'),
+                ),
+              ),
         title: Text(
           _isMembership
               ? (isArabic ? 'العضوية' : 'Membership')

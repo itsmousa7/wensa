@@ -80,7 +80,7 @@ async function sendOne(
   projectId: string,
   accessToken: string,
   data?: Record<string, string>,
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; staleToken?: boolean; error?: string }> {
   const res = await fetch(
     `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
     {
@@ -110,8 +110,17 @@ async function sendOne(
   );
   if (!res.ok) {
     const err = await res.text();
-    console.error(`[FCM] send error for token ${fcmToken.slice(0, 20)}…: ${err}`);
-    return { ok: false, error: err };
+    // UNREGISTERED / NOT_FOUND means the token is expired or belongs to an
+    // old app registration — prune it silently rather than treating it as a
+    // real delivery error.
+    const staleToken =
+      res.status === 404 ||
+      err.includes("UNREGISTERED") ||
+      err.includes("registration-token-not-registered");
+    if (!staleToken) {
+      console.error(`[FCM] send error for token ${fcmToken.slice(0, 20)}…: ${err}`);
+    }
+    return { ok: false, staleToken, error: err };
   }
   return { ok: true };
 }
@@ -208,6 +217,12 @@ Deno.serve(async (_req) => {
               data: { booking_id: booking.id },
             });
           totalSent++;
+        } else if (result.staleToken) {
+          await supabase
+            .schema("profiles")
+            .from("app_users")
+            .update({ fcm_token: null })
+            .eq("id", user.id);
         } else {
           if (result.error) fcmErrors.push(result.error);
           totalErrors++;
@@ -274,6 +289,12 @@ Deno.serve(async (_req) => {
                 data: { membership_id: m.id },
               });
             totalSent++;
+          } else if (result.staleToken) {
+            await supabase
+              .schema("profiles")
+              .from("app_users")
+              .update({ fcm_token: null })
+              .eq("id", user.id);
           } else {
             if (result.error) fcmErrors.push(result.error);
             totalErrors++;
@@ -338,6 +359,13 @@ Deno.serve(async (_req) => {
                 data: { broadcast_id: broadcast.id },
               });
             bSent++;
+          } else if (result.staleToken) {
+            // Prune the dead token so it never causes a false "partial" again
+            await supabase
+              .schema("profiles")
+              .from("app_users")
+              .update({ fcm_token: null })
+              .eq("id", user.id);
           } else {
             if (result.error) fcmErrors.push(result.error);
             bErrors++;

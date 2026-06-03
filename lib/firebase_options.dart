@@ -57,7 +57,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCSYwab_MWCsJ8wjQLqZmfFxHZc7pWYmnc',
-    appId: '1:801707924316:android:5188600c4f67a0bafb3f99',
+    appId: '1:801707924316:android:742bd954387e471afb3f99',
     messagingSenderId: '801707924316',
     projectId: 'wensa-notification',
     storageBucket: 'wensa-notification.firebasestorage.app',
@@ -69,6 +69,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '801707924316',
     projectId: 'wensa-notification',
     storageBucket: 'wensa-notification.firebasestorage.app',
-    iosBundleId: 'com.example.wensa',
+    iosBundleId: 'app.wensa.mobile',
   );
 }

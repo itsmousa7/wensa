@@ -1,5 +1,6 @@
 // lib/features/bookings_history/presentation/pages/bookings_history_page.dart
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking.dart';
@@ -43,6 +44,7 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   late final List<ScrollController> _scrollCtrls;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -55,6 +57,18 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
       kBookingHistoryTabsEn.length,
       (_) => ScrollController(),
     );
+  }
+
+  Future<void> _onRefresh() async {
+    if (_isRefreshing) return;
+    setState(() => _isRefreshing = true);
+    try {
+      ref.invalidate(userBookingsProvider);
+      ref.invalidate(userMembershipsProvider);
+      await Future.delayed(const Duration(milliseconds: 800));
+    } finally {
+      if (mounted) setState(() => _isRefreshing = false);
+    }
   }
 
   @override
@@ -175,6 +189,7 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
             membershipsAsync: ref.watch(userMembershipsProvider),
             onBookingTap: (id) => _navigateToDetail(context, id),
             onMembershipTap: (id) => _navigateToDetail(context, 'm_$id'),
+            onRefresh: _onRefresh,
           ),
           // Tab 1: Sports — sports bookings + memberships (gym is sports)
           _CombinedTab(
@@ -185,6 +200,7 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
             membershipsAsync: ref.watch(userMembershipsProvider),
             onBookingTap: (id) => _navigateToDetail(context, id),
             onMembershipTap: (id) => _navigateToDetail(context, 'm_$id'),
+            onRefresh: _onRefresh,
           ),
           // Tab 2: Farm
           _BookingsTab(
@@ -193,6 +209,7 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
               userBookingsProvider(categories: const ['farm']),
             ),
             onTap: (id) => _navigateToDetail(context, id),
+            onRefresh: _onRefresh,
           ),
           // Tab 3: Concert
           _BookingsTab(
@@ -201,6 +218,7 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
               userBookingsProvider(categories: const ['concert']),
             ),
             onTap: (id) => _navigateToDetail(context, id),
+            onRefresh: _onRefresh,
           ),
           // Tab 4: Restaurant
           _BookingsTab(
@@ -209,17 +227,55 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
               userBookingsProvider(categories: const ['restaurant']),
             ),
             onTap: (id) => _navigateToDetail(context, id),
+            onRefresh: _onRefresh,
           ),
           // Tab 5: Memberships
           _MembershipsTab(
             scrollController: _scrollCtrls[5],
             asyncValue: ref.watch(userMembershipsProvider),
             onTap: (id) => _navigateToDetail(context, 'm_$id'),
+            onRefresh: _onRefresh,
           ),
         ],
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Shared refresh control builder
+// ─────────────────────────────────────────────────────────────────────────────
+Widget _buildRefreshIndicator(
+  BuildContext context,
+  RefreshIndicatorMode mode,
+  double pulledExtent,
+  double triggerDistance,
+  double refreshIndicatorExtent,
+) {
+  final cs = Theme.of(context).colorScheme;
+  final progress = (pulledExtent / triggerDistance).clamp(0.0, 1.0);
+  final loading =
+      mode == RefreshIndicatorMode.refresh ||
+      mode == RefreshIndicatorMode.armed;
+  return Center(
+    child: loading
+        ? SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: cs.primary,
+            ),
+          )
+        : Opacity(
+            opacity: progress,
+            child: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 24,
+              color: cs.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -251,34 +307,64 @@ class _BookingsTab extends ConsumerWidget {
     required this.scrollController,
     required this.asyncValue,
     required this.onTap,
+    required this.onRefresh,
   });
 
   final ScrollController scrollController;
   final AsyncValue<List<Booking>> asyncValue;
   final void Function(String id) onTap;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return asyncValue.when(
-      loading: () => _BookingsSkeleton(),
-      error: (e, _) => _ErrorView(
-        message: e.toString(),
-        onRetry: () => ref.invalidate(userBookingsProvider),
+    final bookings = asyncValue.value;
+    final isLoading = asyncValue.isLoading;
+    final hasError = asyncValue.hasError && bookings == null;
+
+    return CustomScrollView(
+      controller: scrollController,
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
       ),
-      data: (bookings) {
-        if (bookings.isEmpty) {
-          return const _EmptyView();
-        }
-        return ListView.builder(
-          controller: scrollController,
-          padding: const EdgeInsets.only(top: 8, bottom: 110),
-          itemCount: bookings.length,
-          itemBuilder: (_, i) => TicketCard.booking(
-            booking: bookings[i],
-            onTap: () => onTap(bookings[i].id),
+      slivers: [
+        CupertinoSliverRefreshControl(
+          refreshTriggerPullDistance: 80,
+          refreshIndicatorExtent: 50,
+          onRefresh: onRefresh,
+          builder: _buildRefreshIndicator,
+        ),
+        if (isLoading && bookings == null)
+          const SliverPadding(
+            padding: EdgeInsets.only(top: 8, bottom: 110),
+            sliver: _SkeletonSliver(),
+          )
+        else if (hasError)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: _ErrorView(
+              message: asyncValue.error.toString(),
+              onRetry: () => ref.invalidate(userBookingsProvider),
+            ),
+          )
+        else if (bookings == null || bookings.isEmpty)
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: _EmptyView(),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.only(top: 8, bottom: 110),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (_, i) => TicketCard.booking(
+                  booking: bookings[i],
+                  onTap: () => onTap(bookings[i].id),
+                ),
+                childCount: bookings.length,
+              ),
+            ),
           ),
-        );
-      },
+      ],
     );
   }
 }
@@ -293,6 +379,7 @@ class _CombinedTab extends ConsumerWidget {
     required this.membershipsAsync,
     required this.onBookingTap,
     required this.onMembershipTap,
+    required this.onRefresh,
   });
 
   final ScrollController scrollController;
@@ -300,34 +387,21 @@ class _CombinedTab extends ConsumerWidget {
   final AsyncValue<List<Membership>> membershipsAsync;
   final void Function(String id) onBookingTap;
   final void Function(String id) onMembershipTap;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (bookingsAsync.isLoading || membershipsAsync.isLoading) {
-      return _BookingsSkeleton();
-    }
+    final isLoading =
+        (bookingsAsync.isLoading && bookingsAsync.value == null) ||
+        (membershipsAsync.isLoading && membershipsAsync.value == null);
 
-    final bookingsError = bookingsAsync.error;
-    if (bookingsError != null) {
-      return _ErrorView(
-        message: bookingsError.toString(),
-        onRetry: () {
-          ref.invalidate(userBookingsProvider);
-          ref.invalidate(userMembershipsProvider);
-        },
-      );
-    }
-
-    final membershipsError = membershipsAsync.error;
-    if (membershipsError != null) {
-      return _ErrorView(
-        message: membershipsError.toString(),
-        onRetry: () {
-          ref.invalidate(userBookingsProvider);
-          ref.invalidate(userMembershipsProvider);
-        },
-      );
-    }
+    final bookingsError = bookingsAsync.hasError && bookingsAsync.value == null
+        ? bookingsAsync.error
+        : null;
+    final membershipsError =
+        membershipsAsync.hasError && membershipsAsync.value == null
+        ? membershipsAsync.error
+        : null;
 
     final bookings = bookingsAsync.value ?? [];
     final memberships = membershipsAsync.value ?? [];
@@ -337,25 +411,73 @@ class _CombinedTab extends ConsumerWidget {
       ...memberships.map(_MembershipItem.new),
     ]..sort((a, b) => b.sortKey.compareTo(a.sortKey));
 
-    if (items.isEmpty) return const _EmptyView();
-
-    return ListView.builder(
+    return CustomScrollView(
       controller: scrollController,
-      padding: const EdgeInsets.only(top: 8, bottom: 110),
-      itemCount: items.length,
-      itemBuilder: (_, i) {
-        final item = items[i];
-        return switch (item) {
-          _BookingItem(:final booking) => TicketCard.booking(
-            booking: booking,
-            onTap: () => onBookingTap(booking.id),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
+      slivers: [
+        CupertinoSliverRefreshControl(
+          refreshTriggerPullDistance: 80,
+          refreshIndicatorExtent: 50,
+          onRefresh: onRefresh,
+          builder: _buildRefreshIndicator,
+        ),
+        if (isLoading)
+          const SliverPadding(
+            padding: EdgeInsets.only(top: 8, bottom: 110),
+            sliver: _SkeletonSliver(),
+          )
+        else if (bookingsError != null)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: _ErrorView(
+              message: bookingsError.toString(),
+              onRetry: () {
+                ref.invalidate(userBookingsProvider);
+                ref.invalidate(userMembershipsProvider);
+              },
+            ),
+          )
+        else if (membershipsError != null)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: _ErrorView(
+              message: membershipsError.toString(),
+              onRetry: () {
+                ref.invalidate(userBookingsProvider);
+                ref.invalidate(userMembershipsProvider);
+              },
+            ),
+          )
+        else if (items.isEmpty)
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: _EmptyView(),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.only(top: 8, bottom: 110),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (_, i) {
+                  final item = items[i];
+                  return switch (item) {
+                    _BookingItem(:final booking) => TicketCard.booking(
+                      booking: booking,
+                      onTap: () => onBookingTap(booking.id),
+                    ),
+                    _MembershipItem(:final membership) => TicketCard.membership(
+                      membership: membership,
+                      onTap: () => onMembershipTap(membership.id),
+                    ),
+                  };
+                },
+                childCount: items.length,
+              ),
+            ),
           ),
-          _MembershipItem(:final membership) => TicketCard.membership(
-            membership: membership,
-            onTap: () => onMembershipTap(membership.id),
-          ),
-        };
-      },
+      ],
     );
   }
 }
@@ -368,132 +490,169 @@ class _MembershipsTab extends ConsumerWidget {
     required this.scrollController,
     required this.asyncValue,
     required this.onTap,
+    required this.onRefresh,
   });
 
   final ScrollController scrollController;
   final AsyncValue<List<Membership>> asyncValue;
   final void Function(String id) onTap;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return asyncValue.when(
-      loading: () => _BookingsSkeleton(),
-      error: (e, _) => _ErrorView(
-        message: e.toString(),
-        onRetry: () => ref.invalidate(userMembershipsProvider),
+    final memberships = asyncValue.value;
+    final isLoading = asyncValue.isLoading && memberships == null;
+    final hasError = asyncValue.hasError && memberships == null;
+
+    return CustomScrollView(
+      controller: scrollController,
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
       ),
-      data: (memberships) {
-        if (memberships.isEmpty) {
-          return const _EmptyView();
-        }
-        return ListView.builder(
-          controller: scrollController,
-          padding: const EdgeInsets.only(top: 8, bottom: 110),
-          itemCount: memberships.length,
-          itemBuilder: (_, i) => TicketCard.membership(
-            membership: memberships[i],
-            onTap: () => onTap(memberships[i].id),
+      slivers: [
+        CupertinoSliverRefreshControl(
+          refreshTriggerPullDistance: 80,
+          refreshIndicatorExtent: 50,
+          onRefresh: onRefresh,
+          builder: _buildRefreshIndicator,
+        ),
+        if (isLoading)
+          const SliverPadding(
+            padding: EdgeInsets.only(top: 8, bottom: 110),
+            sliver: _SkeletonSliver(),
+          )
+        else if (hasError)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: _ErrorView(
+              message: asyncValue.error.toString(),
+              onRetry: () => ref.invalidate(userMembershipsProvider),
+            ),
+          )
+        else if (memberships == null || memberships.isEmpty)
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: _EmptyView(),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.only(top: 8, bottom: 110),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (_, i) => TicketCard.membership(
+                  membership: memberships[i],
+                  onTap: () => onTap(memberships[i].id),
+                ),
+                childCount: memberships.length,
+              ),
+            ),
           ),
-        );
-      },
+      ],
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Skeleton
+//  Skeleton — sliver version (stays inside CustomScrollView)
 // ─────────────────────────────────────────────────────────────────────────────
-class _BookingsSkeleton extends StatelessWidget {
+class _SkeletonSliver extends StatelessWidget {
+  const _SkeletonSliver();
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (_, _) => const _BookingSkeletonItem(),
+        childCount: 8,
+      ),
+    );
+  }
+}
+
+class _BookingSkeletonItem extends StatelessWidget {
+  const _BookingSkeletonItem();
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 8, bottom: 110),
-      itemCount: 8,
-      itemBuilder: (_, _) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-        // Card frame is outside Skeletonizer so it always renders as a real
-        // card — not a flat bone — between shimmer pulses.
-        child: Container(
-          decoration: BoxDecoration(
-            color: cs.surfaceContainer,
-            borderRadius: AppSpacing.borderRadiusLG,
-            border: Border.all(color: cs.onSurface.withValues(alpha: 0.07)),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cs.surfaceContainer,
+          borderRadius: AppSpacing.borderRadiusLG,
+          border: Border.all(color: cs.onSurface.withValues(alpha: 0.07)),
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Skeletonizer(
+          enabled: true,
+          effect: ShimmerEffect(
+            baseColor: cs.surfaceContainerHighest,
+            highlightColor: cs.surface,
+            duration: const Duration(milliseconds: 1200),
           ),
-          padding: const EdgeInsets.all(14),
-          child: Skeletonizer(
-            enabled: true,
-            effect: ShimmerEffect(
-              baseColor: cs.surfaceContainerHighest,
-              highlightColor: cs.surface,
-              duration: const Duration(milliseconds: 1200),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Icon square — mirrors actual 48×48 r12 icon container
-                Bone(
-                  width: 48,
-                  height: 48,
-                  borderRadius: AppSpacing.borderRadiusMD,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Row 1: name + status badge
-                      Padding(
-                        padding: const EdgeInsets.only(top: 14),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Bone(
-                                height: 13,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Bone(
-                              width: 72,
-                              height: 24,
-                              borderRadius: AppSpacing.borderRadiusXL,
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Row 2: date (left) + amount (right)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Row(
-                          children: [
-                            Bone(
-                              width: 110,
-                              height: 11,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Bone(
+                width: 48,
+                height: 48,
+                borderRadius: AppSpacing.borderRadiusMD,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 14),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Bone(
+                              height: 13,
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            const Spacer(),
-                            Bone(
-                              width: 70,
-                              height: 11,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 8),
+                          Bone(
+                            width: 72,
+                            height: 24,
+                            borderRadius: AppSpacing.borderRadiusXL,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Row(
+                        children: [
+                          Bone(
+                            width: 110,
+                            height: 11,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          const Spacer(),
+                          Bone(
+                            width: 70,
+                            height: 11,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Bone(
-                  width: 16,
-                  height: 16,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              Bone(
+                width: 16,
+                height: 16,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ],
           ),
         ),
       ),

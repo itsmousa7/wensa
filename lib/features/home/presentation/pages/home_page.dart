@@ -140,32 +140,37 @@ class _HomePageState extends ConsumerState<HomePage> {
               // ── Pull to refresh ──────────────────────────────────────────
               CupertinoSliverRefreshControl(
                 refreshTriggerPullDistance: 80,
-                refreshIndicatorExtent: 50,
+                refreshIndicatorExtent: 60,
                 onRefresh: _onRefresh,
                 builder: (context, mode, pulledExtent, triggerDistance, _) {
+                  final topPadding = MediaQuery.of(context).viewPadding.top;
                   final progress = (pulledExtent / triggerDistance).clamp(
                     0.0,
                     1.0,
                   );
                   final loading = mode == RefreshIndicatorMode.armed;
-                  return Center(
-                    child: loading
-                        ? SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: cs.primary,
+                  return Padding(
+                    padding: EdgeInsets.only(top: topPadding),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: loading
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: cs.primary,
+                              ),
+                            )
+                          : Opacity(
+                              opacity: progress,
+                              child: Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                size: 24,
+                                color: cs.onSurface.withValues(alpha: 0.5),
+                              ),
                             ),
-                          )
-                        : Opacity(
-                            opacity: progress,
-                            child: Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              size: 24,
-                              color: cs.onSurface.withValues(alpha: 0.5),
-                            ),
-                          ),
+                    ),
                   );
                 },
               ),
