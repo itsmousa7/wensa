@@ -3,6 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
     import 'package:future_riverpod/core/constants/locale/locale_state.dart';
@@ -18,11 +19,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  print('Background Message: ${message.messageId}');
+  debugPrint('Background Message: ${message.messageId}');
 }
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: binding);
   await dotenv.load(fileName: ".env");
  
   // Initialize Firebase (will fail gracefully until native config is added)
@@ -52,6 +54,7 @@ void main() async {
     debugPrint('[FCM] Initialization error (non-fatal): $e');
   }
 
+  FlutterNativeSplash.remove();
   runApp(const ProviderScope(child: MyApp()));
 }
 

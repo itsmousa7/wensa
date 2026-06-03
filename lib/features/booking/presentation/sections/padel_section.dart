@@ -9,6 +9,8 @@ import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/slot_grid.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
     show bookingsRefreshProvider;
 import 'package:future_riverpod/features/discounts/domain/discount_math.dart';
@@ -284,7 +286,7 @@ class _BookingFormView extends ConsumerWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Payment failed. Please try again.'),
-              backgroundColor: Color(0xFFE53935),
+              backgroundColor: AppColors.danger,
             ),
           );
         },
@@ -646,7 +648,7 @@ class _CourtsRow extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 decoration: BoxDecoration(
                   color: isSelected ? colorScheme.primary : colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: AppSpacing.borderRadiusLG,
                   border: Border.all(
                     color: isSelected
                         ? colorScheme.primary
@@ -718,7 +720,7 @@ class _EmptySlots extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 28),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppSpacing.borderRadiusLG,
       ),
       child: Column(
         children: [
@@ -758,7 +760,7 @@ class _ClosedDay extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 28),
       decoration: BoxDecoration(
         color: cs.errorContainer.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppSpacing.borderRadiusLG,
         border: Border.all(color: cs.error.withValues(alpha: 0.18)),
       ),
       child: Column(

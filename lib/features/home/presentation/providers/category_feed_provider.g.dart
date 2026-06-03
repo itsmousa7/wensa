@@ -58,7 +58,7 @@ final class CategoryFeedProvider
   }
 }
 
-String _$categoryFeedHash() => r'461eef72bfe5d4198cf7df6c97f6e64f2d03eabb';
+String _$categoryFeedHash() => r'0da6c9caba0dd8553068ef58b5c5bbb0ec17dfb7';
 
 final class CategoryFeedFamily extends $Family
     with
@@ -138,7 +138,7 @@ final class AllPlacesFeedProvider
   }
 }
 
-String _$allPlacesFeedHash() => r'e503eb58dd6598a0705c0b70c77939be74dff7eb';
+String _$allPlacesFeedHash() => r'e533cfad6f01769c45fe88a4e158655fc2526487';
 
 abstract class _$AllPlacesFeed extends $Notifier<CategoryFeedState> {
   CategoryFeedState build();
@@ -190,7 +190,7 @@ final class DiscountsFeedProvider
   }
 }
 
-String _$discountsFeedHash() => r'5540c41dd9939cf7b4130c88eaaa2103b0ea3c08';
+String _$discountsFeedHash() => r'd66b3739f07ec1af7e345a62d714fb62deaeaa95';
 
 abstract class _$DiscountsFeed extends $Notifier<CategoryFeedState> {
   CategoryFeedState build();

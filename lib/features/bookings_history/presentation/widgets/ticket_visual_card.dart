@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:future_riverpod/core/share/branded_header.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/qr_block.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 const double _kTopHeight = 270.0;
 const double _kTearHalf = 14.0;
@@ -141,7 +142,7 @@ class _TicketVisualCardState extends State<TicketVisualCard> {
                     const SizedBox(height: 24),
                     Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: AppSpacing.borderRadiusXL,
                         border: Border.all(
                           color: cs.primary.withValues(alpha: 0.25),
                           width: 2,
@@ -304,7 +305,7 @@ class _CodeFieldRow extends StatelessWidget {
         width: 50,
         height: 34,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: AppSpacing.borderRadiusLG,
           border: Border.all(color: borderColor, width: 1.2),
         ),
         child: Icon(

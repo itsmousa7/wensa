@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/plans/domain/models/merchant_plan_state.dart';
 import 'package:future_riverpod/features/plans/presentation/providers/current_plan_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class BannerPurchasePage extends ConsumerStatefulWidget {
   const BannerPurchasePage({
@@ -60,22 +62,30 @@ class _BannerPurchasePageState extends ConsumerState<BannerPurchasePage> {
         // ── Payment method ───────────────────────────────────────────────
         const Text('Payment method', style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        if (hasTrialDays)
-          _radioTile(
-            value: 'trial',
-            title: 'Use free trial days',
-            subtitle: '${planState.bannerTrialDaysRemaining} trial days remaining',
+        RadioGroup<String>(
+          groupValue: _paidVia,
+          onChanged: (v) => setState(() => _paidVia = v!),
+          child: Column(
+            children: [
+              if (hasTrialDays)
+                _radioTile(
+                  value: 'trial',
+                  title: 'Use free trial days',
+                  subtitle: '${planState.bannerTrialDaysRemaining} trial days remaining',
+                ),
+              if (hasQuarterSlot)
+                _radioTile(
+                  value: 'quarterly_slot',
+                  title: 'Use quarterly slot',
+                  subtitle: '${planState.quarterlyBannerSlotsRemaining} slot(s) remaining this quarter',
+                ),
+              _radioTile(
+                value: 'paid',
+                title: 'Pay per day',
+                subtitle: '5,000 IQD / day',
+              ),
+            ],
           ),
-        if (hasQuarterSlot)
-          _radioTile(
-            value: 'quarterly_slot',
-            title: 'Use quarterly slot',
-            subtitle: '${planState.quarterlyBannerSlotsRemaining} slot(s) remaining this quarter',
-          ),
-        _radioTile(
-          value: 'paid',
-          title: 'Pay per day',
-          subtitle: '5,000 IQD / day',
         ),
 
         const SizedBox(height: 24),
@@ -146,10 +156,10 @@ class _BannerPurchasePageState extends ConsumerState<BannerPurchasePage> {
         ElevatedButton(
           onPressed: _isSubmitting ? null : () => _submit(context, planState),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2196F3),
+            backgroundColor: AppColors.brandBlue,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusMD),
           ),
           child: _isSubmitting
               ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
@@ -161,10 +171,8 @@ class _BannerPurchasePageState extends ConsumerState<BannerPurchasePage> {
 
   Widget _radioTile({required String value, required String title, required String subtitle}) =>
       RadioListTile<String>(
-        value:    value,
-        groupValue: _paidVia,
-        onChanged: (v) => setState(() => _paidVia = v!),
-        title:    Text(title),
+        value: value,
+        title: Text(title),
         subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
         contentPadding: EdgeInsets.zero,
         dense: true,
@@ -175,7 +183,7 @@ class _BannerPurchasePageState extends ConsumerState<BannerPurchasePage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(color: Color(0xFF757575))),
+            Text(label, style: const TextStyle(color: AppColors.mutedText)),
             Text(value, style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
           ],
         ),

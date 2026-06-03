@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:intl_phone_field/phone_number.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class ChangePhonePage extends ConsumerStatefulWidget {
   const ChangePhonePage({super.key});
@@ -72,7 +73,7 @@ class _ChangePhonePageState extends ConsumerState<ChangePhonePage> {
     final cs = theme.colorScheme;
 
     OutlineInputBorder border({Color? color}) => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: AppSpacing.borderRadiusLG,
           borderSide:
               color == null ? BorderSide.none : BorderSide(color: color),
         );

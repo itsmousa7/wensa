@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -264,7 +265,7 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
                 ),
                 decoration: BoxDecoration(
                   color: cs.secondary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: AppSpacing.borderRadiusXL,
                 ),
                 child: Text(
                   displayEmail,

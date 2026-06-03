@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 // ---------------------------------------------------------------------------
 // Date utilities
@@ -193,7 +194,7 @@ class _BookingDateStripState extends State<BookingDateStrip> {
                   color: isClosed
                       ? cs.error.withValues(alpha: isDark ? 0.10 : 0.05)
                       : cs.surface,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: AppSpacing.borderRadiusLG,
                   border: Border.all(
                     color: isSel
                         ? cs.primary

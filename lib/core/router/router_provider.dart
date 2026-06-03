@@ -21,6 +21,7 @@ import 'package:future_riverpod/features/favorites/presentation/pages/favorites_
 import 'package:future_riverpod/features/home/presentation/pages/home_page.dart';
 import 'package:future_riverpod/features/home/presentation/pages/splash_page.dart';
 import 'package:future_riverpod/features/notifications/fcm_service.dart';
+import 'package:future_riverpod/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:future_riverpod/features/places/presentation/pages/place_details_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/profile_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/theme_settings_page.dart';
@@ -165,6 +166,11 @@ GoRouter router(Ref ref) {
         builder: (_, _) => const SearchPage(),
       ),
       GoRoute(
+        path: '/notifications',
+        name: RouteNames.notifications,
+        builder: (_, _) => const NotificationsPage(),
+      ),
+      GoRoute(
         path: '/place/:placeId/book',
         name: RouteNames.bookingFlow,
         builder: (_, s) => BookingFlowPage(
@@ -248,6 +254,7 @@ String? _redirect(Ref ref, GoRouterState state) {
     '/place',
     '/event',
     '/bookings',
+    '/notifications',
   ]) {
     if (path.startsWith(guarded)) {
       return (isAuth && isVerified) ? null : '/signin';

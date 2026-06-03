@@ -10,6 +10,7 @@ import 'package:future_riverpod/features/bookings_history/presentation/widgets/t
 import 'package:future_riverpod/features/events/presentation/providers/event_details_provider.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 /// Displays a booking or membership as a modern list card.
 class TicketCard extends StatelessWidget {
@@ -203,14 +204,14 @@ class _BookingCard extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       child: Material(
         color: cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppSpacing.borderRadiusLG,
         elevation: 0,
         child: GestureDetector(
           onTap: onTap,
 
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: AppSpacing.borderRadiusLG,
               border: Border.all(color: cs.onSurface.withValues(alpha: 0.07)),
             ),
             padding: const EdgeInsets.all(14),
@@ -223,7 +224,7 @@ class _BookingCard extends ConsumerWidget {
                   height: 48,
                   decoration: BoxDecoration(
                     color: accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: AppSpacing.borderRadiusMD,
                   ),
                   child: Icon(
                     TicketCard._categoryIcon(booking.category),
@@ -423,13 +424,13 @@ class _MembershipCard extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       child: Material(
         color: cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppSpacing.borderRadiusLG,
         elevation: 0,
         child: GestureDetector(
           onTap: onTap,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: AppSpacing.borderRadiusLG,
               border: Border.all(color: cs.onSurface.withValues(alpha: 0.07)),
             ),
             padding: const EdgeInsets.all(14),
@@ -442,7 +443,7 @@ class _MembershipCard extends ConsumerWidget {
                   height: 48,
                   decoration: BoxDecoration(
                     color: _accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: AppSpacing.borderRadiusMD,
                   ),
                   child: const Icon(
                     Icons.fitness_center_rounded,

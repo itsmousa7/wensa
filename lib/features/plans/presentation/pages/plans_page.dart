@@ -6,6 +6,7 @@ import 'package:future_riverpod/features/plans/presentation/providers/current_pl
 import 'package:future_riverpod/features/plans/presentation/widgets/feature_row.dart';
 import 'package:future_riverpod/features/plans/presentation/widgets/plan_card.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 
 class PlansPage extends ConsumerWidget {
   const PlansPage({super.key, required this.merchantId});
@@ -34,7 +35,7 @@ class PlansPage extends ConsumerWidget {
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
               const Text('يمكنك الترقية أو التخفيض في أي وقت.',
-                  style: TextStyle(color: Color(0xFF9E9E9E))),
+                  style: TextStyle(color: AppColors.neutralGray)),
               const SizedBox(height: 20),
               ...plans.map(
                 (plan) => Padding(

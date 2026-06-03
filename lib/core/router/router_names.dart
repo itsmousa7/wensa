@@ -20,4 +20,5 @@ class RouteNames {
   static const String eventBookingFlow = 'eventBookingFlow';
   static const String bookingsHistory = 'bookingsHistory';
   static const String ticketDetail = 'ticketDetail';
+  static const String notifications = 'notifications';
 }

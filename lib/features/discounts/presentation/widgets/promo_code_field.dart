@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/supabase_provider.dart';
 import 'package:future_riverpod/features/discounts/presentation/providers/user_purchase_history_provider.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class PromoApplied {
   const PromoApplied({
@@ -182,17 +184,17 @@ class _PromoCodeFieldState extends ConsumerState<PromoCodeField> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF2E7D32).withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.successDark.withValues(alpha: 0.08),
+          borderRadius: AppSpacing.borderRadiusMD,
           border: Border.all(
-            color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
+            color: AppColors.successDark.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
           children: [
             const Icon(
               Icons.check_circle_rounded,
-              color: Color(0xFF2E7D32),
+              color: AppColors.successDark,
               size: 18,
             ),
             const SizedBox(width: 8),
@@ -202,7 +204,7 @@ class _PromoCodeFieldState extends ConsumerState<PromoCodeField> {
                     ? 'رمز "${applied.code}" مطبّق · خصم ${applied.percent.round()}%'
                     : 'Code "${applied.code}" applied · ${applied.percent.round()}% OFF',
                 style: const TextStyle(
-                  color: Color(0xFF2E7D32),
+                  color: AppColors.successDark,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -275,7 +277,7 @@ class _PromoCodeFieldState extends ConsumerState<PromoCodeField> {
           const SizedBox(height: 6),
           Text(
             _error!,
-            style: const TextStyle(color: Color(0xFFE53935), fontSize: 12),
+            style: const TextStyle(color: AppColors.danger, fontSize: 12),
           ),
         ],
       ],

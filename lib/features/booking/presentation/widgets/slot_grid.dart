@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/booking/domain/models/slot.dart';
 import 'package:future_riverpod/features/booking/domain/models/slot_availability.dart';
 import 'package:future_riverpod/features/discounts/domain/models/merchant_discount.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class SlotGrid extends StatelessWidget {
   const SlotGrid({
@@ -183,7 +184,7 @@ class _SlotTile extends StatelessWidget {
       curve: Curves.easeOut,
       decoration: BoxDecoration(
         color: isUnavailable ? cs.surfaceContainerHighest : cs.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppSpacing.borderRadiusMD,
         border: Border.all(
           color: isSelected
               ? cs.primary
@@ -206,7 +207,7 @@ class _SlotTile extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppSpacing.borderRadiusMD,
           splashColor: cs.primary.withValues(alpha: 0.1),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

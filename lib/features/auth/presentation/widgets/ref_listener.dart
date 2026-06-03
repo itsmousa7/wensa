@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/auth/domain/models/custom_error.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 // BUG FIX: The original file used a FILE-LEVEL global boolean (_loadingDialogShown).
 // This means all widgets across the entire app share the same flag, causing:
@@ -62,7 +63,7 @@ void showLoadingDialog(BuildContext context) {
         width: 80,
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppSpacing.borderRadiusMD,
         ),
         child: const Center(
           child: SizedBox(

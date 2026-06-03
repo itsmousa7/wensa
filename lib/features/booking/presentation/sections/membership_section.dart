@@ -10,6 +10,7 @@ import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/membership_plan_card.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
     show bookingsRefreshProvider;
 import 'package:future_riverpod/features/discounts/domain/discount_math.dart';
@@ -101,7 +102,7 @@ class _MembershipSectionState extends ConsumerState<MembershipSection> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Payment failed. Please try again.'),
-                    backgroundColor: Color(0xFFE53935),
+                    backgroundColor: AppColors.danger,
                   ),
                 );
               },

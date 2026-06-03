@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/discounts/domain/models/merchant_discount.dart';
 import 'package:future_riverpod/features/places/presentation/widgets/place_details_helper.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class PlaceOpeningHours extends StatefulWidget {
   const PlaceOpeningHours({
@@ -110,7 +112,7 @@ class _PlaceOpeningHoursState extends State<PlaceOpeningHours> {
           child: Container(
             decoration: BoxDecoration(
               color: cs.surfaceContainer,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: AppSpacing.borderRadiusLG,
             ),
             child: Column(
               children: show.map((i) {
@@ -206,7 +208,7 @@ class _PlaceOpeningHoursState extends State<PlaceOpeningHours> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: cs.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: AppSpacing.borderRadiusSM,
         ),
         child: row,
       );
@@ -227,7 +229,7 @@ class _DiscountChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFE53935),
+        color: AppColors.danger,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(

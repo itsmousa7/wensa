@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class DiscountBadge extends StatelessWidget {
   const DiscountBadge({
@@ -79,7 +80,7 @@ class MaxDiscountBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         color: AppColors.lightRedSecondary.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppSpacing.borderRadiusSM,
         border: Border.all(
           color: AppColors.lightRedSecondary.withValues(alpha: 0.30),
         ),

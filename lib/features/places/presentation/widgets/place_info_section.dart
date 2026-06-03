@@ -18,6 +18,7 @@ import 'package:future_riverpod/features/places/presentation/widgets/place_openi
 import 'package:future_riverpod/features/places/presentation/widgets/place_reviews_sheet.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class PlaceInfoSection extends ConsumerWidget {
   const PlaceInfoSection({
@@ -75,7 +76,7 @@ class PlaceInfoSection extends ConsumerWidget {
     // ── Reusable decoration for primary-tinted chips ────────────────────
     BoxDecoration primaryChipDecoration() => BoxDecoration(
       color: cs.primary.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: AppSpacing.borderRadiusMD,
       border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
     );
 
@@ -265,7 +266,7 @@ class PlaceInfoSection extends ConsumerWidget {
                           ),
                           // Reuses the same chip decoration with pill radius
                           decoration: primaryChipDecoration().copyWith(
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: AppSpacing.borderRadiusXL,
                           ),
                           child: Text(
                             isAr ? tag.nameAr : tag.nameEn,
@@ -347,7 +348,7 @@ class PlaceInfoSection extends ConsumerWidget {
           Container(
             decoration: BoxDecoration(
               color: cs.surfaceContainer,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: AppSpacing.borderRadiusLG,
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(15),

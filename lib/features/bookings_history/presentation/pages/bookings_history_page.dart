@@ -9,6 +9,7 @@ import 'package:future_riverpod/features/bookings_history/presentation/widgets/t
 import 'package:future_riverpod/features/bookings_history/presentation/providers/bookings_scroll_signal.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 /// Semantic tab labels for the bookings history filter bar.
 /// Order must match the [TabController] index assignments in [_BookingsHistoryPageState].
@@ -416,7 +417,7 @@ class _BookingsSkeleton extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: cs.surfaceContainer,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: AppSpacing.borderRadiusLG,
             border: Border.all(color: cs.onSurface.withValues(alpha: 0.07)),
           ),
           padding: const EdgeInsets.all(14),
@@ -434,7 +435,7 @@ class _BookingsSkeleton extends StatelessWidget {
                 Bone(
                   width: 48,
                   height: 48,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: AppSpacing.borderRadiusMD,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -458,7 +459,7 @@ class _BookingsSkeleton extends StatelessWidget {
                             Bone(
                               width: 72,
                               height: 24,
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: AppSpacing.borderRadiusXL,
                             ),
                           ],
                         ),

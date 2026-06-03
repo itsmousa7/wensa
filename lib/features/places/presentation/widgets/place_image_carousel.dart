@@ -1,5 +1,6 @@
 // lib/features/places/presentation/widgets/place_details/place_image_carousel.dart
 import 'dart:ui';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -103,7 +104,7 @@ class PlaceImageCarousel extends StatelessWidget {
             right: isAr ? 18 : null,
             child: IgnorePointer(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: AppSpacing.borderRadiusXL,
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
                   child: Container(
@@ -113,7 +114,7 @@ class PlaceImageCarousel extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.45),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: AppSpacing.borderRadiusXL,
                     ),
                     child: Text(
                       '${currentIndex + 1} / ${images.length}',

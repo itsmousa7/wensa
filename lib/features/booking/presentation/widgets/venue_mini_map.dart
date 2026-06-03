@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/booking/domain/models/venue_layout.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/venue_overview_map.dart'
     show colorFromHex;
 
@@ -30,7 +31,7 @@ class VenueMiniMap extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppSpacing.borderRadiusSM,
         border: Border.all(color: Colors.black12),
         boxShadow: [
           BoxShadow(
@@ -41,7 +42,7 @@ class VenueMiniMap extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppSpacing.borderRadiusSM,
         child: Stack(
           children: layout.sections.map((s) {
             final isActive = s.id == highlightSectionId;

@@ -13,6 +13,8 @@ import 'package:future_riverpod/features/booking/presentation/providers/availabi
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/hold_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/seat_map_web_view.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
     show bookingsRefreshProvider;
 import 'package:go_router/go_router.dart';
@@ -201,7 +203,7 @@ class ConcertSection extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Payment failed. Please try again.'),
-                    backgroundColor: Color(0xFFE53935),
+                    backgroundColor: AppColors.danger,
                   ),
                 );
               },
@@ -982,7 +984,7 @@ class _GASheetState extends ConsumerState<_GASheet> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: AppSpacing.borderRadiusMD,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

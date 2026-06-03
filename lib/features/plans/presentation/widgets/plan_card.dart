@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/plans/domain/models/plan_model.dart';
 import 'package:future_riverpod/features/plans/domain/models/plan_tier.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class PlanCard extends StatelessWidget {
   const PlanCard({
@@ -17,7 +19,7 @@ class PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPro       = plan.tier == PlanTier.pro;
-    final accentColor = isPro ? const Color(0xFF7C3AED) : const Color(0xFF2196F3);
+    final accentColor = isPro ? const Color(0xFF7C3AED) : AppColors.brandBlue;
     final bgColor     = isCurrentPlan ? accentColor.withValues(alpha: 0.08) : Colors.white;
 
     return AnimatedContainer(
@@ -28,7 +30,7 @@ class PlanCard extends StatelessWidget {
           color: isCurrentPlan ? accentColor : const Color(0xFFE0E0E0),
           width: isCurrentPlan ? 2 : 1,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppSpacing.borderRadiusLG,
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -86,7 +88,7 @@ class PlanCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: AppSpacing.borderRadiusSM,
         ),
         child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 13)),
       );

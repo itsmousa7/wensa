@@ -5,6 +5,7 @@ import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/features/home/presentation/providers/home_providers.dart';
 import 'package:lottie/lottie.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class CategoryBar extends ConsumerWidget {
   const CategoryBar({super.key, required this.isAr});
@@ -45,7 +46,7 @@ class CategoryBar extends ConsumerWidget {
                       height: 64,
                       decoration: BoxDecoration(
                         color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: AppSpacing.borderRadiusXL,
                         border: Border.all(
                           color: isActive
                               ? theme.colorScheme.primary.withValues(alpha: 0.3)
@@ -102,7 +103,7 @@ class CategoryBar extends ConsumerWidget {
                     height: 64,
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: AppSpacing.borderRadiusXL,
                       border: Border.all(
                         color: isActive
                             ? theme.colorScheme.primary.withValues(alpha: 0.3)
@@ -169,7 +170,7 @@ Widget _buildSkeleton(ThemeData theme) => Skeletonizer(
       separatorBuilder: (_, _) => const SizedBox(width: 12),
       itemBuilder: (_, _) => Column(
         children: [
-          Bone(width: 64, height: 64, borderRadius: BorderRadius.circular(20)),
+          Bone(width: 64, height: 64, borderRadius: AppSpacing.borderRadiusXL),
           const SizedBox(height: 6),
           Bone(width: 40, height: 11, borderRadius: BorderRadius.circular(6)),
         ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership_plan.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_label.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class MembershipPlanCard extends StatelessWidget {
   const MembershipPlanCard({
@@ -66,7 +67,7 @@ class MembershipPlanCard extends StatelessWidget {
                 color: isSelected
                     ? cs.primary.withValues(alpha: 0.12)
                     : cs.surfaceContainerHighest.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: AppSpacing.borderRadiusMD,
               ),
               child: Icon(
                 Icons.fitness_center_rounded,

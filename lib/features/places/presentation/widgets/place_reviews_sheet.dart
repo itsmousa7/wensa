@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -528,7 +529,7 @@ class _AddReviewInput extends StatelessWidget {
                                 color: isLoading
                                     ? cs.primary.withValues(alpha: 0.5)
                                     : cs.primary,
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: AppSpacing.borderRadiusXL,
                               ),
                               child: const Icon(
                                 CupertinoIcons.arrow_up,
@@ -654,7 +655,7 @@ class _ReviewTile extends StatelessWidget {
           padding: EdgeInsets.only(left: isAr ? 20 : 0, right: isAr ? 0 : 20),
           decoration: BoxDecoration(
             color: AppColors.alert,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppSpacing.borderRadiusMD,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

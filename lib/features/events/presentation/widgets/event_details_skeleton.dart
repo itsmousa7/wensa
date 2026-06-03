@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class EventDetailsSkeleton extends StatelessWidget {
   const EventDetailsSkeleton({super.key});
@@ -47,7 +48,7 @@ class EventDetailsSkeleton extends StatelessWidget {
                       Bone(
                         width: 67,
                         height: 67,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppSpacing.borderRadiusMD,
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -59,7 +60,7 @@ class EventDetailsSkeleton extends StatelessWidget {
                                 Bone(
                                   width: 160,
                                   height: 22,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: AppSpacing.borderRadiusMD,
                                 ),
                                 const SizedBox(width: 10),
                                 Bone(
@@ -96,19 +97,19 @@ class EventDetailsSkeleton extends StatelessWidget {
                       Bone(
                         width: 90,
                         height: 52,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppSpacing.borderRadiusMD,
                       ),
                       const SizedBox(width: 10),
                       Bone(
                         width: 90,
                         height: 52,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppSpacing.borderRadiusMD,
                       ),
                       const SizedBox(width: 10),
                       Bone(
                         width: 90,
                         height: 52,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppSpacing.borderRadiusMD,
                       ),
                     ],
                   ),

@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class TicketStatusBadge extends StatelessWidget {
   const TicketStatusBadge.booking({
@@ -149,7 +150,7 @@ class TicketStatusBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: AppSpacing.borderRadiusXL,
       ),
       child: Text(
         label,

@@ -89,14 +89,12 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
         if (isComplete) {
           _resultHandled = true;
           _pollingTimer?.cancel();
-          // ignore: avoid_print
-          print('[WaylWebView] polling: payment COMPLETE');
+          debugPrint('[WaylWebView] polling: payment COMPLETE');
           _dismissWithSuccess(status.referenceId, status.id);
         } else if (isFailed) {
           _resultHandled = true;
           _pollingTimer?.cancel();
-          // ignore: avoid_print
-          print('[WaylWebView] polling: payment FAILED');
+          debugPrint('[WaylWebView] polling: payment FAILED');
           _dismissWithFailure();
         }
       } catch (_) {
@@ -109,8 +107,7 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
   /// Returns true if a result was detected and handled.
   bool _checkForPaymentResult(String url) {
     if (_resultHandled) {
-      // ignore: avoid_print
-      print('[WaylWebView] result already handled, skipping: $url');
+      debugPrint('[WaylWebView] result already handled, skipping: $url');
       return true;
     }
 
@@ -134,8 +131,7 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
       _pollingTimer?.cancel();
       final referenceId = params?['referenceid'] ?? '';
       final orderId = params?['orderid'] ?? params?['order_id'] ?? '';
-      // ignore: avoid_print
-      print('[WaylWebView] payment SUCCESS detected — popping');
+      debugPrint('[WaylWebView] payment SUCCESS detected — popping');
       _dismissWithSuccess(referenceId, orderId);
       return true;
     }
@@ -143,8 +139,7 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
     if (url.contains('status=failed') || url.contains('status=cancelled')) {
       _resultHandled = true;
       _pollingTimer?.cancel();
-      // ignore: avoid_print
-      print('[WaylWebView] payment FAILED detected — popping');
+      debugPrint('[WaylWebView] payment FAILED detected — popping');
       _dismissWithFailure();
       return true;
     }
@@ -156,12 +151,10 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
     // Wait 3 seconds so the user sees the Wayl success page before closing.
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) {
-        // ignore: avoid_print
-        print('[WaylWebView] NOT mounted — cannot pop');
+        debugPrint('[WaylWebView] NOT mounted — cannot pop');
         return;
       }
-      // ignore: avoid_print
-      print('[WaylWebView] mounted — calling onPaymentSuccess + pop');
+      debugPrint('[WaylWebView] mounted — calling onPaymentSuccess + pop');
       widget.onPaymentSuccess?.call(referenceId, orderId);
       Navigator.of(context).pop();
     });
@@ -176,8 +169,7 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
   }
 
   NavigationDecision _handleNavigation(String url) {
-    // ignore: avoid_print
-    print('[WaylWebView] navigating to: $url');
+    debugPrint('[WaylWebView] navigating to: $url');
     if (_checkForPaymentResult(url)) return NavigationDecision.prevent;
     return NavigationDecision.navigate;
   }

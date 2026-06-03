@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class SearchField extends StatelessWidget {
   const SearchField({
@@ -43,7 +44,7 @@ class SearchField extends StatelessWidget {
         decoration: InputDecoration(
           fillColor: cs.surfaceContainer,
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: AppSpacing.borderRadiusLG,
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(

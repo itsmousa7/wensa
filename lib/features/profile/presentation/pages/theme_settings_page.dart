@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/theme/theme_provider.dart';
 import 'package:future_riverpod/core/constants/theme/theme_state.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class ThemeSettingsPage extends ConsumerWidget {
   const ThemeSettingsPage({super.key, required this.isAr});
@@ -30,7 +31,7 @@ class ThemeSettingsPage extends ConsumerWidget {
           Container(
             decoration: BoxDecoration(
               color: cs.surface,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: AppSpacing.borderRadiusLG,
               boxShadow: [
                 BoxShadow(
                   color: cs.shadow.withValues(alpha: 0.06),
@@ -133,7 +134,7 @@ class _ThemeRadioTile extends StatelessWidget {
               height: 32,
               decoration: BoxDecoration(
                 color: cs.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: AppSpacing.borderRadiusSM,
               ),
               child: Icon(icon, size: 18, color: cs.primary),
             ),

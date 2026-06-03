@@ -13,6 +13,7 @@ import 'package:future_riverpod/features/profile/presentation/providers/user_pro
 import 'package:gap/gap.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:intl_phone_field/phone_number.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class CompleteProfilePage extends ConsumerStatefulWidget {
   const CompleteProfilePage({super.key});
@@ -232,7 +233,7 @@ class _PhoneField extends StatelessWidget {
     final languageCode = Localizations.localeOf(context).languageCode;
 
     OutlineInputBorder border({Color? color}) => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: AppSpacing.borderRadiusLG,
       borderSide: color == null ? BorderSide.none : BorderSide(color: color),
     );
 

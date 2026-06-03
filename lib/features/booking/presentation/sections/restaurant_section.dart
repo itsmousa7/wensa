@@ -5,6 +5,7 @@ import 'package:future_riverpod/features/booking/presentation/providers/availabi
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
     show bookingsRefreshProvider;
 import 'package:future_riverpod/features/discounts/presentation/providers/user_purchase_history_provider.dart';
@@ -233,7 +234,7 @@ class _RestaurantBookingFormView extends ConsumerWidget {
             child: Card(
               margin: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: AppSpacing.borderRadiusLG,
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -473,7 +474,7 @@ class _ClosedDay extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 28),
       decoration: BoxDecoration(
         color: cs.errorContainer.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppSpacing.borderRadiusLG,
         border: Border.all(color: cs.error.withValues(alpha: 0.18)),
       ),
       child: Column(
@@ -587,7 +588,7 @@ class _TimeSlotCard extends StatelessWidget {
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: AppSpacing.borderRadiusLG,
           border: Border.all(color: borderColor, width: borderWidth),
           boxShadow: shadows,
         ),

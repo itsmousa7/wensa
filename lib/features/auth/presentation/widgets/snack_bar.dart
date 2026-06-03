@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 SnackBar snack(
   BuildContext context, {
@@ -16,7 +17,7 @@ SnackBar snack(
       ? Theme.of(context).colorScheme.error
       : Theme.of(context).colorScheme.primary,
   shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(12),
+    borderRadius: AppSpacing.borderRadiusMD,
     side: BorderSide(
       color: isError
           ? Theme.of(context).colorScheme.errorContainer

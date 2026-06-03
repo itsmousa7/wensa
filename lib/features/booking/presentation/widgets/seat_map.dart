@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/seat.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 
 class SeatMapWidget extends StatelessWidget {
   const SeatMapWidget({
@@ -21,7 +22,7 @@ class SeatMapWidget extends StatelessWidget {
   static const double _seatRadius = 12.0;
   static const double _canvasWidth = 1200.0;
   static const double _canvasHeight = 800.0;
-  static const Color _selectedColor = Color(0xFF2196F3);
+  static const Color _selectedColor = AppColors.brandBlue;
 
   List<Seat> get _visibleSeats {
     if (filterTierKeys == null || filterTierKeys!.isEmpty) return seats;

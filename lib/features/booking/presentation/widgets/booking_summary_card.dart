@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 // ---------------------------------------------------------------------------
 // Data model for a single detail row
@@ -143,7 +145,7 @@ class BookingSummaryCard extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: AppSpacing.borderRadiusXL,
                     ),
                     child: Text(
                       badgeText!,
@@ -188,7 +190,7 @@ class BookingSummaryCard extends StatelessWidget {
                     _SummaryLineRow(
                       label: discountLabel ?? 'Discount',
                       value: discountValue!,
-                      color: const Color(0xFFE53935),
+                      color: AppColors.danger,
                       bold: true,
                     ),
                     const SizedBox(height: 10),
@@ -246,13 +248,13 @@ class BookingSummaryCard extends StatelessWidget {
                       color: isLoading
                           ? colorScheme.surfaceContainerHighest
                           : colorScheme.primary,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: AppSpacing.borderRadiusLG,
                     ),
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: isLoading ? null : onAction,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: AppSpacing.borderRadiusLG,
                         splashColor: Colors.white.withValues(alpha: 0.2),
                         child: Center(
                           child: isLoading

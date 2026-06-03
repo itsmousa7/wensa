@@ -4,6 +4,7 @@ import 'package:future_riverpod/features/booking/domain/models/seat.dart';
 import 'package:future_riverpod/features/booking/domain/models/venue_layout.dart';
 import 'package:future_riverpod/features/booking/domain/models/venue_section.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/venue_mini_map.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/venue_overview_map.dart'
     show colorFromHex;
 
@@ -107,7 +108,7 @@ class _SectionSeatPickerState extends State<SectionSeatPicker> {
     if (!isFree) {
       color = Colors.grey.shade400;
     } else if (isSelected) {
-      color = const Color(0xFF2196F3);
+      color = AppColors.brandBlue;
     } else {
       color = sectionColor;
     }

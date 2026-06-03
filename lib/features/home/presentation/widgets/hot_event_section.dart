@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +15,6 @@ import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 const _kSurface2 = Color(0xFF1E1E2E);
-const _kText = Color(0xFFFFFFFF);
 
 class HotEventsSection extends ConsumerStatefulWidget {
   const HotEventsSection({super.key});
@@ -275,7 +275,7 @@ class _HeroEventCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: cs.primary,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: AppSpacing.borderRadiusXL,
                             boxShadow: [
                               BoxShadow(
                                 color: cs.primary.withValues(alpha: 0.5),

@@ -4,6 +4,8 @@ import 'package:future_riverpod/features/plans/domain/feature_gate.dart';
 import 'package:future_riverpod/features/plans/domain/models/plan_model.dart';
 import 'package:future_riverpod/features/plans/presentation/providers/current_plan_provider.dart';
 import 'package:future_riverpod/features/plans/presentation/pages/plans_page.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 /// Context passed to PaywallPage so the copy is specific to the blocked action.
 enum PaywallContext {
@@ -119,7 +121,7 @@ class PaywallPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // ── Feature highlight ─────────────────────────────────────
-                const Icon(Icons.lock_open, size: 56, color: Color(0xFF2196F3)),
+                const Icon(Icons.lock_open, size: 56, color: AppColors.brandBlue),
                 const SizedBox(height: 16),
                 Text(
                   context.title,
@@ -130,7 +132,7 @@ class PaywallPage extends ConsumerWidget {
                 Text(
                   context.description,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 15, color: Color(0xFF757575), height: 1.5),
+                  style: const TextStyle(fontSize: 15, color: AppColors.mutedText, height: 1.5),
                 ),
                 const SizedBox(height: 32),
 
@@ -139,7 +141,7 @@ class PaywallPage extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE3F2FD),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: AppSpacing.borderRadiusMD,
                     border: Border.all(color: const Color(0xFF90CAF9)),
                   ),
                   child: Row(
@@ -181,10 +183,10 @@ class PaywallPage extends ConsumerWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2196F3),
+                    backgroundColor: AppColors.brandBlue,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusMD),
                   ),
                   child: Text('ترقية إلى ${targetPlan.name}',
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -192,7 +194,7 @@ class PaywallPage extends ConsumerWidget {
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('ربما لاحقاً', style: TextStyle(color: Color(0xFF9E9E9E))),
+                  child: const Text('ربما لاحقاً', style: TextStyle(color: AppColors.neutralGray)),
                 ),
                 const SizedBox(height: 8),
               ],

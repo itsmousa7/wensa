@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -205,9 +206,9 @@ class _AppTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: cs.surfaceContainer,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppSpacing.borderRadiusLG,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: AppSpacing.borderRadiusLG,
           onTap: () async {
             Navigator.pop(context);
             await _launch(app.url);
@@ -219,7 +220,7 @@ class _AppTile extends StatelessWidget {
                 Container(
                   height: 24,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: AppSpacing.borderRadiusMD,
                   ),
                   child: app.icon,
                 ),

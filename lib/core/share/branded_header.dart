@@ -1,6 +1,7 @@
 // lib/core/share/branded_header.dart
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 /// "[app icon] WENSA" header used at the top of all shareable images.
 class BrandedHeader extends StatelessWidget {
@@ -14,7 +15,7 @@ class BrandedHeader extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: AppSpacing.borderRadiusSM,
           child: Image.asset(
             'assets/icons/app_icon.png',
             width: 28,

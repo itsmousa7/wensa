@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class ProfileSkeleton extends StatelessWidget {
   const ProfileSkeleton({super.key});
@@ -76,14 +77,14 @@ class ProfileSkeleton extends StatelessWidget {
                       Bone(
                         width: 120,
                         height: 64,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppSpacing.borderRadiusMD,
                       ),
                       const SizedBox(width: 12),
                       // Reviews chip
                       Bone(
                         width: 120,
                         height: 64,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppSpacing.borderRadiusMD,
                       ),
                     ],
                   ),

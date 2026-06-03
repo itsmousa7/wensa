@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/booking/domain/models/event_tier.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_label.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class TierLegend extends StatelessWidget {
   const TierLegend({
@@ -27,7 +28,7 @@ class TierLegend extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: AppSpacing.borderRadiusXL,
                 border: Border.all(color: color.withValues(alpha: 0.4)),
               ),
               child: Row(

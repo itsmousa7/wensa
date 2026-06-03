@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 
 /// A single row in the plan comparison table.
 class FeatureRow extends StatelessWidget {
@@ -16,7 +17,7 @@ class FeatureRow extends StatelessWidget {
   final Widget pro;
 
   static Widget _check(bool value) => value
-      ? const Icon(Icons.check_circle, color: Color(0xFF2196F3), size: 20)
+      ? const Icon(Icons.check_circle, color: AppColors.brandBlue, size: 20)
       : const Icon(Icons.remove, color: Color(0xFFBDBDBD), size: 20);
 
   static Widget fromBool(bool value) => _check(value);

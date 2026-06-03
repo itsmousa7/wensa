@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 /// Dimmed tile with lock icon and upgrade CTA.
 /// Never hide locked features — showing this is a conversion surface.
@@ -19,19 +21,19 @@ class LockedFeatureTile extends StatelessWidget {
     return Opacity(
       opacity: 0.55,
       child: ListTile(
-        leading: const Icon(Icons.lock_outline, color: Color(0xFF9E9E9E)),
-        title: Text(label, style: const TextStyle(color: Color(0xFF9E9E9E))),
+        leading: const Icon(Icons.lock_outline, color: AppColors.neutralGray),
+        title: Text(label, style: const TextStyle(color: AppColors.neutralGray)),
         trailing: GestureDetector(
           onTap: onUpgradeTap,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFF2196F3)),
-              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.brandBlue),
+              borderRadius: AppSpacing.borderRadiusMD,
             ),
             child: Text(
               'Upgrade to $requiredPlanName',
-              style: const TextStyle(fontSize: 11, color: Color(0xFF2196F3)),
+              style: const TextStyle(fontSize: 11, color: AppColors.brandBlue),
             ),
           ),
         ),

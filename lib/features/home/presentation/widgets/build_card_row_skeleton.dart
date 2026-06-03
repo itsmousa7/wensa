@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class BuildCardRowSkeleton extends StatelessWidget {
   const BuildCardRowSkeleton({super.key});
@@ -28,7 +29,7 @@ class BuildCardRowSkeleton extends StatelessWidget {
               children: [
                 // ── Cover image: height 130, borderRadius 20 ──────────
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: AppSpacing.borderRadiusXL,
                   child: Container(
                     height: 130,
                     width: double.infinity,
@@ -47,7 +48,7 @@ class BuildCardRowSkeleton extends StatelessWidget {
                         height: 49,
                         decoration: BoxDecoration(
                           color: theme.colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: AppSpacing.borderRadiusMD,
                         ),
                       ),
                       const SizedBox(width: 10),

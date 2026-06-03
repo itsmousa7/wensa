@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 /// Custom app text field with consistent styling
 class AppTextField extends StatefulWidget {
@@ -285,7 +286,7 @@ class _AppTextFieldState extends State<AppTextField> {
             color: theme.colorScheme.onSurface,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: AppSpacing.borderRadiusLG,
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(

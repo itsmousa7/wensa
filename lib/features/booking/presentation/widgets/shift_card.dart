@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/farm_shift.dart';
 import 'package:future_riverpod/features/booking/domain/models/slot_availability.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class ShiftCard extends StatelessWidget {
   const ShiftCard({
@@ -142,7 +144,7 @@ class ShiftCard extends StatelessWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   color: iconBgColor,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: AppSpacing.borderRadiusMD,
                 ),
                 child: Icon(
                   isUnavailable
@@ -244,7 +246,7 @@ class _StatusBadge extends StatelessWidget {
   final SlotAvailability availability;
 
   // Hardcoded colors — theme error/warning tokens are non-standard in this app
-  static const _red = Color(0xFFE53935);
+  static const _red = AppColors.danger;
   static const _amber = Color(0xFFE6A20C);
 
   @override

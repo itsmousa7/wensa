@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class QrBlock extends StatelessWidget {
   const QrBlock({super.key, required this.qrToken});
@@ -20,7 +21,7 @@ class QrBlock extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppSpacing.borderRadiusLG,
         boxShadow: [
           BoxShadow(
             color: cs.shadow.withValues(alpha: 0.08),

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -37,7 +38,7 @@ void appDialog(
         builder: (context) {
           return Dialog(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: AppSpacing.borderRadiusMD,
             ),
             child: Padding(
               padding: const EdgeInsets.all(24),

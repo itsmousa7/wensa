@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class PlaceStatisticChip extends StatelessWidget {
   const PlaceStatisticChip({
@@ -34,7 +35,7 @@ class PlaceStatisticChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppSpacing.borderRadiusMD,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

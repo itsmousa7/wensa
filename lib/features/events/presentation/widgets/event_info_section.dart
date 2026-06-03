@@ -16,6 +16,7 @@ import 'package:future_riverpod/features/places/presentation/widgets/place_detai
 import 'package:future_riverpod/features/places/presentation/widgets/place_location_sheet.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class EventInfoSection extends ConsumerWidget {
   const EventInfoSection({
@@ -45,7 +46,7 @@ class EventInfoSection extends ConsumerWidget {
 
     BoxDecoration primaryChipDecoration() => BoxDecoration(
       color: cs.primary.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: AppSpacing.borderRadiusMD,
     );
 
     final descStyle = tt.labelLarge?.copyWith(

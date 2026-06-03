@@ -3,6 +3,7 @@ import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/features/booking/domain/models/event_tier.dart';
 import 'package:future_riverpod/features/booking/domain/models/seat.dart';
 import 'package:future_riverpod/features/booking/domain/models/venue_section.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 /// Bottom card shown in the section seat-picker — mirrors the rival's
 /// seat-detail panel: the focused seat's stand / tier / price, plus the
@@ -95,7 +96,7 @@ class SeatDetailCard extends StatelessWidget {
                   color: theme.colorScheme.surfaceContainerHighest.withValues(
                     alpha: 0.5,
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: AppSpacing.borderRadiusMD,
                 ),
                 child: Column(
                   children: [

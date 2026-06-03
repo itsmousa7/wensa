@@ -1,6 +1,7 @@
 // lib/features/profile/presentation/widgets/profile_avatar.dart
 
 import 'dart:io';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -299,7 +300,7 @@ class _SheetOption extends StatelessWidget {
           color: isDestructive
               ? Colors.redAccent.withValues(alpha: 0.07)
               : cs.surfaceContainer,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: AppSpacing.borderRadiusLG,
           border: isDestructive
               ? Border.all(color: Colors.redAccent.withValues(alpha: 0.2))
               : null,

@@ -15,6 +15,7 @@ import 'package:future_riverpod/features/home/presentation/widgets/wensa_badge.d
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 class FullWidthFeedCard extends ConsumerWidget {
   const FullWidthFeedCard({
@@ -233,7 +234,7 @@ Widget buildFullWidthSkeleton(BuildContext context) {
                     height: 26,
                     decoration: BoxDecoration(
                       color: cs.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: AppSpacing.borderRadiusMD,
                     ),
                   ),
                 ),
@@ -267,7 +268,7 @@ Widget buildFullWidthSkeleton(BuildContext context) {
                 height: 57,
                 decoration: BoxDecoration(
                   color: cs.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: AppSpacing.borderRadiusMD,
                 ),
               ),
               const Gap(12),
@@ -283,7 +284,7 @@ Widget buildFullWidthSkeleton(BuildContext context) {
                           width: 130,
                           decoration: BoxDecoration(
                             color: cs.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: AppSpacing.borderRadiusMD,
                           ),
                         ),
                         const Gap(8),

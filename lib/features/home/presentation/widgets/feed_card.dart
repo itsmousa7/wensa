@@ -13,6 +13,7 @@ import 'package:future_riverpod/features/favorites/presentation/providers/favori
 import 'package:future_riverpod/features/home/presentation/widgets/new_opening_badge.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 enum FeedCardBadge { trending, event, newOpening, featured }
 
@@ -101,7 +102,7 @@ class FeedCard extends ConsumerWidget {
           .toggle(placeId, itemType: itemType),
       child: Container(
         width: 250,
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(borderRadius: AppSpacing.borderRadiusXL),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -109,7 +110,7 @@ class FeedCard extends ConsumerWidget {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: AppSpacing.borderRadiusXL,
                   child: SizedBox(
                     height: 130,
                     width: double.infinity,

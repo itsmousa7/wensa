@@ -2,6 +2,7 @@
 //
 // Fixed-width branded card used for sharing a place or an event as an image.
 import 'dart:typed_data';
+import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
@@ -44,7 +45,7 @@ class ContentShareCard extends StatelessWidget {
           const BrandedHeader(),
           const SizedBox(height: 16),
           ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: AppSpacing.borderRadiusXL,
             child: AspectRatio(
               aspectRatio: 16 / 10,
               child: _Cover(coverBytes: coverBytes, name: name),

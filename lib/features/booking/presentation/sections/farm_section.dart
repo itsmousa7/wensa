@@ -18,6 +18,7 @@ import 'package:future_riverpod/features/discounts/presentation/providers/user_p
 import 'package:future_riverpod/features/discounts/presentation/widgets/promo_code_field.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 
 // ---------------------------------------------------------------------------
 // Local state notifiers
@@ -243,7 +244,7 @@ class _FarmBookingFormView extends ConsumerWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Payment failed. Please try again.'),
-              backgroundColor: Color(0xFFE53935),
+              backgroundColor: AppColors.danger,
             ),
           );
         },
