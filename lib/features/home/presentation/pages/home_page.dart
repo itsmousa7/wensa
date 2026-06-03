@@ -129,6 +129,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
+          top: false,
           bottom: false,
           child: CustomScrollView(
             controller: scrollCtrl,
