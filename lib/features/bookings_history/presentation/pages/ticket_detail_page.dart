@@ -39,21 +39,32 @@ class TicketDetailPage extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leadingWidth: 70,
         leading: Navigator.of(context).canPop()
-            ? GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Icon(
-                  isArabic
-                      ? CupertinoIcons.chevron_right
-                      : CupertinoIcons.chevron_left,
-                  color: cs.colorScheme.onSurface,
+            ? Padding(
+                padding: const EdgeInsetsDirectional.only(start: 20),
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: Center(
+                      child: Icon(
+                        isArabic
+                            ? CupertinoIcons.chevron_right
+                            : CupertinoIcons.chevron_left,
+                        color: cs.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
                 ),
               )
             : Padding(
-                padding: const EdgeInsets.only(right: 10),
+                padding: const EdgeInsetsDirectional.only(start: 15),
                 child: CNButton.icon(
                   icon: const CNSymbol('xmark'),
                   onPressed: () => context.go('/bookings'),
+                  size: 50,
                 ),
               ),
         title: Text(
@@ -282,7 +293,7 @@ class _MembershipDetail extends ConsumerWidget {
   }
 }
 
-class _MembershipDetailBody extends StatelessWidget {
+class _MembershipDetailBody extends ConsumerWidget {
   const _MembershipDetailBody({required this.membership});
   final Membership membership;
 
@@ -298,11 +309,25 @@ class _MembershipDetailBody extends StatelessWidget {
   static String _amount(int iqd) => '${NumberFormat('#,##0').format(iqd)} IQD';
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final displayName = membership.membershipType.isNotEmpty
-        ? membership.membershipType
-        : (isArabic ? 'عضوية' : 'Membership');
+    final String displayName;
+    if (membership.placeId.isNotEmpty) {
+      final pa = ref.watch(placeDetailsProvider(membership.placeId));
+      displayName = pa.when(
+        data: (p) => isArabic
+            ? (p.nameAr.isNotEmpty ? p.nameAr : p.nameEn)
+            : (p.nameEn.isNotEmpty ? p.nameEn : p.nameAr),
+        loading: () => '…',
+        error: (_, _) => membership.membershipType.isNotEmpty
+            ? membership.membershipType
+            : (isArabic ? 'عضوية' : 'Membership'),
+      );
+    } else {
+      displayName = membership.membershipType.isNotEmpty
+          ? membership.membershipType
+          : (isArabic ? 'عضوية' : 'Membership');
+    }
 
     final cells = [
       TicketInfoCell(
