@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
+import 'package:future_riverpod/features/auth/presentation/pages/change_email_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_name_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_password_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_phone_page.dart';
@@ -88,6 +89,11 @@ GoRouter router(Ref ref) {
         path: '/changePhone',
         name: RouteNames.changePhone,
         builder: (_, _) => const ChangePhonePage(),
+      ),
+      GoRoute(
+        path: '/changeEmail',
+        name: RouteNames.changeEmail,
+        builder: (_, _) => const ChangeEmailPage(),
       ),
       GoRoute(
         path: '/changePassword',
@@ -266,7 +272,13 @@ String? _redirect(Ref ref, GoRouterState state) {
     return (isAuth && isVerified) ? null : '/signin';
   }
 
+  // Allow email-change routes regardless of isVerified so a userUpdated
+  // auth event during the updateUser call can't redirect mid-flow.
+  if (path.startsWith('/changeEmail')) return isAuth ? null : '/signin';
+
   if (path.startsWith('/verify-email')) {
+    // Always allow the email-change OTP flow for authenticated users.
+    if (state.uri.queryParameters['type'] == 'email_change') return null;
     if (isAuth && isVerified) {
       // Don't bounce to /home until we know whether the profile is complete —
       // otherwise the user lands on /home with a hung loading state while the

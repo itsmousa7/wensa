@@ -96,6 +96,17 @@ class AuthRepository {
     return await _client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
+  // Update Email — clears any stale pending change first so Supabase always
+  // generates a fresh OTP, then requests the change. Session stays alive.
+  Future<void> updateEmail(String newEmail) async {
+    try {
+      await _client.rpc('clear_email_change');
+      await _client.auth.updateUser(UserAttributes(email: newEmail));
+    } catch (e) {
+      throw handleException(e);
+    }
+  }
+
   Future<void> updateUserProfile({
     required String firstName,
     required String secondName,

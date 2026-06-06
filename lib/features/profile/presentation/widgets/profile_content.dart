@@ -159,6 +159,18 @@ class ProfileContent extends ConsumerWidget {
                       color: cs.onSurface.withValues(alpha: 0.08),
                     ),
                     SettingsTile(
+                      icon: Icons.email_outlined,
+                      iconColor: cs.primary,
+                      title: isAr ? 'تغيير البريد الإلكتروني' : 'Change Email',
+                      onTap: () => context.pushNamed(RouteNames.changeEmail),
+                      showChevron: true,
+                    ),
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: cs.onSurface.withValues(alpha: 0.08),
+                    ),
+                    SettingsTile(
                       icon: Icons.phone_outlined,
                       iconColor: cs.primary,
                       title: isAr ? 'تغيير رقم الهاتف' : 'Change Phone Number',

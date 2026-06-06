@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 SnackBar snack(
@@ -7,22 +6,22 @@ SnackBar snack(
   bool isError = false,
   required String message,
 }) => SnackBar(
-  content: Text(
-    message,
-    style: Theme.of(
-      context,
-    ).textTheme.bodyMedium?.copyWith(color: AppColors.white),
-  ),
   backgroundColor: isError
-      ? Theme.of(context).colorScheme.error
+      ? const Color(0xFFB91C1C)
       : Theme.of(context).colorScheme.primary,
-  shape: RoundedRectangleBorder(
-    borderRadius: AppSpacing.borderRadiusMD,
-    side: BorderSide(
-      color: isError
-          ? Theme.of(context).colorScheme.errorContainer
-          : Theme.of(context).colorScheme.secondary,
-      width: 2,
-    ),
+  shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderRadiusMD),
+  content: Row(
+    children: [
+      if (isError) ...[
+        const Icon(Icons.error_outline, color: Colors.white, size: 20),
+        const SizedBox(width: 10),
+      ],
+      Expanded(
+        child: Text(
+          message,
+          style: const TextStyle(color: Colors.white),
+        ),
+      ),
+    ],
   ),
 );

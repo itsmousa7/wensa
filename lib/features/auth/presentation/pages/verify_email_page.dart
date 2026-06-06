@@ -9,6 +9,7 @@ import 'package:future_riverpod/core/constants/locale/app_strings_extentions.dar
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_repository_provider.dart';
+import 'package:future_riverpod/features/profile/presentation/providers/user_profile_provider.dart';
 import 'package:future_riverpod/features/auth/presentation/widgets/app_button.dart';
 import 'package:future_riverpod/features/auth/presentation/widgets/snack_bar.dart';
 import 'package:go_router/go_router.dart';
@@ -35,8 +36,13 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
   Timer? _resendTimer;
   bool _isVerifying = false;
 
-  OtpType get otpType => isRecovery ? OtpType.recovery : OtpType.signup;
   bool get isRecovery => widget.type == 'recovery';
+  bool get isEmailChange => widget.type == 'email_change';
+  OtpType get otpType {
+    if (isRecovery) return OtpType.recovery;
+    if (isEmailChange) return OtpType.emailChange;
+    return OtpType.signup;
+  }
 
   @override
   void initState() {
@@ -94,6 +100,8 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
           email: email,
           shouldCreateUser: false,
         );
+      } else if (isEmailChange) {
+        await ref.read(authRepositoryProvider).updateEmail(email);
       } else {
         await Supabase.instance.client.auth.resend(
           type: OtpType.signup,
@@ -159,7 +167,9 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
           context,
           message: isRecovery
               ? context.tr('recovery_success')
-              : context.tr('verification_success'),
+              : isEmailChange
+                  ? context.tr('email_change_success')
+                  : context.tr('verification_success'),
         ),
       );
 
@@ -168,17 +178,29 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
           RouteNames.changePassword,
           queryParameters: {'from': 'forgot'},
         );
+      } else if (isEmailChange) {
+        // The auth email changed but profiles.app_users.email is mirrored by a
+        // DB trigger; invalidate so the profile screen shimmers then reloads
+        // the new address instead of showing the stale cached one.
+        ref.invalidate(profileProvider);
+        context.goNamed(RouteNames.profile);
       }
     } catch (e) {
       if (mounted) {
         errorController.add(ErrorAnimationType.shake);
         textEditingController.clear();
+        final msg = e.toString().toLowerCase();
+        final friendlyMessage = msg.contains('otp_expired') ||
+                msg.contains('token has expired') ||
+                msg.contains('expired')
+            ? context.tr('otp_expired')
+            : msg.contains('otp_invalid') ||
+                    msg.contains('invalid') ||
+                    msg.contains('incorrect')
+                ? context.tr('otp_invalid')
+                : '${context.tr('verification_failed')}: ${e.toString()}';
         ScaffoldMessenger.of(context).showSnackBar(
-          snack(
-            context,
-            isError: true,
-            message: '${context.tr('verification_failed')}: ${e.toString()}',
-          ),
+          snack(context, isError: true, message: friendlyMessage),
         );
         setState(() => _isVerifying = false);
       }
@@ -192,6 +214,8 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
       _resendTimer?.cancel();
       if (isRecovery) {
         context.goNamed(RouteNames.signin);
+      } else if (isEmailChange) {
+        context.goNamed(RouteNames.profile);
       } else {
         await ref.read(authRepositoryProvider).signOut();
         if (mounted) context.goNamed(RouteNames.signin);
@@ -243,7 +267,9 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
               Text(
                 isRecovery
                     ? context.tr('password_recovery')
-                    : context.tr('email_verification'),
+                    : isEmailChange
+                        ? context.tr('email_change_title')
+                        : context.tr('email_verification'),
                 style: tt.headlineLarge,
               ),
               const SizedBox(height: 8),
@@ -278,10 +304,13 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
 
               const SizedBox(height: 36),
 
-              // ── PIN field ───────────────────────────────────────────────
-              PinCodeTextField(
+              // ── PIN field — always LTR so digits read left-to-right ────
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: PinCodeTextField(
                 autovalidateMode: AutovalidateMode.disabled,
                 autoFocus: true,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 appContext: context,
                 pastedTextStyle: tt.bodyLarge?.copyWith(
                   color: cs.secondary,
@@ -333,6 +362,7 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
                 },
                 beforeTextPaste: (_) => true,
               ),
+              ), // Directionality
 
               const SizedBox(height: 8),
 
