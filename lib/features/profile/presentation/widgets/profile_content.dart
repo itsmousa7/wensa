@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:cupertino_native/cupertino_native.dart';
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +17,9 @@ import 'package:future_riverpod/features/profile/presentation/widgets/section_la
 import 'package:future_riverpod/features/profile/presentation/widgets/settings_card.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/delete_account_button.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/sign_out_button.dart';
+import 'package:future_riverpod/features/bottom_bar/providers/bottom_bar_providers.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/support_button.dart';
+import 'package:future_riverpod/core/widgets/in_app_browser_sheet.dart';
 import 'package:go_router/go_router.dart';
 
 class ProfileContent extends ConsumerWidget {
@@ -187,6 +189,29 @@ class ProfileContent extends ConsumerWidget {
                       iconColor: cs.primary,
                       title: isAr ? 'تغيير كلمة المرور' : 'Change Password',
                       onTap: () => context.pushNamed(RouteNames.changePassword),
+                      showChevron: true,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // ── Legal ──────────────────────────────────────────────────
+                SectionLabel(title: isAr ? 'قانوني' : 'Legal'),
+                const SizedBox(height: 10),
+                SettingsCard(
+                  children: [
+                    SettingsTile(
+                      icon: Icons.privacy_tip_outlined,
+                      iconColor: cs.primary,
+                      title: isAr ? 'سياسة الخصوصية' : 'Privacy Policy',
+                      onTap: () {
+                        final notifier = ref.read(
+                          bottomBarHiddenProvider.notifier,
+                        );
+                        notifier.hide();
+                        showInAppBrowser(context, 'https://privacy.wensa.app')
+                            .whenComplete(notifier.show);
+                      },
                       showChevron: true,
                     ),
                   ],
