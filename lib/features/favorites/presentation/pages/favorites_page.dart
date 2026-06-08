@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/core/widgets/section_tab_bar.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_scroll_signal.dart';
 import 'package:future_riverpod/features/favorites/presentation/widgets/feed_list_section.dart';
@@ -23,18 +24,29 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
   late final List<ScrollController> _scrollCtrls;
   bool _isRefreshing = false;
 
+  // Segment shown as selected by the native control. Driven by the tab's
+  // animation value (not its settled index) so the indicator flips at the
+  // swipe's midpoint and tracks the gesture instead of lagging behind it.
+  int _segIndex = 0;
+
   @override
   void initState() {
     super.initState();
     _tab = TabController(length: 3, vsync: this);
-    _tab.addListener(() {
-      if (mounted) setState(() {});
-    });
+    _tab.animation?.addListener(_onTabAnim);
     _scrollCtrls = List.generate(3, (_) => ScrollController());
+  }
+
+  void _onTabAnim() {
+    final i = _tab.animation!.value.round();
+    if (i != _segIndex && mounted) {
+      setState(() => _segIndex = i);
+    }
   }
 
   @override
   void dispose() {
+    _tab.animation?.removeListener(_onTabAnim);
     _tab.dispose();
     for (final c in _scrollCtrls) {
       c.dispose();
@@ -97,17 +109,13 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
                 ),
               ),
 
-              // ── Tabs (custom, no ripple) ────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(22, 4, 22, 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _tabLabel(isAr ? 'الكل' : 'All', 0, tt, theme),
-                    _tabLabel(isAr ? 'الأماكن' : 'Places', 1, tt, theme),
-                    _tabLabel(isAr ? 'الفعاليات' : 'Events', 2, tt, theme),
-                  ],
-                ),
+              // ── Tabs (shared platform-aware section bar) ─────────────────
+              SectionTabBar(
+                tabs: isAr
+                    ? const ['الكل', 'الأماكن', 'الفعاليات']
+                    : const ['All', 'Places', 'Events'],
+                controller: _tab,
+                selectedIndex: _segIndex,
               ),
 
               // ── Swipeable pages ──────────────────────────────────────────
@@ -214,40 +222,6 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 40)),
       ],
-    );
-  }
-
-  Widget _tabLabel(String text, int index, TextTheme tt, ColorScheme theme) {
-    final selected = _tab.index == index;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => _tab.animateTo(index),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            text,
-            style: tt.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: 15,
-              color: selected
-                  ? theme.primary
-                  : theme.onSurface.withValues(alpha: 0.55),
-            ),
-          ),
-          const SizedBox(height: 4),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            height: 2,
-            width: selected ? 22 : 0,
-            decoration: BoxDecoration(
-              color: theme.primary,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

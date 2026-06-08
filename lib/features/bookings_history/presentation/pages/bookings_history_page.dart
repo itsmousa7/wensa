@@ -3,6 +3,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:future_riverpod/core/widgets/section_tab_bar.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart';
@@ -46,6 +47,11 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
   late final List<ScrollController> _scrollCtrls;
   bool _isRefreshing = false;
 
+  // Segment shown as selected by the native control. Driven by the tab's
+  // animation value (not its settled index) so the indicator flips at the
+  // swipe's midpoint and tracks the gesture instead of lagging behind it.
+  int _segIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -53,10 +59,18 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
       length: kBookingHistoryTabsEn.length,
       vsync: this,
     );
+    _tabController.animation?.addListener(_onTabAnim);
     _scrollCtrls = List.generate(
       kBookingHistoryTabsEn.length,
       (_) => ScrollController(),
     );
+  }
+
+  void _onTabAnim() {
+    final i = _tabController.animation!.value.round();
+    if (i != _segIndex && mounted) {
+      setState(() => _segIndex = i);
+    }
   }
 
   Future<void> _onRefresh() async {
@@ -73,6 +87,7 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
 
   @override
   void dispose() {
+    _tabController.animation?.removeListener(_onTabAnim);
     _tabController.dispose();
     for (final c in _scrollCtrls) {
       c.dispose();
@@ -121,62 +136,10 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
             context,
           ).textTheme.titleLarge?.copyWith(color: cs.onSurface),
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: AnimatedBuilder(
-            animation: _tabController,
-            builder: (context, _) => SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: Row(
-                children: List.generate(tabs.length, (i) {
-                  final selected = _tabController.index == i;
-                  return GestureDetector(
-                    onTap: () => _tabController.animateTo(i),
-                    behavior: HitTestBehavior.opaque,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: IntrinsicWidth(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: 12,
-                                bottom: 6,
-                              ),
-                              child: Text(
-                                tabs[i],
-                                style: Theme.of(context).textTheme.titleSmall
-                                    ?.copyWith(
-                                      color: selected
-                                          ? cs.primary
-                                          : cs.onSurface.withValues(
-                                              alpha: 0.40,
-                                            ),
-                                    ),
-                              ),
-                            ),
-                            Container(
-                              height: 3,
-                              decoration: BoxDecoration(
-                                color: selected
-                                    ? cs.primary
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                            ),
-                            const SizedBox(height: 1),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-          ),
+        bottom: SectionTabBar(
+          tabs: tabs,
+          controller: _tabController,
+          selectedIndex: _segIndex,
         ),
       ),
       body: TabBarView(
