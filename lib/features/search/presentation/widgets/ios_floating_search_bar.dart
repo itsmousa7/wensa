@@ -1,4 +1,4 @@
-import 'package:cupertino_native/cupertino_native.dart';
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/search/presentation/widgets/search_field.dart';
 import 'package:go_router/go_router.dart';
@@ -53,6 +53,7 @@ class IosFloatingSearchBar extends StatelessWidget {
                 context.pop();
               },
               icon: const CNSymbol('xmark'),
+              config: const CNButtonConfig(style: CNButtonStyle.glass),
             ),
           ],
         ),

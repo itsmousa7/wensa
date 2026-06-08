@@ -14,8 +14,7 @@
 //   bar 1 → branch 2   (Favorites)
 //   bar 2 → branch 3   (Profile)
 
-import 'package:cupertino_native/components/button.dart';
-import 'package:cupertino_native/style/sf_symbol.dart';
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
@@ -102,11 +101,21 @@ class IosNavShell extends ConsumerWidget {
           children: [
             navigationShell,
 
-            if (!keyboardOpen && isShellCurrent && !barHidden)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
+            // ⚠️ Use Offstage — NOT a conditional `if` — to hide the bar.
+            // A conditional removes the bar from the tree, which DESTROYS the
+            // native UITabBar/CNButton and recreates them on return. A freshly
+            // created UITabBar (built mid pop-transition, when this route flips
+            // back to `isCurrent`) silently drops its item labels until a tap
+            // forces a re-layout — that's the "names disappear until I tap"
+            // bug. Offstage keeps the platform views MOUNTED (labels survive)
+            // but unpainted while hidden, so the white frosted-glass
+            // bleed-through during slide-in stays prevented.
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Offstage(
+                offstage: keyboardOpen || !isShellCurrent || barHidden,
                 // ⚠️ No Material wrapper here.
                 // Material(type: MaterialType.transparency) still creates a
                 // Flutter hit-test surface that intercepts pointer events before
@@ -136,12 +145,17 @@ class IosNavShell extends ConsumerWidget {
                       child: CNButton.icon(
                         icon: const CNSymbol('magnifyingglass'),
                         onPressed: () => context.pushNamed(RouteNames.search),
-                        size: 60,
+                        config: const CNButtonConfig(
+                          style: CNButtonStyle.glass,
+                          width: 60,
+                          minHeight: 60,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
+            ),
           ],
         ),
       ),

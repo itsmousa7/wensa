@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_strings_extentions.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/core/utils/error_dialog.dart';
+import 'package:future_riverpod/core/widgets/glass_back_button.dart';
 import 'package:future_riverpod/features/auth/domain/models/custom_error.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:future_riverpod/features/auth/presentation/widgets/app_button.dart';
@@ -70,6 +71,8 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: GlassBackButton.appBarLeading(),
+        leadingWidth: GlassBackButton.appBarLeadingWidth,
         title: Text(
           context.tr('change_password'),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(

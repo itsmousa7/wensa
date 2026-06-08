@@ -20,7 +20,7 @@ dependencies:
 
   # ── Cupertino / icon glyphs ───────────────────────────────────────────
   cupertino_icons: ^1.0.8
-  cupertino_native: ^0.1.1
+  cupertino_native_better: ^1.5.0
 
   # ── Code-gen annotations (json_annotation is pulled transitively by
   #     freezed_annotation; google_sign_in_ios by google_sign_in) ───────

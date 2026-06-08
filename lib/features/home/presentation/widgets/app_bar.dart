@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -109,6 +112,44 @@ class _NotificationsBellState extends ConsumerState<_NotificationsBell> {
     final theme = Theme.of(context);
     final hasUnread = ref.watch(unreadNotificationsCountProvider) > 0;
 
+    // iOS — native Liquid Glass bell.
+    if (Platform.isIOS) {
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          CNButton.icon(
+            icon: CNSymbol('bell', size: 18, color: theme.colorScheme.primary),
+            onPressed: () => context.push('/notifications'),
+            config: const CNButtonConfig(
+              style: CNButtonStyle.glass,
+              width: 40,
+              minHeight: 40,
+            ),
+          ),
+          if (hasUnread)
+            Positioned(
+              top: 7,
+              right: 7,
+              child: IgnorePointer(
+                child: Container(
+                  width: 9,
+                  height: 9,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.errorContainer,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: theme.colorScheme.surfaceContainer,
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    // Android — original circular surface bell.
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => context.push('/notifications'),

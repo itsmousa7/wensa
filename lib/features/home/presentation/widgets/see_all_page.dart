@@ -1,9 +1,9 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/core/widgets/glass_back_button.dart';
 import 'package:future_riverpod/features/home/presentation/providers/all_events_provider.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/favorites/presentation/widgets/feed_list_section.dart';
@@ -46,16 +46,9 @@ class SeeAllPage extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(4, 8, 22, 4),
                 child: Row(
                   children: [
-                    CupertinoButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      padding: const EdgeInsets.all(12),
-                      child: Icon(
-                        isAr
-                            ? CupertinoIcons.chevron_right
-                            : CupertinoIcons.chevron_left,
-                        color: cs.onSurface,
-                        size: 20,
-                      ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: GlassBackButton(),
                     ),
                     Text(
                       isAr ? titleAr : titleEn,

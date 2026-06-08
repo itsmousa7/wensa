@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/core/widgets/glass_back_button.dart';
 import 'package:future_riverpod/features/notifications/domain/models/app_notification.dart';
 import 'package:future_riverpod/features/notifications/domain/repositories/notifications_repository.dart';
 import 'package:future_riverpod/features/notifications/presentation/providers/notifications_provider.dart';
@@ -64,15 +65,10 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
         appBar: AppBar(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              isAr
-                  ? CupertinoIcons.chevron_right
-                  : CupertinoIcons.chevron_left,
-              color: cs.onSurface,
-              size: 22,
-            ),
-            onPressed: () => context.pop(),
+          leadingWidth: 64,
+          leading: const Padding(
+            padding: EdgeInsetsDirectional.only(start: 12),
+            child: GlassBackButton(),
           ),
           title: Text(
             isAr ? 'الإشعارات' : 'Notifications',

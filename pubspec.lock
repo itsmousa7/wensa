@@ -313,14 +313,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.9"
-  cupertino_native:
+  cupertino_native_better:
     dependency: "direct main"
     description:
-      name: cupertino_native
-      sha256: "5f42e85a091797afb86bb30a25fffd7188335de97278fa4bb80c0f564c874e89"
+      name: cupertino_native_better
+      sha256: "271fbf582aebb55d8ccef103add60373f65359fa7626e995ed62b5afca1131f8"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.1"
+    version: "1.5.0"
   custom_lint:
     dependency: "direct dev"
     description:

@@ -6,7 +6,7 @@ import FlutterMacOS
 import Foundation
 
 import app_links
-import cupertino_native
+import cupertino_native_better
 import file_selector_macos
 import firebase_core
 import firebase_messaging

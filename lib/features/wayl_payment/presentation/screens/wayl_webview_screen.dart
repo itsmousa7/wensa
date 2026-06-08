@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:future_riverpod/core/widgets/glass_back_button.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../data/services/wayl_api_service.dart';
@@ -269,19 +270,22 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+        leadingWidth: 64,
+        leading: Padding(
+          padding: const EdgeInsetsDirectional.only(start: 12),
           // Fire the cancel callback BEFORE pop so the parent's state reset +
           // snackbar happen immediately, rather than waiting ~300ms for the
           // pop animation to complete before dispose() fires. System-back /
           // gesture pops still get caught by the guarded dispose() handler.
-          onPressed: () {
-            if (!_resultHandled) {
-              _resultHandled = true;
-              widget.onPaymentCancelled?.call();
-            }
-            Navigator.pop(context);
-          },
+          child: GlassBackButton(
+            onPressed: () {
+              if (!_resultHandled) {
+                _resultHandled = true;
+                widget.onPaymentCancelled?.call();
+              }
+              Navigator.pop(context);
+            },
+          ),
         ),
         title: Text(
           'Online Payment',

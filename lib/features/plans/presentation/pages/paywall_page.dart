@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/plans/domain/feature_gate.dart';
@@ -101,10 +104,23 @@ class PaywallPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Unlock Feature'),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(ctx),
-        ),
+        leading: Platform.isIOS
+            ? Padding(
+                padding: const EdgeInsetsDirectional.only(start: 12),
+                child: CNButton.icon(
+                  icon: const CNSymbol('xmark'),
+                  onPressed: () => Navigator.pop(ctx),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.glass,
+                    width: 44,
+                    minHeight: 44,
+                  ),
+                ),
+              )
+            : IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(ctx),
+              ),
       ),
       body: allPlansAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),

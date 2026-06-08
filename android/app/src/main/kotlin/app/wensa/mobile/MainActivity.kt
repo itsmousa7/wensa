@@ -1,4 +1,4 @@
-package com.example.wensa
+package app.wensa.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 

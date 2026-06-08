@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/theme/theme_provider.dart';
 import 'package:future_riverpod/core/constants/theme/theme_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
+import 'package:future_riverpod/core/widgets/glass_back_button.dart';
 
 class ThemeSettingsPage extends ConsumerWidget {
   const ThemeSettingsPage({super.key, required this.isAr});
@@ -19,6 +20,8 @@ class ThemeSettingsPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
+        leading: GlassBackButton.appBarLeading(),
+        leadingWidth: GlassBackButton.appBarLeadingWidth,
         title: Text(
           isAr ? 'المظهر' : 'Appearance',
           style: theme.textTheme.titleLarge?.copyWith(color: cs.outline),

@@ -52,6 +52,23 @@ class SectionTabBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     if (Platform.isIOS) {
+      final isRtl = Directionality.of(context) == TextDirection.rtl;
+
+      // The native UISegmentedControl ignores Flutter's text direction and
+      // never updates its titles after creation, so we drive both ourselves:
+      //
+      //  • RTL ordering — reverse the segments so logical index 0 (e.g.
+      //    "All"/"الكل") renders on the right. The horizontal scroll view sits
+      //    in an RTL Directionality, so it starts pinned to that right edge.
+      //  • Locale refresh — a [ValueKey] over the labels recreates the platform
+      //    view when the language changes (it has no `setLabels` channel call),
+      //    while selection-only changes keep the same key and stay smooth.
+      final displayLabels = isRtl ? tabs.reversed.toList() : tabs;
+      int toDisplay(int logical) =>
+          isRtl ? tabs.length - 1 - logical : logical;
+      int toLogical(int display) =>
+          isRtl ? tabs.length - 1 - display : display;
+
       return SizedBox(
         height: _iosHeight,
         child: LayoutBuilder(
@@ -73,10 +90,11 @@ class SectionTabBar extends StatelessWidget implements PreferredSizeWidget {
               child: SizedBox(
                 width: barWidth,
                 child: CNSegmentedControl(
+                  key: ValueKey('seg:${displayLabels.join('|')}'),
                   height: 40,
-                  labels: tabs,
-                  selectedIndex: selectedIndex,
-                  onValueChanged: (i) => controller.animateTo(i),
+                  labels: displayLabels,
+                  selectedIndex: toDisplay(selectedIndex),
+                  onValueChanged: (i) => controller.animateTo(toLogical(i)),
                 ),
               ),
             );

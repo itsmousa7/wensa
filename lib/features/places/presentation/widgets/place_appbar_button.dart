@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:cupertino_native/cupertino_native.dart';
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -64,7 +64,11 @@ class _PlaceAppBarButtonState extends ConsumerState<PlaceAppBarButton>
       return CNButton.icon(
         icon: CNSymbol(widget.sfSymbol!),
         onPressed: _onTap,
-        size: 50,
+        config: const CNButtonConfig(
+          style: CNButtonStyle.glass,
+          width: 50,
+          minHeight: 50,
+        ),
       );
     }
 

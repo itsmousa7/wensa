@@ -1,10 +1,10 @@
 // lib/features/bookings_history/presentation/pages/ticket_detail_page.dart
 
-import 'package:cupertino_native/cupertino_native.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/share/share_link.dart';
+import 'package:future_riverpod/core/widgets/glass_back_button.dart';
 import 'package:future_riverpod/core/share/share_service.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
@@ -41,30 +41,22 @@ class TicketDetailPage extends ConsumerWidget {
         elevation: 0,
         leadingWidth: 70,
         leading: Navigator.of(context).canPop()
-            ? Padding(
-                padding: const EdgeInsetsDirectional.only(start: 20),
-                child: GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: SizedBox(
-                    width: 50,
-                    height: 50,
-                    child: Center(
-                      child: Icon(
-                        isArabic
-                            ? CupertinoIcons.chevron_right
-                            : CupertinoIcons.chevron_left,
-                        color: cs.colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                ),
+            ? const Padding(
+                // Same slot as the X button below so the glass circle isn't
+                // squeezed into an oval by the leading's tight constraints.
+                padding: EdgeInsetsDirectional.only(start: 15),
+                child: GlassBackButton(),
               )
             : Padding(
                 padding: const EdgeInsetsDirectional.only(start: 15),
                 child: CNButton.icon(
                   icon: const CNSymbol('xmark'),
                   onPressed: () => context.go('/bookings'),
-                  size: 50,
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.glass,
+                    width: 50,
+                    minHeight: 50,
+                  ),
                 ),
               ),
         title: Text(

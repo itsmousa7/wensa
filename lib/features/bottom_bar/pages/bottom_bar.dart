@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:cupertino_native/cupertino_native.dart';
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
@@ -126,7 +126,9 @@ class _LiquidGlassBar extends StatelessWidget {
               CNTabBar(
                 currentIndex: currentIndex,
                 tint: cs.primary,
-                height: 85,
+                height: 95,
+                iconSize: 18,
+                labelFontSize: 10,
                 onTap: onTap,
                 items: kNavItems
                     .map(

@@ -2,6 +2,9 @@
 //
 // Reusable ticket visual (info section, tear line, QR), used both on the ticket
 // detail screen and inside the shareable ticket image.
+import 'dart:io';
+
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:future_riverpod/core/share/branded_header.dart';
@@ -290,31 +293,45 @@ class _CodeFieldRow extends StatelessWidget {
     final borderColor = cs.onSurface.withValues(alpha: 0.18);
     final labelColor = cs.primary;
 
-    final copyButton = GestureDetector(
-      onTap: () {
-        Clipboard.setData(ClipboardData(text: code));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isArabic ? 'تم النسخ' : 'Copied'),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 1),
-          ),
-        );
-      },
-      child: Container(
-        width: 50,
-        height: 34,
-        decoration: BoxDecoration(
-          borderRadius: AppSpacing.borderRadiusLG,
-          border: Border.all(color: borderColor, width: 1.2),
+    void onCopy() {
+      Clipboard.setData(ClipboardData(text: code));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isArabic ? 'تم النسخ' : 'Copied'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 1),
         ),
-        child: Icon(
-          Icons.content_copy_rounded,
-          size: 20,
-          color: cs.onSurface.withValues(alpha: 0.55),
-        ),
-      ),
-    );
+      );
+    }
+
+    // iOS — native Liquid Glass copy button. Android keeps the original
+    // bordered button.
+    final Widget copyButton = Platform.isIOS
+        ? CNButton.icon(
+            onPressed: onCopy,
+            icon: CNSymbol('doc.on.doc', size: 15, color: cs.primary),
+            config: const CNButtonConfig(
+              style: CNButtonStyle.glass,
+              width: 50,
+              minHeight: 34,
+            ),
+          )
+        : GestureDetector(
+            onTap: onCopy,
+            child: Container(
+              width: 50,
+              height: 34,
+              decoration: BoxDecoration(
+                borderRadius: AppSpacing.borderRadiusLG,
+                border: Border.all(color: borderColor, width: 1.2),
+              ),
+              child: Icon(
+                Icons.content_copy_rounded,
+                size: 20,
+                color: cs.onSurface.withValues(alpha: 0.55),
+              ),
+            ),
+          );
 
     final textColumn = Expanded(
       child: Column(
