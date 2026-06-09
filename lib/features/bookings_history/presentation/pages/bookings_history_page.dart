@@ -3,6 +3,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/widgets/section_tab_bar.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership.dart';
@@ -10,6 +11,7 @@ import 'package:future_riverpod/features/bookings_history/presentation/providers
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/ticket_card.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/bookings_scroll_signal.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
@@ -683,27 +685,33 @@ class _EmptyView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 56,
-              color: cs.onSurface.withValues(alpha: 0.3),
+    final tt = AppTypography.getTextTheme(isArabic ? 'ar' : 'en', context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 22),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            height: 200,
+            child: Lottie.asset('assets/lottie/animation/empty.json'),
+          ),
+          Text(
+            isArabic ? 'لا توجد حجوزات بعد' : 'No bookings yet',
+            textAlign: TextAlign.center,
+            style: tt.bodyLarge?.copyWith(
+              color: cs.onSurface,
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 12),
-            Text(
-              isArabic ? 'لا توجد حجوزات.' : 'No bookings found.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.5),
-              ),
-              textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isArabic ? 'ستظهر حجوزاتك هنا' : 'Your bookings will appear here',
+            textAlign: TextAlign.center,
+            style: tt.bodySmall?.copyWith(
+              color: cs.onSurface.withValues(alpha: 0.6),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
