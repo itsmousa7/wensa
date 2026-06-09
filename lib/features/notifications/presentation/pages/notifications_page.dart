@@ -65,11 +65,8 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
         appBar: AppBar(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          leadingWidth: 64,
-          leading: const Padding(
-            padding: EdgeInsetsDirectional.only(start: 12),
-            child: GlassBackButton(),
-          ),
+          leadingWidth: GlassBackButton.appBarLeadingWidth,
+          leading: GlassBackButton.appBarLeading(),
           title: Text(
             isAr ? 'الإشعارات' : 'Notifications',
             style: tt.titleLarge?.copyWith(color: cs.onSurface),

@@ -176,7 +176,10 @@ class FavoritesFeed extends _$FavoritesFeed {
             .from('events_mobile')
             .select('id, title_en, title_ar, city, city_ar, cover_image_url, logo_url, is_verified')
             .inFilter('id', eventIds)
-            .eq('event_status', 'approved');
+            .eq('event_status', 'approved')
+            .or(
+              'end_date.is.null,end_date.gt.${DateTime.now().toUtc().toIso8601String()}',
+            );
         for (final e in events as List) {
           final m = e as Map<String, dynamic>;
           eventById[m['id'] as String] = CategoryFeedItem(
