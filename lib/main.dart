@@ -6,7 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
-    import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/supabase_constants.dart';
 import 'package:future_riverpod/core/constants/theme/app_theme.dart';
 import 'package:future_riverpod/core/constants/theme/theme_provider.dart'
