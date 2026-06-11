@@ -46,8 +46,8 @@ class ShareService {
     );
   }
 
-  /// Share a PNG with an optional [caption]. Writes a temp file first (most
-  /// reliable across platforms). Returns the platform [ShareResult].
+  /// Share a PNG with a text [caption] (shown as the message body / caption
+  /// field in messaging apps). Returns the platform [ShareResult].
   Future<ShareResult> shareImage(
     BuildContext context,
     Uint8List png, {

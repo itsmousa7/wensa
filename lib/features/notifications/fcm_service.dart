@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -18,7 +19,23 @@ class FcmService {
 
   String? _pendingRoute;
 
+  /// The FCM token currently registered for this device. Kept so we can remove
+  /// exactly this device's token from the backend on sign-out.
+  String? _currentToken;
+
   final _localNotifications = FlutterLocalNotificationsPlugin();
+
+  static const _badgeChannel = MethodChannel('app.wensa.mobile/badge');
+
+  /// Reset the OS app-icon badge to zero. iOS keeps the springboard badge until
+  /// the app clears it explicitly; call this once the user has read their inbox.
+  Future<void> clearBadge() async {
+    try {
+      await _badgeChannel.invokeMethod('clearBadge');
+    } catch (e) {
+      debugPrint('[FCM] Failed to clear badge: $e');
+    }
+  }
 
   /// Initialize FCM: request permission, get token, listen to events
   Future<void> initialize(SupabaseClient supabase) async {
@@ -37,7 +54,16 @@ class FcmService {
         return;
       }
 
-      // 2. Get and store initial token (only if already signed in)
+      // 2a. On iOS, the FCM token is unavailable until the APNs device token
+      // has been registered. Wait for it (a few retries) before getToken().
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        for (var i = 0; i < 5; i++) {
+          if (await FirebaseMessaging.instance.getAPNSToken() != null) break;
+          await Future.delayed(const Duration(seconds: 1));
+        }
+      }
+
+      // 2b. Get and store the FCM token (only saved if a user is signed in).
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null) {
         await _saveToken(supabase, token);
@@ -46,13 +72,16 @@ class FcmService {
       // 3. Sync preferred_locale on startup so the backend is always current
       await _saveLocale(supabase);
 
-      // 4. Re-save token whenever the user signs in (handles post-startup logins)
+      // 4. Re-save token on sign-in; remove this device's token on sign-out so
+      // a logged-out device stops receiving the previous user's notifications.
       supabase.auth.onAuthStateChange.listen((data) {
         if (data.event == AuthChangeEvent.signedIn) {
           FirebaseMessaging.instance.getToken().then((t) {
             if (t != null) _saveToken(supabase, t);
           });
           _saveLocale(supabase);
+        } else if (data.event == AuthChangeEvent.signedOut) {
+          _deleteToken(supabase);
         }
       });
 
@@ -101,7 +130,8 @@ class FcmService {
         );
   }
 
-  /// Save FCM token to Supabase profiles.app_users table
+  /// Register this device's FCM token in profiles.user_fcm_tokens (one row per
+  /// device) so every device signed into the account receives notifications.
   Future<void> _saveToken(SupabaseClient supabase, String token) async {
     try {
       final uid = supabase.auth.currentUser?.id;
@@ -110,35 +140,66 @@ class FcmService {
         return;
       }
 
-      await supabase
-          .schema('profiles')
-          .from('app_users')
-          .update({'fcm_token': token})
-          .eq('id', uid);
+      _currentToken = token;
+      final platform = defaultTargetPlatform == TargetPlatform.iOS
+          ? 'ios'
+          : 'android';
+
+      await supabase.rpc(
+        'save_fcm_token',
+        params: {'p_token': token, 'p_platform': platform},
+      );
       debugPrint('[FCM] Token saved for user $uid');
-      debugPrint('[FCM] TOKEN: $token');
     } catch (e) {
       debugPrint('[FCM] Failed to save token: $e');
     }
   }
 
-  /// Sync preferred_locale from SharedPreferences to Supabase
+  /// Remove this device's token on sign-out so it no longer receives the
+  /// previous user's notifications. Other devices on the account are untouched.
+  Future<void> _deleteToken(SupabaseClient supabase) async {
+    final token = _currentToken;
+    if (token == null) return;
+    try {
+      await supabase.rpc('delete_fcm_token', params: {'p_token': token});
+      _currentToken = null;
+      debugPrint('[FCM] Token removed on sign-out');
+    } catch (e) {
+      debugPrint('[FCM] Failed to remove token: $e');
+    }
+  }
+
+  /// Sync the effective notification language to Supabase so the backend sends
+  /// pushes in the language the app is actually displaying. When the user has
+  /// not made an explicit choice (system mode) this resolves the device
+  /// language, so leaving the app on its default still produces matching pushes.
   Future<void> _saveLocale(SupabaseClient supabase) async {
     try {
       final uid = supabase.auth.currentUser?.id;
       if (uid == null) return;
-      final prefs = await SharedPreferences.getInstance();
-      final saved = prefs.getString('app_locale');
-      if (saved != 'ar' && saved != 'en') return;
+      final locale = await _effectiveLocale();
       await supabase
           .schema('profiles')
           .from('app_users')
-          .update({'preferred_locale': saved})
+          .update({'preferred_locale': locale})
           .eq('id', uid);
-      debugPrint('[FCM] Synced preferred_locale=$saved');
+      debugPrint('[FCM] Synced preferred_locale=$locale');
     } catch (e) {
       debugPrint('[FCM] Failed to sync locale: $e');
     }
+  }
+
+  /// The language notifications should use: an explicit 'ar'/'en' choice if the
+  /// user picked one, otherwise the device language resolved against the two
+  /// locales the app supports (Arabic, else English — matching MaterialApp's
+  /// supportedLocales).
+  Future<String> _effectiveLocale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString('app_locale');
+    if (saved == 'ar' || saved == 'en') return saved!;
+    return PlatformDispatcher.instance.locale.languageCode == 'ar'
+        ? 'ar'
+        : 'en';
   }
 
   /// Show an in-app notification banner when the app is in the foreground

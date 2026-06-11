@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/core/widgets/profile_error.dart';
 import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/all_events_provider.dart';
@@ -16,15 +17,14 @@ import 'package:future_riverpod/features/home/presentation/widgets/all_events_se
 import 'package:future_riverpod/features/home/presentation/widgets/all_places_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/app_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/category_bar.dart';
+import 'package:future_riverpod/features/home/presentation/widgets/featured_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/home_search_bar.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/hot_event_section.dart';
-import 'package:future_riverpod/features/home/presentation/widgets/featured_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/new_opening_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/promoted_banner.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/see_all_page.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/trending_feed_section.dart';
 import 'package:future_riverpod/features/home/presentation/widgets/when_no_data_available.dart';
-import 'package:future_riverpod/core/widgets/profile_error.dart';
 
 const int kDiscountsCategoryIndex = -1;
 
@@ -131,196 +131,213 @@ class _HomePageState extends ConsumerState<HomePage> {
         body: SafeArea(
           top: false,
           bottom: false,
-          child: CustomScrollView(
-            controller: scrollCtrl,
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: [
-              // ── Pull to refresh ──────────────────────────────────────────
-              CupertinoSliverRefreshControl(
-                refreshTriggerPullDistance: 80,
-                refreshIndicatorExtent: 60,
-                onRefresh: _onRefresh,
-                builder: (context, mode, pulledExtent, triggerDistance, _) {
-                  final topPadding = MediaQuery.of(context).viewPadding.top;
-                  final progress = (pulledExtent / triggerDistance).clamp(
-                    0.0,
-                    1.0,
-                  );
-                  final loading = mode == RefreshIndicatorMode.armed;
-                  return Padding(
-                    padding: EdgeInsets.only(top: topPadding),
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: loading
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: cs.primary,
-                              ),
-                            )
-                          : Opacity(
-                              opacity: progress,
-                              child: Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                size: 24,
-                                color: cs.onSurface.withValues(alpha: 0.5),
-                              ),
-                            ),
-                    ),
-                  );
-                },
-              ),
-
+          child: Column(
+            children: [
               // ── Fixed top sections ───────────────────────────────────────
-              const SliverToBoxAdapter(child: HomeAppBar()),
-              SliverToBoxAdapter(child: HomeSearchBar()),
+              const HomeAppBar(),
+              HomeSearchBar(),
 
-              // ── Network error state — replaces ALL feed sections ─────────
-              if (hasNetworkError) ...[
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: GlobalErrorWidget(
-                    cs: cs,
-                    isAr: isAr,
-                    tt: tt,
-                    onTap: () {
-                      ref.invalidate(hotEventsProvider);
-                      ref.invalidate(trendingFeedProvider);
-                      ref.invalidate(newOpeningsProvider);
-                      ref.invalidate(featuredFeedProvider);
-                      ref.invalidate(promotedBannersProvider);
-                      ref.invalidate(categoriesProvider);
-                      ref.invalidate(allPlacesFeedProvider);
-                      ref.invalidate(favoritesFeedProvider);
-                      ref.invalidate(allEventsProvider);
-                    },
+              // ── Scrollable content (refresh indicator shows below header) ─
+              Expanded(
+                child: CustomScrollView(
+                  controller: scrollCtrl,
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
                   ),
-                ),
-              ] else ...[
-                SliverToBoxAdapter(child: PromotedBanner()),
-                // ── Normal feed sections ─────────────────────────────────
-                if (ref.watch(hotEventsProvider).when(
-                  data: (e) => e.isNotEmpty,
-                  loading: () => true,
-                  error: (_, _) => false,
-                )) ...[
-                  SliverToBoxAdapter(child: _sectionTitle(_hotEventsLabel)),
-                  const SliverToBoxAdapter(child: HotEventsSection()),
-                ],
-                SliverToBoxAdapter(child: _sectionTitle(_categoryLabel)),
-                SliverToBoxAdapter(child: CategoryBar(isAr: isAr)),
-
-                if (selectedIdx == kDiscountsCategoryIndex) ...[
-                  SliverToBoxAdapter(
-                    child: _sectionTitle(isAr ? 'خصومات' : 'Discounts'),
-                  ),
-                  const DiscountsFeedSection(),
-                ] else if (selectedCat == null) ...[
-                  // ── Ad slot 0 ────────────────────────────────────────────
-                  const SliverToBoxAdapter(
-                    child: PromotedBannerInline(slotIndex: 0),
-                  ),
-
-                  SliverToBoxAdapter(
-                    child: _sectionTitle(
-                      _trendingLabel,
-                      more: true,
-                      onMoreTap: () => _goToSeeAll(SeeAllType.trending),
+                  slivers: [
+                    // ── Pull to refresh ──────────────────────────────────────────
+                    CupertinoSliverRefreshControl(
+                      refreshTriggerPullDistance: 80,
+                      refreshIndicatorExtent: 50,
+                      onRefresh: _onRefresh,
+                      builder:
+                          (context, mode, pulledExtent, triggerDistance, _) {
+                            final progress = (pulledExtent / triggerDistance)
+                                .clamp(0.0, 1.0);
+                            final loading =
+                                mode == RefreshIndicatorMode.refresh ||
+                                mode == RefreshIndicatorMode.armed;
+                            return Center(
+                              child: loading
+                                  ? SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: cs.primary,
+                                      ),
+                                    )
+                                  : Opacity(
+                                      opacity: progress,
+                                      child: Icon(
+                                        Icons.keyboard_arrow_down_rounded,
+                                        size: 24,
+                                        color: cs.onSurface.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                            );
+                          },
                     ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: TrendingFeedSection(
-                      onViewAll: () => _goToSeeAll(SeeAllType.trending),
-                    ),
-                  ),
 
-                  // ── Ad slot 1 ────────────────────────────────────────────
-                  const SliverToBoxAdapter(
-                    child: PromotedBannerInline(slotIndex: 1),
-                  ),
-
-                  SliverToBoxAdapter(
-                    child: _sectionTitle(
-                      _featuredLabel,
-                      more: true,
-                      onMoreTap: () => _goToSeeAll(SeeAllType.featured),
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: FeaturedSection(
-                      onViewAll: () => _goToSeeAll(SeeAllType.featured),
-                    ),
-                  ),
-
-                  // ── Ad slot 2 ────────────────────────────────────────────
-                  const SliverToBoxAdapter(
-                    child: PromotedBannerInline(slotIndex: 2),
-                  ),
-
-                  SliverToBoxAdapter(
-                    child: _sectionTitle(
-                      _newOpeningsLabel,
-                      more: true,
-                      onMoreTap: () => _goToSeeAll(SeeAllType.newOpenings),
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: NewOpeningSection(
-                      onViewAll: () => _goToSeeAll(SeeAllType.newOpenings),
-                    ),
-                  ),
-
-                  // ── Ad slot 3 ────────────────────────────────────────────
-                  const SliverToBoxAdapter(
-                    child: PromotedBannerInline(slotIndex: 3),
-                  ),
-
-                  if (ref.watch(allEventsProvider).when(
-                    data: (e) => e.isNotEmpty,
-                    loading: () => true,
-                    error: (_, _) => false,
-                  )) ...[
-                    SliverToBoxAdapter(
-                      child: _sectionTitle(
-                        _allEventsLabel,
-                        more: true,
-                        onMoreTap: () => _goToSeeAll(SeeAllType.allEvents),
+                    // ── Network error state — replaces ALL feed sections ─────────
+                    if (hasNetworkError) ...[
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: GlobalErrorWidget(
+                          cs: cs,
+                          isAr: isAr,
+                          tt: tt,
+                          onTap: () {
+                            ref.invalidate(hotEventsProvider);
+                            ref.invalidate(trendingFeedProvider);
+                            ref.invalidate(newOpeningsProvider);
+                            ref.invalidate(featuredFeedProvider);
+                            ref.invalidate(promotedBannersProvider);
+                            ref.invalidate(categoriesProvider);
+                            ref.invalidate(allPlacesFeedProvider);
+                            ref.invalidate(favoritesFeedProvider);
+                            ref.invalidate(allEventsProvider);
+                          },
+                        ),
                       ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: AllEventsSection(
-                        onViewAll: () => _goToSeeAll(SeeAllType.allEvents),
-                      ),
-                    ),
+                    ] else ...[
+                      SliverToBoxAdapter(child: PromotedBanner()),
+                      // ── Normal feed sections ─────────────────────────────────
+                      if (ref
+                          .watch(hotEventsProvider)
+                          .when(
+                            data: (e) => e.isNotEmpty,
+                            loading: () => true,
+                            error: (_, _) => false,
+                          )) ...[
+                        SliverToBoxAdapter(
+                          child: _sectionTitle(_hotEventsLabel),
+                        ),
+                        const SliverToBoxAdapter(child: HotEventsSection()),
+                      ],
+                      SliverToBoxAdapter(child: _sectionTitle(_categoryLabel)),
+                      SliverToBoxAdapter(child: CategoryBar(isAr: isAr)),
 
-                    // ── Ad slot 4 ──────────────────────────────────────────
-                    const SliverToBoxAdapter(
-                      child: PromotedBannerInline(slotIndex: 4),
-                    ),
+                      if (selectedIdx == kDiscountsCategoryIndex) ...[
+                        SliverToBoxAdapter(
+                          child: _sectionTitle(isAr ? 'خصومات' : 'Discounts'),
+                        ),
+                        const DiscountsFeedSection(),
+                      ] else if (selectedCat == null) ...[
+                        // ── Ad slot 0 ────────────────────────────────────────────
+                        const SliverToBoxAdapter(
+                          child: PromotedBannerInline(slotIndex: 0),
+                        ),
+
+                        SliverToBoxAdapter(
+                          child: _sectionTitle(
+                            _trendingLabel,
+                            more: true,
+                            onMoreTap: () => _goToSeeAll(SeeAllType.trending),
+                          ),
+                        ),
+                        SliverToBoxAdapter(
+                          child: TrendingFeedSection(
+                            onViewAll: () => _goToSeeAll(SeeAllType.trending),
+                          ),
+                        ),
+
+                        // ── Ad slot 1 ────────────────────────────────────────────
+                        const SliverToBoxAdapter(
+                          child: PromotedBannerInline(slotIndex: 1),
+                        ),
+
+                        SliverToBoxAdapter(
+                          child: _sectionTitle(
+                            _featuredLabel,
+                            more: true,
+                            onMoreTap: () => _goToSeeAll(SeeAllType.featured),
+                          ),
+                        ),
+                        SliverToBoxAdapter(
+                          child: FeaturedSection(
+                            onViewAll: () => _goToSeeAll(SeeAllType.featured),
+                          ),
+                        ),
+
+                        // ── Ad slot 2 ────────────────────────────────────────────
+                        const SliverToBoxAdapter(
+                          child: PromotedBannerInline(slotIndex: 2),
+                        ),
+
+                        SliverToBoxAdapter(
+                          child: _sectionTitle(
+                            _newOpeningsLabel,
+                            more: true,
+                            onMoreTap: () =>
+                                _goToSeeAll(SeeAllType.newOpenings),
+                          ),
+                        ),
+                        SliverToBoxAdapter(
+                          child: NewOpeningSection(
+                            onViewAll: () =>
+                                _goToSeeAll(SeeAllType.newOpenings),
+                          ),
+                        ),
+
+                        // ── Ad slot 3 ────────────────────────────────────────────
+                        const SliverToBoxAdapter(
+                          child: PromotedBannerInline(slotIndex: 3),
+                        ),
+
+                        if (ref
+                            .watch(allEventsProvider)
+                            .when(
+                              data: (e) => e.isNotEmpty,
+                              loading: () => true,
+                              error: (_, _) => false,
+                            )) ...[
+                          SliverToBoxAdapter(
+                            child: _sectionTitle(
+                              _allEventsLabel,
+                              more: true,
+                              onMoreTap: () =>
+                                  _goToSeeAll(SeeAllType.allEvents),
+                            ),
+                          ),
+                          SliverToBoxAdapter(
+                            child: AllEventsSection(
+                              onViewAll: () =>
+                                  _goToSeeAll(SeeAllType.allEvents),
+                            ),
+                          ),
+
+                          // ── Ad slot 4 ──────────────────────────────────────────
+                          const SliverToBoxAdapter(
+                            child: PromotedBannerInline(slotIndex: 4),
+                          ),
+                        ],
+
+                        SliverToBoxAdapter(
+                          child: _sectionTitle(_allPlacesLabel),
+                        ),
+
+                        const AllPlacesSection(),
+                      ] else ...[
+                        SliverToBoxAdapter(
+                          child: _sectionTitle(
+                            isAr ? selectedCat.nameAr : selectedCat.nameEn,
+                          ),
+                        ),
+                        CategoryFeedSection(
+                          categoryId: selectedCat.id,
+                          categoryNameEn: selectedCat.nameEn,
+                          categoryNameAr: selectedCat.nameAr,
+                        ),
+                      ],
+
+                      const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                    ],
                   ],
-
-                  SliverToBoxAdapter(child: _sectionTitle(_allPlacesLabel)),
-
-                  const AllPlacesSection(),
-                ] else ...[
-                  SliverToBoxAdapter(
-                    child: _sectionTitle(
-                      isAr ? selectedCat.nameAr : selectedCat.nameEn,
-                    ),
-                  ),
-                  CategoryFeedSection(
-                    categoryId: selectedCat.id,
-                    categoryNameEn: selectedCat.nameEn,
-                    categoryNameAr: selectedCat.nameAr,
-                  ),
-                ],
-
-                const SliverToBoxAdapter(child: SizedBox(height: 100)),
-              ],
+                ),
+              ),
             ],
           ),
         ),

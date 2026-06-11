@@ -11,10 +11,13 @@ import 'package:flutter/material.dart';
 /// platforms) keep the original plain Material chevron. Defaults to popping
 /// the current route.
 class GlassBackButton extends StatelessWidget {
-  const GlassBackButton({super.key, this.onPressed});
+  const GlassBackButton({super.key, this.onPressed, this.size = 50});
 
   /// Override the default pop behavior.
   final VoidCallback? onPressed;
+
+  /// Diameter of the glass circle (iOS only). Defaults to 50.
+  final double size;
 
   /// AppBar `leading` that reuses the booking pages' glass back button.
   ///
@@ -43,10 +46,10 @@ class GlassBackButton extends StatelessWidget {
       return CNButton.icon(
         icon: CNSymbol(isRtl ? 'chevron.right' : 'chevron.left'),
         onPressed: onTap,
-        config: const CNButtonConfig(
+        config: CNButtonConfig(
           style: CNButtonStyle.glass,
-          width: 50,
-          minHeight: 50,
+          width: size,
+          minHeight: size,
         ),
       );
     }

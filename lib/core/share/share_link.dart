@@ -7,9 +7,9 @@
 /// and universal/app links are configured.
 const String kShareBaseUrl = 'https://wensa.app';
 
-String placeShareUrl(String id) => '$kShareBaseUrl/place?placeId=$id';
+String placeShareUrl(String id) => '$kShareBaseUrl/placeDetails?placeId=$id';
 
-String eventShareUrl(String id) => '$kShareBaseUrl/event?eventId=$id';
+String eventShareUrl(String id) => '$kShareBaseUrl/eventDetails?eventId=$id';
 
 String placeShareCaption({
   required String name,

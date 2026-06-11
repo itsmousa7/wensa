@@ -89,6 +89,7 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
           ? await _share.fetchImageBytes(cover)
           : null;
       if (!mounted) return;
+      final url = eventShareUrl(event.id);
       final png = await _share.renderToPng(
         context,
         ContentShareCard(
@@ -97,6 +98,7 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
           coverBytes: coverBytes,
           isAr: _isAr,
           footerText: _isAr ? 'اكتشفه على ونسة' : 'Discover on Wensa',
+          shareUrl: url,
         ),
         isAr: _isAr,
       );

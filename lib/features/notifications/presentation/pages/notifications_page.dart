@@ -8,6 +8,7 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/widgets/glass_back_button.dart';
 import 'package:future_riverpod/features/notifications/domain/models/app_notification.dart';
+import 'package:future_riverpod/features/notifications/fcm_service.dart';
 import 'package:future_riverpod/features/notifications/domain/repositories/notifications_repository.dart';
 import 'package:future_riverpod/features/notifications/presentation/providers/notifications_provider.dart';
 import 'package:go_router/go_router.dart';
@@ -39,6 +40,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     _markedRead = true;
     try {
       await ref.read(notificationsRepositoryProvider).markAllAsRead();
+      await FcmService.instance.clearBadge();
     } finally {
       if (mounted) {
         ref.read(notificationsRefreshProvider.notifier).bump();

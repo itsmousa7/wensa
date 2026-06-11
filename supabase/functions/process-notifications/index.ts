@@ -79,6 +79,7 @@ async function sendOne(
   body: string,
   projectId: string,
   accessToken: string,
+  badge: number,
   data?: Record<string, string>,
 ): Promise<{ ok: boolean; staleToken?: boolean; error?: string }> {
   const res = await fetch(
@@ -96,12 +97,14 @@ async function sendOne(
           data: data ?? {},
           android: {
             priority: "HIGH",
-            notification: { channel_id: "wensa_default" },
+            // notification_count drives the app-icon badge count on launchers
+            // that support it (mirrors the iOS aps.badge value).
+            notification: { channel_id: "wensa_default", notification_count: badge },
           },
           apns: {
             headers: { "apns-priority": "10" },
             payload: {
-              aps: { alert: { title, body }, sound: "default", badge: 1 },
+              aps: { alert: { title, body }, sound: "default", badge },
             },
           },
         },
@@ -123,6 +126,74 @@ async function sendOne(
     return { ok: false, staleToken, error: err };
   }
   return { ok: true };
+}
+
+/// Fetch every device token for the given users → { user_id: [token, …] }.
+/// One row per device, so a user signed in on several devices gets several.
+async function getTokensByUser(
+  supabase: any,
+  userIds: string[],
+): Promise<Record<string, string[]>> {
+  const map: Record<string, string[]> = {};
+  if (!userIds.length) return map;
+  const { data } = await supabase
+    .schema("profiles")
+    .from("user_fcm_tokens")
+    .select("user_id, token")
+    .in("user_id", userIds);
+  for (const row of data ?? []) {
+    (map[row.user_id] ??= []).push(row.token);
+  }
+  return map;
+}
+
+/// Count the user's unread inbox items. Used as the app-icon badge value so it
+/// reflects how many notifications are waiting, not a constant 1.
+async function getUnreadCount(supabase: any, userId: string): Promise<number> {
+  const { count } = await supabase
+    .schema("profiles")
+    .from("user_notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .is("read_at", null);
+  return count ?? 0;
+}
+
+/// Send one notification to all of a user's device tokens. Prunes any token
+/// FCM reports as stale. Returns how many devices were reached. `badge` is the
+/// app-icon badge count to display (unread inbox count including this push).
+async function sendToTokens(
+  supabase: any,
+  tokens: string[],
+  title: string,
+  body: string,
+  projectId: string,
+  accessToken: string,
+  badge: number,
+  data?: Record<string, string>,
+): Promise<{ sent: number; errors: number; errorMsgs: string[] }> {
+  let sent = 0;
+  let errors = 0;
+  const errorMsgs: string[] = [];
+  for (const token of tokens) {
+    const r = await sendOne(token, title, body, projectId, accessToken, badge, data);
+    if (r.ok) {
+      sent++;
+    } else if (r.staleToken) {
+      console.warn(
+        `[FCM] pruning stale token ${token.slice(0, 24)}…: ${r.error ?? ""}`,
+      );
+      await supabase
+        .schema("profiles")
+        .from("user_fcm_tokens")
+        .delete()
+        .eq("token", token);
+    } else {
+      errors++;
+      if (r.error) errorMsgs.push(r.error);
+    }
+  }
+  return { sent, errors, errorMsgs };
 }
 
 Deno.serve(async (_req) => {
@@ -180,25 +251,27 @@ Deno.serve(async (_req) => {
       const { data: users } = await supabase
         .schema("profiles")
         .from("app_users")
-        .select("id, fcm_token, preferred_locale")
-        .in("id", userIds)
-        .not("fcm_token", "is", null);
+        .select("id, preferred_locale")
+        .in("id", userIds);
       const userMap = Object.fromEntries((users ?? []).map((u: any) => [u.id, u]));
+      const tokensByUser = await getTokensByUser(supabase, userIds);
 
       for (const booking of dueBookings) {
         const user = userMap[booking.user_id];
-        if (!user?.fcm_token) continue;
+        const tokens = tokensByUser[booking.user_id] ?? [];
+        if (!user || tokens.length === 0) continue;
 
         const isAr = (user.preferred_locale ?? "en") === "ar";
         const title = isAr ? cfg.title_ar : cfg.title_en;
         const body  = isAr ? cfg.body_ar  : cfg.body_en;
 
-        const result = await sendOne(
-          user.fcm_token, title, body, sa.project_id, accessToken,
+        const badge = (await getUnreadCount(supabase, booking.user_id)) + 1;
+        const { sent, errors, errorMsgs } = await sendToTokens(
+          supabase, tokens, title, body, sa.project_id, accessToken, badge,
           { booking_id: booking.id, kind: cfgKey },
         );
 
-        if (result.ok) {
+        if (sent > 0) {
           await supabase
             .schema("bookings")
             .from("bookings")
@@ -216,16 +289,11 @@ Deno.serve(async (_req) => {
               body_ar: cfg.body_ar,
               data: { booking_id: booking.id },
             });
-          totalSent++;
-        } else if (result.staleToken) {
-          await supabase
-            .schema("profiles")
-            .from("app_users")
-            .update({ fcm_token: null })
-            .eq("id", user.id);
-        } else {
-          if (result.error) fcmErrors.push(result.error);
-          totalErrors++;
+          totalSent += sent;
+        }
+        if (errors > 0) {
+          fcmErrors.push(...errorMsgs);
+          totalErrors += errors;
         }
       }
     }
@@ -252,25 +320,27 @@ Deno.serve(async (_req) => {
         const { data: users } = await supabase
           .schema("profiles")
           .from("app_users")
-          .select("id, fcm_token, preferred_locale")
-          .in("id", userIds)
-          .not("fcm_token", "is", null);
+          .select("id, preferred_locale")
+          .in("id", userIds);
         const userMap = Object.fromEntries((users ?? []).map((u: any) => [u.id, u]));
+        const tokensByUser = await getTokensByUser(supabase, userIds);
 
         for (const m of dueMemberships) {
           const user = userMap[m.user_id];
-          if (!user?.fcm_token) continue;
+          const tokens = tokensByUser[m.user_id] ?? [];
+          if (!user || tokens.length === 0) continue;
 
           const isAr = (user.preferred_locale ?? "en") === "ar";
           const title = isAr ? memCfg.title_ar : memCfg.title_en;
           const body  = isAr ? memCfg.body_ar  : memCfg.body_en;
 
-          const result = await sendOne(
-            user.fcm_token, title, body, sa.project_id, accessToken,
+          const badge = (await getUnreadCount(supabase, m.user_id)) + 1;
+          const { sent, errors, errorMsgs } = await sendToTokens(
+            supabase, tokens, title, body, sa.project_id, accessToken, badge,
             { membership_id: m.id, kind: "membership" },
           );
 
-          if (result.ok) {
+          if (sent > 0) {
             await supabase
               .schema("bookings")
               .from("memberships")
@@ -288,16 +358,11 @@ Deno.serve(async (_req) => {
                 body_ar: memCfg.body_ar,
                 data: { membership_id: m.id },
               });
-            totalSent++;
-          } else if (result.staleToken) {
-            await supabase
-              .schema("profiles")
-              .from("app_users")
-              .update({ fcm_token: null })
-              .eq("id", user.id);
-          } else {
-            if (result.error) fcmErrors.push(result.error);
-            totalErrors++;
+            totalSent += sent;
+          }
+          if (errors > 0) {
+            fcmErrors.push(...errorMsgs);
+            totalErrors += errors;
           }
         }
       }
@@ -315,8 +380,7 @@ Deno.serve(async (_req) => {
       const { data: allUsers } = await supabase
         .schema("profiles")
         .from("app_users")
-        .select("id, fcm_token, preferred_locale")
-        .not("fcm_token", "is", null);
+        .select("id, preferred_locale");
 
       for (const broadcast of broadcasts) {
         await supabase
@@ -328,24 +392,30 @@ Deno.serve(async (_req) => {
         const audience = broadcast.target_user_id
           ? (allUsers ?? []).filter((u: any) => u.id === broadcast.target_user_id)
           : (allUsers ?? []);
+        const tokensByUser = await getTokensByUser(
+          supabase, audience.map((u: any) => u.id),
+        );
 
+        // bSent counts users reached; totalSent below counts device pushes.
         let bSent = 0;
         let bErrors = 0;
 
         const broadcastKind = `broadcast_${broadcast.type ?? "general"}`;
 
         for (const user of audience) {
-          if (!user.fcm_token) continue;
+          const tokens = tokensByUser[user.id] ?? [];
+          if (tokens.length === 0) continue;
           const isAr = (user.preferred_locale ?? "en") === "ar";
           const title = isAr ? broadcast.title_ar : broadcast.title_en;
           const body  = isAr ? broadcast.body_ar  : broadcast.body_en;
           if (!title || !body) continue;
 
-          const result = await sendOne(
-            user.fcm_token, title, body, sa.project_id, accessToken,
+          const badge = (await getUnreadCount(supabase, user.id)) + 1;
+          const { sent, errors, errorMsgs } = await sendToTokens(
+            supabase, tokens, title, body, sa.project_id, accessToken, badge,
             { broadcast_id: broadcast.id, kind: broadcastKind },
           );
-          if (result.ok) {
+          if (sent > 0) {
             await supabase
               .schema("profiles")
               .from("user_notifications")
@@ -359,15 +429,10 @@ Deno.serve(async (_req) => {
                 data: { broadcast_id: broadcast.id },
               });
             bSent++;
-          } else if (result.staleToken) {
-            // Prune the dead token so it never causes a false "partial" again
-            await supabase
-              .schema("profiles")
-              .from("app_users")
-              .update({ fcm_token: null })
-              .eq("id", user.id);
-          } else {
-            if (result.error) fcmErrors.push(result.error);
+            totalSent += sent;
+          }
+          if (errors > 0) {
+            fcmErrors.push(...errorMsgs);
             bErrors++;
           }
         }
@@ -388,7 +453,7 @@ Deno.serve(async (_req) => {
           })
           .eq("id", broadcast.id);
 
-        totalSent += bSent;
+        // totalSent is already incremented per device push inside the loop.
         totalErrors += bErrors;
       }
     }

@@ -41,7 +41,7 @@ final class AppLocaleProvider
   }
 }
 
-String _$appLocaleHash() => r'19d5479e6132068ec2355af5c0ba7e16bdb476f5';
+String _$appLocaleHash() => r'3223be45958cb9ba029046cffbf9192ca0a70955';
 
 abstract class _$AppLocale extends $Notifier<LocaleState> {
   LocaleState build();

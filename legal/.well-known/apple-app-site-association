@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["C9C57Q5V58.app.wensa.mobile"],
+        "components": [
+          { "/": "/placeDetails*" },
+          { "/": "/eventDetails*" }
+        ]
+      }
+    ]
+  }
+}

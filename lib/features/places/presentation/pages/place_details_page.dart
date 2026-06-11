@@ -76,6 +76,7 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
           ? await _share.fetchImageBytes(cover)
           : null;
       if (!mounted) return;
+      final url = placeShareUrl(place.id);
       final png = await _share.renderToPng(
         context,
         ContentShareCard(
@@ -84,6 +85,7 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
           coverBytes: coverBytes,
           isAr: _isAr,
           footerText: _isAr ? 'اكتشفه على ونسة' : 'Discover on Wensa',
+          shareUrl: url,
         ),
         isAr: _isAr,
       );

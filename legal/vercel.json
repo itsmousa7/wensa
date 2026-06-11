@@ -1,7 +1,21 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/.well-known/(.*)",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ],
   "redirects": [
     { "source": "/", "destination": "/privacy", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/placeDetails", "destination": "/open" },
+    { "source": "/eventDetails", "destination": "/open" }
   ]
 }

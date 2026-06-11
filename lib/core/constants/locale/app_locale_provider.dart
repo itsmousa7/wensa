@@ -37,11 +37,15 @@ class AppLocale extends _$AppLocale {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_localeKey, localeCode);
 
-    // Sync to Supabase so backend sends notifications in the right language.
-    // Only sync 'ar'/'en'; skip 'system' (no canonical value to store).
-    if (localeCode != 'system') {
-      _syncLocaleToSupabase(localeCode);
-    }
+    // Sync to Supabase so the backend sends notifications in the language the
+    // app is actually showing. For 'system' there is no stored value, so
+    // resolve the device language against the locales we support (ar, else en).
+    final syncCode = localeCode == 'system'
+        ? (PlatformDispatcher.instance.locale.languageCode == 'ar'
+            ? 'ar'
+            : 'en')
+        : localeCode;
+    _syncLocaleToSupabase(syncCode);
   }
 
   void _syncLocaleToSupabase(String localeCode) {

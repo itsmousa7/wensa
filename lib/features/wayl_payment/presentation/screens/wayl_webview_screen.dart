@@ -74,16 +74,19 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
         return;
       }
       try {
-        final status =
-            await _apiService.checkPaymentStatus(widget.referenceId!);
+        final status = await _apiService.checkPaymentStatus(
+          widget.referenceId!,
+        );
         if (_resultHandled) return;
         final statusLower = status.status.toLowerCase();
-        final isComplete = statusLower == 'complete' ||
+        final isComplete =
+            statusLower == 'complete' ||
             statusLower == 'completed' ||
             statusLower == 'paid' ||
             statusLower == 'success' ||
             status.completedAt != null;
-        final isFailed = statusLower == 'failed' ||
+        final isFailed =
+            statusLower == 'failed' ||
             statusLower == 'cancelled' ||
             statusLower == 'canceled';
 
@@ -118,12 +121,14 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
     final params = uri?.queryParameters.map(
       (k, v) => MapEntry(k.toLowerCase(), v),
     );
-    final hasSuccessParams = params != null &&
+    final hasSuccessParams =
+        params != null &&
         params.containsKey('referenceid') &&
         (params.containsKey('orderid') || params.containsKey('order_id'));
 
     // Case-insensitive comparison — iOS may normalise the URL scheme.
-    final matchesRedirect = redirectBase != null &&
+    final matchesRedirect =
+        redirectBase != null &&
         redirectBase.isNotEmpty &&
         url.toLowerCase().startsWith(redirectBase.toLowerCase());
 
@@ -179,8 +184,7 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
   /// (e.g. wansa://). Inject JS that intercepts the redirect attempt and
   /// forwards it to Flutter via a JavaScript channel.
   void _injectRedirectInterceptor() {
-    final scheme =
-        Uri.tryParse(widget.redirectionUrl ?? '')?.scheme ?? 'wansa';
+    final scheme = Uri.tryParse(widget.redirectionUrl ?? '')?.scheme ?? 'wansa';
 
     _webViewController.runJavaScript('''
       (function() {
@@ -227,9 +231,12 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
   void _initWebView() {
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..addJavaScriptChannel('PaymentRedirect', onMessageReceived: (message) {
-        _checkForPaymentResult(message.message);
-      })
+      ..addJavaScriptChannel(
+        'PaymentRedirect',
+        onMessageReceived: (message) {
+          _checkForPaymentResult(message.message);
+        },
+      )
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
@@ -286,9 +293,7 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
         ),
         title: Text(
           'Online Payment',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.outline,
-          ),
+          style: TextStyle(color: Theme.of(context).colorScheme.outline),
         ),
         centerTitle: true,
       ),
@@ -306,13 +311,18 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.wifi_off_rounded,
-                        size: 56, color: Color(0xFFBBBBBB)),
+                    const Icon(
+                      Icons.wifi_off_rounded,
+                      size: 56,
+                      color: Color(0xFFBBBBBB),
+                    ),
                     const SizedBox(height: 16),
                     const Text(
                       'Unable to load payment page',
                       style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
@@ -326,8 +336,9 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
                           _hasError = false;
                           _isLoading = true;
                         });
-                        _webViewController
-                            .loadRequest(Uri.parse(widget.paymentUrl));
+                        _webViewController.loadRequest(
+                          Uri.parse(widget.paymentUrl),
+                        );
                       },
                       child: const Text('Retry'),
                     ),

@@ -653,9 +653,13 @@ BEGIN
   SELECT * INTO v_booking FROM bookings.bookings WHERE qr_token = p_qr_token;
 
   IF FOUND THEN
-    -- Caller must be merchant staff for this booking's merchant, or admin
+    -- Caller must be admin, merchant owner, or merchant staff
     IF NOT (
       public.is_admin() OR
+      EXISTS (
+        SELECT 1 FROM business.merchants
+        WHERE user_id = v_uid AND id = v_booking.merchant_id
+      ) OR
       EXISTS (
         SELECT 1 FROM business.merchant_staff
         WHERE user_id = v_uid AND merchant_id = v_booking.merchant_id
@@ -694,6 +698,10 @@ BEGIN
   IF FOUND THEN
     IF NOT (
       public.is_admin() OR
+      EXISTS (
+        SELECT 1 FROM business.merchants
+        WHERE user_id = v_uid AND id = v_mem.merchant_id
+      ) OR
       EXISTS (
         SELECT 1 FROM business.merchant_staff
         WHERE user_id = v_uid AND merchant_id = v_mem.merchant_id

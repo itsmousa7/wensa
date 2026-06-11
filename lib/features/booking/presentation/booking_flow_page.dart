@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:future_riverpod/core/widgets/glass_back_button.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/concert_section.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/farm_section.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/membership_section.dart';
@@ -30,6 +31,11 @@ class BookingFlowPage extends ConsumerWidget {
     if (isEventFlow) {
       return Scaffold(
         appBar: AppBar(
+          leadingWidth: 72,
+          leading: Padding(
+            padding: const EdgeInsetsDirectional.only(start: 16),
+            child: GlassBackButton(),
+          ),
           title: Text(
             isAr ? 'الحجز' : 'Booking',
             style: TextStyle(color: Theme.of(context).colorScheme.outline),
@@ -43,6 +49,8 @@ class BookingFlowPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leadingWidth: GlassBackButton.appBarLeadingWidth,
+        leading: GlassBackButton.appBarLeading(),
         title: placeAsync.maybeWhen(
           data: (place) {
             final name = isAr
