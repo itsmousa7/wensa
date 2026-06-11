@@ -86,8 +86,12 @@ class BookingRepository {
     required String courtId,
     required String date,
   }) async {
+    // Calendar-day slots: each date shows only the hours whose Baghdad calendar
+    // date matches it. A past-midnight session's after-midnight tail therefore
+    // appears under the NEXT day's tab (e.g. tonight's 12–3 AM live under
+    // tomorrow), and a day's own early-morning hours sit at the top of its tab.
     final data = await _client.schema('bookings').rpc(
-      'available_slots',
+      'available_slots_calendar',
       params: {'p_court_id': courtId, 'p_date': date},
     );
     return (data as List).map((e) => Slot.fromJson(e as Map<String, dynamic>)).toList();

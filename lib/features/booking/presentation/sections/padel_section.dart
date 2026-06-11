@@ -427,7 +427,10 @@ class _BookingFormView extends ConsumerWidget {
                                 child: _EmptySlots(),
                               );
                             }
-                            // Pass raw slots — SlotGrid handles expiry internally
+                            // Slots arrive in chronological order for the
+                            // selected calendar day (12 AM first, then daytime).
+                            // SlotGrid handles expiry on the real timestamps, so
+                            // a day's already-passed early hours show as Closed.
                             return Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 16),

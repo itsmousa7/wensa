@@ -255,16 +255,26 @@ class _InfoGrid extends StatelessWidget {
                         Text(
                           cell.label,
                           style: tt.labelSmall?.copyWith(
+                            fontSize: 11,
                             color: cs.primary,
                             fontWeight: FontWeight.w600,
-                            letterSpacing: 0.4,
+                            letterSpacing: 0.2,
+                            height: 1.0,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
+                        // Values are always numeric/Latin (dates, times, amounts,
+                        // codes). Force LTR so the Arabic RTL layout doesn't
+                        // reorder them (e.g. "12 Jun 2026" -> "Jun 2026 12"); the
+                        // block still sits on the start edge under the label.
                         Text(
                           cell.value,
+                          textDirection: TextDirection.ltr,
                           style: tt.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                            fontSize: 16.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.2,
+                            height: 1.1,
                             color: cs.onSurface,
                           ),
                         ),
@@ -364,6 +374,8 @@ class _CodeFieldRow extends StatelessWidget {
       ),
     );
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     // Force LTR on the Row so the explicit child order is visually respected
     // regardless of the app's text direction (Arabic RTL would otherwise flip it).
     return Directionality(
@@ -372,7 +384,30 @@ class _CodeFieldRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: borderColor, width: 1.2),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withValues(alpha: isDark ? 0.22 : 0.68),
+              Colors.white.withValues(alpha: isDark ? 0.08 : 0.32),
+            ],
+          ),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: isDark ? 0.38 : 0.85),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.50),
+              blurRadius: 6,
+              offset: const Offset(0, 1),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: isArabic
