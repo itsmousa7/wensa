@@ -39,6 +39,18 @@ class _InAppBrowserSheetState extends State<InAppBrowserSheet> {
           _loading = p < 100;
         }),
         onPageFinished: (_) => setState(() => _loading = false),
+        onNavigationRequest: (request) async {
+          final uri = Uri.tryParse(request.url);
+          // The WebView can only load http(s). Hand off other schemes
+          // (mailto:, tel:, etc.) to the OS so the mail/phone app opens.
+          if (uri != null && uri.scheme != 'http' && uri.scheme != 'https') {
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
+            return NavigationDecision.prevent;
+          }
+          return NavigationDecision.navigate;
+        },
       ))
       ..loadRequest(Uri.parse(widget.url));
   }
