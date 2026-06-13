@@ -22,8 +22,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 void main() async {
-  final binding = WidgetsFlutterBinding.ensureInitialized();
-
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
 
   // Initialize Firebase (will fail gracefully until native config is added)
@@ -53,7 +52,6 @@ void main() async {
     debugPrint('[FCM] Initialization error (non-fatal): $e');
   }
 
- 
   runApp(const ProviderScope(child: MyApp()));
 }
 
