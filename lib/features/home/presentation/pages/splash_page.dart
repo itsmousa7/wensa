@@ -22,27 +22,11 @@ class SplashPage extends ConsumerStatefulWidget {
   ConsumerState<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends ConsumerState<SplashPage>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _fade;
-
+class _SplashPageState extends ConsumerState<SplashPage> {
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
-    _ctrl.forward();
     _navigate();
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
   }
 
   Future<void> _navigate() async {
@@ -56,13 +40,12 @@ class _SplashPageState extends ConsumerState<SplashPage>
 
   @override
   Widget build(BuildContext context) {
+    // Rendered identically to the native launch screen (same logo, same white
+    // background) so the handoff from native splash → Flutter is seamless.
     return Scaffold(
       backgroundColor: AppColors.white,
       body: Center(
-        child: FadeTransition(
-          opacity: _fade,
-          child: Image.asset('assets/icons/wensa_icon.png', width: 220),
-        ),
+        child: Image.asset('assets/icons/wensa_icon.png', width: 230),
       ),
     );
   }

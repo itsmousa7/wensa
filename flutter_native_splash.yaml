@@ -1,0 +1,19 @@
+# Native splash screen — shows the wensa logo the instant the app opens,
+# eliminating the white gap before Flutter boots.
+#
+# Regenerate after changing this file:
+#   dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#FFFFFF"
+  # 920px source → renders at 230dp (source ÷ 4), matching the Flutter
+  # SplashPage's Image.asset(width: 230) for a seamless handoff.
+  image: assets/icons/wensa_splash.png
+
+  # Android 12+ uses the system splash API (logo is masked to a circle).
+  android_12:
+    color: "#FFFFFF"
+    image: assets/icons/wensa_splash.png
+
+  android: true
+  ios: true
+  web: false
