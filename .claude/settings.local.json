@@ -80,7 +80,9 @@
       "Bash(flutter doctor *)",
       "Bash(pod install *)",
       "Bash(xcodebuild -project Runner.xcodeproj -showBuildSettings)",
-      "Bash(flutter config *)"
+      "Bash(flutter config *)",
+      "Bash(vercel --version)",
+      "Bash(vercel *)"
     ]
   }
 }

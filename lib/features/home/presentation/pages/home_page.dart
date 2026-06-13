@@ -131,15 +131,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         body: SafeArea(
           top: false,
           bottom: false,
-          child: Column(
-            children: [
-              // ── Fixed top sections ───────────────────────────────────────
-              const HomeAppBar(),
-              HomeSearchBar(),
-
-              // ── Scrollable content (refresh indicator shows below header) ─
-              Expanded(
-                child: CustomScrollView(
+          child: CustomScrollView(
                   controller: scrollCtrl,
                   physics: const BouncingScrollPhysics(
                     parent: AlwaysScrollableScrollPhysics(),
@@ -180,6 +172,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                             );
                           },
                     ),
+
+                    // ── Header scrolls away with the content ─────────────────────
+                    const SliverToBoxAdapter(child: HomeAppBar()),
+                    SliverToBoxAdapter(child: HomeSearchBar()),
 
                     // ── Network error state — replaces ALL feed sections ─────────
                     if (hasNetworkError) ...[
@@ -337,9 +333,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ],
                   ],
                 ),
-              ),
-            ],
-          ),
         ),
       ),
     );

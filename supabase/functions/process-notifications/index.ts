@@ -128,21 +128,26 @@ async function sendOne(
   return { ok: true };
 }
 
-/// Fetch every device token for the given users → { user_id: [token, …] }.
-/// One row per device, so a user signed in on several devices gets several.
+interface DeviceToken {
+  token: string;
+  locale: string | null;
+}
+
+/// Fetch every device token for the given users → { user_id: [{token, locale}, …] }.
+/// One row per device, each carrying that device's own notification language.
 async function getTokensByUser(
   supabase: any,
   userIds: string[],
-): Promise<Record<string, string[]>> {
-  const map: Record<string, string[]> = {};
+): Promise<Record<string, DeviceToken[]>> {
+  const map: Record<string, DeviceToken[]> = {};
   if (!userIds.length) return map;
   const { data } = await supabase
     .schema("profiles")
     .from("user_fcm_tokens")
-    .select("user_id, token")
+    .select("user_id, token, locale")
     .in("user_id", userIds);
   for (const row of data ?? []) {
-    (map[row.user_id] ??= []).push(row.token);
+    (map[row.user_id] ??= []).push({ token: row.token, locale: row.locale });
   }
   return map;
 }
@@ -159,14 +164,62 @@ async function getUnreadCount(supabase: any, userId: string): Promise<number> {
   return count ?? 0;
 }
 
-/// Send one notification to all of a user's device tokens. Prunes any token
-/// FCM reports as stale. Returns how many devices were reached. `badge` is the
-/// app-icon badge count to display (unread inbox count including this push).
+/// Bilingual display name for a place. → { id: { en, ar } }.
+async function getPlaceNames(
+  supabase: any,
+  placeIds: string[],
+): Promise<Record<string, { en: string | null; ar: string | null }>> {
+  const map: Record<string, { en: string | null; ar: string | null }> = {};
+  const ids = [...new Set(placeIds.filter(Boolean))];
+  if (!ids.length) return map;
+  const { data } = await supabase
+    .schema("content")
+    .from("places")
+    .select("id, name_en, name_ar")
+    .in("id", ids);
+  for (const row of data ?? []) map[row.id] = { en: row.name_en, ar: row.name_ar };
+  return map;
+}
+
+/// Bilingual display name for an event. → { id: { en, ar } }.
+async function getEventNames(
+  supabase: any,
+  eventIds: string[],
+): Promise<Record<string, { en: string | null; ar: string | null }>> {
+  const map: Record<string, { en: string | null; ar: string | null }> = {};
+  const ids = [...new Set(eventIds.filter(Boolean))];
+  if (!ids.length) return map;
+  const { data } = await supabase
+    .schema("content")
+    .from("events")
+    .select("id, title_en, title_ar")
+    .in("id", ids);
+  for (const row of data ?? []) map[row.id] = { en: row.title_en, ar: row.title_ar };
+  return map;
+}
+
+/// Append a place/event name to a reminder title, e.g. "Booking Reminder — Foo".
+/// Falls back to the bare title when no name is available.
+function titleWithName(base: string, name: string | null): string {
+  return name ? `${base} — ${name}` : base;
+}
+
+interface LocalizedText {
+  title: string;
+  body: string;
+}
+
+/// Send a notification to all of a user's devices, each in its OWN language.
+/// Each device token carries its locale; we fall back to `fallbackLocale`
+/// (the user's stored preference) for tokens saved before per-device locale
+/// existed, then to English. Prunes any token FCM reports as stale. `badge`
+/// is the app-icon badge count to display (unread inbox count including this).
 async function sendToTokens(
   supabase: any,
-  tokens: string[],
-  title: string,
-  body: string,
+  tokens: DeviceToken[],
+  fallbackLocale: string,
+  en: LocalizedText,
+  ar: LocalizedText,
   projectId: string,
   accessToken: string,
   badge: number,
@@ -175,7 +228,9 @@ async function sendToTokens(
   let sent = 0;
   let errors = 0;
   const errorMsgs: string[] = [];
-  for (const token of tokens) {
+  for (const { token, locale } of tokens) {
+    const isAr = (locale ?? fallbackLocale ?? "en") === "ar";
+    const { title, body } = isAr ? ar : en;
     const r = await sendOne(token, title, body, projectId, accessToken, badge, data);
     if (r.ok) {
       sent++;
@@ -231,7 +286,7 @@ Deno.serve(async (_req) => {
       let query = supabase
         .schema("bookings")
         .from("bookings")
-        .select("id, user_id, category")
+        .select("id, user_id, category, place_id, event_id")
         .eq("status", "confirmed")
         .eq("payment_status", "paid")
         .is("reminder_sent_at", null)
@@ -255,19 +310,30 @@ Deno.serve(async (_req) => {
         .in("id", userIds);
       const userMap = Object.fromEntries((users ?? []).map((u: any) => [u.id, u]));
       const tokensByUser = await getTokensByUser(supabase, userIds);
+      // Concerts carry an event title; hourly bookings carry a place name.
+      const placeNames = await getPlaceNames(
+        supabase, dueBookings.map((b: any) => b.place_id),
+      );
+      const eventNames = await getEventNames(
+        supabase, dueBookings.map((b: any) => b.event_id),
+      );
 
       for (const booking of dueBookings) {
         const user = userMap[booking.user_id];
         const tokens = tokensByUser[booking.user_id] ?? [];
         if (!user || tokens.length === 0) continue;
 
-        const isAr = (user.preferred_locale ?? "en") === "ar";
-        const title = isAr ? cfg.title_ar : cfg.title_en;
-        const body  = isAr ? cfg.body_ar  : cfg.body_en;
+        // Prefer the event title (concerts); fall back to the place name.
+        const nm = eventNames[booking.event_id] ?? placeNames[booking.place_id] ?? null;
+        const titleEn = titleWithName(cfg.title_en, nm?.en ?? null);
+        const titleAr = titleWithName(cfg.title_ar, nm?.ar ?? null);
 
         const badge = (await getUnreadCount(supabase, booking.user_id)) + 1;
         const { sent, errors, errorMsgs } = await sendToTokens(
-          supabase, tokens, title, body, sa.project_id, accessToken, badge,
+          supabase, tokens, user.preferred_locale ?? "en",
+          { title: titleEn, body: cfg.body_en },
+          { title: titleAr, body: cfg.body_ar },
+          sa.project_id, accessToken, badge,
           { booking_id: booking.id, kind: cfgKey },
         );
 
@@ -283,8 +349,8 @@ Deno.serve(async (_req) => {
             .insert({
               user_id: booking.user_id,
               kind: cfgKey,
-              title_en: cfg.title_en,
-              title_ar: cfg.title_ar,
+              title_en: titleEn,
+              title_ar: titleAr,
               body_en: cfg.body_en,
               body_ar: cfg.body_ar,
               data: { booking_id: booking.id },
@@ -309,7 +375,7 @@ Deno.serve(async (_req) => {
       const { data: dueMemberships } = await supabase
         .schema("bookings")
         .from("memberships")
-        .select("id, user_id, ends_at")
+        .select("id, user_id, ends_at, place_id")
         .eq("status", "active")
         .is("reminder_sent_at", null)
         .gte("ends_at", targetFromIso)
@@ -324,19 +390,25 @@ Deno.serve(async (_req) => {
           .in("id", userIds);
         const userMap = Object.fromEntries((users ?? []).map((u: any) => [u.id, u]));
         const tokensByUser = await getTokensByUser(supabase, userIds);
+        const placeNames = await getPlaceNames(
+          supabase, dueMemberships.map((m: any) => m.place_id),
+        );
 
         for (const m of dueMemberships) {
           const user = userMap[m.user_id];
           const tokens = tokensByUser[m.user_id] ?? [];
           if (!user || tokens.length === 0) continue;
 
-          const isAr = (user.preferred_locale ?? "en") === "ar";
-          const title = isAr ? memCfg.title_ar : memCfg.title_en;
-          const body  = isAr ? memCfg.body_ar  : memCfg.body_en;
+          const nm = placeNames[m.place_id] ?? null;
+          const titleEn = titleWithName(memCfg.title_en, nm?.en ?? null);
+          const titleAr = titleWithName(memCfg.title_ar, nm?.ar ?? null);
 
           const badge = (await getUnreadCount(supabase, m.user_id)) + 1;
           const { sent, errors, errorMsgs } = await sendToTokens(
-            supabase, tokens, title, body, sa.project_id, accessToken, badge,
+            supabase, tokens, user.preferred_locale ?? "en",
+            { title: titleEn, body: memCfg.body_en },
+            { title: titleAr, body: memCfg.body_ar },
+            sa.project_id, accessToken, badge,
             { membership_id: m.id, kind: "membership" },
           );
 
@@ -352,8 +424,8 @@ Deno.serve(async (_req) => {
               .insert({
                 user_id: m.user_id,
                 kind: "membership",
-                title_en: memCfg.title_en,
-                title_ar: memCfg.title_ar,
+                title_en: titleEn,
+                title_ar: titleAr,
                 body_en: memCfg.body_en,
                 body_ar: memCfg.body_ar,
                 data: { membership_id: m.id },
@@ -402,17 +474,26 @@ Deno.serve(async (_req) => {
 
         const broadcastKind = `broadcast_${broadcast.type ?? "general"}`;
 
+        // Fall back to the other language if a broadcast only filled one side,
+        // so a device never receives an empty title/body.
+        const en: LocalizedText = {
+          title: broadcast.title_en || broadcast.title_ar,
+          body:  broadcast.body_en  || broadcast.body_ar,
+        };
+        const ar: LocalizedText = {
+          title: broadcast.title_ar || broadcast.title_en,
+          body:  broadcast.body_ar  || broadcast.body_en,
+        };
+
         for (const user of audience) {
           const tokens = tokensByUser[user.id] ?? [];
           if (tokens.length === 0) continue;
-          const isAr = (user.preferred_locale ?? "en") === "ar";
-          const title = isAr ? broadcast.title_ar : broadcast.title_en;
-          const body  = isAr ? broadcast.body_ar  : broadcast.body_en;
-          if (!title || !body) continue;
+          if (!en.title || !en.body) continue;
 
           const badge = (await getUnreadCount(supabase, user.id)) + 1;
           const { sent, errors, errorMsgs } = await sendToTokens(
-            supabase, tokens, title, body, sa.project_id, accessToken, badge,
+            supabase, tokens, user.preferred_locale ?? "en",
+            en, ar, sa.project_id, accessToken, badge,
             { broadcast_id: broadcast.id, kind: broadcastKind },
           );
           if (sent > 0) {

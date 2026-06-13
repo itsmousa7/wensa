@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../features/notifications/fcm_service.dart';
 import 'locale_state.dart';
 
 part 'app_locale_provider.g.dart';
@@ -46,6 +47,9 @@ class AppLocale extends _$AppLocale {
             : 'en')
         : localeCode;
     _syncLocaleToSupabase(syncCode);
+    // Update THIS device's token locale so its notifications follow the new
+    // language independently of other devices on the account.
+    FcmService.instance.updateDeviceLocale();
   }
 
   void _syncLocaleToSupabase(String localeCode) {

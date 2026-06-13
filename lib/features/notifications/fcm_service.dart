@@ -115,7 +115,7 @@ class FcmService {
       android: androidSettings,
       iOS: iosSettings,
     );
-    await _localNotifications.initialize(initSettings);
+    await _localNotifications.initialize(settings: initSettings);
 
     // Create the Android high-importance channel once
     await _localNotifications
@@ -144,14 +144,41 @@ class FcmService {
       final platform = defaultTargetPlatform == TargetPlatform.iOS
           ? 'ios'
           : 'android';
+      // Persist THIS device's notification language alongside its token so the
+      // backend pushes in the language this device is showing — independent of
+      // any other device signed into the same account.
+      final locale = await _effectiveLocale();
 
       await supabase.rpc(
         'save_fcm_token',
-        params: {'p_token': token, 'p_platform': platform},
+        params: {'p_token': token, 'p_platform': platform, 'p_locale': locale},
       );
-      debugPrint('[FCM] Token saved for user $uid');
+      debugPrint('[FCM] Token saved for user $uid (locale=$locale)');
     } catch (e) {
       debugPrint('[FCM] Failed to save token: $e');
+    }
+  }
+
+  /// Re-save this device's token with its current app language. Called when the
+  /// user switches the in-app language so notifications for THIS device follow
+  /// it, without waiting for a token refresh.
+  Future<void> updateDeviceLocale() async {
+    final token = _currentToken;
+    if (token == null) return;
+    try {
+      final supabase = Supabase.instance.client;
+      if (supabase.auth.currentUser == null) return;
+      final platform = defaultTargetPlatform == TargetPlatform.iOS
+          ? 'ios'
+          : 'android';
+      final locale = await _effectiveLocale();
+      await supabase.rpc(
+        'save_fcm_token',
+        params: {'p_token': token, 'p_platform': platform, 'p_locale': locale},
+      );
+      debugPrint('[FCM] Device locale updated to $locale');
+    } catch (e) {
+      debugPrint('[FCM] Failed to update device locale: $e');
     }
   }
 
@@ -212,10 +239,10 @@ class FcmService {
     debugPrint('[FCM foreground] $title: $body');
 
     _localNotifications.show(
-      DateTime.now().millisecondsSinceEpoch.remainder(100000),
-      title,
-      body,
-      const NotificationDetails(
+      id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
+      title: title,
+      body: body,
+      notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           _kChannelId,
           _kChannelName,

@@ -39,7 +39,6 @@ class _SplashPageState extends ConsumerState<SplashPage>
     _navigate();
   }
 
-
   @override
   void dispose() {
     _ctrl.dispose();
@@ -58,17 +57,11 @@ class _SplashPageState extends ConsumerState<SplashPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.lightGreenPrimary,
+      backgroundColor: AppColors.white,
       body: Center(
         child: FadeTransition(
           opacity: _fade,
-          child: Text(
-            'ونسة',
-            style: Theme.of(context).textTheme.displayMedium?.copyWith(
-              color: AppColors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          child: Image.asset('assets/icons/wensa_icon.png', width: 220),
         ),
       ),
     );

@@ -9,17 +9,17 @@ import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/constants/theme/theme_provider.dart';
 import 'package:future_riverpod/core/constants/theme/theme_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
-import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
+import 'package:future_riverpod/core/widgets/in_app_browser_sheet.dart';
 import 'package:future_riverpod/core/widgets/place_statistic_chip.dart';
+import 'package:future_riverpod/features/bottom_bar/providers/bottom_bar_providers.dart';
+import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/profile/presentation/providers/user_profile_provider.dart';
+import 'package:future_riverpod/features/profile/presentation/widgets/delete_account_button.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/profile_header.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/section_label.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/settings_card.dart';
-import 'package:future_riverpod/features/profile/presentation/widgets/delete_account_button.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/sign_out_button.dart';
-import 'package:future_riverpod/features/bottom_bar/providers/bottom_bar_providers.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/support_button.dart';
-import 'package:future_riverpod/core/widgets/in_app_browser_sheet.dart';
 import 'package:go_router/go_router.dart';
 
 class ProfileContent extends ConsumerWidget {
@@ -209,8 +209,10 @@ class ProfileContent extends ConsumerWidget {
                           bottomBarHiddenProvider.notifier,
                         );
                         notifier.hide();
-                        showInAppBrowser(context, 'https://privacy.wensa.app')
-                            .whenComplete(notifier.show);
+                        showInAppBrowser(
+                          context,
+                          'https://wensa.app/privacy',
+                        ).whenComplete(notifier.show);
                       },
                       showChevron: true,
                     ),
