@@ -51,6 +51,7 @@
     }
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
+    .email-link { cursor: pointer; }
     .toggle {
       border: 1px solid var(--border); background: var(--surface); color: var(--text);
       border-radius: 999px; padding: 8px 16px; font-size: 14px; font-weight: 600;
@@ -109,7 +110,7 @@ Payment information: when you make a booking, payments are processed by our paym
       <h2>Changes to This Policy</h2>
       <p>We may update this Privacy Policy from time to time. The latest version will always be available here and in the app, with the updated date shown at the top.</p>
 
-      <div class="contact">For any privacy questions, contact us at <a href="mailto:support@wensa.app">support@wensa.app</a> or through the in-app Support button.</div>
+      <div class="contact">For any privacy questions, contact us at <a class="email-link" href="mailto:support@wensa.app" onclick="handleEmail(event)">support@wensa.app</a> or through the in-app Support button.</div>
     </main>
 
     <!-- ARABIC -->
@@ -153,7 +154,7 @@ Payment information: when you make a booking, payments are processed by our paym
       <h2>التغييرات على هذه السياسة</h2>
       <p>قد نقوم بتحديث سياسة الخصوصية هذه من حين لآخر. ستتوفر أحدث نسخة دائماً هنا وداخل التطبيق، مع عرض تاريخ التحديث في الأعلى.</p>
 
-      <div class="contact">لأي استفسار حول خصوصيتك، تواصل معنا عبر <a href="mailto:support@wensa.app">support@wensa.app</a> أو عبر زر الدعم داخل التطبيق.</div>
+      <div class="contact">لأي استفسار حول خصوصيتك، تواصل معنا عبر <a class="email-link" href="mailto:support@wensa.app" onclick="handleEmail(event)">support@wensa.app</a> أو عبر زر الدعم داخل التطبيق.</div>
     </main>
 
     <footer>© <span id="year"></span> Wensa. wensa.app</footer>
@@ -170,6 +171,11 @@ Payment information: when you make a booking, payments are processed by our paym
       document.getElementById('content-ar').hidden = !isAr;
       document.getElementById('langToggle').textContent = isAr ? 'English' : 'العربية';
       try { localStorage.setItem('wensa-lang', lang); } catch (e) {}
+    }
+    function handleEmail(e) {
+      e.preventDefault();
+      var email = 'support@wensa.app';
+      window.location.href = 'mailto:' + email;
     }
     document.getElementById('year').textContent = new Date().getFullYear();
     // Restore preference, else follow browser language.
