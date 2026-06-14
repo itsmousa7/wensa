@@ -99,6 +99,7 @@ class _ProfileAvatarState extends ConsumerState<ProfileAvatar> {
 
     showCupertinoModalPopup<void>(
       context: context,
+      useRootNavigator: true,
       builder: (sheetContext) => CupertinoActionSheet(
         title: const Text('Profile Photo'),
         actions: [
@@ -144,13 +145,16 @@ class _ProfileAvatarState extends ConsumerState<ProfileAvatar> {
 
     showModalBottomSheet<void>(
       context: context,
+      // Present on the root navigator so the sheet (and its scrim) sit above
+      // the bottom navigation bar instead of behind it.
+      useRootNavigator: true,
       backgroundColor: cs.surface,
       isScrollControlled: true,
       useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => Padding(
+      builder: (sheetContext) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -167,14 +171,17 @@ class _ProfileAvatarState extends ConsumerState<ProfileAvatar> {
             const SizedBox(height: 20),
             Text(
               'Profile Photo',
-              style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              style: tt.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: cs.onSurface,
+              ),
             ),
             const SizedBox(height: 20),
             _SheetOption(
               icon: Icons.camera_alt_rounded,
               label: 'Take a Photo',
               onTap: () {
-                Navigator.of(context).pop();
+                Navigator.of(sheetContext).pop();
                 _pick(ImageSource.camera);
               },
             ),
@@ -183,7 +190,7 @@ class _ProfileAvatarState extends ConsumerState<ProfileAvatar> {
               icon: Icons.photo_library_rounded,
               label: 'Choose from Gallery',
               onTap: () {
-                Navigator.of(context).pop();
+                Navigator.of(sheetContext).pop();
                 _pick(ImageSource.gallery);
               },
             ),
@@ -194,7 +201,7 @@ class _ProfileAvatarState extends ConsumerState<ProfileAvatar> {
                 icon: Icons.delete_outline_rounded,
                 label: 'Remove Photo',
                 onTap: () {
-                  Navigator.of(context).pop();
+                  Navigator.of(sheetContext).pop();
                   _delete();
                 },
                 isDestructive: true,

@@ -27,21 +27,21 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
   static const _slides = <_SlideData>[
     _SlideData(
-      asset: 'assets/lottie/onboarding/discover.json',
-      fallbackIcon: Icons.explore_outlined,
+      asset: 'assets/lottie/onboarding/discover.lottie',
+      fallbackIcon: Icons.directions_car_outlined,
       accent: AppColors.lightGreenPrimary,
       titleKey: 'onboarding_title_1',
       bodyKey: 'onboarding_body_1',
     ),
     _SlideData(
-      asset: 'assets/lottie/onboarding/venues.json',
+      asset: 'assets/lottie/onboarding/venues.lottie',
       fallbackIcon: Icons.sports_soccer_outlined,
       accent: AppColors.headline,
       titleKey: 'onboarding_title_2',
       bodyKey: 'onboarding_body_2',
     ),
     _SlideData(
-      asset: 'assets/lottie/onboarding/joy.json',
+      asset: 'assets/lottie/onboarding/joy.lottie',
       fallbackIcon: Icons.celebration_outlined,
       accent: AppColors.lightGreenSecondary,
       titleKey: 'onboarding_title_3',
@@ -182,11 +182,12 @@ class _TopBar extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.language, size: 18),
+                  Icon(Icons.language, size: 18, color: cs.onSurface),
                   const Gap(AppSpacing.sm),
                   Text(
                     isAr ? 'EN' : 'العربية',
                     style: tt.labelLarge?.copyWith(
+                      color: cs.onSurface,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

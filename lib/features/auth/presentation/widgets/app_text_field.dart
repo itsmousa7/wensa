@@ -138,7 +138,7 @@ class AppTextField extends StatefulWidget {
        showPasswordToggle = false;
 
   /// Phone text field
-  const AppTextField.phone({
+  AppTextField.phone({
     this.hint = 'Phone Number',
     this.controller,
     this.validator,
@@ -157,7 +157,7 @@ class AppTextField extends StatefulWidget {
        prefixIcon = const Icon(CupertinoIcons.phone),
        suffixIcon = null,
        onTap = null,
-       inputFormatters = null,
+       inputFormatters = [FilteringTextInputFormatter.digitsOnly],
        textCapitalization = TextCapitalization.none,
        helperText = null,
        errorText = null,

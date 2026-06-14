@@ -74,11 +74,13 @@ class AppStrings {
       'new_email': 'New Email Address',
       'update_email': 'Update Email',
       'enter_new_email': 'Please enter a new email address',
-      'email_same_as_current': 'New email must be different from your current email',
+      'email_same_as_current':
+          'New email must be different from your current email',
       'email_change_success': 'Email updated successfully!',
       'email_change_otp_sent': 'A verification code was sent to your new email',
       'email_change_title': 'Verify New Email',
-      'email_already_registered': 'This email is already linked to another account. Please use a different email address.',
+      'email_already_registered':
+          'This email is already linked to another account. Please use a different email address.',
 
       // OTP
       'otp_sent': 'OTP sent to',
@@ -88,7 +90,8 @@ class AppStrings {
       'recovery_success': 'Email verified! Now set your new password',
       'enter_complete_code': 'Please enter the complete code',
       'verification_failed': 'Verification failed',
-      'otp_expired': 'This code has expired. Tap "Resend Code" to get a new one.',
+      'otp_expired':
+          'This code has expired. Tap "Resend Code" to get a new one.',
       'otp_invalid': 'Incorrect code. Please check and try again.',
       'error_resending': 'Error resending OTP',
       'error_prefix': 'Error',
@@ -188,11 +191,14 @@ class AppStrings {
       'new_email': 'البريد الإلكتروني الجديد',
       'update_email': 'تحديث البريد الإلكتروني',
       'enter_new_email': 'يرجى إدخال بريد إلكتروني جديد',
-      'email_same_as_current': 'يجب أن يكون البريد الجديد مختلفاً عن بريدك الحالي',
+      'email_same_as_current':
+          'يجب أن يكون البريد الجديد مختلفاً عن بريدك الحالي',
       'email_change_success': 'تم تحديث البريد الإلكتروني بنجاح!',
-      'email_change_otp_sent': 'تم إرسال رمز التحقق إلى بريدك الإلكتروني الجديد',
+      'email_change_otp_sent':
+          'تم إرسال رمز التحقق إلى بريدك الإلكتروني الجديد',
       'email_change_title': 'تحقق من البريد الجديد',
-      'email_already_registered': 'هذا البريد الإلكتروني مرتبط بحساب آخر. يرجى استخدام بريد إلكتروني مختلف.',
+      'email_already_registered':
+          'هذا البريد الإلكتروني مرتبط بحساب آخر. يرجى استخدام بريد إلكتروني مختلف.',
 
       // OTP
       'otp_sent': 'تم إرسال الرمز إلى',
@@ -202,7 +208,8 @@ class AppStrings {
       'recovery_success': 'تم التحقق! قم الآن بتعيين كلمة مرور جديدة',
       'enter_complete_code': 'يرجى إدخال الرمز كاملاً',
       'verification_failed': 'فشل التحقق',
-      'otp_expired': 'انتهت صلاحية هذا الرمز. اضغط على "إعادة إرسال الرمز" للحصول على رمز جديد.',
+      'otp_expired':
+          'انتهت صلاحية هذا الرمز. اضغط على "إعادة إرسال الرمز" للحصول على رمز جديد.',
       'otp_invalid': 'الرمز غير صحيح. يرجى التحقق والمحاولة مجدداً.',
       'error_resending': 'خطأ في إعادة إرسال الرمز',
       'error_prefix': 'خطأ',
@@ -228,7 +235,7 @@ class AppStrings {
           'بدوسة وحدة تحجز وتتونس... الونسة صارت أسهل من قبل بهواية.',
       'onboarding_skip': 'تخطّي',
       'onboarding_next': 'التالي',
-      'onboarding_get_started': 'يلّا نبدأ',
+      'onboarding_get_started': 'يلّا نبدي',
     },
   };
 

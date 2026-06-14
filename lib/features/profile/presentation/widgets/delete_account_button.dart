@@ -22,12 +22,16 @@ class _DeleteAccountButtonState extends ConsumerState<DeleteAccountButton> {
   Future<void> _showConfirmationSheet() async {
     await showModalBottomSheet(
       context: context,
+      // Present on the root navigator so the sheet + scrim sit above the
+      // bottom navigation bar instead of behind it.
+      useRootNavigator: true,
+      useSafeArea: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

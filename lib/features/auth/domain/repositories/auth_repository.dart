@@ -1,4 +1,5 @@
 import 'package:future_riverpod/features/auth/domain/repositories/exceptions_supabase.dart';
+import 'package:future_riverpod/services/apple_auth_service.dart';
 import 'package:future_riverpod/services/google_auth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -43,6 +44,15 @@ class AuthRepository {
     try {
       final googleAuthService = GoogleAuthService(_client);
       return await googleAuthService.signInWithGoogle();
+    } catch (e) {
+      throw handleException(e);
+    }
+  }
+
+  Future<AuthResponse> signInWithApple() async {
+    try {
+      final appleAuthService = AppleAuthService(_client);
+      return await appleAuthService.signInWithApple();
     } catch (e) {
       throw handleException(e);
     }

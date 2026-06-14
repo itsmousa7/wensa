@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/app_strings_extentions.dart';
@@ -251,6 +252,7 @@ class _PhoneField extends StatelessWidget {
         languageCode: languageCode,
         initialCountryCode: 'IQ',
         invalidNumberMessage: invalidNumberMessage,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         onChanged: onChanged,
         validator: (phone) {
           if (phone == null || phone.number.trim().isEmpty) {

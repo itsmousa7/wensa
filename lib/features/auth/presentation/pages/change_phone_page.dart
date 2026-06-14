@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_strings_extentions.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
@@ -108,6 +109,7 @@ class _ChangePhonePageState extends ConsumerState<ChangePhonePage> {
                   enabled: !_isLoading,
                   initialCountryCode: 'IQ',
                   invalidNumberMessage: context.tr('valid_phone'),
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   onChanged: (phone) => _phoneNumber = phone,
                   validator: (phone) {
                     if (phone == null || phone.number.trim().isEmpty) {

@@ -40,6 +40,7 @@ class OnboardingSlide extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: tt.headlineMedium?.copyWith(
+              color: cs.onSurface,
               fontWeight: FontWeight.w700,
               height: 1.2,
             ),

@@ -85,7 +85,7 @@ final class FavoritesFeedProvider
   }
 }
 
-String _$favoritesFeedHash() => r'010a08510da742731c768cbdff6b288003dac035';
+String _$favoritesFeedHash() => r'e92894408cdef17fbc0d4bcde405039717042469';
 
 abstract class _$FavoritesFeed extends $Notifier<CategoryFeedState> {
   CategoryFeedState build();

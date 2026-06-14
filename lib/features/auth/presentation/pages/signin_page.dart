@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +13,7 @@ import 'package:future_riverpod/core/constants/theme/theme_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/core/utils/error_dialog.dart';
 import 'package:future_riverpod/features/auth/domain/models/custom_error.dart';
+import 'package:future_riverpod/features/auth/presentation/providers/apple_auth_provider.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/auth_repository_provider.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/google_auth_provider.dart';
 import 'package:future_riverpod/features/auth/presentation/providers/signin_provider.dart';
@@ -109,6 +112,15 @@ class _SigninPageState extends ConsumerState<SigninPage> {
         prev: prev,
         next: next,
         // No onLoading here anymore
+        onError: (error) => errorDialog(context, error),
+      );
+    });
+
+    ref.listen(appleAuthProvider, (prev, next) {
+      listenAsyncProvider(
+        context: context,
+        prev: prev,
+        next: next,
         onError: (error) => errorDialog(context, error),
       );
     });
@@ -257,6 +269,32 @@ class _SigninPageState extends ConsumerState<SigninPage> {
                       ),
                       label: context.tr('continue_google'),
                     ),
+
+                    if (Platform.isIOS) ...[
+                      const Gap(AppSpacing.mlg),
+                      AppButton.secondary(
+                        onPressed: () async {
+                          // Capture navigator before the async gap — context may
+                          // be unmounted by the time GoRouter navigates to /home.
+                          final nav = Navigator.of(
+                            context,
+                            rootNavigator: true,
+                          );
+                          showLoadingDialog(context);
+                          await ref
+                              .read(appleAuthProvider.notifier)
+                              .signInWithApple();
+                          if (nav.canPop()) nav.pop();
+                        },
+                        color: theme.colorScheme.outline,
+                        icon: Icon(
+                          Icons.apple,
+                          size: height * 0.025,
+                          color: theme.colorScheme.outline,
+                        ),
+                        label: context.tr('continue_apple'),
+                      ),
+                    ],
 
                     const Gap(20),
                     Row(

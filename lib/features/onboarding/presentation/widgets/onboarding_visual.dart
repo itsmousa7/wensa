@@ -14,7 +14,7 @@ class OnboardingVisual extends StatelessWidget {
     required this.accent,
   });
 
-  /// Path to the Lottie JSON, e.g. `assets/lottie/onboarding/discover.json`.
+  /// Path to the dotLottie file, e.g. `assets/lottie/onboarding/discover.lottie`.
   final String asset;
   final IconData fallbackIcon;
   final Color accent;
