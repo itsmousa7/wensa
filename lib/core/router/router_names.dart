@@ -11,6 +11,7 @@ class RouteNames {
   static const verifyEmail = 'otpPage';
   static const completeProfile = 'completeProfile';
   static const splash = 'splash';
+  static const onboarding = 'onboarding';
   static const profile = 'profile';
   static const search = 'search';
   static const favorites = 'favorites';

@@ -15,6 +15,7 @@ class AppStrings {
       'have_account': 'Already have an account?',
       'log_in': 'Log in',
       'continue_google': 'Continue with Google',
+      'continue_apple': 'Continue with Apple',
       'first_name': 'First Name',
       'second_name': 'Second Name',
       'phone_number': 'Phone Number',
@@ -101,6 +102,20 @@ class AppStrings {
       'valid_phone': 'Please enter a valid phone number',
       'save': 'Save',
       'sign_out': 'Sign out',
+
+      // Onboarding
+      'onboarding_title_1': "Discover what's around you",
+      'onboarding_body_1':
+          'Farms, parties, restaurants and outings — all in one place.',
+      'onboarding_title_2': 'Book courts & grab tickets',
+      'onboarding_body_2':
+          'Padel, football pitches, events and tickets — reserve them all from your seat.',
+      'onboarding_title_3': 'All the fun in one place',
+      'onboarding_body_3':
+          'One tap to book and enjoy — your good times, made effortless.',
+      'onboarding_skip': 'Skip',
+      'onboarding_next': 'Next',
+      'onboarding_get_started': 'Get Started',
     },
     'ar': {
       // Auth
@@ -114,6 +129,7 @@ class AppStrings {
       'have_account': 'لديك حساب بالفعل؟',
       'log_in': 'تسجيل الدخول',
       'continue_google': 'المتابعة عبر جوجل',
+      'continue_apple': 'المتابعة عبر آبل',
       'first_name': 'الاسم الأول',
       'second_name': 'الاسم الثاني',
       'phone_number': 'رقم الهاتف',
@@ -200,6 +216,19 @@ class AppStrings {
       'valid_phone': 'يرجى إدخال رقم هاتف صحيح',
       'save': 'حفظ',
       'sign_out': 'تسجيل الخروج',
+
+      // Onboarding — لهجة عراقية
+      'onboarding_title_1': 'شوف شكو ماكو داير مدايرك',
+      'onboarding_body_1': 'مزارع، حفلات، مطاعم وطلعات... كلها بمكان واحد.',
+      'onboarding_title_2': 'احجز ملعبك وتذكرتك',
+      'onboarding_body_2':
+          'بادل، ملاعب خماسي، فعاليات وتذاكر… احجزها كلها وانت بمكانك.',
+      'onboarding_title_3': 'كل الونسة بنفس المكان',
+      'onboarding_body_3':
+          'بدوسة وحدة تحجز وتتونس... الونسة صارت أسهل من قبل بهواية.',
+      'onboarding_skip': 'تخطّي',
+      'onboarding_next': 'التالي',
+      'onboarding_get_started': 'يلّا نبدأ',
     },
   };
 

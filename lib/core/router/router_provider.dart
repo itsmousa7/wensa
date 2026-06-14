@@ -23,6 +23,8 @@ import 'package:future_riverpod/features/home/presentation/pages/home_page.dart'
 import 'package:future_riverpod/features/home/presentation/pages/splash_page.dart';
 import 'package:future_riverpod/features/notifications/fcm_service.dart';
 import 'package:future_riverpod/features/notifications/presentation/pages/notifications_page.dart';
+import 'package:future_riverpod/features/onboarding/data/onboarding_provider.dart';
+import 'package:future_riverpod/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:future_riverpod/features/places/presentation/pages/place_details_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/profile_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/theme_settings_page.dart';
@@ -51,6 +53,11 @@ GoRouter router(Ref ref) {
         path: '/splash',
         name: RouteNames.splash,
         builder: (_, _) => const SplashPage(),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        name: RouteNames.onboarding,
+        builder: (_, _) => const OnboardingPage(),
       ),
       GoRoute(
         path: '/signin',
@@ -199,7 +206,13 @@ String? _redirect(Ref ref, GoRouterState state) {
     if (!ref.read(supabaseReadyProvider)) return null; // still initialising
     final isAuth = ref.read(isAuthenticatedProvider);
     final isVerified = ref.read(isEmailVerifiedProvider);
-    if (!isAuth) return '/signin';
+    if (!isAuth) {
+      // First-launch onboarding gate. `null` while the SharedPreferences flag
+      // is still loading — stay on /splash to avoid flashing the wrong screen.
+      final seen = ref.read(hasSeenOnboardingProvider);
+      if (seen == null) return null;
+      return seen ? '/signin' : '/onboarding';
+    }
     if (!isVerified) return '/verify-email';
     // Wait here until profileProvider resolves — prevents /home from showing
     // for a frame before we know the profile is incomplete.
@@ -226,6 +239,14 @@ String? _redirect(Ref ref, GoRouterState state) {
     if (pendingRoute != null) {
       return pendingRoute;
     }
+  }
+
+  // Onboarding is only for first-launch, logged-out users. Send everyone else
+  // onward: authenticated users back through /splash, returning users to signin.
+  if (path == '/onboarding') {
+    if (isAuth) return '/splash';
+    final seen = ref.read(hasSeenOnboardingProvider);
+    return seen == true ? '/signin' : null;
   }
 
   final isPublic = const [
@@ -343,6 +364,13 @@ class _RouterNotifier extends ChangeNotifier {
     // Profile-completion changes (null → true/false) drive the
     // /complete-profile redirect — refresh GoRouter whenever it flips.
     ref.listen(isProfileCompleteProvider, (prev, next) {
+      if (!ref.read(supabaseReadyProvider)) return;
+      if (prev != next) _notify();
+    });
+
+    // First-launch onboarding flag resolves async (null → true/false); refresh
+    // GoRouter when it settles so the /splash redirect can pick a destination.
+    ref.listen(hasSeenOnboardingProvider, (prev, next) {
       if (!ref.read(supabaseReadyProvider)) return;
       if (prev != next) _notify();
     });
