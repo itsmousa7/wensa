@@ -38,7 +38,12 @@ class _ProfileAvatarState extends ConsumerState<ProfileAvatar> {
 
     // ← Give iOS time to fully dismiss the sheet/picker before presenting
     // the cropper. Without this, image_cropper returns null silently on iOS.
-    await Future.delayed(const Duration(milliseconds: 300));
+    // The camera UI takes longer to dismiss than the gallery picker, so it
+    // needs a larger window — otherwise the cropper is presented while the
+    // camera controller is still on screen and returns null (the photo is
+    // never uploaded).
+    final dismissDelay = source == ImageSource.camera ? 700 : 300;
+    await Future.delayed(Duration(milliseconds: dismissDelay));
     if (!mounted) return;
 
     final cs = Theme.of(context).colorScheme;

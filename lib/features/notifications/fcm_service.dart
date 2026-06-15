@@ -109,7 +109,8 @@ class FcmService {
   }
 
   Future<void> _initLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/app_icons');
+    const androidSettings =
+        AndroidInitializationSettings('@drawable/ic_stat_wensa');
     const iosSettings = DarwinInitializationSettings();
     const initSettings = InitializationSettings(
       android: androidSettings,
@@ -248,6 +249,7 @@ class FcmService {
           _kChannelName,
           importance: Importance.high,
           priority: Priority.high,
+          icon: '@drawable/ic_stat_wensa',
         ),
         iOS: DarwinNotificationDetails(),
       ),

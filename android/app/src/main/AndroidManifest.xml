@@ -39,7 +39,7 @@
         
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@mipmap/ic_launcher"/>
+            android:resource="@drawable/ic_stat_wensa"/>
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/notification_color"/>
@@ -49,6 +49,13 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Required by image_cropper (uCrop). Without this the cropper
+             activity can't launch and the app crashes after picking a photo. -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
     </application>
     <queries>
         <intent>
