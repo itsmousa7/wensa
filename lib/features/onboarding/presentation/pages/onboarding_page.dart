@@ -27,7 +27,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
   static const _slides = <_SlideData>[
     _SlideData(
-      asset: 'assets/lottie/onboarding/discover.lottie',
+      asset: 'assets/lottie/onboarding/car_motorly.lottie',
       fallbackIcon: Icons.directions_car_outlined,
       accent: AppColors.lightGreenPrimary,
       titleKey: 'onboarding_title_1',
