@@ -11,20 +11,20 @@ class PlaceReviewsRepository {
   final SupabaseClient _client;
 
   Future<List<ReviewWithUser>> fetchReviews(String placeId) async {
-    final data = await _client
-        .schema('profiles')
-        .from('reviews')
-        .select('*, app_users(first_name, second_name, avatar_url)')
-        .eq('place_id', placeId)
-        .order('created_at', ascending: false);
+    // SECURITY DEFINER RPC: app_users RLS only exposes the viewer's own row,
+    // so an embedded join hides every other reviewer's name/avatar. The RPC
+    // returns the public profile fields (name + avatar) for all reviewers.
+    final data = await _client.schema('profiles').rpc(
+      'get_place_reviews',
+      params: {'p_place_id': placeId},
+    );
 
     return (data as List).map((row) {
-      final user = row['app_users'] as Map<String, dynamic>?;
       return ReviewWithUser(
         review: ReviewModel.fromJson(row),
-        firstName: user?['first_name'] as String?,
-        secondName: user?['second_name'] as String?,
-        avatarUrl: user?['avatar_url'] as String?,
+        firstName: row['first_name'] as String?,
+        secondName: row['second_name'] as String?,
+        avatarUrl: row['avatar_url'] as String?,
       );
     }).toList();
   }
