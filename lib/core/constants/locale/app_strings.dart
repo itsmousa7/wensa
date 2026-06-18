@@ -16,6 +16,11 @@ class AppStrings {
       'log_in': 'Log in',
       'continue_google': 'Continue with Google',
       'continue_apple': 'Continue with Apple',
+      'browse_as_guest': 'Browse as guest',
+      'guest': 'Guest',
+      'sign_in_required_title': 'Sign in to continue',
+      'sign_in_required_body':
+          'Create an account or sign in to save favorites, book, and manage your bookings.',
       'first_name': 'First Name',
       'second_name': 'Second Name',
       'phone_number': 'Phone Number',
@@ -133,6 +138,11 @@ class AppStrings {
       'log_in': 'تسجيل الدخول',
       'continue_google': 'المتابعة عبر جوجل',
       'continue_apple': 'المتابعة عبر آبل',
+      'browse_as_guest': 'تصفّح كضيف',
+      'guest': 'ضيف',
+      'sign_in_required_title': 'سجّل الدخول للمتابعة',
+      'sign_in_required_body':
+          'أنشئ حساباً أو سجّل الدخول لحفظ المفضلة والحجز وإدارة حجوزاتك.',
       'first_name': 'الاسم الأول',
       'second_name': 'الاسم الثاني',
       'phone_number': 'رقم الهاتف',

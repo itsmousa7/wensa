@@ -6,6 +6,7 @@ import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
+import 'package:future_riverpod/core/widgets/auth_required_sheet.dart';
 import 'package:future_riverpod/core/widgets/discount_badge.dart';
 import 'package:future_riverpod/core/widgets/merchant_logo.dart';
 import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
@@ -97,9 +98,10 @@ class FeedCard extends ConsumerWidget {
                   RouteNames.eventDetails,
                   queryParameters: {'eventId': placeId},
                 )),
-      onDoubleTap: () => ref
-          .read(favoritesProvider.notifier)
-          .toggle(placeId, itemType: itemType),
+      onDoubleTap: () {
+        if (!requireAuth(context, ref)) return;
+        ref.read(favoritesProvider.notifier).toggle(placeId, itemType: itemType);
+      },
       child: Container(
         width: 250,
         decoration: BoxDecoration(borderRadius: AppSpacing.borderRadiusXL),
@@ -149,9 +151,12 @@ class FeedCard extends ConsumerWidget {
                   left: isAr ? 8 : null,
                   child: GestureDetector(
                     // ✅ Pass itemType here too
-                    onTap: () => ref
-                        .read(favoritesProvider.notifier)
-                        .toggle(placeId, itemType: itemType),
+                    onTap: () {
+                      if (!requireAuth(context, ref)) return;
+                      ref
+                          .read(favoritesProvider.notifier)
+                          .toggle(placeId, itemType: itemType);
+                    },
                     child: Container(
                       width: 28,
                       height: 28,

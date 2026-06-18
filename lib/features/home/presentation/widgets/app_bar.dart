@@ -6,7 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
+import 'package:future_riverpod/core/constants/locale/app_strings_extentions.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/core/widgets/auth_required_sheet.dart';
+import 'package:future_riverpod/features/auth/presentation/providers/auth_provider.dart';
 import 'package:future_riverpod/features/notifications/fcm_service.dart';
 import 'package:future_riverpod/features/notifications/presentation/providers/notifications_provider.dart';
 import 'package:future_riverpod/features/profile/presentation/providers/user_profile_provider.dart';
@@ -59,7 +62,14 @@ class HomeAppBar extends ConsumerWidget {
                   ),
                 ),
 
-                error: (_, _) => const SizedBox.shrink(),
+                // Guests have no profile — greet them generically instead of
+                // leaving an empty header.
+                error: (_, _) => Text(
+                  '${context.tr('guest')} 👋',
+                  style: textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
 
                 data: (user) {
                   // BUG FIX: pass uiLocale ('en'/'ar'), not user.firstName
@@ -110,7 +120,9 @@ class _NotificationsBellState extends ConsumerState<_NotificationsBell> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasUnread = ref.watch(unreadNotificationsCountProvider) > 0;
+    // Guests have no notifications — skip the fetch (and badge) entirely.
+    final hasUnread = ref.watch(isAuthenticatedProvider) &&
+        ref.watch(unreadNotificationsCountProvider) > 0;
 
     // iOS — native Liquid Glass bell.
     if (Platform.isIOS) {
@@ -119,7 +131,10 @@ class _NotificationsBellState extends ConsumerState<_NotificationsBell> {
         children: [
           CNButton.icon(
             icon: CNSymbol('bell', size: 18, color: theme.colorScheme.primary),
-            onPressed: () => context.push('/notifications'),
+            onPressed: () {
+              if (!requireAuth(context, ref)) return;
+              context.push('/notifications');
+            },
             config: const CNButtonConfig(
               style: CNButtonStyle.glass,
               width: 40,
@@ -152,7 +167,10 @@ class _NotificationsBellState extends ConsumerState<_NotificationsBell> {
     // Android — original circular surface bell.
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => context.push('/notifications'),
+      onTap: () {
+        if (!requireAuth(context, ref)) return;
+        context.push('/notifications');
+      },
       child: Stack(
         clipBehavior: Clip.none,
         children: [

@@ -7,6 +7,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/widgets/merchant_logo.dart';
 import 'package:future_riverpod/core/widgets/place_statistic_chip.dart';
+import 'package:future_riverpod/core/widgets/auth_required_sheet.dart';
 import 'package:future_riverpod/core/widgets/primary_action_button.dart';
 import 'package:future_riverpod/features/events/domain/models/event_model.dart';
 import 'package:future_riverpod/features/events/presentation/providers/event_app_bar_state.dart';
@@ -240,7 +241,11 @@ class EventInfoSection extends ConsumerWidget {
           const SizedBox(height: 28),
           PrimaryActionButton(
             label: isAr ? 'احجز مقعدك' : 'Book a Seat',
-            onTap: () => context.push('/event/$eventId/book'),
+            onTap: () {
+              // Booking is account-based — prompt guests to sign in first.
+              if (!requireAuth(context, ref)) return;
+              context.push('/event/$eventId/book');
+            },
           ),
           const SizedBox(height: 12),
         ],

@@ -22,6 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
+import 'package:future_riverpod/core/widgets/auth_required_sheet.dart';
 import 'package:future_riverpod/features/bottom_bar/pages/bottom_bar.dart';
 import 'package:future_riverpod/features/bottom_bar/providers/bottom_bar_providers.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/bookings_scroll_signal.dart';
@@ -83,6 +84,10 @@ class AndroidNavShell extends ConsumerWidget {
       context.pushNamed(RouteNames.search);
       return;
     }
+
+    // Favorites (1), Profile (2) and Bookings (3) are account-based — guests
+    // get the sign-in prompt instead of switching branch. Home (0) is open.
+    if (branchIndex != 0 && !requireAuth(context, ref)) return;
 
     navigationShell.goBranch(
       branchIndex,

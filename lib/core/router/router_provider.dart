@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_email_page.dart';
 import 'package:future_riverpod/features/auth/presentation/pages/change_name_page.dart';
@@ -45,7 +45,7 @@ class SupabaseReady extends _$SupabaseReady {
 GoRouter router(Ref ref) {
   return GoRouter(
     initialLocation: '/splash',
-    debugLogDiagnostics: true,
+    debugLogDiagnostics: kDebugMode,
     redirect: (_, state) => _redirect(ref, state),
     refreshListenable: _RouterNotifier(ref),
     routes: [
@@ -256,6 +256,19 @@ String? _redirect(Ref ref, GoRouterState state) {
     '/verify-email',
   ].any(path.startsWith);
 
+  // Guest-browsable content (Apple 5.1.1(v)): these are NOT account based and
+  // must be reachable without signing in. Authenticated users pass through them
+  // normally; unauthenticated guests are allowed instead of bounced to /signin.
+  // Note the absence of trailing slashes — '/placeDetails' / '/eventDetails' are
+  // the read-only detail pages, distinct from the guarded '/place/.../book' and
+  // '/event/.../book' booking routes below.
+  final isPublicContent = const [
+    '/home',
+    '/search',
+    '/placeDetails',
+    '/eventDetails',
+  ].any(path.startsWith);
+
   // Signed-in + verified users with an incomplete profile must finish the
   // /complete-profile flow before they can access any guarded route.
   if (isAuth && isVerified && isComplete == false) {
@@ -268,18 +281,19 @@ String? _redirect(Ref ref, GoRouterState state) {
     return null;
   }
 
+  // Account-based routes — always require a verified session. Content routes
+  // (/home, /search, /placeDetails, /eventDetails) are intentionally absent so
+  // guests can browse them. The booking guards use trailing slashes ('/place/',
+  // '/event/') so they don't also capture the public '/placeDetails' /
+  // '/eventDetails' detail pages via startsWith.
   for (final guarded in [
-    '/placeDetails',
-    '/eventDetails',
-    '/home',
-    '/search',
     '/favorites',
     '/profile',
     '/changeName',
     '/changePhone',
     '/theme-settings',
-    '/place',
-    '/event',
+    '/place/',
+    '/event/',
     '/bookings',
     '/notifications',
   ]) {
@@ -323,7 +337,9 @@ String? _redirect(Ref ref, GoRouterState state) {
     return null;
   }
   if (isAuth && !isVerified) return '/verify-email';
-  return isPublic ? null : '/signin';
+  // Guests may stay on public auth pages and on public browse content; anything
+  // else falls back to /signin.
+  return (isPublic || isPublicContent) ? null : '/signin';
 }
 
 class _RouterNotifier extends ChangeNotifier {

@@ -6,6 +6,7 @@ import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/widgets/discount_badge.dart';
 import 'package:future_riverpod/core/widgets/merchant_logo.dart';
 import 'package:future_riverpod/core/widgets/place_statistic_chip.dart';
+import 'package:future_riverpod/core/widgets/auth_required_sheet.dart';
 import 'package:future_riverpod/core/widgets/primary_action_button.dart';
 import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
 import 'package:future_riverpod/features/places/domain/models/place_model.dart';
@@ -434,9 +435,13 @@ class PlaceInfoSection extends ConsumerWidget {
           if (place.bookingCategory != null) ...[
             PrimaryActionButton(
               label: isAr ? 'احجز الآن' : 'Book Now',
-              onTap: () => context.push(
-                '/place/$placeId/book?category=${place.bookingCategory}',
-              ),
+              onTap: () {
+                // Booking is account-based — prompt guests to sign in first.
+                if (!requireAuth(context, ref)) return;
+                context.push(
+                  '/place/$placeId/book?category=${place.bookingCategory}',
+                );
+              },
             ),
           ],
         ],

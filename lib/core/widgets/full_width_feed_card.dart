@@ -6,6 +6,7 @@ import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/router/router_names.dart';
+import 'package:future_riverpod/core/widgets/auth_required_sheet.dart';
 import 'package:future_riverpod/core/widgets/discount_badge.dart';
 import 'package:future_riverpod/core/widgets/merchant_logo.dart';
 import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
@@ -61,9 +62,10 @@ class FullWidthFeedCard extends ConsumerWidget {
                   RouteNames.eventDetails,
                   queryParameters: {'eventId': item.id},
                 )),
-      onDoubleTap: () => ref
-          .read(favoritesProvider.notifier)
-          .toggle(item.id, itemType: item.type),
+      onDoubleTap: () {
+        if (!requireAuth(context, ref)) return;
+        ref.read(favoritesProvider.notifier).toggle(item.id, itemType: item.type);
+      },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -374,6 +376,7 @@ class _HeartButtonState extends ConsumerState<_HeartButton>
   }
 
   void _tap() {
+    if (!requireAuth(context, ref)) return;
     _ctrl.forward().then((_) => _ctrl.reverse());
     ref
         .read(favoritesProvider.notifier)

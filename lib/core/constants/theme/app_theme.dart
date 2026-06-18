@@ -179,10 +179,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppSpacing.borderRadiusMD,
           ),
-          side: const BorderSide(
-            color: AppColors.lightGreenSecondary,
-            width: AppSpacing.borderMedium,
-          ),
+          side: BorderSide.none,
           textStyle: AppTypography.button(
             context: context,
             languageCode: languageCode,
@@ -514,10 +511,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppSpacing.borderRadiusMD,
           ),
-          side: const BorderSide(
-            color: AppColors.darkGreenSecondary,
-            width: AppSpacing.borderMedium,
-          ),
+          side: BorderSide.none,
           textStyle: AppTypography.button(
             context: context,
             languageCode: languageCode,

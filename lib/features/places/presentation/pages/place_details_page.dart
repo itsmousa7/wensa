@@ -9,6 +9,7 @@ import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/share/content_share_card.dart';
 import 'package:future_riverpod/core/share/share_link.dart';
 import 'package:future_riverpod/core/share/share_service.dart';
+import 'package:future_riverpod/core/widgets/auth_required_sheet.dart';
 import 'package:future_riverpod/core/widgets/detail_error_page.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/places/domain/models/place_model.dart';
@@ -255,9 +256,12 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
                                     ? cs.onSurface
                                     : AppColors.lightRedSecondary),
                         ),
-                        onTap: () => ref
-                            .read(favoritesProvider.notifier)
-                            .toggle(place.id, itemType: 'place'),
+                        onTap: () {
+                          if (!requireAuth(context, ref)) return;
+                          ref
+                              .read(favoritesProvider.notifier)
+                              .toggle(place.id, itemType: 'place');
+                        },
                         collapsed: collapsed,
                         animate: true,
                         // ← symbol switches based on current favorite state

@@ -16,6 +16,7 @@ import 'package:future_riverpod/core/constants/theme/theme_state.dart';
 import 'package:future_riverpod/core/share/content_share_card.dart';
 import 'package:future_riverpod/core/share/share_link.dart';
 import 'package:future_riverpod/core/share/share_service.dart';
+import 'package:future_riverpod/core/widgets/auth_required_sheet.dart';
 import 'package:future_riverpod/core/widgets/detail_error_page.dart';
 import 'package:future_riverpod/features/events/domain/models/event_model.dart';
 import 'package:future_riverpod/features/events/domain/repositories/events_repository.dart';
@@ -278,9 +279,12 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
                                     ? cs.onSurface
                                     : AppColors.lightRedSecondary),
                         ),
-                        onTap: () => ref
-                            .read(favoritesProvider.notifier)
-                            .toggle(event.id, itemType: 'event'),
+                        onTap: () {
+                          if (!requireAuth(context, ref)) return;
+                          ref
+                              .read(favoritesProvider.notifier)
+                              .toggle(event.id, itemType: 'event');
+                        },
                         collapsed: collapsed,
                         animate: true,
                         sfSymbol: isFav ? 'heart.fill' : 'heart',

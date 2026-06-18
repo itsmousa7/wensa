@@ -316,6 +316,30 @@ class _SigninPageState extends ConsumerState<SigninPage> {
                         ),
                       ],
                     ),
+                    const Gap(4),
+                    // Guest browsing (Apple 5.1.1(v)): content is accessible
+                    // without an account. Drops the user onto the home feed;
+                    // account-based actions still prompt sign-in on demand.
+                    TextButton(
+                      onPressed: isLoading
+                          ? null
+                          : () => context.goNamed(RouteNames.home),
+                      // No ink ripple / highlight on tap.
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 44),
+                        splashFactory: NoSplash.splashFactory,
+                      ).copyWith(
+                        overlayColor: const WidgetStatePropertyAll(
+                          Colors.transparent,
+                        ),
+                      ),
+                      child: Text(
+                        context.tr('browse_as_guest'),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

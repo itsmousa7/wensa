@@ -115,7 +115,6 @@ class SignOutButton extends ConsumerWidget {
         decoration: BoxDecoration(
           color: AppColors.alert.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.alert.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

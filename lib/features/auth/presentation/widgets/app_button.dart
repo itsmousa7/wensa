@@ -143,10 +143,7 @@ class AppButton extends StatelessWidget {
         style: FilledButton.styleFrom(
           backgroundColor: Theme.of(context).colorScheme.primary,
           foregroundColor: Theme.of(context).colorScheme.onSurface,
-          side: BorderSide(
-            color: Theme.of(context).colorScheme.secondaryContainer,
-            width: AppSpacing.borderThin,
-          ),
+          side: BorderSide.none,
         ),
         onPressed: isLoading ? null : onPressed,
         child: buttonChild,
@@ -176,10 +173,7 @@ class AppButton extends StatelessWidget {
         style: FilledButton.styleFrom(
           backgroundColor: Theme.of(context).colorScheme.error,
           foregroundColor: Theme.of(context).colorScheme.onSurface,
-          side: BorderSide(
-            color: Theme.of(context).colorScheme.errorContainer,
-            width: AppSpacing.borderMedium,
-          ),
+          side: BorderSide.none,
         ),
         child: buttonChild,
       ),
