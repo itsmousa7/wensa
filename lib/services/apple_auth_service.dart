@@ -43,7 +43,7 @@ class AppleAuthService {
     final idToken = credential.identityToken;
     if (idToken == null) throw Exception('Missing Apple ID Token');
 
-    return await _client.auth
+    final response = await _client.auth
         .signInWithIdToken(
           provider: OAuthProvider.apple,
           idToken: idToken,
@@ -55,5 +55,50 @@ class AppleAuthService {
             'Sign-in timed out. Please try again.',
           ),
         );
+
+    // Apple only returns the user's name + email on the FIRST authorization for
+    // this app (Apple ID); every subsequent sign-in returns null for these.
+    // Persist them now so the app never has to re-ask the user for information
+    // the Authentication Services framework already provided (App Store Review
+    // Guideline 4 — Sign in with Apple). Best-effort: a failure here must not
+    // break the sign-in itself.
+    await _persistAppleProfile(response, credential);
+
+    return response;
+  }
+
+  /// Writes the Apple-provided full name (and email) into `profiles.app_users`
+  /// when present, so the user isn't prompted to retype them afterwards.
+  Future<void> _persistAppleProfile(
+    AuthResponse response,
+    AuthorizationCredentialAppleID credential,
+  ) async {
+    final userId = response.user?.id;
+    if (userId == null) return;
+
+    final firstName = credential.givenName?.trim() ?? '';
+    final secondName = credential.familyName?.trim() ?? '';
+    final email = (credential.email ?? response.user?.email)?.trim() ?? '';
+
+    // Nothing useful to store (likely a returning user) — leave the existing
+    // row untouched so we never overwrite a real name with blanks.
+    if (firstName.isEmpty && secondName.isEmpty) return;
+
+    try {
+      await _client
+          .schema('profiles')
+          .from('app_users')
+          .upsert({
+            'id': userId,
+            if (firstName.isNotEmpty) 'first_name': firstName,
+            if (secondName.isNotEmpty) 'second_name': secondName,
+            if (email.isNotEmpty) 'email': email,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          }, onConflict: 'id')
+          .timeout(const Duration(seconds: 10));
+    } catch (_) {
+      // Swallow — sign-in already succeeded. Worst case the user completes
+      // their name in the profile flow as before.
+    }
   }
 }

@@ -17,9 +17,34 @@ class DeleteAccountButton extends ConsumerStatefulWidget {
 
 class _DeleteAccountButtonState extends ConsumerState<DeleteAccountButton> {
   bool _loading = false;
-  String? _errorMessage;
+
+  /// Runs the actual deletion. The confirmation sheet is already closed by the
+  /// caller before this runs — deleting signs the user out, which triggers the
+  /// router redirect to /signin and unmounts this page, so any modal still open
+  /// at that moment crashes (unmounted-context / navigator-lock assertion).
+  Future<void> _performDelete() async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _loading = true);
+    try {
+      await ref.read(authRepositoryProvider).deleteAccount();
+      // Success: the auth-state change redirects to /signin; nothing to do.
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.isAr
+                ? 'حدث خطأ. يرجى المحاولة مجدداً.'
+                : 'Something went wrong. Please try again.',
+          ),
+        ),
+      );
+    }
+  }
 
   Future<void> _showConfirmationSheet() async {
+    if (_loading) return;
     await showModalBottomSheet(
       context: context,
       // Present on the root navigator so the sheet + scrim sit above the
@@ -81,112 +106,56 @@ class _DeleteAccountButtonState extends ConsumerState<DeleteAccountButton> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            StatefulBuilder(
-              builder: (ctx2, setInner) {
-                return Column(
-                  children: [
-                    if (_errorMessage != null) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: AppColors.alert.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          _errorMessage!,
-                          style: Theme.of(ctx2).textTheme.bodySmall?.copyWith(
-                            color: AppColors.alert,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: _loading
-                            ? null
-                            : () async {
-                                setInner(() {
-                                  _loading = true;
-                                  _errorMessage = null;
-                                });
-                                try {
-                                  await ref
-                                      .read(authRepositoryProvider)
-                                      .deleteAccount();
-                                  // Auth state change fires → router redirects.
-                                  // Close the sheet only after success.
-                                  if (ctx.mounted) Navigator.pop(ctx);
-                                } catch (e) {
-                                  if (mounted) {
-                                    setInner(() {
-                                      _loading = false;
-                                      _errorMessage = widget.isAr
-                                          ? 'حدث خطأ. يرجى المحاولة مجدداً.'
-                                          : 'Something went wrong. Please try again.';
-                                    });
-                                  }
-                                }
-                              },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.alert,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: _loading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                widget.isAr
-                                    ? 'حذف حسابي'
-                                    : 'Delete My Account',
-                                style: Theme.of(
-                                  ctx2,
-                                ).textTheme.titleSmall?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: AppTypography.buttonFontFamily(
-                                    widget.isAr ? 'ar' : 'en',
-                                  ),
-                                ),
-                              ),
+            Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    // Close the sheet FIRST, then delete. Deleting signs the
+                    // user out and the router redirects to /signin, tearing
+                    // down this page — popping after (or leaving the sheet
+                    // open) crashes with an unmounted-context assertion.
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _performDelete();
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.alert,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: TextButton(
-                        onPressed:
-                            _loading ? null : () => Navigator.pop(ctx),
-                        child: Text(
-                          widget.isAr ? 'إلغاء' : 'Cancel',
-                          style: Theme.of(ctx2).textTheme.titleSmall?.copyWith(
-                            color: Theme.of(ctx2).colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: AppTypography.buttonFontFamily(
-                              widget.isAr ? 'ar' : 'en',
-                            ),
-                          ),
+                    child: Text(
+                      widget.isAr ? 'حذف حسابي' : 'Delete My Account',
+                      style: Theme.of(ctx).textTheme.titleSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: AppTypography.buttonFontFamily(
+                          widget.isAr ? 'ar' : 'en',
                         ),
                       ),
                     ),
-                  ],
-                );
-              },
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: Text(
+                      widget.isAr ? 'إلغاء' : 'Cancel',
+                      style: Theme.of(ctx).textTheme.titleSmall?.copyWith(
+                        color: Theme.of(ctx).colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: AppTypography.buttonFontFamily(
+                          widget.isAr ? 'ar' : 'en',
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -208,11 +177,21 @@ class _DeleteAccountButtonState extends ConsumerState<DeleteAccountButton> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              CupertinoIcons.trash,
-              color: AppColors.alert,
-              size: 18,
-            ),
+            if (_loading)
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  color: AppColors.alert,
+                  strokeWidth: 2,
+                ),
+              )
+            else
+              const Icon(
+                CupertinoIcons.trash,
+                color: AppColors.alert,
+                size: 18,
+              ),
             const SizedBox(width: 8),
             Text(
               widget.isAr ? 'حذف الحساب' : 'Delete Account',
