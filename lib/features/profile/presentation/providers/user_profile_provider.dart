@@ -83,8 +83,16 @@ Future<int> userReviewsCount(Ref ref) async {
 //  ProfileCompletion — sync view used by the router redirect.
 //
 //  Returns `null` while the profile is still loading (router should wait),
-//  `true` when the row has first_name + second_name + phone all filled,
-//  `false` otherwise (router should redirect to /complete-profile).
+//  `true` when the row has a phone number on file, `false` otherwise (router
+//  should redirect to /complete-profile).
+//
+//  Note: the name is intentionally NOT part of this gate. Sign in with Apple
+//  only returns the user's name on the very first authorization — every
+//  re-authorization (and App Store re-review) returns null — so requiring the
+//  name right after authentication violates Sign in with Apple's guidelines.
+//  The name is instead captured inside the booking flow (prefilled from any
+//  Apple/Google-provided value), where asking for it is a legitimate
+//  functional requirement rather than an auth gate.
 // ─────────────────────────────────────────────────────────────────────────────
 
 @riverpod
@@ -96,10 +104,7 @@ bool? isProfileComplete(Ref ref) {
 
   final async = ref.watch(profileProvider);
   return async.when(
-    data: (u) =>
-        u.firstName.trim().isNotEmpty &&
-        u.secondName.trim().isNotEmpty &&
-        (u.phone ?? '').trim().isNotEmpty,
+    data: (u) => (u.phone ?? '').trim().isNotEmpty,
     loading: () => null,
     // A genuine fetch failure (missing row, RLS issue, network) is treated as
     // "incomplete" so the user is sent to /complete-profile, where the upsert

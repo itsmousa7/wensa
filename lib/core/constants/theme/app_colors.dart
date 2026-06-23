@@ -19,7 +19,7 @@ class AppColors {
   static const Color disableGray = Color(0xFFA0A0B8);
   static const Color lightSecondary = Color.fromARGB(255, 231, 231, 231);
 
-  static const Color lightGreenPrimary = Color.fromARGB(219, 52, 144, 162);
+  static const Color lightGreenPrimary = Color(0xDB3490A2);
   static const Color lightGreenSecondary = Color(0xFF155b6a);
 
   static const Color lightRedPrimary = Color(0xFFFFD8D3);
