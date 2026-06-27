@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 <uses-permission android:name="android.permission.CAMERA"/>
-<uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+<!-- Gallery selection uses the Android Photo Picker (no storage permission
+     needed on API 33+). READ_EXTERNAL_STORAGE is a scoped fallback for
+     Android 12 and below only; do NOT add READ_MEDIA_IMAGES, as it triggers
+     Google Play's Photo and Video Permissions declaration. -->
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="wensa"
@@ -11,6 +15,7 @@
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
+            android:screenOrientation="portrait"
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"

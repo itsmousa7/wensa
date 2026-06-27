@@ -15,6 +15,7 @@ import 'package:future_riverpod/features/booking/presentation/providers/hold_pro
 import 'package:future_riverpod/features/booking/presentation/widgets/seat_map_web_view.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
+import 'package:future_riverpod/core/widgets/primary_action_button.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
     show bookingsRefreshProvider;
 import 'package:go_router/go_router.dart';
@@ -857,8 +858,10 @@ class _ReviewSheet extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-            FilledButton(
-              onPressed: isLoading || selectedSeats.isEmpty
+            PrimaryActionButton(
+              label: isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
+              isLoading: isLoading,
+              onTap: selectedSeats.isEmpty
                   ? null
                   : () {
                       // Keep the sheet visible while create-booking runs.
@@ -873,24 +876,9 @@ class _ReviewSheet extends ConsumerWidget {
                                 .toList(),
                           );
                     },
-              child: isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(
-                      isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
-                      style: TextStyle(
-                        fontFamily:
-                            AppTypography.buttonFontFamily(
-                              isAr ? 'ar' : 'en',
-                            ) ??
-                            AppTypography.ibmPlexSansBold(),
-                      ),
-                    ),
             ),
-            const SizedBox(height: 16),
+            // Keep the CTA clear of the system navigation / gesture bar.
+            SizedBox(height: 16 + MediaQuery.of(context).viewPadding.bottom),
           ],
         ),
       ),
@@ -1082,8 +1070,10 @@ class _GASheetState extends ConsumerState<_GASheet> {
               ),
             ),
             const SizedBox(height: 8),
-            FilledButton(
-              onPressed: isLoading || remaining <= 0 || price <= 0
+            PrimaryActionButton(
+              label: isAr ? "متابعة للدفع" : "Proceed to Payment",
+              isLoading: isLoading,
+              onTap: remaining <= 0 || price <= 0
                   ? null
                   : () {
                       // Keep the sheet visible until the parent's listener
@@ -1096,22 +1086,6 @@ class _GASheetState extends ConsumerState<_GASheet> {
                             quantity: _quantity,
                           );
                     },
-              child: isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(
-                      isAr ? "متابعة للدفع" : "Proceed to Payment",
-                      style: TextStyle(
-                        fontFamily:
-                            AppTypography.buttonFontFamily(
-                              isAr ? 'ar' : 'en',
-                            ) ??
-                            AppTypography.ibmPlexSansBold(),
-                      ),
-                    ),
             ),
             if (price <= 0)
               Padding(
