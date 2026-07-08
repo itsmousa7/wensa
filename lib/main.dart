@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -63,8 +65,51 @@ void main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
+
+  @override
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
+  StreamSubscription<AuthState>? _authSub;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Stamp last_seen_at on launch and whenever a user signs in.
+    _reportLastSeen();
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((state) {
+      if (state.event == AuthChangeEvent.signedIn ||
+          state.event == AuthChangeEvent.tokenRefreshed) {
+        _reportLastSeen();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // App brought back to the foreground counts as "opening" the app.
+    if (state == AppLifecycleState.resumed) _reportLastSeen();
+  }
+
+  // Fire-and-forget heartbeat; failures are non-critical and ignored.
+  void _reportLastSeen() {
+    final client = Supabase.instance.client;
+    if (client.auth.currentUser == null) return;
+    client.rpc('touch_last_seen').catchError((Object e) {
+      debugPrint('[last_seen] touch_last_seen failed (non-fatal): $e');
+    });
+  }
 
   static Locale? _toLocale(LocaleState state) => switch (state) {
     EnglishLocale() => const Locale('en'),
@@ -86,7 +131,7 @@ class MyApp extends ConsumerWidget {
   };
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final locale = ref.watch(appLocaleProvider);
     final themeState = ref.watch(appThemeProvider);
