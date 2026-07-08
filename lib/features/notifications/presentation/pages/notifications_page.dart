@@ -7,6 +7,7 @@ import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/widgets/glass_back_button.dart';
+import 'package:future_riverpod/core/widgets/responsive_page_width.dart';
 import 'package:future_riverpod/features/notifications/domain/models/app_notification.dart';
 import 'package:future_riverpod/features/notifications/fcm_service.dart';
 import 'package:future_riverpod/features/notifications/domain/repositories/notifications_repository.dart';
@@ -74,7 +75,8 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
             style: tt.titleLarge?.copyWith(color: cs.onSurface),
           ),
         ),
-        body: Builder(
+        body: ResponsivePageWidth(
+          child: Builder(
           builder: (context) {
             final items = asyncList.value;
             final isFirstLoad = asyncList.isLoading && items == null;
@@ -150,6 +152,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
               ],
             );
           },
+        ),
         ),
       ),
     );

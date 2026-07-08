@@ -206,6 +206,9 @@ Widget _categoryIcon(String nameEn, {bool animate = true}) {
     case 'Festivals':
       asset = 'assets/lottie/categories/festival.json';
       break;
+    case 'Farms':
+      asset = 'assets/lottie/categories/resort.json';
+      break;
     case 'Discounts':
       asset = 'assets/lottie/categories/discount.json';
       break;

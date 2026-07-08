@@ -56,7 +56,7 @@ class _ReviewsSheet extends ConsumerStatefulWidget {
 
 class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
   final _commentCtrl = TextEditingController();
-  int _selectedRating = 5;
+  int _selectedRating = 0;
 
   @override
   void dispose() {
@@ -67,6 +67,8 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
   Future<void> _submit() async {
     final userId = ref.read(currentUserProvider)?.id;
     if (userId == null) return;
+    // A star rating is required before a review can be submitted.
+    if (_selectedRating < 1) return;
     FocusScope.of(context).unfocus();
     // Single trim — reused for both the null-check and the value
     final comment = _commentCtrl.text.trim();
@@ -78,7 +80,7 @@ class _ReviewsSheetState extends ConsumerState<_ReviewsSheet> {
           comment: comment.isEmpty ? null : comment,
         );
     _commentCtrl.clear();
-    setState(() => _selectedRating = 5);
+    setState(() => _selectedRating = 0);
   }
 
   @override
@@ -516,17 +518,20 @@ class _AddReviewInput extends StatelessWidget {
                       builder: (_, value, _) {
                         final hasText = value.text.trim().isNotEmpty;
                         if (!hasText) return const SizedBox.shrink();
+                        // A rating must be picked before the comment can be
+                        // sent; grey out and disable the button until then.
+                        final canSubmit = selectedRating > 0;
                         return Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
                             vertical: 5,
                           ),
                           child: GestureDetector(
-                            onTap: isLoading ? null : onSubmit,
+                            onTap: (isLoading || !canSubmit) ? null : onSubmit,
                             child: Container(
                               width: 56, // wider
                               decoration: BoxDecoration(
-                                color: isLoading
+                                color: (isLoading || !canSubmit)
                                     ? cs.primary.withValues(alpha: 0.5)
                                     : cs.primary,
                                 borderRadius: AppSpacing.borderRadiusXL,

@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
+import 'package:future_riverpod/core/widgets/responsive_page_width.dart';
 import 'package:future_riverpod/core/widgets/section_tab_bar.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership.dart';
@@ -144,7 +145,8 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
           selectedIndex: _segIndex,
         ),
       ),
-      body: TabBarView(
+      body: ResponsivePageWidth(
+        child: TabBarView(
         controller: _tabController,
         children: [
           // Tab 0: All — bookings + memberships combined
@@ -202,6 +204,7 @@ class _BookingsHistoryPageState extends ConsumerState<BookingsHistoryPage>
             onRefresh: _onRefresh,
           ),
         ],
+      ),
       ),
     );
   }

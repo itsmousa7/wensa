@@ -24,7 +24,7 @@ class PlaceReviewsNotifier extends _$PlaceReviewsNotifier {
   }) async {
     // Show spinner while submitting
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard(() async {
       await ref
           .read(placeReviewsRepositoryProvider)
           .addReview(
@@ -39,15 +39,21 @@ class PlaceReviewsNotifier extends _$PlaceReviewsNotifier {
       ref.invalidate(userReviewsCountProvider);
       return ref.read(placeReviewsRepositoryProvider).fetchReviews(placeId);
     });
+    // The sheet (and this auto-dispose notifier) may have been torn down while
+    // the async work was in flight — don't write state to a disposed provider.
+    if (!ref.mounted) return;
+    state = result;
   }
 
   Future<void> deleteReview(String reviewId) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard(() async {
       await ref.read(placeReviewsRepositoryProvider).deleteReview(reviewId);
       ref.invalidate(placeDetailsProvider(placeId));
       ref.invalidate(userReviewsCountProvider);
       return ref.read(placeReviewsRepositoryProvider).fetchReviews(placeId);
     });
+    if (!ref.mounted) return;
+    state = result;
   }
 }

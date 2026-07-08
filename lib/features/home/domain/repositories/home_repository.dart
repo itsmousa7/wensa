@@ -75,7 +75,26 @@ class HomeRepository {
         .select()
         .order('name_en');
 
-    return data.map((e) => CategoryModel.fromJson(e)).toList();
+    final categories = data.map((e) => CategoryModel.fromJson(e)).toList();
+
+    // Only surface categories that actually have at least one approved place.
+    // Otherwise an empty category would show up in the bar and open an empty
+    // feed when tapped. We match the exact source/filter used by the category
+    // feed (content.places_mobile + place_status = 'approved').
+    final placeRows = await _supabase
+        .schema('content')
+        .from('places_mobile')
+        .select('category_id')
+        .eq('place_status', 'approved');
+
+    final nonEmptyCategoryIds = (placeRows as List)
+        .map((e) => (e as Map)['category_id'] as String?)
+        .whereType<String>()
+        .toSet();
+
+    return categories
+        .where((c) => nonEmptyCategoryIds.contains(c.id))
+        .toList();
   }
 
   // ── 6. Featured Feed (places + events mixed) ──────────────────────────────

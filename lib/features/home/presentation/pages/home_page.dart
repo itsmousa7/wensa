@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/core/widgets/profile_error.dart';
+import 'package:future_riverpod/core/widgets/responsive_page_width.dart';
 import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/home/presentation/providers/all_events_provider.dart';
@@ -131,7 +132,11 @@ class _HomePageState extends ConsumerState<HomePage> {
         body: SafeArea(
           top: false,
           bottom: false,
-          child: CustomScrollView(
+          // On tablets / very wide screens, keep the content column at a
+          // mobile-like width and center it so place cards & images don't
+          // stretch edge-to-edge. On phones this is a no-op.
+          child: ResponsivePageWidth(
+              child: CustomScrollView(
                   controller: scrollCtrl,
                   physics: const BouncingScrollPhysics(
                     parent: AlwaysScrollableScrollPhysics(),
@@ -333,6 +338,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ],
                   ],
                 ),
+          ),
         ),
       ),
     );

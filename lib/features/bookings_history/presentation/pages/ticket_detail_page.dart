@@ -1,5 +1,7 @@
 // lib/features/bookings_history/presentation/pages/ticket_detail_page.dart
 
+import 'dart:io';
+
 import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,15 +51,26 @@ class TicketDetailPage extends ConsumerWidget {
               )
             : Padding(
                 padding: const EdgeInsetsDirectional.only(start: 15),
-                child: CNButton.icon(
-                  icon: const CNSymbol('xmark'),
-                  onPressed: () => context.go('/bookings'),
-                  config: const CNButtonConfig(
-                    style: CNButtonStyle.glass,
-                    width: 50,
-                    minHeight: 50,
-                  ),
-                ),
+                // iOS renders a native Liquid Glass X; Android (where the SF
+                // Symbol won't render, leaving an empty glass dot) falls back
+                // to a plain Material close icon.
+                child: Platform.isIOS
+                    ? CNButton.icon(
+                        icon: const CNSymbol('xmark'),
+                        onPressed: () => context.go('/bookings'),
+                        config: const CNButtonConfig(
+                          style: CNButtonStyle.glass,
+                          width: 50,
+                          minHeight: 50,
+                        ),
+                      )
+                    : IconButton(
+                        icon: Icon(
+                          Icons.close,
+                          color: cs.colorScheme.onSurface,
+                        ),
+                        onPressed: () => context.go('/bookings'),
+                      ),
               ),
         title: Text(
           _isMembership

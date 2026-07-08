@@ -10,6 +10,7 @@ import 'package:future_riverpod/core/share/content_share_card.dart';
 import 'package:future_riverpod/core/share/share_link.dart';
 import 'package:future_riverpod/core/share/share_service.dart';
 import 'package:future_riverpod/core/widgets/auth_required_sheet.dart';
+import 'package:future_riverpod/core/widgets/responsive_page_width.dart';
 import 'package:future_riverpod/core/widgets/detail_error_page.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/places/domain/models/place_model.dart';
@@ -149,7 +150,8 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
       textDirection: _isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        body: placeAsync.when(
+        body: ResponsivePageWidth(
+          child: placeAsync.when(
           loading: () => const PlaceDetailsSkeleton(),
           error: (e, _) => DetailErrorScreen(
             isAr: _isAr,
@@ -303,6 +305,7 @@ class _PlaceDetailsPageState extends ConsumerState<PlaceDetailsPage> {
               ],
             );
           },
+        ),
         ),
       ),
     );

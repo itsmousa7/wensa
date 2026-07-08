@@ -7,6 +7,7 @@ import 'package:future_riverpod/core/constants/locale/locale_state.dart';
 import 'package:future_riverpod/features/profile/presentation/providers/user_profile_provider.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/profile_content.dart';
 import 'package:future_riverpod/core/widgets/profile_error.dart';
+import 'package:future_riverpod/core/widgets/responsive_page_width.dart';
 import 'package:future_riverpod/features/profile/presentation/widgets/profile_skeleton.dart';
 
 class ProfilePage extends ConsumerWidget {
@@ -21,10 +22,12 @@ class ProfilePage extends ConsumerWidget {
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: profileAsync.when(
-          loading: () => const ProfileSkeleton(),
-          error: (e, _) => ProfileError(isAr: isAr),
-          data: (user) => ProfileContent(user: user, isAr: isAr),
+        body: ResponsivePageWidth(
+          child: profileAsync.when(
+            loading: () => const ProfileSkeleton(),
+            error: (e, _) => ProfileError(isAr: isAr),
+            data: (user) => ProfileContent(user: user, isAr: isAr),
+          ),
         ),
       ),
     );

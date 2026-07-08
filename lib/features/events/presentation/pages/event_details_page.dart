@@ -17,6 +17,7 @@ import 'package:future_riverpod/core/share/content_share_card.dart';
 import 'package:future_riverpod/core/share/share_link.dart';
 import 'package:future_riverpod/core/share/share_service.dart';
 import 'package:future_riverpod/core/widgets/auth_required_sheet.dart';
+import 'package:future_riverpod/core/widgets/responsive_page_width.dart';
 import 'package:future_riverpod/core/widgets/detail_error_page.dart';
 import 'package:future_riverpod/features/events/domain/models/event_model.dart';
 import 'package:future_riverpod/features/events/domain/repositories/events_repository.dart';
@@ -167,7 +168,8 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
       textDirection: _isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        body: eventAsync.when(
+        body: ResponsivePageWidth(
+          child: eventAsync.when(
           loading: () => const EventDetailsSkeleton(),
           error: (e, _) => DetailErrorScreen(
             isAr: _isAr,
@@ -326,6 +328,7 @@ class _EventDetailsPageState extends ConsumerState<EventDetailsPage> {
               ],
             );
           },
+        ),
         ),
       ),
     );

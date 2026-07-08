@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/constants/app_typography.dart';
 import 'package:future_riverpod/core/constants/locale/app_locale_provider.dart';
 import 'package:future_riverpod/core/constants/locale/locale_state.dart';
+import 'package:future_riverpod/core/widgets/responsive_page_width.dart';
 import 'package:future_riverpod/core/widgets/section_tab_bar.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_provider.dart';
 import 'package:future_riverpod/features/favorites/presentation/providers/favorites_scroll_signal.dart';
@@ -92,7 +93,8 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
-          child: Column(
+          child: ResponsivePageWidth(
+            child: Column(
             children: [
               // ── Title ────────────────────────────────────────────────────
               Padding(
@@ -151,6 +153,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),
