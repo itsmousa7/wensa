@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/core/widgets/glass_back_button.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/concert_section.dart';
-import 'package:future_riverpod/features/booking/presentation/widgets/booking_name_gate.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/booking_details_gate.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/farm_section.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/membership_section.dart';
 import 'package:future_riverpod/features/booking/presentation/sections/padel_section.dart';
@@ -42,9 +42,11 @@ class BookingFlowPage extends ConsumerWidget {
             style: TextStyle(color: Theme.of(context).colorScheme.outline),
           ),
         ),
-        body: BookingNameGate(child: ConcertSection(eventId: eventId!)),
+        body: BookingDetailsGate(child: ConcertSection(eventId: eventId!)),
       );
     }
+
+
 
     final placeAsync = ref.watch(placeDetailsProvider(placeId));
 
@@ -68,7 +70,7 @@ class BookingFlowPage extends ConsumerWidget {
           ),
         ),
       ),
-      body: BookingNameGate(
+      body: BookingDetailsGate(
         child: placeAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('Error: $e')),

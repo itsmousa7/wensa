@@ -54,6 +54,7 @@ class AppleAuthService {
           onTimeout: () => throw Exception(
             'Sign-in timed out. Please try again.',
           ),
+          
         );
 
     // Apple only returns the user's name + email on the FIRST authorization for

@@ -83,16 +83,19 @@ Future<int> userReviewsCount(Ref ref) async {
 //  ProfileCompletion — sync view used by the router redirect.
 //
 //  Returns `null` while the profile is still loading (router should wait),
-//  `true` when the row has a phone number on file, `false` otherwise (router
-//  should redirect to /complete-profile).
+//  `true` once it is known (so the router lets the user into /home).
 //
-//  Note: the name is intentionally NOT part of this gate. Sign in with Apple
-//  only returns the user's name on the very first authorization — every
-//  re-authorization (and App Store re-review) returns null — so requiring the
-//  name right after authentication violates Sign in with Apple's guidelines.
-//  The name is instead captured inside the booking flow (prefilled from any
-//  Apple/Google-provided value), where asking for it is a legitimate
-//  functional requirement rather than an auth gate.
+//  Note: NOTHING personal is required at the authentication step anymore.
+//  - The name is not required because Sign in with Apple only returns it on the
+//    very first authorization — requiring it later violates its guidelines.
+//  - The phone number is not required because Apple guideline 5.1.1(v) forbids
+//    requiring personal information that is not needed to create the account.
+//  Both the name and the phone number are instead collected inside the booking
+//  flow (see [BookingDetailsGate]), prefilled from any value we already hold,
+//  where asking for them is a legitimate functional requirement of the
+//  reservation rather than an account-creation gate. As a result this gate no
+//  longer redirects anyone to /complete-profile — a signed-in, verified user is
+//  always allowed straight through to /home.
 // ─────────────────────────────────────────────────────────────────────────────
 
 @riverpod
@@ -104,12 +107,15 @@ bool? isProfileComplete(Ref ref) {
 
   final async = ref.watch(profileProvider);
   return async.when(
-    data: (u) => (u.phone ?? '').trim().isNotEmpty,
+    // The profile carries no auth-time required fields, so it is "complete" as
+    // soon as we have a signed-in user. We only wait for the first load to
+    // avoid the /home screen flashing before the profile row is available.
+    data: (_) => true,
     loading: () => null,
-    // A genuine fetch failure (missing row, RLS issue, network) is treated as
-    // "incomplete" so the user is sent to /complete-profile, where the upsert
-    // path can repair the row instead of leaving them stranded on /home.
-    error: (_, _) => false,
+    // A fetch failure (missing row, RLS issue, network) must not strand the
+    // user: there is no longer a /complete-profile step to send them to, and
+    // any missing name/phone is repaired inside the booking flow. Let them in.
+    error: (_, _) => true,
   );
 }
 
