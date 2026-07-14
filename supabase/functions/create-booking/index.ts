@@ -1,5 +1,5 @@
 /**
- * create-booking — orchestrates booking creation + Wayl payment link.
+ * create-booking — orchestrates booking creation + HyperPay checkout.
  *
  * Flow:
  *   1. Validate caller JWT
@@ -7,8 +7,8 @@
  *   3. Call the appropriate bookings.create_* RPC (inserts pending row(s))
  *   4. Apply discount server-side (promo OR auto), persist audit columns +
  *      final amount on the booking row(s).
- *   5. Create a Wayl payment link for the *final* amount
- *   6. Return { booking_id?, group_id?, payment_url, hold_until, reference_id }
+ *   5. Create a HyperPay checkout for the *final* amount
+ *   6. Return { booking_id?, group_id?, checkout_id, payment_mode, hold_until, reference_id }
  *
  * referenceId format:
  *   bookings:  booking_{booking_id}_{timestamp}
@@ -16,9 +16,9 @@
  *
  * Env vars required:
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY
- *   WAYL_API_KEY, WAYL_WEBHOOK_SECRET, WAYL_WEBHOOK_URL
- *   WAYL_ENV               — "live" | "test" (default: "live")
- *   APP_DEEP_LINK_BASE     — e.g. "wansa://payment"
+ *   HYPERPAY_BASE          — e.g. "https://eu-test.oppwa.com" (default: test)
+ *   HYPERPAY_ENTITY_ID, HYPERPAY_AUTH_TOKEN
+ *   HYPERPAY_ENV           — "live" | "test" (default: "test")
  *   MERCHANT_PORTAL_URL    — e.g. "http://localhost:5173" (QR deep-link host)
  */
 
@@ -27,8 +27,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
-
-const WAYL_BASE = "https://api.thewayl.com";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -93,11 +91,10 @@ Deno.serve(async (req: Request) => {
 
   const SUPABASE_URL    = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_KEY     = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const WAYL_API_KEY    = Deno.env.get("WAYL_API_KEY")!;
-  const WAYL_WEBHOOK_SECRET = Deno.env.get("WAYL_WEBHOOK_SECRET")!;
-  const WAYL_WEBHOOK_URL    = Deno.env.get("WAYL_BOOKING_WEBHOOK_URL") ?? Deno.env.get("WAYL_WEBHOOK_URL")!;
-  const APP_DEEP_LINK   = Deno.env.get("APP_DEEP_LINK_BASE") ?? "wansa://payment";
-  const WAYL_ENV        = Deno.env.get("WAYL_ENV") ?? "live";
+  const HYPERPAY_BASE       = Deno.env.get("HYPERPAY_BASE") ?? "https://eu-test.oppwa.com";
+  const HYPERPAY_ENTITY_ID  = Deno.env.get("HYPERPAY_ENTITY_ID")!;
+  const HYPERPAY_AUTH_TOKEN = Deno.env.get("HYPERPAY_AUTH_TOKEN")!;
+  const HYPERPAY_ENV        = Deno.env.get("HYPERPAY_ENV") ?? "test";
 
   try {
     // ── Auth ───────────────────────────────────────────────────────────────
@@ -319,46 +316,38 @@ Deno.serve(async (req: Request) => {
       }, 200);
     }
 
-    // ── Create Wayl payment link for the FINAL amount ──────────────────────
-    // Always carry referenceId + category to the redirect target so the post-
-    // payment landing page (mobile deep link OR the dashboard confirmation page)
-    // can look the booking up on a fresh page load. A caller-supplied
-    // redirect_url is treated as a base; we append the params either way.
-    const redirectBase = body.redirect_url ?? APP_DEEP_LINK;
-    const redirectSep  = redirectBase.includes("?") ? "&" : "?";
-    const redirectUrl  = `${redirectBase}${redirectSep}referenceId=${referenceId}&category=${body.category}`;
-
-    const waylBody = {
-      env:             WAYL_ENV,
-      referenceId,
-      total:           finalIqd,
-      currency:        "IQD",
-      customParameter,
-      lineItem: [
-        { label: lineItemLabel, amount: finalIqd, type: "increase" },
-      ],
-      webhookUrl:     WAYL_WEBHOOK_URL,
-      webhookSecret:  WAYL_WEBHOOK_SECRET,
-      redirectionUrl: redirectUrl,
-    };
-
-    const waylRes = await fetch(`${WAYL_BASE}/api/v1/links`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-WAYL-AUTHENTICATION": WAYL_API_KEY,
-      },
-      body: JSON.stringify(waylBody),
+    // ── Create HyperPay checkout for the FINAL amount ───────────────────────
+    // The app submits the card via the native mSDK using this checkout ID.
+    // merchantTransactionId carries our referenceId for reconciliation.
+    const checkoutBody = new URLSearchParams({
+      entityId:              HYPERPAY_ENTITY_ID,
+      amount:                finalIqd.toFixed(2),
+      currency:              "IQD",
+      paymentType:           "DB",
+      merchantTransactionId: referenceId,
+      ...(HYPERPAY_ENV !== "live" ? { testMode: "EXTERNAL" } : {}),
     });
 
-    if (!waylRes.ok) {
-      const waylErr = await waylRes.json().catch(() => ({}));
-      throw new Error(`Wayl error ${waylRes.status}: ${JSON.stringify(waylErr)}`);
+    const hpRes = await fetch(`${HYPERPAY_BASE}/v1/checkouts`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${HYPERPAY_AUTH_TOKEN}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: checkoutBody.toString(),
+    });
+
+    const hpJson = await hpRes.json().catch(() => ({})) as
+      { id?: string; result?: { code?: string; description?: string } };
+
+    if (!hpRes.ok || !hpJson.id) {
+      throw new Error(
+        `HyperPay checkout error ${hpRes.status}: ${JSON.stringify(hpJson.result ?? hpJson)}`,
+      );
     }
 
-    const waylJson = await waylRes.json() as { data: { id: string; url: string; code?: string } };
-    const paymentUrl = waylJson.data.url;
-    const waylCode   = waylJson.data.code;
+    const checkoutId  = hpJson.id;
+    const paymentMode = HYPERPAY_ENV === "live" ? "LIVE" : "TEST";
 
     // ── Look up merchant commission to snapshot onto booking ───────────────
     // Priority: temp override (when current Asia/Baghdad date is in window)
@@ -403,7 +392,6 @@ Deno.serve(async (req: Request) => {
             merchant_discount_id: merchantDiscountId,
             source,
             guest_name:           body.guest_name ?? null,
-            ...(waylCode ? { wayl_code: waylCode } : {}),
           }),
         },
       );
@@ -424,7 +412,6 @@ Deno.serve(async (req: Request) => {
             auto_discount_id:    autoDiscountId,
             source,
             guest_name:          body.guest_name ?? null,
-            ...(waylCode ? { wayl_code: waylCode } : {}),
           }),
         },
       );
@@ -435,7 +422,8 @@ Deno.serve(async (req: Request) => {
     return json({
       booking_id:  !isGroup ? rpcResult.id : undefined,
       group_id:    isGroup  ? rpcResult.group_id : undefined,
-      payment_url: paymentUrl,
+      checkout_id:  checkoutId,
+      payment_mode: paymentMode,
       hold_until:  rpcResult.hold_until ?? rpcResult.expires_at,
       reference_id: referenceId,
       amount_iqd:          finalIqd,
