@@ -324,7 +324,8 @@ Deno.serve(async (req: Request) => {
       amount:                finalIqd.toFixed(2),
       currency:              "IQD",
       paymentType:           "DB",
-      merchantTransactionId: referenceId,
+      // HyperPay rejects underscores in merchantTransactionId — dashes only.
+      merchantTransactionId: referenceId.replaceAll("_", "-"),
       ...(HYPERPAY_ENV !== "live" ? { testMode: "EXTERNAL" } : {}),
     });
 
