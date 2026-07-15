@@ -37,7 +37,8 @@ android {
         applicationId = "app.wensa.mobile"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // HyperPay mSDK 7.11 (oppwa.mobile / ipworks3ds) requires minSdk 24
+        minSdk = maxOf(flutter.minSdkVersion, 24)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -73,4 +74,17 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
+    // HyperPay mSDK 7.11 (android/app/libs) + its required dependencies
+    // (from the SDK's dependencies.txt; Braintree/PayPal/Venmo omitted — cards only).
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.recyclerview:recyclerview:1.4.0")
+    implementation("androidx.browser:browser:1.8.0")
+    implementation("androidx.fragment:fragment-ktx:1.8.6")
+    implementation("androidx.constraintlayout:constraintlayout:2.2.1")
+    implementation("androidx.webkit:webkit:1.13.0")
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("com.google.code.gson:gson:2.11.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
 }
