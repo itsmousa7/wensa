@@ -223,7 +223,14 @@ class MainActivity : FlutterFragmentActivity(), ITransactionListener {
         dialog.setOnDismissListener {
             challengeDialog = null
             webView.stopLoading()
-            webView.destroy()
+            // Defer teardown: dismiss() can be triggered from inside the WebView's own
+            // WebViewClient callback (shouldOverrideUrlLoading), and destroying the WebView
+            // on its own callback stack is a known intermittent native-crash pattern.
+            // Also detach from the view hierarchy before destroy(), per Android guidance.
+            handler.post {
+                (webView.parent as? android.view.ViewGroup)?.removeView(webView)
+                webView.destroy()
+            }
         }
         webView.loadUrl(url)
         dialog.show()
