@@ -26,7 +26,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// deno-lint-ignore no-control-regex
 const SUCCESS_CODE = /^(000\.000\.|000\.100\.1)/;
 const MANUAL_REVIEW_CODE = /^(000\.400\.0[^3]|000\.400\.100)/;
 
@@ -78,6 +77,15 @@ Deno.serve(async (req: Request) => {
     const statusJson = await statusRes.json().catch(() => ({})) as {
       result?: { code?: string; description?: string };
     };
+    // A non-2xx WITHOUT a result code means the verification call itself broke
+    // (bad credentials, HyperPay outage) — surface as retryable, not "unpaid".
+    // Declined payments come back with a result code even on non-2xx statuses,
+    // so those still classify normally below.
+    if (!statusRes.ok && !statusJson.result?.code) {
+      console.error(`verify-payment: HyperPay status check failed ${statusRes.status}`);
+      return json({ error: `HyperPay status check failed (${statusRes.status})` }, 502);
+    }
+
     const code        = statusJson.result?.code ?? "unknown";
     const description = statusJson.result?.description ?? `HTTP ${statusRes.status}`;
 
