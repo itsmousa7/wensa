@@ -80,7 +80,7 @@ class RestaurantSection extends ConsumerWidget {
 
     ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
       next.maybeWhen(
-        success: (_, _, _, _) {
+        success: (_, _, _, _, _) {
           ref.read(bookingsRefreshProvider.notifier).bump();
           ref.invalidate(userPurchaseHistoryProvider);
         },
@@ -97,7 +97,7 @@ class RestaurantSection extends ConsumerWidget {
     });
 
     return submitState.maybeWhen(
-      success: (bookingId, paymentUrl, holdUntil, waylReferenceId) =>
+      success: (bookingId, checkoutId, holdUntil, referenceId, paymentMode) =>
           const _RestaurantPendingView(),
       orElse: () =>
           _RestaurantBookingFormView(placeId: placeId, placeName: placeName),

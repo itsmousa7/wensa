@@ -32,7 +32,7 @@ final class AppleAuthProvider extends $AsyncNotifierProvider<AppleAuth, void> {
   AppleAuth create() => AppleAuth();
 }
 
-String _$appleAuthHash() => r'ef2b75fb611ce36c962c6627fc039e4f0b823975';
+String _$appleAuthHash() => r'08d68abc8fc061533d2e4a6825f4b432a52e9c26';
 
 abstract class _$AppleAuth extends $AsyncNotifier<void> {
   FutureOr<void> build();

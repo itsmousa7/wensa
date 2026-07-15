@@ -13,11 +13,12 @@ abstract class BookingSubmitState with _$BookingSubmitState {
   const factory BookingSubmitState.loading() = _Loading;
   const factory BookingSubmitState.success({
     required String bookingId,
-    required String paymentUrl,
+    required String checkoutId,
     required String holdUntil,
-    // Wayl referenceId (e.g. "booking_{uuid}_{ts}") — use this for polling,
-    // NOT bookingId which is just the raw UUID.
-    required String waylReferenceId,
+    // Our referenceId (e.g. "booking_{uuid}_{ts}") — becomes payment_id on
+    // confirm; NOT bookingId which is just the raw UUID.
+    required String referenceId,
+    required String paymentMode, // 'TEST' | 'LIVE' from the server
   }) = _Success;
   const factory BookingSubmitState.error(String message) = _Error;
 }
@@ -53,9 +54,10 @@ class BookingSubmit extends _$BookingSubmit {
       final data = result.data as Map<String, dynamic>;
       state = BookingSubmitState.success(
         bookingId: data['booking_id'] as String,
-        paymentUrl: data['payment_url'] as String,
+        checkoutId: data['checkout_id'] as String? ?? '',
         holdUntil: data['hold_until'] as String? ?? '',
-        waylReferenceId: data['reference_id'] as String,
+        referenceId: data['reference_id'] as String,
+        paymentMode: data['payment_mode'] as String? ?? 'TEST',
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
@@ -86,9 +88,10 @@ class BookingSubmit extends _$BookingSubmit {
       final data = result.data as Map<String, dynamic>;
       state = BookingSubmitState.success(
         bookingId: data['booking_id'] as String,
-        paymentUrl: data['payment_url'] as String,
+        checkoutId: data['checkout_id'] as String? ?? '',
         holdUntil: data['hold_until'] as String? ?? '',
-        waylReferenceId: data['reference_id'] as String,
+        referenceId: data['reference_id'] as String,
+        paymentMode: data['payment_mode'] as String? ?? 'TEST',
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
@@ -121,9 +124,10 @@ class BookingSubmit extends _$BookingSubmit {
       final data = result.data as Map<String, dynamic>;
       state = BookingSubmitState.success(
         bookingId: data['booking_id'] as String,
-        paymentUrl: data['payment_url'] as String? ?? '',
+        checkoutId: data['checkout_id'] as String? ?? '',
         holdUntil: '',
-        waylReferenceId: data['reference_id'] as String? ?? '',
+        referenceId: data['reference_id'] as String? ?? '',
+        paymentMode: data['payment_mode'] as String? ?? 'TEST',
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
@@ -131,7 +135,7 @@ class BookingSubmit extends _$BookingSubmit {
   }
 
   /// Creates a pending general-admission booking (no seat picking) and
-  /// returns a Wayl payment URL. The webhook flips the row to confirmed
+  /// returns a HyperPay checkout ID. The webhook flips the row to confirmed
   /// on payment success.
   Future<void> createGeneralAdmissionBooking({
     required String eventId,
@@ -154,9 +158,10 @@ class BookingSubmit extends _$BookingSubmit {
       final data = result.data as Map<String, dynamic>;
       state = BookingSubmitState.success(
         bookingId: (data['booking_id'] ?? '') as String,
-        paymentUrl: (data['payment_url'] ?? '') as String,
+        checkoutId: (data['checkout_id'] ?? '') as String? ?? '',
         holdUntil: (data['hold_until'] ?? '') as String? ?? '',
-        waylReferenceId: (data['reference_id'] ?? '') as String,
+        referenceId: (data['reference_id'] ?? '') as String,
+        paymentMode: (data['payment_mode'] ?? 'TEST') as String? ?? 'TEST',
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
@@ -183,9 +188,10 @@ class BookingSubmit extends _$BookingSubmit {
       // Concerts return group_id (not booking_id) — use group_id as bookingId
       state = BookingSubmitState.success(
         bookingId: (data['group_id'] ?? data['booking_id'] ?? '') as String,
-        paymentUrl: data['payment_url'] as String,
+        checkoutId: data['checkout_id'] as String? ?? '',
         holdUntil: data['hold_until'] as String? ?? '',
-        waylReferenceId: data['reference_id'] as String,
+        referenceId: data['reference_id'] as String,
+        paymentMode: data['payment_mode'] as String? ?? 'TEST',
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
@@ -218,7 +224,7 @@ class BookingSubmit extends _$BookingSubmit {
   Future<void> cancelPending() async {
     final current = state;
     final bookingId = current.maybeWhen(
-      success: (id, _, _, _) => id,
+      success: (id, _, _, _, _) => id,
       orElse: () => null,
     );
     if (bookingId == null || bookingId.isEmpty) {

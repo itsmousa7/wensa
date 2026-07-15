@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership_plan.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
-import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
+import 'package:future_riverpod/features/hyperpay_payment/presentation/pages/hyperpay_payment_page.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/membership_submit_provider.dart';
@@ -69,13 +69,15 @@ class _MembershipSectionState extends ConsumerState<MembershipSection> {
   Widget build(BuildContext context) {
     ref.listen<BookingSubmitState>(membershipSubmitProvider, (prev, next) {
       next.maybeWhen(
-        success: (bookingId, paymentUrl, holdUntil, waylReferenceId) {
-          if (paymentUrl.isNotEmpty) {
-            PaymentWebViewPage.push(
+        success: (bookingId, checkoutId, holdUntil, referenceId, paymentMode) {
+          if (checkoutId.isNotEmpty) {
+            HyperpayPaymentPage.push(
               context,
-              paymentUrl,
-              referenceId: waylReferenceId,
-              redirectionUrl: 'wansa://payment',
+              checkoutId: checkoutId,
+              referenceId: referenceId,
+              entityKindForVerify: 'membership',
+              entityId: bookingId,
+              paymentMode: paymentMode,
               onPaymentSuccess: (_, orderId) async {
                 try {
                   await ref

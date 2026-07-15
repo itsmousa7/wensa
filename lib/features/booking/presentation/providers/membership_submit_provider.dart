@@ -31,9 +31,10 @@ class MembershipSubmit extends _$MembershipSubmit {
       final data = result.data as Map<String, dynamic>;
       state = BookingSubmitState.success(
         bookingId: data['membership_id'] as String,
-        paymentUrl: data['payment_url'] as String? ?? '',
+        checkoutId: data['checkout_id'] as String? ?? '',
         holdUntil: '',
-        waylReferenceId: data['reference_id'] as String? ?? '',
+        referenceId: data['reference_id'] as String? ?? '',
+        paymentMode: data['payment_mode'] as String? ?? 'TEST',
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
@@ -68,7 +69,7 @@ class MembershipSubmit extends _$MembershipSubmit {
   Future<void> cancelPending() async {
     final current = state;
     final bookingId = current.maybeWhen(
-      success: (id, _, _, _) => id,
+      success: (id, _, _, _, _) => id,
       orElse: () => null,
     );
     if (bookingId == null || bookingId.isEmpty) {

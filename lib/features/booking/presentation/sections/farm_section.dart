@@ -9,7 +9,7 @@ import 'package:future_riverpod/features/booking/presentation/widgets/booking_da
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/shift_card.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
-import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
+import 'package:future_riverpod/features/hyperpay_payment/presentation/pages/hyperpay_payment_page.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart' show bookingsRefreshProvider;
 import 'package:future_riverpod/features/discounts/domain/discount_math.dart';
 import 'package:future_riverpod/features/discounts/domain/models/auto_discount.dart';
@@ -207,13 +207,15 @@ class _FarmBookingFormView extends ConsumerWidget {
 
     // Opens the payment webview for the given booking details.
     // Defined here so it can be reused by both ref.listen and onAction.
-    void openPaymentWebView(
-        String bookingId, String paymentUrl, String waylReferenceId) {
-      PaymentWebViewPage.push(
+    void openCardPayment(String bookingId, String checkoutId,
+        String referenceId, String paymentMode) {
+      HyperpayPaymentPage.push(
         context,
-        paymentUrl,
-        referenceId: waylReferenceId,
-        redirectionUrl: 'wansa://payment',
+        checkoutId: checkoutId,
+        referenceId: referenceId,
+        entityKindForVerify: 'booking',
+        entityId: bookingId,
+        paymentMode: paymentMode,
         onPaymentSuccess: (_, orderId) async {
           try {
             await ref
@@ -268,9 +270,9 @@ class _FarmBookingFormView extends ConsumerWidget {
 
     ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
       next.maybeWhen(
-        success: (bookingId, paymentUrl, holdUntil, waylReferenceId) {
-          if (paymentUrl.isNotEmpty) {
-            openPaymentWebView(bookingId, paymentUrl, waylReferenceId);
+        success: (bookingId, checkoutId, holdUntil, referenceId, paymentMode) {
+          if (checkoutId.isNotEmpty) {
+            openCardPayment(bookingId, checkoutId, referenceId, paymentMode);
           }
         },
         error: (message) {
@@ -467,11 +469,11 @@ class _FarmBookingFormView extends ConsumerWidget {
                             // instead of creating a new booking (avoids DB constraint error).
                             final current = ref.read(bookingSubmitProvider);
                             current.maybeWhen(
-                              success: (bookingId, paymentUrl, holdUntil,
-                                  waylReferenceId) {
-                                if (paymentUrl.isNotEmpty) {
-                                  openPaymentWebView(
-                                      bookingId, paymentUrl, waylReferenceId);
+                              success: (bookingId, checkoutId, holdUntil,
+                                  referenceId, paymentMode) {
+                                if (checkoutId.isNotEmpty) {
+                                  openCardPayment(bookingId, checkoutId,
+                                      referenceId, paymentMode);
                                 }
                               },
                               orElse: () {
