@@ -162,6 +162,7 @@ class SceneDelegate: FlutterSceneDelegate {
     if let url = URLContexts.first?.url,
        url.scheme == "wensa", url.host == "payment-result", hyperpayResult != nil {
       challengeController?.dismissHosting()
+      challengeController = nil
       resolveSuccess("success")
       return
     }
@@ -183,11 +184,19 @@ extension SceneDelegate: OPPThreeDSEventListener {
   }
 
   func onThreeDSChallengeRequired(completion: @escaping (UINavigationController) -> Void) {
-    guard let root = window?.rootViewController else { return }
-    let presenter = root.presentedViewController ?? root
-    let nav = UINavigationController()
-    presenter.present(nav, animated: true) {
-      completion(nav)
+    DispatchQueue.main.async { [weak self] in
+      guard let self else { return }
+      guard let root = self.window?.rootViewController else {
+        // No presenter means the completion can never be satisfied; fail
+        // deterministically so the Dart side does not hang forever.
+        self.resolveError("transaction_failed", "No root view controller for 3DS challenge")
+        return
+      }
+      let presenter = root.presentedViewController ?? root
+      let nav = UINavigationController()
+      presenter.present(nav, animated: true) {
+        completion(nav)
+      }
     }
   }
 }
