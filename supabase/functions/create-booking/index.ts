@@ -321,12 +321,15 @@ Deno.serve(async (req: Request) => {
     // merchantTransactionId carries our referenceId for reconciliation.
     const checkoutBody = new URLSearchParams({
       entityId:              HYPERPAY_ENTITY_ID,
-      amount:                finalIqd.toFixed(2),
+      // IQD is a 0-decimal currency for this acquirer: decimals in the amount
+      // cause 800.100.156 "transaction declined (format error)" at submit.
+      // Matches the dashboard's proven integration (_shared/hyperpay.ts).
+      amount:                String(Math.round(finalIqd)),
       currency:              "IQD",
       paymentType:           "DB",
       // HyperPay rejects underscores in merchantTransactionId — dashes only.
       merchantTransactionId: referenceId.replaceAll("_", "-"),
-      ...(HYPERPAY_ENV !== "live" ? { testMode: "EXTERNAL" } : {}),
+      ...(HYPERPAY_ENV !== "live" && HYPERPAY_ENV !== "prod" ? { testMode: "EXTERNAL" } : {}),
     });
 
     const hpRes = await fetch(`${HYPERPAY_BASE}/v1/checkouts`, {
@@ -348,7 +351,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const checkoutId  = hpJson.id;
-    const paymentMode = HYPERPAY_ENV === "live" ? "LIVE" : "TEST";
+    const paymentMode = HYPERPAY_ENV === "live" || HYPERPAY_ENV === "prod" ? "LIVE" : "TEST";
 
     // ── Look up merchant commission to snapshot onto booking ───────────────
     // Priority: temp override (when current Asia/Baghdad date is in window)

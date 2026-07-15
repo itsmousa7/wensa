@@ -26,8 +26,18 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const SUCCESS_CODE = /^(000\.000\.|000\.100\.1)/;
-const MANUAL_REVIEW_CODE = /^(000\.400\.0[^3]|000\.400\.100)/;
+// Success rule per environment — mirrors the dashboard's proven integration
+// (wansa-admin-dashboard _shared/hyperpay.ts):
+//   test: any "successfully processed in test mode" code — 000.100.1xx
+//   prod: only 000.000.000 is a successful payment
+const TEST_SUCCESS_RE = /^000\.100\.1\d{2}$/;
+const PROD_SUCCESS_CODE = "000.000.000";
+
+function isPaid(code: string, env: string): boolean {
+  return env === "live" || env === "prod"
+    ? code === PROD_SUCCESS_CODE
+    : TEST_SUCCESS_RE.test(code) || code === PROD_SUCCESS_CODE;
+}
 
 const RPC_BY_KIND: Record<string, { fn: string; idParam: string }> = {
   booking:       { fn: "confirm_payment",               idParam: "p_booking_id" },
@@ -51,6 +61,7 @@ Deno.serve(async (req: Request) => {
   const HYPERPAY_BASE       = Deno.env.get("HYPERPAY_BASE") ?? "https://eu-test.oppwa.com";
   const HYPERPAY_ENTITY_ID  = Deno.env.get("HYPERPAY_ENTITY_ID")!;
   const HYPERPAY_AUTH_TOKEN = Deno.env.get("HYPERPAY_AUTH_TOKEN")!;
+  const HYPERPAY_ENV        = Deno.env.get("HYPERPAY_ENV") ?? "test";
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -89,7 +100,11 @@ Deno.serve(async (req: Request) => {
     const code        = statusJson.result?.code ?? "unknown";
     const description = statusJson.result?.description ?? `HTTP ${statusRes.status}`;
 
-    const paid = SUCCESS_CODE.test(code) || MANUAL_REVIEW_CODE.test(code);
+    const paid = isPaid(code, HYPERPAY_ENV);
+    console.log(
+      `verify-payment: checkout=${body.checkout_id} kind=${body.kind} ` +
+      `http=${statusRes.status} code=${code} paid=${paid} desc=${description}`,
+    );
     if (!paid) {
       // Not an error: the row stays pending; expiry crons clean it up.
       return json({ paid: false, code, description }, 200);
