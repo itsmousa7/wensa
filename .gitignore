@@ -50,3 +50,4 @@ app.*.map.json
 
 # graphify generated knowledge-graph output
 /graphify-out/
+.superpowers/
