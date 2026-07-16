@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/court.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:future_riverpod/features/hyperpay_payment/presentation/pages/hyperpay_payment_page.dart';
+import 'package:future_riverpod/features/hyperpay_payment/presentation/screens/payment_result_page.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_label.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/slot_grid.dart';
-import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
     show bookingsRefreshProvider;
@@ -254,7 +254,7 @@ class _BookingFormView extends ConsumerWidget {
         entityKindForVerify: 'booking',
         entityId: bookingId,
         paymentMode: paymentMode,
-        onPaymentSuccess: (_, orderId) async {
+        onPaymentSuccess: (_, orderId, merchantTxnId) async {
           try {
             await ref
                 .read(bookingRepositoryProvider)
@@ -264,16 +264,17 @@ class _BookingFormView extends ConsumerWidget {
           ref.read(bookingsRefreshProvider.notifier).bump();
           ref.invalidate(userPurchaseHistoryProvider);
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Payment successful! Your booking is confirmed.'),
-                backgroundColor: Colors.green,
-              ),
+            PaymentResultPage.show(
+              context,
+              success: true,
+              merchantTransactionId: merchantTxnId,
+              onDone: () {
+                if (context.mounted) context.go('/bookings/$bookingId');
+              },
             );
-            context.go('/bookings/$bookingId');
           }
         },
-        onPaymentFailed: () async {
+        onPaymentFailed: (message, merchantTxnId) async {
           // Release the pending row so the slot frees up immediately instead
           // of staying "booked" until the expiry cron. The slot is only ever
           // held by a confirmed (paid) booking.
@@ -285,11 +286,11 @@ class _BookingFormView extends ConsumerWidget {
             ));
           }
           if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment failed. Please try again.'),
-              backgroundColor: AppColors.danger,
-            ),
+          PaymentResultPage.show(
+            context,
+            success: false,
+            message: message,
+            merchantTransactionId: merchantTxnId,
           );
         },
         onPaymentCancelled: () async {

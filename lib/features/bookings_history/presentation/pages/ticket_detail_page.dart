@@ -477,7 +477,10 @@ class _TicketScreenState extends State<_TicketScreen> {
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: const StadiumBorder(),
-                side: BorderSide.none,
+                side: BorderSide(
+                  color: cs.outline.withValues(alpha: 0.5),
+                  width: 1.2,
+                ),
               ),
             ),
           ),

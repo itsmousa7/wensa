@@ -27,6 +27,7 @@ import 'package:future_riverpod/features/onboarding/data/onboarding_provider.dar
 import 'package:future_riverpod/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:future_riverpod/features/places/presentation/pages/place_details_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/profile_page.dart';
+import 'package:future_riverpod/features/profile/presentation/pages/saved_cards_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/theme_settings_page.dart';
 import 'package:future_riverpod/features/search/presentation/pages/search_page.dart';
 import 'package:go_router/go_router.dart';
@@ -125,6 +126,11 @@ GoRouter router(Ref ref) {
         path: '/theme-settings',
         name: RouteNames.themeSettings,
         builder: (_, s) => ThemeSettingsPage(isAr: s.extra as bool),
+      ),
+      GoRoute(
+        path: '/saved-cards',
+        name: RouteNames.savedCards,
+        builder: (_, s) => SavedCardsPage(isAr: s.extra as bool? ?? false),
       ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => NavShell(navigationShell: shell),
@@ -292,6 +298,7 @@ String? _redirect(Ref ref, GoRouterState state) {
     '/changeName',
     '/changePhone',
     '/theme-settings',
+    '/saved-cards',
     '/place/',
     '/event/',
     '/bookings',

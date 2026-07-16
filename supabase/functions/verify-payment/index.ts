@@ -12,11 +12,18 @@
  *   { checkout_id: string,
  *     kind: "booking" | "concert_group" | "membership",
  *     id: string,              // booking_id | group_id | membership_id
- *     reference_id: string }   // stored into payment_id on confirm
+ *     reference_id: string,    // stored into payment_id on confirm
+ *     save_card?: boolean }    // persist the card token for one-tap payments
  *
- * Response: { paid: boolean, code: string, description: string }
+ * Response: { paid: boolean, code: string, description: string,
+ *             merchant_transaction_id: string | null }
  *
- * Env: SUPABASE_URL, SUPABASE_ANON_KEY,
+ * Checkouts are created with createRegistration=true (create-booking), so a
+ * successful status result carries a registrationId. When save_card is true
+ * we upsert it into bookings.user_payment_tokens for the caller (best-effort,
+ * never fails the payment).
+ *
+ * Env: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
  *      HYPERPAY_BASE, HYPERPAY_ENTITY_ID, HYPERPAY_AUTH_TOKEN
  */
 
@@ -52,6 +59,64 @@ function json(body: unknown, status: number): Response {
   });
 }
 
+/**
+ * Upsert the card token from a successful payment result into
+ * bookings.user_payment_tokens for the JWT's user. Conflict target is the
+ * (user_id, brand, last4, exp_month, exp_year) unique index so re-saving the
+ * same physical card refreshes registration_id instead of duplicating the row.
+ * Best-effort — a token-save failure must never fail the payment itself.
+ */
+async function saveCardToken(
+  supabaseUrl: string,
+  jwt: string,
+  payment: {
+    registrationId?: string;
+    paymentBrand?: string;
+    id?: string;
+    card?: {
+      last4Digits?: string; holder?: string;
+      expiryMonth?: string; expiryYear?: string;
+    };
+  },
+): Promise<void> {
+  try {
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const b64 = jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const userId = (JSON.parse(atob(b64)) as { sub?: string }).sub;
+    if (!userId) return;
+
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/user_payment_tokens` +
+        `?on_conflict=user_id,brand,last4,exp_month,exp_year`,
+      {
+        method: "POST",
+        headers: {
+          apikey: SERVICE_KEY,
+          Authorization: `Bearer ${SERVICE_KEY}`,
+          "Content-Type": "application/json",
+          "Content-Profile": "bookings",
+          Prefer: "resolution=merge-duplicates,return=minimal",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          registration_id: payment.registrationId,
+          brand: payment.paymentBrand ?? null,
+          last4: payment.card?.last4Digits ?? null,
+          exp_month: payment.card?.expiryMonth ?? null,
+          exp_year: payment.card?.expiryYear ?? null,
+          holder: payment.card?.holder ?? null,
+          initial_transaction_id: payment.id ?? null,
+        }),
+      },
+    );
+    if (!res.ok) {
+      console.error(`saveCardToken failed ${res.status}: ${await res.text().catch(() => "")}`);
+    }
+  } catch (e) {
+    console.error("saveCardToken failed (non-fatal):", e);
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -71,6 +136,7 @@ Deno.serve(async (req: Request) => {
 
     const body = await req.json().catch(() => null) as {
       checkout_id?: string; kind?: string; id?: string; reference_id?: string;
+      save_card?: boolean;
     } | null;
 
     const rpc = body?.kind ? RPC_BY_KIND[body.kind] : undefined;
@@ -87,6 +153,14 @@ Deno.serve(async (req: Request) => {
 
     const statusJson = await statusRes.json().catch(() => ({})) as {
       result?: { code?: string; description?: string };
+      merchantTransactionId?: string;
+      registrationId?: string;
+      paymentBrand?: string;
+      id?: string;
+      card?: {
+        last4Digits?: string; holder?: string;
+        expiryMonth?: string; expiryYear?: string;
+      };
     };
     // A non-2xx WITHOUT a result code means the verification call itself broke
     // (bad credentials, HyperPay outage) — surface as retryable, not "unpaid".
@@ -99,6 +173,9 @@ Deno.serve(async (req: Request) => {
 
     const code        = statusJson.result?.code ?? "unknown";
     const description = statusJson.result?.description ?? `HTTP ${statusRes.status}`;
+    // Echoed back so the app can show a support-friendly transaction id on
+    // the payment result page (matches the id visible in the HyperPay BIP).
+    const merchantTransactionId = statusJson.merchantTransactionId ?? null;
 
     const paid = isPaid(code, HYPERPAY_ENV);
     console.log(
@@ -107,7 +184,10 @@ Deno.serve(async (req: Request) => {
     );
     if (!paid) {
       // Not an error: the row stays pending; expiry crons clean it up.
-      return json({ paid: false, code, description }, 200);
+      return json(
+        { paid: false, code, description, merchant_transaction_id: merchantTransactionId },
+        200,
+      );
     }
 
     // ── 2. Confirm via the existing user-scoped RPC ─────────────────────────
@@ -131,7 +211,15 @@ Deno.serve(async (req: Request) => {
       return json({ error: `Payment verified but confirm failed (${rpcRes.status})` }, 500);
     }
 
-    return json({ paid: true, code, description }, 200);
+    // ── 3. Optionally persist the card token (best-effort, never fatal) ─────
+    if (body.save_card === true && statusJson.registrationId) {
+      await saveCardToken(SUPABASE_URL, authHeader.slice(7), statusJson);
+    }
+
+    return json(
+      { paid: true, code, description, merchant_transaction_id: merchantTransactionId },
+      200,
+    );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Internal server error";
     console.error("verify-payment error:", msg);

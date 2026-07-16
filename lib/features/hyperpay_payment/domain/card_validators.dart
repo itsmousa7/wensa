@@ -43,3 +43,12 @@ bool isValidExpiry(String mm, String yy) {
 String normalizeYear(String yy) => yy.length == 2 ? '20$yy' : yy;
 
 bool isValidCvv(String cvv) => RegExp(r'^\d{3}$').hasMatch(cvv);
+
+/// Requires a first and last name (e.g. "John Doe") totalling at least 3
+/// characters.
+bool isValidHolderName(String name) {
+  final trimmed = name.trim();
+  if (trimmed.length < 3) return false;
+  final parts = trimmed.split(RegExp(r'\s+'));
+  return parts.length >= 2 && parts.every((part) => part.isNotEmpty);
+}

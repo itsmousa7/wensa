@@ -14,29 +14,36 @@ class AppTheme {
     String languageCode = 'en',
     required BuildContext context,
   }) {
-    final textTheme = AppTypography.getTextTheme(languageCode, context);
+    // Hoisted so the typography helpers below derive colors from THIS
+    // scheme, not the ambient theme (which may be the other brightness).
+    const colorScheme = ColorScheme.light(
+      primary: AppColors.lightGreenPrimary,
+      onPrimary: AppColors.white,
+      secondary: AppColors.lightGreenSecondary,
+      onSecondary: AppColors.black,
+      error: AppColors.lightRedPrimary,
+      onError: AppColors.white,
+      surface: AppColors.lightPrimary,
+      onSurface: AppColors.lightTextPrimary,
+      surfaceContainerHighest: AppColors.lightSecondary,
+      errorContainer: AppColors.lightRedSecondary, // ← add
+      onErrorContainer: AppColors.black,
+      surfaceContainer: AppColors.lightTextField,
+      surfaceContainerLowest: AppColors.disableGray,
+      onTertiary: AppColors.lightGraySecondary,
+    );
+    final textTheme = AppTypography.getTextTheme(
+      languageCode,
+      context,
+      colorScheme: colorScheme,
+    );
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
 
       // Color Scheme
-      colorScheme: const ColorScheme.light(
-        primary: AppColors.lightGreenPrimary,
-        onPrimary: AppColors.white,
-        secondary: AppColors.lightGreenSecondary,
-        onSecondary: AppColors.black,
-        error: AppColors.lightRedPrimary,
-        onError: AppColors.white,
-        surface: AppColors.lightPrimary,
-        onSurface: AppColors.lightTextPrimary,
-        surfaceContainerHighest: AppColors.lightSecondary,
-        errorContainer: AppColors.lightRedSecondary, // ← add
-        onErrorContainer: AppColors.black,
-        surfaceContainer: AppColors.lightTextField,
-        surfaceContainerLowest: AppColors.disableGray,
-        onTertiary: AppColors.lightGraySecondary,
-      ),
+      colorScheme: colorScheme,
 
       // Scaffold Background
       scaffoldBackgroundColor: AppColors.white,
@@ -123,10 +130,12 @@ class AppTheme {
         hintStyle: AppTypography.hint(
           context: context,
           languageCode: languageCode,
+          colorScheme: colorScheme,
         ),
         errorStyle: AppTypography.error(
           context: context,
           languageCode: languageCode,
+          colorScheme: colorScheme,
         ),
         labelStyle: textTheme.bodyMedium,
         floatingLabelStyle: textTheme.bodySmall?.copyWith(
@@ -161,6 +170,7 @@ class AppTheme {
           textStyle: AppTypography.button(
             context: context,
             languageCode: languageCode,
+            colorScheme: colorScheme,
           ),
         ),
       ),
@@ -183,6 +193,7 @@ class AppTheme {
           textStyle: AppTypography.button(
             context: context,
             languageCode: languageCode,
+            colorScheme: colorScheme,
           ),
         ),
       ),
@@ -199,6 +210,7 @@ class AppTheme {
           textStyle: AppTypography.button(
             context: context,
             languageCode: languageCode,
+            colorScheme: colorScheme,
           ).copyWith(fontWeight: FontWeight.w500),
         ),
       ),
@@ -347,28 +359,36 @@ class AppTheme {
     String languageCode = 'en',
     required BuildContext context,
   }) {
-    final textTheme = AppTypography.getTextTheme(languageCode, context);
+    // Hoisted so the typography helpers below derive colors from THIS
+    // scheme — previously they read the ambient (light) theme, baking dark
+    // text colors into the dark theme's textTheme.
+    const colorScheme = ColorScheme.dark(
+      primary: AppColors.darkGreenPrimary,
+      onPrimary: AppColors.white,
+      secondary: AppColors.darkGreenSecondary,
+      onSecondary: AppColors.white,
+      error: AppColors.darkRedPrimary,
+      onError: AppColors.white,
+      surface: AppColors.darkPrimary,
+      onSurface: AppColors.darkTextPrimary,
+      errorContainer: AppColors.darkRedSecondary, // ← add
+      onErrorContainer: AppColors.white,
+      surfaceContainer: AppColors.darkPrimary,
+      surfaceContainerHighest: AppColors.darkSecondary,
+      onTertiary: AppColors.darkGraySecondary,
+    );
+    final textTheme = AppTypography.getTextTheme(
+      languageCode,
+      context,
+      colorScheme: colorScheme,
+    );
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
 
       // Color Scheme
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.darkGreenPrimary,
-        onPrimary: AppColors.white,
-        secondary: AppColors.darkGreenSecondary,
-        onSecondary: AppColors.white,
-        error: AppColors.darkRedPrimary,
-        onError: AppColors.white,
-        surface: AppColors.darkPrimary,
-        onSurface: AppColors.darkTextPrimary,
-        errorContainer: AppColors.darkRedSecondary, // ← add
-        onErrorContainer: AppColors.white,
-        surfaceContainer: AppColors.darkPrimary,
-        surfaceContainerHighest: AppColors.darkSecondary,
-        onTertiary: AppColors.darkGraySecondary,
-      ),
+      colorScheme: colorScheme,
 
       // Scaffold Background
       scaffoldBackgroundColor: AppColors.black,
@@ -455,10 +475,12 @@ class AppTheme {
         hintStyle: AppTypography.hint(
           context: context,
           languageCode: languageCode,
+          colorScheme: colorScheme,
         ),
         errorStyle: AppTypography.error(
           context: context,
           languageCode: languageCode,
+          colorScheme: colorScheme,
         ),
         labelStyle: textTheme.bodyMedium,
         floatingLabelStyle: textTheme.bodySmall?.copyWith(
@@ -493,6 +515,7 @@ class AppTheme {
           textStyle: AppTypography.button(
             context: context,
             languageCode: languageCode,
+            colorScheme: colorScheme,
           ),
         ),
       ),
@@ -515,6 +538,7 @@ class AppTheme {
           textStyle: AppTypography.button(
             context: context,
             languageCode: languageCode,
+            colorScheme: colorScheme,
           ),
         ),
       ),
@@ -531,6 +555,7 @@ class AppTheme {
           textStyle: AppTypography.button(
             context: context,
             languageCode: languageCode,
+            colorScheme: colorScheme,
           ).copyWith(fontWeight: FontWeight.w500),
         ),
       ),

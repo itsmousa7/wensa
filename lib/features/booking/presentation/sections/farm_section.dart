@@ -10,6 +10,7 @@ import 'package:future_riverpod/features/booking/presentation/widgets/booking_su
 import 'package:future_riverpod/features/booking/presentation/widgets/shift_card.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:future_riverpod/features/hyperpay_payment/presentation/pages/hyperpay_payment_page.dart';
+import 'package:future_riverpod/features/hyperpay_payment/presentation/screens/payment_result_page.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart' show bookingsRefreshProvider;
 import 'package:future_riverpod/features/discounts/domain/discount_math.dart';
 import 'package:future_riverpod/features/discounts/domain/models/auto_discount.dart';
@@ -18,7 +19,6 @@ import 'package:future_riverpod/features/discounts/presentation/providers/user_p
 import 'package:future_riverpod/features/discounts/presentation/widgets/promo_code_field.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 
 // ---------------------------------------------------------------------------
 // Local state notifiers
@@ -216,7 +216,7 @@ class _FarmBookingFormView extends ConsumerWidget {
         entityKindForVerify: 'booking',
         entityId: bookingId,
         paymentMode: paymentMode,
-        onPaymentSuccess: (_, orderId) async {
+        onPaymentSuccess: (_, orderId, merchantTxnId) async {
           try {
             await ref
                 .read(bookingRepositoryProvider)
@@ -226,16 +226,17 @@ class _FarmBookingFormView extends ConsumerWidget {
           ref.read(bookingsRefreshProvider.notifier).bump();
           ref.invalidate(userPurchaseHistoryProvider);
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Payment successful! Your booking is confirmed.'),
-                backgroundColor: Colors.green,
-              ),
+            PaymentResultPage.show(
+              context,
+              success: true,
+              merchantTransactionId: merchantTxnId,
+              onDone: () {
+                if (context.mounted) context.go('/bookings/$bookingId');
+              },
             );
-            context.go('/bookings/$bookingId');
           }
         },
-        onPaymentFailed: () async {
+        onPaymentFailed: (message, merchantTxnId) async {
           // Release the pending row so the shift frees up immediately instead
           // of staying "booked" until the expiry cron. The shift is only ever
           // held by a confirmed (paid) booking.
@@ -243,11 +244,11 @@ class _FarmBookingFormView extends ConsumerWidget {
           ref.invalidate(
               farmShiftsProvider(placeId, bookingFormatDate(selectedDate)));
           if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment failed. Please try again.'),
-              backgroundColor: AppColors.danger,
-            ),
+          PaymentResultPage.show(
+            context,
+            success: false,
+            message: message,
+            merchantTransactionId: merchantTxnId,
           );
         },
         onPaymentCancelled: () async {

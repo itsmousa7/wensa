@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership_plan.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:future_riverpod/features/hyperpay_payment/presentation/pages/hyperpay_payment_page.dart';
+import 'package:future_riverpod/features/hyperpay_payment/presentation/screens/payment_result_page.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/membership_submit_provider.dart';
@@ -10,7 +11,6 @@ import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/membership_plan_card.dart';
-import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
     show bookingsRefreshProvider;
 import 'package:future_riverpod/features/discounts/domain/discount_math.dart';
@@ -78,7 +78,7 @@ class _MembershipSectionState extends ConsumerState<MembershipSection> {
               entityKindForVerify: 'membership',
               entityId: bookingId,
               paymentMode: paymentMode,
-              onPaymentSuccess: (_, orderId) async {
+              onPaymentSuccess: (_, orderId, merchantTxnId) async {
                 try {
                   await ref
                       .read(bookingRepositoryProvider)
@@ -88,24 +88,26 @@ class _MembershipSectionState extends ConsumerState<MembershipSection> {
                 ref.read(bookingsRefreshProvider.notifier).bump();
                 ref.invalidate(userPurchaseHistoryProvider);
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Payment successful! Your membership is now active.',
-                      ),
-                      backgroundColor: Colors.green,
-                    ),
+                  PaymentResultPage.show(
+                    context,
+                    success: true,
+                    merchantTransactionId: merchantTxnId,
+                    onDone: () {
+                      if (context.mounted) {
+                        context.go('/bookings/m_$bookingId');
+                      }
+                    },
                   );
-                  context.go('/bookings/m_$bookingId');
                 }
               },
-              onPaymentFailed: () {
+              onPaymentFailed: (message, merchantTxnId) {
                 ref.read(membershipSubmitProvider.notifier).reset();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Payment failed. Please try again.'),
-                    backgroundColor: AppColors.danger,
-                  ),
+                if (!context.mounted) return;
+                PaymentResultPage.show(
+                  context,
+                  success: false,
+                  message: message,
+                  merchantTransactionId: merchantTxnId,
                 );
               },
               onPaymentCancelled: () async {

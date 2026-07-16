@@ -10,9 +10,14 @@
  *   5. Create a HyperPay checkout for the *final* amount
  *   6. Return { booking_id?, group_id?, checkout_id, payment_mode, hold_until, reference_id }
  *
- * referenceId format:
+ * referenceId format (internal, stored as bookings.payment_id):
  *   bookings:  booking_{booking_id}_{timestamp}
  *   concerts:  booking_venue_{group_id}_{timestamp}
+ *
+ * merchantTransactionId sent to HyperPay (dashboard `banner-{id}` shape,
+ * capped at 32 chars — longer triggers the acquirer's format error):
+ *   bookings:  booking-{booking_id}   (truncated)
+ *   concerts:  booking-venue-{group_id} (truncated)
  *
  * Env vars required:
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY
@@ -21,6 +26,12 @@
  *   HYPERPAY_ENV           — "live" | "test" (default: "test")
  *   MERCHANT_PORTAL_URL    — e.g. "http://localhost:5173" (QR deep-link host)
  */
+
+import {
+  createCheckout,
+  type HyperPayConfig,
+  type HyperPayEnv,
+} from "../_shared/hyperpay.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -318,40 +329,47 @@ Deno.serve(async (req: Request) => {
 
     // ── Create HyperPay checkout for the FINAL amount ───────────────────────
     // The app submits the card via the native mSDK using this checkout ID.
-    // merchantTransactionId carries our referenceId for reconciliation.
-    const checkoutBody = new URLSearchParams({
-      entityId:              HYPERPAY_ENTITY_ID,
-      // IQD is a 0-decimal currency for this acquirer: decimals in the amount
-      // cause 800.100.156 "transaction declined (format error)" at submit.
-      // Matches the dashboard's proven integration (_shared/hyperpay.ts).
-      amount:                String(Math.round(finalIqd)),
-      currency:              "IQD",
-      paymentType:           "DB",
-      // HyperPay rejects underscores in merchantTransactionId — dashes only.
-      merchantTransactionId: referenceId.replaceAll("_", "-"),
-      ...(HYPERPAY_ENV !== "live" && HYPERPAY_ENV !== "prod" ? { testMode: "EXTERNAL" } : {}),
-    });
+    // Uses the same _shared/hyperpay.ts request body as the dashboard's proven
+    // banner/plan integration — this acquirer answers 800.100.156 "format
+    // error" to any deviation (decimals, underscores, customer/billing block).
+    //
+    // merchantTransactionId mirrors the dashboard's `banner-{id}` shape:
+    //   booking-{booking_id} / booking-venue-{group_id} — no timestamp suffix,
+    // capped at 32 chars (longer values trigger the acquirer's 800.100.156
+    // "format error"). Nothing parses it back (reconciliation is by
+    // checkout_id + reference_id), it exists for HyperPay-side audit only.
+    const merchantTxnId = (isGroup
+      ? `booking-venue-${customParameter}`
+      : `booking-${customParameter}`
+    ).slice(0, 32);
 
-    const hpRes = await fetch(`${HYPERPAY_BASE}/v1/checkouts`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${HYPERPAY_AUTH_TOKEN}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: checkoutBody.toString(),
-    });
+    const hpEnv: HyperPayEnv =
+      HYPERPAY_ENV === "live" || HYPERPAY_ENV === "prod" ? "prod" : "test";
+    const hpConfig: HyperPayConfig = {
+      entityId:  HYPERPAY_ENTITY_ID,
+      authToken: HYPERPAY_AUTH_TOKEN,
+      env:       hpEnv,
+      base:      HYPERPAY_BASE,
+    };
 
-    const hpJson = await hpRes.json().catch(() => ({})) as
-      { id?: string; result?: { code?: string; description?: string } };
+    // tokenize: every checkout carries createRegistration + CIT standing
+    // instruction (the dashboard does this on all checkouts — proven with this
+    // acquirer). The card is only PERSISTED if the user opts in: verify-payment
+    // saves the registrationId into bookings.user_payment_tokens when the app
+    // passes save_card=true.
+    const checkout = await createCheckout(
+      { amount: Math.round(finalIqd), merchantTransactionId: merchantTxnId, tokenize: true },
+      hpConfig,
+    );
 
-    if (!hpRes.ok || !hpJson.id) {
+    if (!checkout.id) {
       throw new Error(
-        `HyperPay checkout error ${hpRes.status}: ${JSON.stringify(hpJson.result ?? hpJson)}`,
+        `HyperPay checkout error: ${JSON.stringify(checkout.result ?? checkout)}`,
       );
     }
 
-    const checkoutId  = hpJson.id;
-    const paymentMode = HYPERPAY_ENV === "live" || HYPERPAY_ENV === "prod" ? "LIVE" : "TEST";
+    const checkoutId  = checkout.id;
+    const paymentMode = hpEnv === "prod" ? "LIVE" : "TEST";
 
     // ── Look up merchant commission to snapshot onto booking ───────────────
     // Priority: temp override (when current Asia/Baghdad date is in window)

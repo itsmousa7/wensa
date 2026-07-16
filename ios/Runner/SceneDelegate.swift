@@ -15,6 +15,16 @@ class SceneDelegate: FlutterSceneDelegate {
   private var hyperpayResult: FlutterResult?
   private var paymentProvider: OPPPaymentProvider?
   private var challengeController: ChallengeWebViewController?
+  /// Nav controller handed to the SDK's native 3DS2 challenge
+  /// (onThreeDSChallengeRequired). The SDK pushes its challenge screens onto
+  /// it but never dismisses it — we must tear it down when the transaction
+  /// resolves, or it covers the app forever after payment completes.
+  private var threeDSNav: UINavigationController?
+  /// present(animated:) for the 3DS nav is still running. A dismiss issued
+  /// while a presentation is in flight is silently dropped by UIKit, so we
+  /// queue it and run it from the present-completion instead.
+  private var threeDSNavPresenting = false
+  private var threeDSDismissRequested = false
 
   override func scene(
     _ scene: UIScene,
@@ -70,6 +80,7 @@ class SceneDelegate: FlutterSceneDelegate {
 
   private func resolveSuccess(_ value: String) {
     DispatchQueue.main.async {
+      self.dismissThreeDSNav()
       self.hyperpayResult?(value)
       self.hyperpayResult = nil
     }
@@ -77,9 +88,23 @@ class SceneDelegate: FlutterSceneDelegate {
 
   private func resolveError(_ code: String, _ message: String) {
     DispatchQueue.main.async {
+      self.dismissThreeDSNav()
       self.hyperpayResult?(FlutterError(code: code, message: message, details: nil))
       self.hyperpayResult = nil
     }
+  }
+
+  /// Must run on the main thread.
+  private func dismissThreeDSNav() {
+    if threeDSNavPresenting {
+      threeDSDismissRequested = true
+      return
+    }
+    threeDSNav = nil
+    // Dismiss whatever UIKit has presented over the Flutter root — the SDK's
+    // 3DS screens all sit above it (on our nav or presented by the SDK
+    // itself). No-op when nothing is presented.
+    window?.rootViewController?.dismiss(animated: true)
   }
 
   private func submitCard(args: [String: Any], from presenter: UIViewController) {
@@ -194,8 +219,16 @@ extension SceneDelegate: OPPThreeDSEventListener {
       }
       let presenter = root.presentedViewController ?? root
       let nav = UINavigationController()
+      nav.modalPresentationStyle = .fullScreen
+      self.threeDSNav = nav
+      self.threeDSNavPresenting = true
       presenter.present(nav, animated: true) {
+        self.threeDSNavPresenting = false
         completion(nav)
+        if self.threeDSDismissRequested {
+          self.threeDSDismissRequested = false
+          self.dismissThreeDSNav()
+        }
       }
     }
   }

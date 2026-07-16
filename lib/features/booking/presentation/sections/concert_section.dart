@@ -9,11 +9,11 @@ import 'package:future_riverpod/features/booking/domain/models/venue_section.dar
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:future_riverpod/features/booking/domain/seat_validation.dart';
 import 'package:future_riverpod/features/hyperpay_payment/presentation/pages/hyperpay_payment_page.dart';
+import 'package:future_riverpod/features/hyperpay_payment/presentation/screens/payment_result_page.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/hold_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/seat_map_web_view.dart';
-import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 import 'package:future_riverpod/core/widgets/primary_action_button.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
@@ -167,7 +167,7 @@ class ConcertSection extends ConsumerWidget {
               entityKindForVerify: 'concert_group',
               entityId: groupId,
               paymentMode: paymentMode,
-              onPaymentSuccess: (_, orderId) async {
+              onPaymentSuccess: (_, orderId, merchantTxnId) async {
                 // Flip every row in the concert group to confirmed before
                 // the cron can expire it — same backstop as padel/farm in
                 // case the HyperPay webhook is delayed.
@@ -181,22 +181,23 @@ class ConcertSection extends ConsumerWidget {
                 ref.read(_concertSelectionProvider.notifier).reset();
                 ref.read(bookingsRefreshProvider.notifier).bump();
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Payment successful! Your tickets are confirmed.',
-                      ),
-                      backgroundColor: Colors.green,
-                    ),
+                  final bookingId = firstBookingId;
+                  PaymentResultPage.show(
+                    context,
+                    success: true,
+                    merchantTransactionId: merchantTxnId,
+                    onDone: () {
+                      if (!context.mounted) return;
+                      if (bookingId != null && bookingId.isNotEmpty) {
+                        context.go('/bookings/$bookingId');
+                      } else {
+                        context.goNamed('bookingsHistory');
+                      }
+                    },
                   );
-                  if (firstBookingId != null && firstBookingId.isNotEmpty) {
-                    context.go('/bookings/$firstBookingId');
-                  } else {
-                    context.goNamed('bookingsHistory');
-                  }
                 }
               },
-              onPaymentFailed: () async {
+              onPaymentFailed: (message, merchantTxnId) async {
                 // Cancel the group so seats are released immediately rather
                 // than waiting up to 3 min for the cron to expire them.
                 await ref
@@ -204,11 +205,11 @@ class ConcertSection extends ConsumerWidget {
                     .cancelConcertGroup(groupId);
                 ref.invalidate(availableSeatsProvider(eventId));
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Payment failed. Please try again.'),
-                    backgroundColor: AppColors.danger,
-                  ),
+                PaymentResultPage.show(
+                  context,
+                  success: false,
+                  message: message,
+                  merchantTransactionId: merchantTxnId,
                 );
               },
               onPaymentCancelled: () async {

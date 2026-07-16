@@ -33,12 +33,21 @@ class AppTypography {
   static String getBodyFontFamily(String languageCode) =>
       languageCode == 'en' ? _ibmPlexSans() : _roboto;
 
-  static TextTheme getTextTheme(String languageCode, BuildContext context) {
+  /// [colorScheme] must be passed when building a ThemeData (AppTheme):
+  /// falling back to `Theme.of(context)` there bakes the *ambient* theme's
+  /// colors into the new theme — which is how the dark theme ended up with
+  /// light-mode (dark) text colors.
+  static TextTheme getTextTheme(
+    String languageCode,
+    BuildContext context, {
+    ColorScheme? colorScheme,
+  }) {
     final titleFont = getTitleFontFamily(languageCode);
     final bodyFont = getBodyFontFamily(languageCode);
     final base = GoogleFonts.robotoTextTheme();
-    final textColor = Theme.of(context).colorScheme.onSurface;
-    final mutedColor = Theme.of(context).colorScheme.onSurfaceVariant;
+    final scheme = colorScheme ?? Theme.of(context).colorScheme;
+    final textColor = scheme.onSurface;
+    final mutedColor = scheme.onSurfaceVariant;
 
     return base.copyWith(
       // ── Display ───────────────────────────────────────────────────────────
@@ -178,13 +187,14 @@ class AppTypography {
   static TextStyle button({
     required BuildContext context,
     String languageCode = 'en',
+    ColorScheme? colorScheme,
   }) {
     final isAr = languageCode == 'ar';
     return TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w400,
       letterSpacing: 0.5,
-      color: Theme.of(context).colorScheme.onPrimary,
+      color: (colorScheme ?? Theme.of(context).colorScheme).onPrimary,
       // Arabic buttons use the Graphik Extra Bold Arabic face.
       fontFamily: isAr ? _graphikExtraBold : getBodyFontFamily(languageCode),
       fontFamilyFallback: isAr ? const [_graphikExtraBold] : _bodyFallback,
@@ -206,11 +216,14 @@ class AppTypography {
   static TextStyle hint({
     required BuildContext context,
     String languageCode = 'en',
+    ColorScheme? colorScheme,
   }) => TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w300,
     letterSpacing: 0.15,
-    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
+    color: (colorScheme ?? Theme.of(context).colorScheme).onSurface.withValues(
+      alpha: 0.4,
+    ),
     fontFamily: getBodyFontFamily(languageCode),
     fontFamilyFallback: _bodyFallback,
   );
@@ -218,11 +231,12 @@ class AppTypography {
   static TextStyle error({
     required BuildContext context,
     String languageCode = 'en',
+    ColorScheme? colorScheme,
   }) => TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w400,
     letterSpacing: 0.4,
-    color: Theme.of(context).colorScheme.error,
+    color: (colorScheme ?? Theme.of(context).colorScheme).error,
     fontFamily: getBodyFontFamily(languageCode),
     fontFamilyFallback: _bodyFallback,
   );

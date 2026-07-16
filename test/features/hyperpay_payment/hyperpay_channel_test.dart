@@ -11,22 +11,22 @@ void main() {
   void mockNative(Object? Function() handler) {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
-      expect(call.method, 'submitCardPayment');
-      capturedArgs = call.arguments as Map<Object?, Object?>;
-      return handler();
-    });
+          expect(call.method, 'submitCardPayment');
+          capturedArgs = call.arguments as Map<Object?, Object?>;
+          return handler();
+        });
   }
 
   Future<void> submit(HyperpayChannel c) => c.submitCardPayment(
-        checkoutId: 'chk_1',
-        brand: 'VISA',
-        cardNumber: '4111111111111111',
-        holderName: 'M ALHAMAD',
-        expiryMonth: '12',
-        expiryYear: '39',
-        cvv: '123',
-        mode: 'TEST',
-      );
+    checkoutId: 'chk_1',
+    brand: 'VISA',
+    cardNumber: '4111111111111111',
+    holderName: 'M ALHAMAD',
+    expiryMonth: '12',
+    expiryYear: '39',
+    cvv: '123',
+    mode: 'TEST',
+  );
 
   test('sends normalized 4-digit year and all fields', () async {
     mockNative(() => 'SYNC');
@@ -43,20 +43,37 @@ void main() {
   });
 
   test('maps cancelled PlatformException', () async {
-    mockNative(() => throw PlatformException(code: 'cancelled', message: 'user closed'));
+    mockNative(
+      () => throw PlatformException(code: 'cancelled', message: 'user closed'),
+    );
     await expectLater(
       submit(HyperpayChannel()),
-      throwsA(isA<HyperpayPaymentException>()
-          .having((e) => e.kind, 'kind', HyperpayFailureKind.cancelled)),
+      throwsA(
+        isA<HyperpayPaymentException>().having(
+          (e) => e.kind,
+          'kind',
+          HyperpayFailureKind.cancelled,
+        ),
+      ),
     );
   });
 
   test('maps unknown error to failed', () async {
-    mockNative(() => throw PlatformException(code: 'transaction_failed', message: 'declined'));
+    mockNative(
+      () => throw PlatformException(
+        code: 'transaction_failed',
+        message: 'declined',
+      ),
+    );
     await expectLater(
       submit(HyperpayChannel()),
-      throwsA(isA<HyperpayPaymentException>()
-          .having((e) => e.kind, 'kind', HyperpayFailureKind.failed)),
+      throwsA(
+        isA<HyperpayPaymentException>().having(
+          (e) => e.kind,
+          'kind',
+          HyperpayFailureKind.failed,
+        ),
+      ),
     );
   });
 
