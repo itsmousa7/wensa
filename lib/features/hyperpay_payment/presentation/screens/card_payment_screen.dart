@@ -244,18 +244,22 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
 
       final merchantTxnId =
           result.merchantTransactionId ?? _merchantTxnFallback;
+      _resultHandled = true;
+      // Pop BEFORE invoking the outcome callback. Callbacks may synchronously
+      // push PaymentResultPage onto the same (root) navigator; a pop() issued
+      // after that push removes the result page instead of this sheet — the
+      // user sees the payment UI close with no result page. (Only bit some
+      // callers: callbacks that await something first yield long enough for
+      // the pop to land before their push.)
+      if (mounted) Navigator.of(context).pop();
       if (result.paid) {
-        _resultHandled = true;
         widget.onPaymentSuccess?.call(
           widget.referenceId,
           widget.checkoutId,
           merchantTxnId,
         );
-        if (mounted) Navigator.of(context).pop();
       } else {
-        _resultHandled = true;
         widget.onPaymentFailed?.call(result.description, merchantTxnId);
-        if (mounted) Navigator.of(context).pop();
       }
     } on HyperpayPaymentException catch (e) {
       if (e.kind != HyperpayFailureKind.cancelled) {

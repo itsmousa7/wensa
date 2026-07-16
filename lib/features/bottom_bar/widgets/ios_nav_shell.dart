@@ -98,6 +98,14 @@ class IosNavShell extends ConsumerWidget {
     // correct tab is highlighted.
     final barIndex = _branchToBar(navigationShell.currentIndex);
 
+    // The search block's footprint (padding + button) is dead width taken from
+    // the native CNTabBar. At the default 32+60+32 = 124pt, the 4 labeled tabs
+    // get ~250–290pt on 375–414pt phones (iPhone 11/SE/mini) and the labels
+    // collide. Below 420pt, shrink the block so the tab bar wins back ~40pt.
+    final compact = MediaQuery.sizeOf(context).width < 420;
+    final searchPadding = compact ? 14.0 : 32.0;
+    final searchButtonSize = compact ? 56.0 : 60.0;
+
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
@@ -142,18 +150,18 @@ class IosNavShell extends ConsumerWidget {
 
                     // Search: pushed as a route on iOS
                     Padding(
-                      padding: const EdgeInsets.only(
-                        right: 32,
+                      padding: EdgeInsets.only(
+                        right: searchPadding,
                         bottom: 25,
-                        left: 32,
+                        left: searchPadding,
                       ),
                       child: CNButton.icon(
                         icon: const CNSymbol('magnifyingglass'),
                         onPressed: () => context.pushNamed(RouteNames.search),
-                        config: const CNButtonConfig(
+                        config: CNButtonConfig(
                           style: CNButtonStyle.glass,
-                          width: 60,
-                          minHeight: 60,
+                          width: searchButtonSize,
+                          minHeight: searchButtonSize,
                         ),
                       ),
                     ),

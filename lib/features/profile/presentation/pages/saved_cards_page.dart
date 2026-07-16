@@ -51,9 +51,13 @@ class SavedCardsPage extends ConsumerWidget {
       _ => null,
     };
     if (asset == null) return const Icon(Icons.credit_card, size: 28);
+    // The Mastercard SVG has a square 58×58 viewBox with the card artwork
+    // occupying only 58×40 of it — inside a 36×24 contain box it renders
+    // ~24pt wide, visibly smaller than the wide-viewBox Visa wordmark. A
+    // square box lets its artwork fill the full 36pt width like Visa does.
     return SizedBox(
       width: 36,
-      height: 24,
+      height: brand == 'MASTER' ? 36 : 24,
       child: SvgPicture.asset(asset, fit: BoxFit.contain),
     );
   }
@@ -100,9 +104,15 @@ class SavedCardsPage extends ConsumerWidget {
                         color: cs.outlineVariant,
                       ),
                       const SizedBox(height: AppSpacing.md),
+                      // Hint-field gray (onSurface @ 40% — see
+                      // AppTypography.hint) so the empty state reads muted in
+                      // BOTH modes; the default titleMedium is baked with
+                      // light-mode colors and goes dark-on-dark in dark mode.
                       Text(
                         isAr ? 'لا توجد بطاقات محفوظة' : 'No saved cards yet',
-                        style: theme.textTheme.titleMedium,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.4),
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 4.0),
@@ -111,7 +121,7 @@ class SavedCardsPage extends ConsumerWidget {
                             ? 'يمكنك حفظ بطاقتك أثناء الدفع لاستخدامها لاحقًا.'
                             : 'You can save a card during checkout to use it for faster payments.',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: cs.outline,
+                          color: cs.onSurface.withValues(alpha: 0.4),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -136,9 +146,14 @@ class SavedCardsPage extends ConsumerWidget {
                     borderRadius: AppSpacing.borderRadiusLG,
                   ),
                   // Dark theme's surfaceContainer matches the page surface
-                  // (tiles vanish) — use the highest container tone there.
+                  // (tiles vanish), but surfaceContainerHighest (#313131) is
+                  // too light — blend a faint white over the surface for a
+                  // subtle elevated tile (~#1F1F1F) instead.
                   tileColor: theme.brightness == Brightness.dark
-                      ? cs.surfaceContainerHighest
+                      ? Color.alphaBlend(
+                          Colors.white.withValues(alpha: 0.055),
+                          cs.surface,
+                        )
                       : cs.surfaceContainer,
                   leading: _brandIcon(card.brand),
                   // Explicit onSurface colors: the app's dark textTheme is

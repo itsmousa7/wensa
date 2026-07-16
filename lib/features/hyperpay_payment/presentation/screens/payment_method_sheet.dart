@@ -99,12 +99,15 @@ class _PaymentMethodSheetState extends ConsumerState<PaymentMethodSheet> {
           result.merchantTransactionId ?? _merchantTxnFallback;
       if (result.paid) {
         _resultHandled = true;
+        // Pop before the callback — see CardPaymentScreen._pay(): a callback
+        // that synchronously pushes PaymentResultPage would otherwise have
+        // its page removed by this pop instead of the sheet.
+        if (mounted) Navigator.of(context).pop();
         widget.onPaymentSuccess?.call(
           widget.referenceId,
           widget.checkoutId,
           merchantTxnId,
         );
-        if (mounted) Navigator.of(context).pop();
         return;
       }
       // Declined: keep the sheet open so the user can try another card or
@@ -147,9 +150,12 @@ class _PaymentMethodSheetState extends ConsumerState<PaymentMethodSheet> {
       _ => null,
     };
     if (asset == null) return const Icon(Icons.credit_card, size: 28);
+    // Square box for Mastercard — its SVG viewBox is square with the card
+    // artwork only ~⅔ of the height, so a 36×24 box shrinks it vs Visa.
+    // Mirrors SavedCardsPage._brandIcon.
     return SizedBox(
       width: 36,
-      height: 24,
+      height: brand == 'MASTER' ? 36 : 24,
       child: SvgPicture.asset(asset, fit: BoxFit.contain),
     );
   }
