@@ -2,22 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:future_riverpod/features/hyperpay_payment/presentation/screens/payment_result_page.dart';
+import 'package:future_riverpod/features/hyperpay_payment/hyperpay_payment.dart';
 
 Widget _host(PaymentResultPage page) => MaterialApp(
-      home: Builder(
-        builder: (context) => Scaffold(
-          body: Center(
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => page),
-              ),
-              child: const Text('open'),
-            ),
-          ),
+  home: Builder(
+    builder: (context) => Scaffold(
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute<void>(builder: (_) => page)),
+          child: const Text('open'),
         ),
       ),
-    );
+    ),
+  ),
+);
 
 /// Opens [page] and pumps just past the entrance animation — deliberately not
 /// pumpAndSettle, which would fast-forward through the countdown and pop the
@@ -30,8 +30,9 @@ Future<void> _open(WidgetTester tester, PaymentResultPage page) async {
 }
 
 void main() {
-  testWidgets('success shows thank-you card with the transaction id',
-      (tester) async {
+  testWidgets('success shows thank-you card with the transaction id', (
+    tester,
+  ) async {
     await _open(
       tester,
       const PaymentResultPage(
@@ -62,8 +63,9 @@ void main() {
     );
   });
 
-  testWidgets('failure without description falls back to generic copy',
-      (tester) async {
+  testWidgets('failure without description falls back to generic copy', (
+    tester,
+  ) async {
     await _open(tester, const PaymentResultPage(success: false));
 
     expect(
@@ -72,8 +74,9 @@ void main() {
     );
   });
 
-  testWidgets('transaction id is shown on both outcomes and copies on tap',
-      (tester) async {
+  testWidgets('transaction id is shown on both outcomes and copies on tap', (
+    tester,
+  ) async {
     final copied = <String>[];
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       SystemChannels.platform,
@@ -84,8 +87,12 @@ void main() {
         return null;
       },
     );
-    addTearDown(() => tester.binding.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, null));
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
 
     await _open(
       tester,
@@ -138,18 +145,17 @@ void main() {
     expect(find.text('اضغط في أي مكان للمتابعة'), findsOneWidget);
   });
 
-  testWidgets('no transaction row when merchant txn id is absent',
-      (tester) async {
-    await _open(
-      tester,
-      const PaymentResultPage(success: true),
-    );
+  testWidgets('no transaction row when merchant txn id is absent', (
+    tester,
+  ) async {
+    await _open(tester, const PaymentResultPage(success: true));
 
     expect(find.byKey(const Key('payment_result_txn_id')), findsNothing);
   });
 
-  testWidgets('countdown elapsing pops the page and fires onDone',
-      (tester) async {
+  testWidgets('countdown elapsing pops the page and fires onDone', (
+    tester,
+  ) async {
     var done = 0;
     await _open(
       tester,

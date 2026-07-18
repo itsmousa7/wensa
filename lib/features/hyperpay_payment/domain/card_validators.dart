@@ -2,6 +2,10 @@
 /// Brand support is intentionally VISA/MASTER only (Wensa scope).
 library;
 
+final _digitsOnly = RegExp(r'^\d+$');
+final _cvvPattern = RegExp(r'^\d{3}$');
+final _whitespace = RegExp(r'\s+');
+
 /// Detects the card brand from the leading digits.
 /// VISA starts with 4; Mastercard with 51–55 or 2221–2720.
 String? detectBrand(String digits) {
@@ -15,7 +19,7 @@ String? detectBrand(String digits) {
 }
 
 bool luhnCheck(String digits) {
-  if (digits.length < 12 || !RegExp(r'^\d+$').hasMatch(digits)) return false;
+  if (digits.length < 12 || !_digitsOnly.hasMatch(digits)) return false;
   var sum = 0;
   var alternate = false;
   for (var i = digits.length - 1; i >= 0; i--) {
@@ -42,13 +46,13 @@ bool isValidExpiry(String mm, String yy) {
 
 String normalizeYear(String yy) => yy.length == 2 ? '20$yy' : yy;
 
-bool isValidCvv(String cvv) => RegExp(r'^\d{3}$').hasMatch(cvv);
+bool isValidCvv(String cvv) => _cvvPattern.hasMatch(cvv);
 
 /// Requires a first and last name (e.g. "John Doe") totalling at least 3
 /// characters.
 bool isValidHolderName(String name) {
   final trimmed = name.trim();
   if (trimmed.length < 3) return false;
-  final parts = trimmed.split(RegExp(r'\s+'));
+  final parts = trimmed.split(_whitespace);
   return parts.length >= 2 && parts.every((part) => part.isNotEmpty);
 }

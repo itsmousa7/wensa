@@ -11,11 +11,14 @@ class BookingLockService {
 
   /// [kind] is one of: booking | concert_group | membership.
   /// Returns true when the hold is still the caller's and was extended.
-  Future<bool> lockForPayment({required String kind, required String id}) async {
-    final result = await Supabase.instance.client.rpc('lock_for_payment', params: {
-      'p_kind': kind,
-      'p_id': id,
-    });
+  Future<bool> lockForPayment({
+    required String kind,
+    required String id,
+  }) async {
+    final result = await Supabase.instance.client.rpc(
+      'lock_for_payment',
+      params: {'p_kind': kind, 'p_id': id},
+    );
     return result == true;
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:future_riverpod/features/hyperpay_payment/data/services/hyperpay_channel.dart';
+import 'package:future_riverpod/features/hyperpay_payment/hyperpay_payment.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

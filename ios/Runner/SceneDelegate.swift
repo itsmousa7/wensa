@@ -70,11 +70,13 @@ class SceneDelegate: FlutterSceneDelegate {
         return
       }
       guard let args = call.arguments as? [String: Any] else {
-        result(FlutterError(code: "invalid_card", message: "Missing arguments", details: nil))
+        // Malformed arguments are a programming error, not bad card input —
+        // "invalid_card" would tell the shopper to check their card details.
+        result(FlutterError(code: "transaction_failed", message: "Missing arguments", details: nil))
         return
       }
       self.hyperpayResult = result
-      self.submitCard(args: args, from: controller)
+      self.submitCard(args: args)
     }
   }
 
@@ -83,6 +85,7 @@ class SceneDelegate: FlutterSceneDelegate {
       self.dismissThreeDSNav()
       self.hyperpayResult?(value)
       self.hyperpayResult = nil
+      self.paymentProvider = nil
     }
   }
 
@@ -91,30 +94,37 @@ class SceneDelegate: FlutterSceneDelegate {
       self.dismissThreeDSNav()
       self.hyperpayResult?(FlutterError(code: code, message: message, details: nil))
       self.hyperpayResult = nil
+      self.paymentProvider = nil
     }
   }
 
   /// Must run on the main thread.
   private func dismissThreeDSNav() {
+    // Only ever tear down our own 3DS nav. Dismissing off the root view
+    // controller unconditionally is not a no-op when we never presented
+    // anything: an early resolve (e.g. invalid card, before any payment UI
+    // exists) would dismiss an unrelated modal the app happens to be showing
+    // — image_picker, SFSafariViewController, a share sheet.
+    guard threeDSNav != nil else { return }
     if threeDSNavPresenting {
       threeDSDismissRequested = true
       return
     }
+    let nav = threeDSNav
     threeDSNav = nil
-    // Dismiss whatever UIKit has presented over the Flutter root — the SDK's
-    // 3DS screens all sit above it (on our nav or presented by the SDK
-    // itself). No-op when nothing is presented.
-    window?.rootViewController?.dismiss(animated: true)
+    nav?.presentingViewController?.dismiss(animated: true)
   }
 
-  private func submitCard(args: [String: Any], from presenter: UIViewController) {
-    let checkoutId = args["checkoutid"] as? String ?? ""
-    let brand      = args["brand"] as? String ?? ""
-    let number     = args["card_number"] as? String ?? ""
-    let holder     = args["holder_name"] as? String ?? ""
-    let month      = args["month"] as? String ?? ""
-    let year       = args["year"] as? String ?? ""
-    let cvv        = args["cvv"] as? String ?? ""
+  private func submitCard(args: [String: Any]) {
+    func arg(_ key: String) -> String { args[key] as? String ?? "" }
+
+    let checkoutId = arg("checkoutid")
+    let brand      = arg("brand")
+    let number     = arg("card_number")
+    let holder     = arg("holder_name")
+    let month      = arg("month")
+    let year       = arg("year")
+    let cvv        = arg("cvv")
     let mode       = args["mode"] as? String ?? "TEST"
 
     guard OPPCardPaymentParams.isNumberValid(number, luhnCheck: true),
@@ -146,12 +156,22 @@ class SceneDelegate: FlutterSceneDelegate {
         case .synchronous:
           self.resolveSuccess("SYNC")
         case .asynchronous:
+          // When threeDS2Info is present the mSDK already ran the 3DS2
+          // challenge itself (native ipworks3ds screens pushed onto the nav we
+          // hand it in onThreeDSChallengeRequired) before this callback fired.
+          // transaction.redirectURL still holds the original — now consumed —
+          // challenge URL; opening it again just shows HyperPay's "no payment
+          // session found" error page for a payment that likely succeeded.
+          if transaction.threeDS2Info != nil {
+            self.resolveSuccess("success")
+            return
+          }
           guard let redirectURL = transaction.redirectURL else {
             self.resolveError("transaction_failed", "Missing 3DS redirect URL")
             return
           }
           DispatchQueue.main.async {
-            self.presentChallenge(url: redirectURL, over: presenter)
+            self.presentChallenge(url: redirectURL)
           }
         default:
           self.resolveError("transaction_failed", "Invalid transaction state")
@@ -162,7 +182,18 @@ class SceneDelegate: FlutterSceneDelegate {
     }
   }
 
-  private func presentChallenge(url: URL, over presenter: UIViewController) {
+  /// Must run on the main thread.
+  private func presentChallenge(url: URL) {
+    // Resolve the presenter now rather than reusing the controller captured at
+    // submit time: if something is already presented over the Flutter root,
+    // presenting on the root is silently dropped by UIKit — no callback ever
+    // fires and the Dart side hangs forever.
+    guard let root = window?.rootViewController else {
+      resolveError("transaction_failed", "No view controller to present the 3DS challenge")
+      return
+    }
+    let presenter = root.presentedViewController ?? root
+
     let vc = ChallengeWebViewController(
       url: url,
       resultScheme: "wensa",
@@ -178,7 +209,13 @@ class SceneDelegate: FlutterSceneDelegate {
     challengeController = vc
     let nav = UINavigationController(rootViewController: vc)
     nav.modalPresentationStyle = .fullScreen
-    presenter.present(nav, animated: true)
+    presenter.present(nav, animated: true) { [weak self, weak nav] in
+      // A dropped presentation would otherwise be invisible. If the nav never
+      // made it on screen, fail instead of leaving Dart waiting.
+      guard let self, nav?.presentingViewController == nil else { return }
+      self.challengeController = nil
+      self.resolveError("transaction_failed", "Could not present the 3DS challenge")
+    }
   }
 
   // Fallback: the shopper redirect arrived via the OS (external browser hop)
@@ -212,9 +249,13 @@ extension SceneDelegate: OPPThreeDSEventListener {
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
       guard let root = self.window?.rootViewController else {
-        // No presenter means the completion can never be satisfied; fail
-        // deterministically so the Dart side does not hang forever.
+        // No presenter means no challenge can be shown; fail deterministically
+        // so the Dart side does not hang forever. The SDK's completion must
+        // still be satisfied — abandoning it blocks the SDK and leaves
+        // paymentProvider holding a stalled transaction forever — so hand it a
+        // throwaway nav that is simply never presented.
         self.resolveError("transaction_failed", "No root view controller for 3DS challenge")
+        completion(UINavigationController())
         return
       }
       let presenter = root.presentedViewController ?? root

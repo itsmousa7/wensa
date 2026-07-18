@@ -8,7 +8,6 @@ class SavedCard {
     this.last4,
     this.expMonth,
     this.expYear,
-    this.holder,
   });
 
   final String id;
@@ -16,16 +15,14 @@ class SavedCard {
   final String? last4;
   final String? expMonth;
   final String? expYear;
-  final String? holder;
 
   factory SavedCard.fromJson(Map<String, dynamic> json) => SavedCard(
-        id: json['id'] as String,
-        brand: json['brand'] as String?,
-        last4: json['last4'] as String?,
-        expMonth: json['exp_month'] as String?,
-        expYear: json['exp_year'] as String?,
-        holder: json['holder'] as String?,
-      );
+    id: json['id'] as String,
+    brand: json['brand'] as String?,
+    last4: json['last4'] as String?,
+    expMonth: json['exp_month'] as String?,
+    expYear: json['exp_year'] as String?,
+  );
 
   /// "Visa •••• 4242" style label.
   String get displayName {

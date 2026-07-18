@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:future_riverpod/features/hyperpay_payment/domain/card_validators.dart';
+import 'package:future_riverpod/features/hyperpay_payment/hyperpay_payment.dart';
 
 void main() {
   group('detectBrand', () {

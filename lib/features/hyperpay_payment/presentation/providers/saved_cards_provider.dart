@@ -19,7 +19,7 @@ class SavedCards extends _$SavedCards {
     final rows = await _db
         .schema('bookings')
         .from('user_payment_tokens')
-        .select('id, brand, last4, exp_month, exp_year, holder')
+        .select('id, brand, last4, exp_month, exp_year')
         .eq('user_id', user.id)
         .order('created_at', ascending: false);
 

@@ -18,9 +18,10 @@ class HyperpayPaymentPage {
       String referenceId,
       String orderId,
       String? merchantTransactionId,
-    )? onPaymentSuccess,
+    )?
+    onPaymentSuccess,
     void Function(String? message, String? merchantTransactionId)?
-        onPaymentFailed,
+    onPaymentFailed,
     void Function()? onPaymentCancelled,
   }) {
     // Drag-down (and tap-outside) dismissal is allowed: leaving the sheet

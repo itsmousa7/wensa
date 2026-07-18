@@ -1,4 +1,4 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'edge_function.dart';
 
 /// Outcome of a verify-payment call: whether HyperPay reported the payment
 /// as paid, the gateway's result description (used to explain declines), and
@@ -30,20 +30,13 @@ class HyperpayVerifyService {
     required String referenceId,
     bool saveCard = false,
   }) async {
-    final result = await Supabase.instance.client.functions.invoke(
-      'verify-payment',
-      body: {
-        'checkout_id': checkoutId,
-        'kind': kind,
-        'id': id,
-        'reference_id': referenceId,
-        if (saveCard) 'save_card': true,
-      },
-    );
-    if (result.status != 200) {
-      throw Exception('verify-payment failed: ${result.data}');
-    }
-    final data = result.data as Map<String, dynamic>;
+    final data = await invokeEdgeFunction('verify-payment', {
+      'checkout_id': checkoutId,
+      'kind': kind,
+      'id': id,
+      'reference_id': referenceId,
+      if (saveCard) 'save_card': true,
+    });
     return VerifyResult(
       paid: data['paid'] == true,
       description: data['description'] as String?,

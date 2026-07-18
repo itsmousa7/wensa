@@ -8,9 +8,11 @@ import {
   buildCheckoutParams,
   buildRegistrationChargeParams,
   extractPaymentDetails,
+  isPaid,
   isPaymentSuccessful,
   isPending,
   isTransient,
+  normalizeEnv,
 } from "./hyperpay.ts";
 
 // ── isPaymentSuccessful — success matrix ────────────────────────────────────
@@ -23,9 +25,48 @@ Deno.test("isPaymentSuccessful: whole 000.100.1xx test-mode family succeeds in t
   assertFalse(isPaymentSuccessful("000.100.112", "prod"));
 });
 
-Deno.test("isPaymentSuccessful: prod-env success code only in prod env", () => {
+Deno.test("isPaymentSuccessful: 000.000.000 succeeds in BOTH envs", () => {
+  // A test entity can still answer with the live success code; the deployed
+  // callers have always accepted it, and the shared helper now matches them.
   assert(isPaymentSuccessful("000.000.000", "prod"));
-  assertFalse(isPaymentSuccessful("000.000.000", "test"));
+  assert(isPaymentSuccessful("000.000.000", "test"));
+});
+
+// ── env normalisation — "live" is what the deployments actually set ─────────
+Deno.test("normalizeEnv: live/prod ⇒ prod, everything else ⇒ test", () => {
+  assertEquals(normalizeEnv("live"), "prod");
+  assertEquals(normalizeEnv("prod"), "prod");
+  assertEquals(normalizeEnv("LIVE"), "prod");
+  assertEquals(normalizeEnv(" Prod "), "prod");
+  assertEquals(normalizeEnv("test"), "test");
+  assertEquals(normalizeEnv("sandbox"), "test");
+  assertEquals(normalizeEnv(undefined), "test");
+  assertEquals(normalizeEnv(null), "test");
+  assertEquals(normalizeEnv(""), "test");
+});
+
+Deno.test('isPaymentSuccessful: env="live" applies PROD rules, not test rules', () => {
+  // Regression: HYPERPAY_ENV is set to "live" by create-booking/charge-saved-card.
+  // A `as HyperPayEnv` cast used to make "live" fall through to TEST rules,
+  // which would accept a test-mode code as a real payment in production.
+  assertFalse(isPaymentSuccessful("000.100.110", "live"));
+  assertFalse(isPaymentSuccessful("000.100.112", "live"));
+  assert(isPaymentSuccessful("000.000.000", "live"));
+});
+
+Deno.test("isPaid: alias of isPaymentSuccessful — the one classifier both functions use", () => {
+  assertEquals(isPaid, isPaymentSuccessful);
+  assert(isPaid("000.100.110", "test"));
+  assert(isPaid("000.000.000", "test"));
+  assert(isPaid("000.000.000", "live"));
+  assertFalse(isPaid("000.100.110", "live"));
+  assertFalse(isPaid("800.100.156", "test"));
+  assertFalse(isPaid("800.100.156", "live"));
+});
+
+Deno.test("isPaymentSuccessful: test-mode family is never a success in prod", () => {
+  assertFalse(isPaymentSuccessful("000.100.110", "prod"));
+  assertFalse(isPaymentSuccessful("000.100.112", "prod"));
 });
 
 Deno.test("isPaymentSuccessful: near-miss code is failure in either env", () => {
@@ -62,6 +103,162 @@ Deno.test("isTransient", () => {
   assertFalse(isTransient(undefined));
   assertFalse(isTransient(null));
   assertFalse(isTransient(""));
+});
+
+// ── REQUEST-BODY KEY SETS (the 800.100.156 guard) ───────────────────────────
+// This acquirer answers 800.100.156 "transaction declined (format error)" to
+// ANY deviation in the outgoing body — an extra key (customer.*/billing.*), a
+// missing key, a renamed key. These assertions pin the EXACT key set of every
+// request shape we send. If one fails, do not "fix" the expectation: the
+// change to the builder is what is wrong.
+
+const CHECKOUT_BASE = ["amount", "currency", "entityId", "integrity", "merchantTransactionId", "paymentType"];
+const TOKENIZE_KEYS = [
+  "createRegistration",
+  "standingInstruction.mode",
+  "standingInstruction.recurringType",
+  "standingInstruction.source",
+  "standingInstruction.type",
+];
+
+Deno.test("buildCheckoutParams: EXACT key set — test env, no tokenize", () => {
+  const p = buildCheckoutParams(
+    { amount: 25000, merchantTransactionId: "booking-abc", tokenize: false },
+    { entityId: "ent1", env: "test" },
+  );
+  assertEquals(Object.keys(p).sort(), [...CHECKOUT_BASE, "testMode"].sort());
+});
+
+Deno.test("buildCheckoutParams: EXACT key set — prod env, no tokenize", () => {
+  const p = buildCheckoutParams(
+    { amount: 25000, merchantTransactionId: "booking-abc", tokenize: false },
+    { entityId: "ent1", env: "prod" },
+  );
+  assertEquals(Object.keys(p).sort(), [...CHECKOUT_BASE].sort());
+});
+
+Deno.test("buildCheckoutParams: EXACT key set — test env, tokenize", () => {
+  const p = buildCheckoutParams(
+    { amount: 25000, merchantTransactionId: "booking-abc", tokenize: true },
+    { entityId: "ent1", env: "test" },
+  );
+  assertEquals(
+    Object.keys(p).sort(),
+    [...CHECKOUT_BASE, ...TOKENIZE_KEYS, "testMode"].sort(),
+  );
+});
+
+Deno.test("buildCheckoutParams: EXACT key set — prod env, tokenize (the live app shape)", () => {
+  const p = buildCheckoutParams(
+    { amount: 25000, merchantTransactionId: "booking-abc", tokenize: true },
+    { entityId: "ent1", env: "prod" },
+  );
+  assertEquals(Object.keys(p).sort(), [...CHECKOUT_BASE, ...TOKENIZE_KEYS].sort());
+});
+
+Deno.test("buildCheckoutParams: merchantTransactionId is OMITTED, never sent empty", () => {
+  const p = buildCheckoutParams({ amount: 1, tokenize: false }, { entityId: "ent1", env: "prod" });
+  assertEquals(
+    Object.keys(p).sort(),
+    CHECKOUT_BASE.filter((k) => k !== "merchantTransactionId").sort(),
+  );
+  assertFalse("merchantTransactionId" in p);
+});
+
+Deno.test("buildCheckoutParams: no customer.*/billing.* key ever leaks in", () => {
+  for (const env of ["test", "prod"] as const) {
+    for (const tokenize of [false, true]) {
+      const p = buildCheckoutParams(
+        { amount: 1, merchantTransactionId: "m", tokenize },
+        { entityId: "ent1", env },
+      );
+      for (const k of Object.keys(p)) {
+        assertFalse(k.startsWith("customer."), `unexpected key ${k}`);
+        assertFalse(k.startsWith("billing."), `unexpected key ${k}`);
+        assertFalse(k.startsWith("3D"), `unexpected key ${k}`);
+      }
+    }
+  }
+});
+
+const MIT_BASE = [
+  "amount",
+  "currency",
+  "entityId",
+  "merchantTransactionId",
+  "paymentType",
+  "standingInstruction.mode",
+  "standingInstruction.source",
+  "standingInstruction.type",
+];
+
+Deno.test("buildRegistrationChargeParams: EXACT key set — test env, with initialTransactionId", () => {
+  const p = buildRegistrationChargeParams(
+    { amount: 5000, merchantTransactionId: "mit-1", initialTransactionId: "init-123" },
+    { entityId: "ent1", env: "test" },
+  );
+  assertEquals(
+    Object.keys(p).sort(),
+    [...MIT_BASE, "standingInstruction.initialTransactionId", "testMode"].sort(),
+  );
+});
+
+Deno.test("buildRegistrationChargeParams: EXACT key set — prod env, no initialTransactionId", () => {
+  const p = buildRegistrationChargeParams(
+    { amount: 5000, merchantTransactionId: "mit-1" },
+    { entityId: "ent1", env: "prod" },
+  );
+  assertEquals(Object.keys(p).sort(), [...MIT_BASE].sort());
+});
+
+// ── merchantTransactionId invariants ────────────────────────────────────────
+// Both construction sites must produce ≤32 chars with NO underscore — either
+// violation is answered with 800.100.156.
+function assertValidMerchantTxnId(id: string) {
+  assert(id.length <= 32, `merchantTransactionId too long (${id.length}): ${id}`);
+  assertFalse(id.includes("_"), `merchantTransactionId contains "_": ${id}`);
+  assert(id.length > 0, "merchantTransactionId is empty");
+}
+
+/** create-booking/index.ts formula. */
+function bookingMerchantTxnId(id: string, isGroup: boolean): string {
+  return (isGroup ? `booking-venue-${id}` : `booking-${id}`).slice(0, 32);
+}
+
+/** charge-saved-card/index.ts formula. */
+function mitMerchantTxnId(): string {
+  return `mit-${crypto.randomUUID().replace(/-/g, "").slice(0, 28)}`;
+}
+
+Deno.test("merchantTransactionId: create-booking formula stays ≤32 and underscore-free", () => {
+  const uuid = "3f9a1c2e-4b5d-6e7f-8a9b-0c1d2e3f4a5b";
+  assertValidMerchantTxnId(bookingMerchantTxnId(uuid, false));
+  assertValidMerchantTxnId(bookingMerchantTxnId(uuid, true));
+  // a pathological id must still be truncated, not passed through
+  assertValidMerchantTxnId(bookingMerchantTxnId("x".repeat(200), true));
+  assertEquals(bookingMerchantTxnId(uuid, false).length, 32);
+  // underscores must never be introduced by the prefix itself
+  assertEquals(bookingMerchantTxnId("abc", false), "booking-abc");
+  assertEquals(bookingMerchantTxnId("abc", true), "booking-venue-abc");
+});
+
+Deno.test("merchantTransactionId: charge-saved-card MIT formula stays ≤32 and underscore-free", () => {
+  for (let i = 0; i < 200; i++) {
+    const id = mitMerchantTxnId();
+    assertValidMerchantTxnId(id);
+    assertEquals(id.length, 32);
+    assert(id.startsWith("mit-"));
+  }
+});
+
+Deno.test("merchantTransactionId: a valid id survives buildCheckoutParams/buildRegistrationChargeParams unchanged", () => {
+  const id = bookingMerchantTxnId("3f9a1c2e-4b5d-6e7f-8a9b-0c1d2e3f4a5b", false);
+  const c = buildCheckoutParams({ amount: 1, merchantTransactionId: id, tokenize: true }, { entityId: "e", env: "prod" });
+  assertEquals(c.merchantTransactionId, id);
+  assertValidMerchantTxnId(c.merchantTransactionId);
+  const m = buildRegistrationChargeParams({ amount: 1, merchantTransactionId: id }, { entityId: "e", env: "prod" });
+  assertEquals(m.merchantTransactionId, id);
+  assertValidMerchantTxnId(m.merchantTransactionId);
 });
 
 // ── buildCheckoutParams ─────────────────────────────────────────────────────
@@ -190,6 +387,26 @@ Deno.test("extractPaymentDetails: RRN falls back to transaction.receipt (interna
   } as never);
   assertEquals(d.rrn, "619457986427");
   assertEquals(d.cardScope, "international");
+});
+
+Deno.test("extractPaymentDetails: ConnectorTxID2 RRN position varies — skip non-numeric connector refs", () => {
+  // Observed MADA via INET PostBridge shape: STAN|connectorRef|RRN|| — the
+  // 12-digit RRN (matches the BIP reconciliationId) sits in the 3rd field.
+  const d = extractPaymentDetails({
+    resultDetails: { ConnectorTxID2: "403517|86a37f8776a8|139903327171||" },
+  } as never);
+  assertEquals(d.rrn, "139903327171");
+  assertEquals(d.cardScope, "local");
+});
+
+Deno.test("extractPaymentDetails: ConnectorTxID2 RRN alone marks the transaction local", () => {
+  // Local rails (ZainCash/PostBridge) always emit the pipe-format RRN; the
+  // clearing institute name is not required — nor guaranteed to say "mada".
+  const d = extractPaymentDetails({
+    resultDetails: { ConnectorTxID2: "396119|142048794721|749381839811||" },
+  } as never);
+  assertEquals(d.rrn, "142048794721");
+  assertEquals(d.cardScope, "local");
 });
 
 Deno.test("extractPaymentDetails: live names — Mada via Position local, Switch MPGS international", () => {

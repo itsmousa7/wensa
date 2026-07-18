@@ -39,7 +39,7 @@ final class SavedCardsProvider
   SavedCards create() => SavedCards();
 }
 
-String _$savedCardsHash() => r'c47b8d642ba833465d1f0eb48a5c90364812965e';
+String _$savedCardsHash() => r'08e5cc7c66dfc6d51e72be3470df5e1557ebd96d';
 
 /// The signed-in user's saved HyperPay cards (newest first). RLS scopes the
 /// select/delete to the caller; inserts happen server-side (verify-payment).

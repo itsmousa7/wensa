@@ -5,7 +5,9 @@
  *   POST /v1/registrations/{registrationId}/payments
  * with standingInstruction mode=REPEATED source=MIT type=UNSCHEDULED — the
  * same proven body as the dashboard's hyperpay-charge-token. The result is
- * synchronous; pending/transient codes are treated as failure.
+ * synchronous. Pending (000.200.*) and transient (800.120.100 / 900.*) codes
+ * are NOT failures — the acquirer outcome is unknown and may be a capture, so
+ * nothing is persisted and the response carries retryable:true.
  *
  * The client calls this INSTEAD of the card form + verify-payment: the
  * checkout session created by create-booking is simply left to expire.
@@ -36,41 +38,23 @@
  */
 
 import {
+  cfg,
   chargeRegistration,
-  type HyperPayConfig,
-  type HyperPayEnv,
+  extractPaymentDetails,
+  isPaid,
+  isPending,
+  isTransient,
 } from "../_shared/hyperpay.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
-
-// Success rule per environment — mirrors verify-payment:
-//   test: any "successfully processed in test mode" code — 000.100.1xx
-//   prod: only 000.000.000 is a successful payment
-const TEST_SUCCESS_RE = /^000\.100\.1\d{2}$/;
-const PROD_SUCCESS_CODE = "000.000.000";
-
-function isPaid(code: string, env: string): boolean {
-  return env === "live" || env === "prod"
-    ? code === PROD_SUCCESS_CODE
-    : TEST_SUCCESS_RE.test(code) || code === PROD_SUCCESS_CODE;
-}
-
-const RPC_BY_KIND: Record<string, { fn: string; idParam: string }> = {
-  booking:       { fn: "confirm_payment",               idParam: "p_booking_id" },
-  concert_group: { fn: "confirm_concert_group_payment", idParam: "p_group_id" },
-  membership:    { fn: "confirm_membership_payment",    idParam: "p_membership_id" },
-};
-
-function json(body: unknown, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
+import { insertPaymentTransaction, markPaymentFailed, setCardScope } from "../_shared/payments.ts";
+import {
+  buildPaymentTxRow,
+  confirmViaRpc,
+  corsHeaders,
+  json,
+  jwtSub,
+  RPC_BY_KIND,
+  serviceHeaders,
+} from "../_shared/payment_flow.ts";
 
 /** Re-validates and extends the caller's hold immediately before charging.
  *  Forwards the caller's own JWT (not the service role) so auth.uid() inside
@@ -128,10 +112,6 @@ Deno.serve(async (req: Request) => {
   const SUPABASE_URL        = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_KEY         = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const ANON_KEY            = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const HYPERPAY_BASE       = Deno.env.get("HYPERPAY_BASE") ?? "https://eu-test.oppwa.com";
-  const HYPERPAY_ENTITY_ID  = Deno.env.get("HYPERPAY_ENTITY_ID")!;
-  const HYPERPAY_AUTH_TOKEN = Deno.env.get("HYPERPAY_AUTH_TOKEN")!;
-  const HYPERPAY_ENV        = Deno.env.get("HYPERPAY_ENV") ?? "test";
 
   try {
     // ── Auth ────────────────────────────────────────────────────────────────
@@ -139,15 +119,8 @@ Deno.serve(async (req: Request) => {
     if (!authHeader?.startsWith("Bearer ")) {
       return json({ error: "Missing authorization" }, 401);
     }
-    let callerId: string;
-    try {
-      const b64 = authHeader.slice(7).split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-      const payload = JSON.parse(atob(b64));
-      if (!payload.sub) throw new Error("no sub");
-      callerId = payload.sub;
-    } catch {
-      return json({ error: "Unauthorized" }, 401);
-    }
+    const callerId = jwtSub(authHeader.slice(7));
+    if (!callerId) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json().catch(() => null) as {
       token_id?: string; kind?: string; id?: string; reference_id?: string;
@@ -157,11 +130,7 @@ Deno.serve(async (req: Request) => {
       return json({ error: "token_id, kind, id, reference_id required" }, 400);
     }
 
-    const svc: Record<string, string> = {
-      apikey: SERVICE_KEY,
-      Authorization: `Bearer ${SERVICE_KEY}`,
-      "Content-Type": "application/json",
-    };
+    const svc = serviceHeaders(SERVICE_KEY);
 
     // ── Load the caller's saved card ────────────────────────────────────────
     const tRes = await fetch(
@@ -175,6 +144,22 @@ Deno.serve(async (req: Request) => {
     }>;
     if (!tRes.ok || !tokens.length) return json({ error: "Saved card not found" }, 404);
     const token = tokens[0];
+
+    // TODO(payments): BUG — no idempotency guard; concurrent calls can double-charge.
+    // Nothing between here and chargeRegistration() is atomic or de-duplicated:
+    // two requests for the same (kind, id) — a double-tap, a client retry after a
+    // timeout, or a replay — both read the same pending row(s), both pass
+    // lock_for_payment (it extends the hold rather than claiming it), and both
+    // mint a FRESH random `mit-<uuid>` merchantTransactionId, so HyperPay sees two
+    // unrelated MIT charges and captures BOTH. The second row then loses the
+    // payment_transactions insert (checkout_id unique + ignore-duplicates) only if
+    // the OPPWA payment ids happen to collide — they don't — so the user is
+    // charged twice for one booking. FIX (needs UAT): derive the
+    // merchantTransactionId deterministically from the entity (e.g.
+    // `mit-<id-hash>`) so the acquirer rejects the duplicate, and/or claim the
+    // pending row with a conditional UPDATE before charging. Deliberately NOT
+    // done in this pass: it changes a value sent to the gateway, which this
+    // acquirer answers with 800.100.156 on any unvalidated deviation.
 
     // ── Resolve amount server-side from the caller's pending row(s) ─────────
     const amount = await loadPendingAmount(SUPABASE_URL, svc, body.kind!, body.id, callerId);
@@ -197,14 +182,7 @@ Deno.serve(async (req: Request) => {
     const merchantTransactionId =
       `mit-${crypto.randomUUID().replace(/-/g, "").slice(0, 28)}`;
 
-    const hpEnv: HyperPayEnv =
-      HYPERPAY_ENV === "live" || HYPERPAY_ENV === "prod" ? "prod" : "test";
-    const hpConfig: HyperPayConfig = {
-      entityId:  HYPERPAY_ENTITY_ID,
-      authToken: HYPERPAY_AUTH_TOKEN,
-      env:       hpEnv,
-      base:      HYPERPAY_BASE,
-    };
+    const hpConfig = cfg();
 
     const result = await chargeRegistration(token.registration_id, {
       amount,
@@ -214,14 +192,72 @@ Deno.serve(async (req: Request) => {
 
     const code        = result.result?.code ?? "unknown";
     const description = result.result?.description ?? "Unknown payment result";
-    const paid        = isPaid(code, HYPERPAY_ENV);
+    const paid        = isPaid(code, hpConfig.env);
+    const details     = extractPaymentDetails(result);
     console.log(
       `charge-saved-card: kind=${body.kind} id=${body.id} amount=${amount} ` +
-      `code=${code} paid=${paid} desc=${description}`,
+      `code=${code} paid=${paid} rrn=${details.rrn} scope=${details.cardScope} desc=${description}`,
     );
+
+    // ── Non-final codes: outcome UNKNOWN, never "failed" ────────────────────
+    // 000.200.* (still in flight), 800.120.100 (rate limit) and 900.* ("error
+    // in communication with the connector") do NOT mean the card wasn't
+    // charged — the acquirer may well have captured it, we just never got the
+    // answer. Writing a `failed` row here would let the client release the
+    // booking on money that was taken, and would poison any reconciliation
+    // sweep (the row would look like a settled failure). So: persist nothing,
+    // and answer with a distinct retryable signal instead of paid:false alone.
+    if (isPending(code) || isTransient(code)) {
+      console.error(
+        `charge-saved-card: NON-FINAL result — outcome unknown, may be captured. ` +
+        `kind=${body.kind} id=${body.id} amount=${amount} code=${code} ` +
+        `mtx=${merchantTransactionId} uniqueId=${details.uniqueId} desc=${description}`,
+      );
+      return json({
+        paid: false,
+        pending: true,
+        retryable: true,
+        status: "pending",
+        code,
+        description,
+        merchant_transaction_id: merchantTransactionId,
+      }, 200);
+    }
+
+    // Persist the outcome for the dashboards (result code, RRN, card scope).
+    // An MIT charge has no checkout session — the OPPWA payment id fills the
+    // unique checkout_id slot (falling back to our own MIT reference).
+    const txRow = buildPaymentTxRow({
+      kind: body.kind!,
+      id: body.id,
+      referenceId: body.reference_id,
+      userId: callerId,
+      amountIqd: amount,
+      paid,
+      code,
+      description,
+      details,
+      checkoutId: details.uniqueId ?? `mit_${merchantTransactionId}`,
+      fallbackMerchantTransactionId: merchantTransactionId,
+    });
+    const persisted = await insertPaymentTransaction(SUPABASE_URL, svc, txRow);
+    if (paid && !persisted) {
+      // The charge succeeded but the audit row is lost. Unlike verify-payment
+      // this is still confirmable (the result is in hand, not behind a consumed
+      // one-time session), so continue — but dump the result for reconciliation.
+      console.error(
+        "charge-saved-card: CHARGED BUT RECORD FAILED — reconcile manually. " +
+        `kind=${body.kind} id=${body.id} reference=${body.reference_id} ` +
+        `result=${JSON.stringify(result)}`,
+      );
+    }
+
     if (!paid) {
-      // Not an error: the row stays pending; the client releases it (same
-      // path as a failed card payment) or the expiry crons clean it up.
+      // Settled decline — the non-final codes already returned above, so the
+      // money definitively was not taken. Mark the row failed/cancelled instead
+      // of leaving it pending for the client or the expiry crons: a pending row
+      // shows in the dashboards as Expired rather than Failed.
+      await markPaymentFailed(SUPABASE_URL, svc, body.kind!, body.id);
       return json(
         { paid: false, code, description, merchant_transaction_id: merchantTransactionId },
         200,
@@ -229,23 +265,15 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── Confirm via the existing user-scoped RPC ────────────────────────────
-    const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${rpc.fn}`, {
-      method: "POST",
-      headers: {
-        "Authorization": authHeader,
-        "apikey":        ANON_KEY,
-        "Content-Type":  "application/json",
-      },
-      body: JSON.stringify({
-        [rpc.idParam]: body.id,
-        p_payment_id:  body.reference_id,
-      }),
-    });
-    if (!rpcRes.ok) {
-      const errText = await rpcRes.text().catch(() => "");
-      console.error(`charge-saved-card: ${rpc.fn} failed ${rpcRes.status}: ${errText}`);
-      return json({ error: `Payment charged but confirm failed (${rpcRes.status})` }, 500);
+    const rpcOut = await confirmViaRpc(
+      SUPABASE_URL, ANON_KEY, authHeader, rpc, body.id, body.reference_id,
+    );
+    if (!rpcOut.ok) {
+      console.error(`charge-saved-card: ${rpc.fn} failed ${rpcOut.status}: ${rpcOut.errText}`);
+      return json({ error: `Payment charged but confirm failed (${rpcOut.status})` }, 500);
     }
+
+    await setCardScope(SUPABASE_URL, svc, body.kind!, body.id, details.cardScope);
 
     return json(
       { paid: true, code, description, merchant_transaction_id: merchantTransactionId },

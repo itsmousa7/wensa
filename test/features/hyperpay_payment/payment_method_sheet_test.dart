@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:future_riverpod/features/hyperpay_payment/data/services/hyperpay_token_service.dart';
-import 'package:future_riverpod/features/hyperpay_payment/domain/models/saved_card.dart';
-import 'package:future_riverpod/features/hyperpay_payment/presentation/providers/saved_cards_provider.dart';
-import 'package:future_riverpod/features/hyperpay_payment/presentation/screens/card_payment_screen.dart';
-import 'package:future_riverpod/features/hyperpay_payment/presentation/screens/payment_method_sheet.dart';
+import 'package:future_riverpod/features/hyperpay_payment/hyperpay_payment.dart';
 
 class _FakeSavedCards extends SavedCards {
   _FakeSavedCards(this.cards);
@@ -21,7 +17,7 @@ class _FakeTokenService extends HyperpayTokenService {
   String? lastTokenId;
   @override
   Future<({bool paid, String? description, String? merchantTransactionId})>
-      chargeSavedCard({
+  chargeSavedCard({
     required String tokenId,
     required String kind,
     required String id,
@@ -46,9 +42,7 @@ const _visa = SavedCard(
 
 Widget _wrap(Widget sheet, {List<SavedCard> cards = const [_visa]}) {
   return ProviderScope(
-    overrides: [
-      savedCardsProvider.overrideWith(() => _FakeSavedCards(cards)),
-    ],
+    overrides: [savedCardsProvider.overrideWith(() => _FakeSavedCards(cards))],
     child: MaterialApp(home: Scaffold(body: sheet)),
   );
 }
@@ -81,10 +75,13 @@ void main() {
     expect(successRef, 'ref_1');
   });
 
-  testWidgets('declined charge shows the error and keeps the sheet open',
-      (tester) async {
-    final tokenService =
-        _FakeTokenService(paid: false, description: 'Card declined');
+  testWidgets('declined charge shows the error and keeps the sheet open', (
+    tester,
+  ) async {
+    final tokenService = _FakeTokenService(
+      paid: false,
+      description: 'Card declined',
+    );
     var failed = false;
     await tester.pumpWidget(
       _wrap(

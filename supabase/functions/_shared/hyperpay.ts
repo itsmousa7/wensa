@@ -12,8 +12,12 @@
  * SUCCESS RULE (critical, per business requirement):
  *   test: any "successfully processed in test mode" code — 000.100.1xx
  *         (e.g. 000.100.110 integrator, 000.100.112 connector test mode)
+ *         PLUS 000.000.000 (a test entity can still answer with the live
+ *         success code; the deployed callers have always accepted it).
  *   prod: only result.code === "000.000.000" is a successful payment
  *   Any other FINAL code is a failure; result.description is shown to the merchant.
+ *   HYPERPAY_ENV is a RAW env string: "live" and "prod" both mean production,
+ *   anything else (including unset) means test — see normalizeEnv().
  *
  * Code classes:
  *   pending   000.200.*            — shopper still completing (3DS challenge)
@@ -46,10 +50,20 @@ export interface HyperPayResult {
   [key: string]: unknown;
 }
 
+/**
+ * Normalise the RAW HYPERPAY_ENV value. Deployments set it to "live" (see
+ * create-booking / charge-saved-card), so a bare `as HyperPayEnv` cast would
+ * silently select TEST rules for a production entity.
+ */
+export function normalizeEnv(raw: string | undefined | null): HyperPayEnv {
+  const v = (raw ?? "").trim().toLowerCase();
+  return v === "live" || v === "prod" ? "prod" : "test";
+}
+
 export function cfg(): HyperPayConfig {
   const entityId = Deno.env.get("HYPERPAY_ENTITY_ID");
   const authToken = Deno.env.get("HYPERPAY_AUTH_TOKEN");
-  const env = (Deno.env.get("HYPERPAY_ENV") ?? "test") as HyperPayEnv;
+  const env = normalizeEnv(Deno.env.get("HYPERPAY_ENV"));
   if (!entityId || !authToken) {
     throw new Error("HYPERPAY_ENTITY_ID / HYPERPAY_AUTH_TOKEN not configured");
   }
@@ -65,14 +79,22 @@ export const SUCCESS_CODE_PROD = "000.000.000";
 export const TEST_SUCCESS_RE = /^000\.100\.1\d{2}$/;
 
 /**
- * Success rule per environment:
+ * Success rule per environment. `env` is the RAW HYPERPAY_ENV string (or an
+ * already-normalised HyperPayEnv) — "live"/"prod" ⇒ prod rules, else test.
  *   prod — exact 000.000.000 (a real, live-processed payment)
- *   test — any 000.100.1xx "successfully processed in test mode" code
+ *   test — any 000.100.1xx "successfully processed in test mode" code,
+ *          or 000.000.000
+ * This is THE authoritative classifier: verify-payment and charge-saved-card
+ * both import it (they used to hand-roll divergent copies).
  */
-export function isPaymentSuccessful(code: string | undefined | null, env: HyperPayEnv): boolean {
+export function isPaymentSuccessful(code: string | undefined | null, env: string | undefined | null): boolean {
   if (!code) return false;
-  return env === "prod" ? code === SUCCESS_CODE_PROD : TEST_SUCCESS_RE.test(code);
+  if (normalizeEnv(env) === "prod") return code === SUCCESS_CODE_PROD;
+  return TEST_SUCCESS_RE.test(code) || code === SUCCESS_CODE_PROD;
 }
+
+/** Canonical name used by the payment functions. */
+export const isPaid = isPaymentSuccessful;
 
 /** Shopper still completing the payment (e.g. inside the 3DS challenge). */
 export function isPending(code: string | undefined | null): boolean {
@@ -168,11 +190,19 @@ export async function createCheckout(o: CheckoutOptions, c: HyperPayConfig): Pro
  * WARNING: one-time consumable — the first call that returns a FINAL result
  * consumes the session; later calls get 200.300.404 "No payment session found".
  * Callers must persist a final outcome before responding.
+ *
+ * The HTTP status is returned alongside the body: OPPWA answers declines with
+ * a non-2xx status AND a result code, so callers distinguish "declined" from
+ * "the status call itself broke" (non-2xx with no result code ⇒ retryable).
  */
-export async function getPaymentStatus(checkoutId: string, c: HyperPayConfig): Promise<HyperPayResult> {
+export async function getPaymentStatus(
+  checkoutId: string,
+  c: HyperPayConfig,
+): Promise<{ httpStatus: number; result: HyperPayResult }> {
   const url = `${c.base}/v1/checkouts/${encodeURIComponent(checkoutId)}/payment?entityId=${c.entityId}`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${c.authToken}` } });
-  return await res.json() as HyperPayResult;
+  const body = await res.json().catch(() => ({})) as HyperPayResult;
+  return { httpStatus: res.status, result: body };
 }
 
 /** Charge a stored registration token (server-to-server MIT). Synchronous result. */
@@ -199,14 +229,16 @@ export interface PaymentDetails {
 /**
  * Extract audit fields from a final OPPWA payment result.
  *
- * RRN: local connectors (ZainCash/PostBridge) encode it as the 2nd pipe field
- * of resultDetails.ConnectorTxID2 ("STAN|RRN|…"); international MPGS puts it
- * in resultDetails["transaction.receipt"]. Never throws — absent fields ⇒ null.
+ * RRN: local connectors (ZainCash/PostBridge) carry it inside pipe-delimited
+ * resultDetails.ConnectorTxID2 — but NOT at a fixed position (observed both
+ * "STAN|RRN|…" and "STAN|connectorRef|RRN|…"), so take the first all-digit
+ * 12-char field after the leading STAN. International MPGS puts it in
+ * resultDetails["transaction.receipt"]. Never throws — absent fields ⇒ null.
  *
- * card_scope: clearingInstituteName containing "mada" (any case) is a local
- * (Mada) transaction — covers test "MADA via INET PostBridge" and live
- * "Mada via Position"; any other non-empty name (SAIB MPGS, Switch MPGS) is
- * international.
+ * card_scope: a local-rail transaction is recognized by its ConnectorTxID2
+ * RRN (only local connectors emit it) or a clearingInstituteName containing
+ * "mada"; otherwise any non-empty clearingInstituteName (SAIB MPGS,
+ * Switch MPGS) is international.
  */
 export function extractPaymentDetails(result: HyperPayResult): PaymentDetails {
   const details = (result.resultDetails ?? {}) as Record<string, unknown>;
@@ -214,13 +246,16 @@ export function extractPaymentDetails(result: HyperPayResult): PaymentDetails {
     typeof v === "string" && v.trim() !== "" ? v : null;
 
   const ctx2 = str(details["ConnectorTxID2"]);
-  const pipeRrn = ctx2 ? (ctx2.split("|")[1]?.trim() || null) : null;
+  const ctx2Fields = ctx2 ? ctx2.split("|").slice(1).map((f) => f.trim()) : [];
+  const pipeRrn = ctx2Fields.find((f) => /^\d{12}$/.test(f)) ??
+    ctx2Fields.find((f) => /^\d{6,}$/.test(f)) ?? null;
   const rrn = pipeRrn ?? str(details["transaction.receipt"]);
 
   const clearingInstituteName = str(details["clearingInstituteName"]);
-  const cardScope = clearingInstituteName === null
-    ? null
-    : clearingInstituteName.toLowerCase().includes("mada") ? "local" : "international";
+  const cardScope: "local" | "international" | null =
+    pipeRrn !== null || (clearingInstituteName ?? "").toLowerCase().includes("mada")
+      ? "local"
+      : clearingInstituteName !== null ? "international" : null;
 
   return {
     uniqueId: str(result.id),

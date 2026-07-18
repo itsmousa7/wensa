@@ -1,12 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 import 'package:future_riverpod/core/widgets/glass_back_button.dart';
-import 'package:future_riverpod/features/hyperpay_payment/domain/models/saved_card.dart';
-import 'package:future_riverpod/features/hyperpay_payment/presentation/providers/saved_cards_provider.dart';
+
+import '../../domain/models/saved_card.dart';
+import '../payment_strings.dart';
+import '../providers/saved_cards_provider.dart';
+import '../widgets/saved_card_tile.dart';
 
 /// Profile → Payment → Saved cards: lists the user's saved HyperPay cards
 /// with the option to remove them. Cards are added by opting in during a
@@ -33,33 +35,11 @@ class SavedCardsPage extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            isAr
-                ? 'تعذر حذف البطاقة. حاول مرة أخرى.'
-                : 'Could not remove the card. Please try again.',
-          ),
+          content: Text(PaymentStrings.forLocale(isAr).couldNotRemoveCard),
           backgroundColor: AppColors.danger,
         ),
       );
     }
-  }
-
-  Widget _brandIcon(String? brand) {
-    final asset = switch (brand) {
-      'VISA' => 'assets/icons/visa.svg',
-      'MASTER' => 'assets/icons/mastercard.svg',
-      _ => null,
-    };
-    if (asset == null) return const Icon(Icons.credit_card, size: 28);
-    // The Mastercard SVG has a square 58×58 viewBox with the card artwork
-    // occupying only 58×40 of it — inside a 36×24 contain box it renders
-    // ~24pt wide, visibly smaller than the wide-viewBox Visa wordmark. A
-    // square box lets its artwork fill the full 36pt width like Visa does.
-    return SizedBox(
-      width: 36,
-      height: brand == 'MASTER' ? 36 : 24,
-      child: SvgPicture.asset(asset, fit: BoxFit.contain),
-    );
   }
 
   @override
@@ -67,6 +47,7 @@ class SavedCardsPage extends ConsumerWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final cardsAsync = ref.watch(savedCardsProvider);
+    final s = PaymentStrings.forLocale(isAr);
 
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
@@ -76,7 +57,7 @@ class SavedCardsPage extends ConsumerWidget {
           leading: GlassBackButton.appBarLeading(),
           leadingWidth: GlassBackButton.appBarLeadingWidth,
           title: Text(
-            isAr ? 'البطاقات المحفوظة' : 'Saved Cards',
+            s.savedCardsTitle,
             style: theme.textTheme.titleLarge?.copyWith(color: cs.outline),
           ),
         ),
@@ -84,9 +65,7 @@ class SavedCardsPage extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (_, _) => Center(
             child: Text(
-              isAr
-                  ? 'تعذر تحميل البطاقات المحفوظة.'
-                  : 'Could not load your saved cards.',
+              s.couldNotLoadSavedCards,
               style: theme.textTheme.bodyMedium,
             ),
           ),
@@ -109,7 +88,7 @@ class SavedCardsPage extends ConsumerWidget {
                       // BOTH modes; the default titleMedium is baked with
                       // light-mode colors and goes dark-on-dark in dark mode.
                       Text(
-                        isAr ? 'لا توجد بطاقات محفوظة' : 'No saved cards yet',
+                        s.noSavedCardsYet,
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: cs.onSurface.withValues(alpha: 0.4),
                         ),
@@ -117,9 +96,7 @@ class SavedCardsPage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4.0),
                       Text(
-                        isAr
-                            ? 'يمكنك حفظ بطاقتك أثناء الدفع لاستخدامها لاحقًا.'
-                            : 'You can save a card during checkout to use it for faster payments.',
+                        s.noSavedCardsHint,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: cs.onSurface.withValues(alpha: 0.4),
                         ),
@@ -136,45 +113,8 @@ class SavedCardsPage extends ConsumerWidget {
               separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
               itemBuilder: (context, index) {
                 final card = cards[index];
-                return ListTile(
-                  key: Key('saved_card_${card.id}'),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: 4.0,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: AppSpacing.borderRadiusLG,
-                  ),
-                  // Dark theme's surfaceContainer matches the page surface
-                  // (tiles vanish), but surfaceContainerHighest (#313131) is
-                  // too light — blend a faint white over the surface for a
-                  // subtle elevated tile (~#1F1F1F) instead.
-                  tileColor: theme.brightness == Brightness.dark
-                      ? Color.alphaBlend(
-                          Colors.white.withValues(alpha: 0.055),
-                          cs.surface,
-                        )
-                      : cs.surfaceContainer,
-                  leading: _brandIcon(card.brand),
-                  // Explicit onSurface colors: the app's dark textTheme is
-                  // baked with light-mode colors, so default-styled text
-                  // renders dark-on-dark.
-                  title: Text(
-                    card.displayName,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: cs.onSurface,
-                    ),
-                  ),
-                  subtitle: card.expiryLabel == null
-                      ? null
-                      : Text(
-                          isAr
-                              ? 'تنتهي ${card.expiryLabel}'
-                              : 'Expires ${card.expiryLabel}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: cs.onSurface.withValues(alpha: 0.65),
-                          ),
-                        ),
+                return SavedCardTile(
+                  card: card,
                   trailing: _DeleteButton(
                     key: Key('delete_card_${card.id}'),
                     onPressed: () => _confirmDelete(context, ref, card),
@@ -206,11 +146,7 @@ class _DeleteButton extends StatelessWidget {
         onTap: onPressed,
         child: const Padding(
           padding: EdgeInsets.all(10),
-          child: Icon(
-            CupertinoIcons.trash,
-            color: AppColors.danger,
-            size: 20,
-          ),
+          child: Icon(CupertinoIcons.trash, color: AppColors.danger, size: 20),
         ),
       ),
     );
@@ -230,6 +166,7 @@ class _DeleteCardDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final s = PaymentStrings.forLocale(isAr);
 
     return Dialog(
       backgroundColor: cs.surface,
@@ -255,7 +192,7 @@ class _DeleteCardDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              isAr ? 'حذف البطاقة؟' : 'Remove this card?',
+              s.removeCardTitle,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
@@ -263,9 +200,7 @@ class _DeleteCardDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              isAr
-                  ? '${card.displayName} ستُحذف. يمكنك حفظها مجددًا في عملية دفع لاحقة.'
-                  : '${card.displayName} will be removed. You can save it again during a future payment.',
+              s.removeCardBody(card.displayName),
               style: theme.textTheme.bodyMedium?.copyWith(color: cs.outline),
               textAlign: TextAlign.center,
             ),
@@ -282,7 +217,7 @@ class _DeleteCardDialog extends StatelessWidget {
                       ),
                       foregroundColor: cs.onSurface,
                     ),
-                    child: Text(isAr ? 'إلغاء' : 'Cancel'),
+                    child: Text(s.cancel),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -298,7 +233,7 @@ class _DeleteCardDialog extends StatelessWidget {
                       ),
                     ),
                     icon: const Icon(CupertinoIcons.trash, size: 18),
-                    label: Text(isAr ? 'حذف' : 'Remove'),
+                    label: Text(s.remove),
                   ),
                 ),
               ],

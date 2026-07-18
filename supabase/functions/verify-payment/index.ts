@@ -8,6 +8,13 @@
  * idempotent). Rows that never get verified stay pending and are swept by the
  * existing expiry crons.
  *
+ * Every FINAL result is persisted into bookings.payment_transactions (audit:
+ * result code, merchantTransactionId, RRN, local/international card scope) —
+ * the admin/merchant dashboards read that table via get-transactions /
+ * get-payment-transaction. The OPPWA status read is ONE-TIME consumable, so
+ * the persisted row also answers retries: a repeat call (or one that lost the
+ * race and sees 200.300.404) is served DB-first instead of failing.
+ *
  * Request (POST, user JWT required):
  *   { checkout_id: string,
  *     kind: "booking" | "concert_group" | "membership",
@@ -27,37 +34,26 @@
  *      HYPERPAY_BASE, HYPERPAY_ENTITY_ID, HYPERPAY_AUTH_TOKEN
  */
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
-
-// Success rule per environment — mirrors the dashboard's proven integration
-// (wansa-admin-dashboard _shared/hyperpay.ts):
-//   test: any "successfully processed in test mode" code — 000.100.1xx
-//   prod: only 000.000.000 is a successful payment
-const TEST_SUCCESS_RE = /^000\.100\.1\d{2}$/;
-const PROD_SUCCESS_CODE = "000.000.000";
-
-function isPaid(code: string, env: string): boolean {
-  return env === "live" || env === "prod"
-    ? code === PROD_SUCCESS_CODE
-    : TEST_SUCCESS_RE.test(code) || code === PROD_SUCCESS_CODE;
-}
-
-const RPC_BY_KIND: Record<string, { fn: string; idParam: string }> = {
-  booking:       { fn: "confirm_payment",               idParam: "p_booking_id" },
-  concert_group: { fn: "confirm_concert_group_payment", idParam: "p_group_id" },
-  membership:    { fn: "confirm_membership_payment",    idParam: "p_membership_id" },
-};
-
-function json(body: unknown, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
+import {
+  cfg,
+  extractPaymentDetails,
+  getPaymentStatus,
+  isPaid,
+  isPending,
+  isTransient,
+  type HyperPayResult,
+} from "../_shared/hyperpay.ts";
+import { insertPaymentTransaction, getPaymentTransactionByCheckout, markPaymentFailed, setCardScope } from "../_shared/payments.ts";
+import {
+  buildPaymentTxRow,
+  confirmViaRpc,
+  corsHeaders,
+  json,
+  jwtSub,
+  RPC_BY_KIND,
+  rowEntityId,
+  serviceHeaders,
+} from "../_shared/payment_flow.ts";
 
 /**
  * Upsert the card token from a successful payment result into
@@ -69,20 +65,11 @@ function json(body: unknown, status: number): Response {
 async function saveCardToken(
   supabaseUrl: string,
   jwt: string,
-  payment: {
-    registrationId?: string;
-    paymentBrand?: string;
-    id?: string;
-    card?: {
-      last4Digits?: string; holder?: string;
-      expiryMonth?: string; expiryYear?: string;
-    };
-  },
+  payment: HyperPayResult,
 ): Promise<void> {
   try {
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const b64 = jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-    const userId = (JSON.parse(atob(b64)) as { sub?: string }).sub;
+    const userId = jwtSub(jwt);
     if (!userId) return;
 
     const res = await fetch(
@@ -123,10 +110,7 @@ Deno.serve(async (req: Request) => {
 
   const SUPABASE_URL        = Deno.env.get("SUPABASE_URL")!;
   const ANON_KEY            = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const HYPERPAY_BASE       = Deno.env.get("HYPERPAY_BASE") ?? "https://eu-test.oppwa.com";
-  const HYPERPAY_ENTITY_ID  = Deno.env.get("HYPERPAY_ENTITY_ID")!;
-  const HYPERPAY_AUTH_TOKEN = Deno.env.get("HYPERPAY_AUTH_TOKEN")!;
-  const HYPERPAY_ENV        = Deno.env.get("HYPERPAY_ENV") ?? "test";
+  const SERVICE_KEY         = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -144,74 +128,156 @@ Deno.serve(async (req: Request) => {
       return json({ error: "checkout_id, kind, id, reference_id required" }, 400);
     }
 
-    // ── 1. Ask HyperPay for the payment status ──────────────────────────────
-    const statusRes = await fetch(
-      `${HYPERPAY_BASE}/v1/checkouts/${encodeURIComponent(body.checkout_id)}` +
-        `/payment?entityId=${encodeURIComponent(HYPERPAY_ENTITY_ID)}`,
-      { headers: { Authorization: `Bearer ${HYPERPAY_AUTH_TOKEN}` } },
-    );
+    const svc = serviceHeaders(SERVICE_KEY);
 
-    const statusJson = await statusRes.json().catch(() => ({})) as {
-      result?: { code?: string; description?: string };
-      merchantTransactionId?: string;
-      registrationId?: string;
-      paymentBrand?: string;
-      id?: string;
-      card?: {
-        last4Digits?: string; holder?: string;
-        expiryMonth?: string; expiryYear?: string;
-      };
-    };
+    // ── 0. DB-first: this checkout's final outcome may already be persisted ──
+    // (a retried call, or one that lost the race for the one-time OPPWA read).
+    // On a persisted success re-run the confirm RPC anyway — it's idempotent
+    // and user-scoped, and it heals the crash window where the row was written
+    // but the confirm never ran.
+    const existing = await getPaymentTransactionByCheckout(SUPABASE_URL, svc, body.checkout_id);
+    if (existing) {
+      const callerId = jwtSub(authHeader.slice(7));
+      if (existing.user_id && callerId && existing.user_id !== callerId) {
+        return json({ error: "Forbidden" }, 403);
+      }
+      // SECURITY: the row is looked up by checkout_id ALONE, so it must also be
+      // proven to target the entity being confirmed. Without this, a caller can
+      // replay their own already-paid checkout against a NEW pending booking and
+      // have it confirmed for free — the confirm RPCs key only on (id, uid,
+      // status) and never see the checkout, so they offer no defence.
+      const existingEntityId = rowEntityId(existing);
+      if (existingEntityId && existingEntityId !== body.id) {
+        console.error(
+          `verify-payment: REJECTED checkout replay — checkout=${body.checkout_id} ` +
+          `is bound to entity=${existingEntityId} but caller requested entity=${body.id} ` +
+          `(kind=${body.kind} user=${callerId})`,
+        );
+        return json({ error: "Forbidden" }, 403);
+      }
+      if (existing.status === "success") {
+        const rpcOut = await confirmViaRpc(SUPABASE_URL, ANON_KEY, authHeader, rpc, body.id, body.reference_id);
+        if (!rpcOut.ok) {
+          console.error(`verify-payment (db-first): ${rpc.fn} failed ${rpcOut.status}: ${rpcOut.errText}`);
+          return json({ error: `Payment verified but confirm failed (${rpcOut.status})` }, 500);
+        }
+        await setCardScope(SUPABASE_URL, svc, body.kind!, body.id, existing.card_scope);
+        return json({
+          paid: true,
+          code: existing.result_code ?? "unknown",
+          description: existing.result_description ?? "Payment approved",
+          merchant_transaction_id: existing.merchant_transaction_id ?? null,
+        }, 200);
+      }
+      // Persisted decline: settle the entity too. Idempotent (the PATCH only
+      // matches a still-pending row), so this also heals rows left pending by
+      // the earlier behaviour of returning without touching them.
+      await markPaymentFailed(SUPABASE_URL, svc, body.kind!, body.id);
+      return json({
+        paid: false,
+        code: existing.result_code ?? "unknown",
+        description: existing.result_description ?? "Payment was not completed",
+        merchant_transaction_id: existing.merchant_transaction_id ?? null,
+      }, 200);
+    }
+
+    // ── 1. Ask HyperPay for the payment status ──────────────────────────────
+    const hpConfig = cfg();
+    const { httpStatus, result: statusJson } = await getPaymentStatus(body.checkout_id, hpConfig);
+
     // A non-2xx WITHOUT a result code means the verification call itself broke
     // (bad credentials, HyperPay outage) — surface as retryable, not "unpaid".
     // Declined payments come back with a result code even on non-2xx statuses,
     // so those still classify normally below.
-    if (!statusRes.ok && !statusJson.result?.code) {
-      console.error(`verify-payment: HyperPay status check failed ${statusRes.status}`);
-      return json({ error: `HyperPay status check failed (${statusRes.status})` }, 502);
+    const httpOk = httpStatus >= 200 && httpStatus < 300;
+    if (!httpOk && !statusJson.result?.code) {
+      console.error(`verify-payment: HyperPay status check failed ${httpStatus}`);
+      return json({ error: `HyperPay status check failed (${httpStatus})` }, 502);
     }
 
     const code        = statusJson.result?.code ?? "unknown";
-    const description = statusJson.result?.description ?? `HTTP ${statusRes.status}`;
+    const description = statusJson.result?.description ?? `HTTP ${httpStatus}`;
+    const details     = extractPaymentDetails(statusJson);
     // Echoed back so the app can show a support-friendly transaction id on
     // the payment result page (matches the id visible in the HyperPay BIP).
-    const merchantTransactionId = statusJson.merchantTransactionId ?? null;
+    const merchantTransactionId = details.merchantTransactionId;
 
-    const paid = isPaid(code, HYPERPAY_ENV);
-    console.log(
-      `verify-payment: checkout=${body.checkout_id} kind=${body.kind} ` +
-      `http=${statusRes.status} code=${code} paid=${paid} desc=${description}`,
-    );
-    if (!paid) {
-      // Not an error: the row stays pending; expiry crons clean it up.
+    // Non-final codes (3DS still in flight, gateway rate limit) and a lost
+    // 200.300.404 race with no persisted row yet: nothing to persist or
+    // confirm — report unpaid and let the app retry.
+    if (isPending(code) || isTransient(code) || code === "200.300.404") {
       return json(
         { paid: false, code, description, merchant_transaction_id: merchantTransactionId },
         200,
       );
     }
 
-    // ── 2. Confirm via the existing user-scoped RPC ─────────────────────────
-    // Forward the caller's JWT so auth.uid() inside the RPC scopes the update.
-    const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${rpc.fn}`, {
-      method: "POST",
-      headers: {
-        "Authorization": authHeader,
-        "apikey":        ANON_KEY,
-        "Content-Type":  "application/json",
-      },
-      body: JSON.stringify({
-        [rpc.idParam]: body.id,
-        p_payment_id:  body.reference_id,
-      }),
-    });
+    const paid = isPaid(code, hpConfig.env);
+    console.log(
+      `verify-payment: checkout=${body.checkout_id} kind=${body.kind} ` +
+      `http=${httpStatus} code=${code} paid=${paid} rrn=${details.rrn} ` +
+      `scope=${details.cardScope} desc=${description}`,
+    );
 
-    if (!rpcRes.ok) {
-      const errText = await rpcRes.text().catch(() => "");
-      console.error(`verify-payment: ${rpc.fn} failed ${rpcRes.status}: ${errText}`);
-      return json({ error: `Payment verified but confirm failed (${rpcRes.status})` }, 500);
+    // ── 2. Persist the FINAL outcome (before confirming) ────────────────────
+    // The OPPWA session is now consumed; this row is the durable record the
+    // dashboards read (RRN, result code, local/international card scope) and
+    // what serves any retry of this function.
+    const row = buildPaymentTxRow({
+      kind: body.kind!,
+      id: body.id,
+      referenceId: body.reference_id,
+      userId: jwtSub(authHeader.slice(7)),
+      amountIqd: statusJson.amount != null && !Number.isNaN(Number(statusJson.amount))
+        ? Math.round(Number(statusJson.amount))
+        : null,
+      paid,
+      code,
+      description,
+      details,
+      checkoutId: body.checkout_id,
+    });
+    const persisted = await insertPaymentTransaction(SUPABASE_URL, svc, row);
+
+    // A CAPTURED payment whose row we failed to write is unrecoverable through
+    // this endpoint: the OPPWA session is a one-time read, so every retry now
+    // gets 200.300.404 with no persisted row to serve it. Dump the full result
+    // so the payment can be reconciled from the logs, and fail loudly instead
+    // of confirming on top of a missing audit row.
+    if (paid && !persisted) {
+      console.error(
+        "verify-payment: PAYMENT CAPTURED BUT RECORD FAILED — reconcile manually. " +
+        `checkout=${body.checkout_id} kind=${body.kind} id=${body.id} ` +
+        `reference=${body.reference_id} result=${JSON.stringify(statusJson)}`,
+      );
+      return json({
+        error: "Payment captured but could not be recorded. Support has been notified.",
+        code: "payment_recorded_failed",
+      }, 500);
     }
 
-    // ── 3. Optionally persist the card token (best-effort, never fatal) ─────
+    if (!paid) {
+      // Settled decline (the non-final codes returned above). Mark the row
+      // failed/cancelled rather than leaving it pending for the expiry crons —
+      // a pending row shows in the dashboards as Expired instead of Failed.
+      await markPaymentFailed(SUPABASE_URL, svc, body.kind!, body.id);
+      return json(
+        { paid: false, code, description, merchant_transaction_id: merchantTransactionId },
+        200,
+      );
+    }
+
+    // ── 3. Confirm via the existing user-scoped RPC ─────────────────────────
+    // Forward the caller's JWT so auth.uid() inside the RPC scopes the update.
+    const rpcOut = await confirmViaRpc(SUPABASE_URL, ANON_KEY, authHeader, rpc, body.id, body.reference_id);
+    if (!rpcOut.ok) {
+      console.error(`verify-payment: ${rpc.fn} failed ${rpcOut.status}: ${rpcOut.errText}`);
+      return json({ error: `Payment verified but confirm failed (${rpcOut.status})` }, 500);
+    }
+
+    await setCardScope(SUPABASE_URL, svc, body.kind!, body.id, details.cardScope);
+
+    // ── 4. Optionally persist the card token (best-effort, never fatal) ─────
     if (body.save_card === true && statusJson.registrationId) {
       await saveCardToken(SUPABASE_URL, authHeader.slice(7), statusJson);
     }

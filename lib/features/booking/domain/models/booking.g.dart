@@ -23,7 +23,6 @@ _Booking _$BookingFromJson(Map<String, dynamic> json) => _Booking(
   amountIqd: (json['amountIqd'] as num?)?.toInt() ?? 0,
   paymentId: json['paymentId'] as String?,
   paymentStatus: json['paymentStatus'] as String?,
-  waylCode: json['waylCode'] as String?,
   qrToken: json['qrToken'] as String? ?? '',
   holdUntil: json['holdUntil'] as String?,
   categoryData:
@@ -47,7 +46,6 @@ Map<String, dynamic> _$BookingToJson(_Booking instance) => <String, dynamic>{
   'amountIqd': instance.amountIqd,
   'paymentId': instance.paymentId,
   'paymentStatus': instance.paymentStatus,
-  'waylCode': instance.waylCode,
   'qrToken': instance.qrToken,
   'holdUntil': instance.holdUntil,
   'categoryData': instance.categoryData,

@@ -24,14 +24,9 @@
  *   HYPERPAY_BASE          — e.g. "https://eu-test.oppwa.com" (default: test)
  *   HYPERPAY_ENTITY_ID, HYPERPAY_AUTH_TOKEN
  *   HYPERPAY_ENV           — "live" | "test" (default: "test")
- *   MERCHANT_PORTAL_URL    — e.g. "http://localhost:5173" (QR deep-link host)
  */
 
-import {
-  createCheckout,
-  type HyperPayConfig,
-  type HyperPayEnv,
-} from "../_shared/hyperpay.ts";
+import { cfg, createCheckout } from "../_shared/hyperpay.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -102,10 +97,7 @@ Deno.serve(async (req: Request) => {
 
   const SUPABASE_URL    = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_KEY     = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const HYPERPAY_BASE       = Deno.env.get("HYPERPAY_BASE") ?? "https://eu-test.oppwa.com";
-  const HYPERPAY_ENTITY_ID  = Deno.env.get("HYPERPAY_ENTITY_ID")!;
-  const HYPERPAY_AUTH_TOKEN = Deno.env.get("HYPERPAY_AUTH_TOKEN")!;
-  const HYPERPAY_ENV        = Deno.env.get("HYPERPAY_ENV") ?? "test";
+  // HYPERPAY_* are read by _shared/hyperpay.ts cfg() at checkout time.
 
   try {
     // ── Auth ───────────────────────────────────────────────────────────────
@@ -343,14 +335,10 @@ Deno.serve(async (req: Request) => {
       : `booking-${customParameter}`
     ).slice(0, 32);
 
-    const hpEnv: HyperPayEnv =
-      HYPERPAY_ENV === "live" || HYPERPAY_ENV === "prod" ? "prod" : "test";
-    const hpConfig: HyperPayConfig = {
-      entityId:  HYPERPAY_ENTITY_ID,
-      authToken: HYPERPAY_AUTH_TOKEN,
-      env:       hpEnv,
-      base:      HYPERPAY_BASE,
-    };
+    // cfg() reads HYPERPAY_* from the environment and normalises HYPERPAY_ENV
+    // ("live"/"prod" ⇒ prod, anything else ⇒ test).
+    const hpConfig = cfg();
+    const hpEnv = hpConfig.env;
 
     // tokenize: every checkout carries createRegistration + CIT standing
     // instruction (the dashboard does this on all checkouts — proven with this
@@ -404,7 +392,10 @@ Deno.serve(async (req: Request) => {
           body: JSON.stringify({
             payment_id:           referenceId,
             commission_pct:       commissionPct,
-            amount_iqd:           finalIqd,
+            // Must match the amount actually sent to the gateway above
+            // (Math.round(finalIqd)) — IQD is a 0-decimal currency, so an
+            // unrounded value here would let the DB and HyperPay disagree.
+            amount_iqd:           Math.round(finalIqd),
             original_amount_iqd:  subtotalIqd,
             discount_amount_iqd:  discountAmount,
             discount_source:      discountSource,

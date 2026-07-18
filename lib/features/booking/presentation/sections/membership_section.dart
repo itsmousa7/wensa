@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership_plan.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
-import 'package:future_riverpod/features/hyperpay_payment/presentation/pages/hyperpay_payment_page.dart';
-import 'package:future_riverpod/features/hyperpay_payment/presentation/screens/payment_result_page.dart';
+import 'package:future_riverpod/features/hyperpay_payment/hyperpay_payment.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/membership_submit_provider.dart';
@@ -38,7 +37,8 @@ final _selectedMembershipPlanProvider =
 
 final _membershipPromoProvider =
     NotifierProvider.autoDispose<_MembershipPromoNotifier, PromoApplied?>(
-        _MembershipPromoNotifier.new);
+      _MembershipPromoNotifier.new,
+    );
 
 class _MembershipPromoNotifier extends Notifier<PromoApplied?> {
   @override
@@ -71,14 +71,14 @@ class _MembershipSectionState extends ConsumerState<MembershipSection> {
       next.maybeWhen(
         success: (bookingId, checkoutId, holdUntil, referenceId, paymentMode) {
           if (checkoutId.isNotEmpty) {
-            HyperpayPaymentPage.push(
+            launchHyperpayPayment(
               context,
               checkoutId: checkoutId,
               referenceId: referenceId,
-              entityKindForVerify: 'membership',
+              entityKind: 'membership',
               entityId: bookingId,
               paymentMode: paymentMode,
-              onPaymentSuccess: (_, orderId, merchantTxnId) async {
+              onConfirmed: (orderId) async {
                 try {
                   await ref
                       .read(bookingRepositoryProvider)
@@ -87,40 +87,22 @@ class _MembershipSectionState extends ConsumerState<MembershipSection> {
                 ref.read(membershipSubmitProvider.notifier).reset();
                 ref.read(bookingsRefreshProvider.notifier).bump();
                 ref.invalidate(userPurchaseHistoryProvider);
-                if (context.mounted) {
-                  PaymentResultPage.show(
-                    context,
-                    success: true,
-                    merchantTransactionId: merchantTxnId,
-                    onDone: () {
-                      if (context.mounted) {
-                        context.go('/bookings/m_$bookingId');
-                      }
-                    },
-                  );
+                return () => context.go('/bookings/m_$bookingId');
+              },
+              onAborted: (reason) async {
+                // TODO(payments): a decline only resets local state — the
+                // pending membership row keeps its hold until the expiry
+                // cron, unlike every other flow which cancels server-side.
+                if (reason == PaymentAbort.declined) {
+                  ref.read(membershipSubmitProvider.notifier).reset();
+                  return;
                 }
-              },
-              onPaymentFailed: (message, merchantTxnId) {
-                ref.read(membershipSubmitProvider.notifier).reset();
-                if (!context.mounted) return;
-                PaymentResultPage.show(
-                  context,
-                  success: false,
-                  message: message,
-                  merchantTransactionId: merchantTxnId,
-                );
-              },
-              onPaymentCancelled: () async {
                 // Await the server-side cancel before releasing the Proceed
                 // button — otherwise the next tap races the still-`pending`
                 // membership row and hits a constraint conflict.
                 await ref
                     .read(membershipSubmitProvider.notifier)
                     .cancelPending();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Payment cancelled.')),
-                );
               },
             );
           } else {
@@ -128,7 +110,8 @@ class _MembershipSectionState extends ConsumerState<MembershipSection> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text(
-                    'Unable to get payment link. Please try again.'),
+                  'Unable to get payment link. Please try again.',
+                ),
                 backgroundColor: Theme.of(context).colorScheme.error,
               ),
             );
@@ -147,7 +130,9 @@ class _MembershipSectionState extends ConsumerState<MembershipSection> {
     });
 
     return _MembershipFormView(
-        placeId: widget.placeId, placeName: widget.placeName);
+      placeId: widget.placeId,
+      placeName: widget.placeName,
+    );
   }
 }
 
@@ -211,12 +196,16 @@ class _MembershipFormView extends ConsumerWidget {
 
     final placeAsync = ref.watch(placeDetailsProvider(placeId));
     final place = placeAsync.value;
-    final autoDiscount = ref.watch(bestAutoDiscountProvider(AutoDiscountKey(
-      orderType: 'memberships',
-      placeId: placeId,
-      merchantId: place?.merchantId,
-      categoryId: place?.categoryId,
-    )));
+    final autoDiscount = ref.watch(
+      bestAutoDiscountProvider(
+        AutoDiscountKey(
+          orderType: 'memberships',
+          placeId: placeId,
+          merchantId: place?.merchantId,
+          categoryId: place?.categoryId,
+        ),
+      ),
+    );
     final promo = ref.watch(_membershipPromoProvider);
 
     return SingleChildScrollView(
@@ -313,7 +302,8 @@ class _MembershipFormView extends ConsumerWidget {
 
                       // Re-validate promo on subtotal change.
                       if (promo != null &&
-                          promo.finalAmount + promo.discountAmount != subtotal) {
+                          promo.finalAmount + promo.discountAmount !=
+                              subtotal) {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           ref.read(_membershipPromoProvider.notifier).set(null);
                         });
@@ -365,8 +355,9 @@ class _MembershipFormView extends ConsumerWidget {
                             ),
                           ],
                           subtotalLabel: isAr ? 'المجموع' : 'Subtotal',
-                          subtotalValue:
-                              eff.discount > 0 ? _formatPrice(subtotal) : null,
+                          subtotalValue: eff.discount > 0
+                              ? _formatPrice(subtotal)
+                              : null,
                           discountLabel: eff.discount > 0 ? eff.label : null,
                           discountValue: eff.discount > 0
                               ? '−${_formatPrice(eff.discount)}'
@@ -387,8 +378,9 @@ class _MembershipFormView extends ConsumerWidget {
                                       .set(p),
                                 )
                               : null,
-                          actionLabel:
-                              isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
+                          actionLabel: isAr
+                              ? 'المتابعة للدفع'
+                              : 'Proceed to Payment',
                           onAction: () {
                             final plan = selectedPlan;
                             ref

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 import 'package:future_riverpod/core/widgets/primary_action_button.dart';
@@ -9,6 +8,10 @@ import '../../data/services/booking_lock_service.dart';
 import '../../data/services/hyperpay_channel.dart';
 import '../../data/services/hyperpay_verify_service.dart';
 import '../../domain/card_validators.dart';
+import '../domain/merchant_txn_id.dart';
+import '../payment_strings.dart';
+import '../widgets/card_brand_icon.dart';
+import '../widgets/payment_sheet_shell.dart';
 
 /// Wensa-styled HyperPay card form, shown as a modal bottom sheet. Field
 /// order: card number, expiry, CVV, cardholder name (auto-advances focus
@@ -38,18 +41,20 @@ class CardPaymentScreen extends StatefulWidget {
   final HyperpayChannel channel;
   final HyperpayVerifyService verifyService;
   final BookingLockService lockService;
+
   /// [merchantTransactionId] is the HyperPay-side transaction id (shown to
   /// the user for support lookups) when the verify step returned one.
   final void Function(
     String referenceId,
     String orderId,
     String? merchantTransactionId,
-  )? onPaymentSuccess;
+  )?
+  onPaymentSuccess;
 
   /// Fired on a terminal decline; [message] is HyperPay's result description
   /// when the verify step returned one.
   final void Function(String? message, String? merchantTransactionId)?
-      onPaymentFailed;
+  onPaymentFailed;
   final void Function()? onPaymentCancelled;
 
   @override
@@ -93,11 +98,13 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
 
   void _onFieldChanged() => setState(() {});
 
+  PaymentStrings get _s => PaymentStrings.of(context);
+
   void _onNumberChanged() {
     final len = _number.length;
     String? error;
     if (len == 16 && !(luhnCheck(_number) && detectBrand(_number) != null)) {
-      error = 'Invalid card number';
+      error = _s.invalidCardNumber;
     }
     final shouldAdvance = len == 16 && error == null && _prevNumberLen < 16;
     setState(() {
@@ -111,7 +118,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
     final len = _expiryController.text.length;
     String? error;
     if (len == 5 && !isValidExpiry(_month, _year)) {
-      error = 'Invalid expiry date';
+      error = _s.invalidExpiryDate;
     }
     final shouldAdvance = len == 5 && error == null && _prevExpiryLen < 5;
     setState(() {
@@ -125,7 +132,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
     final len = _cvv.length;
     String? error;
     if (len == 3 && !isValidCvv(_cvv)) {
-      error = 'Invalid CVV';
+      error = _s.invalidCvv;
     }
     final shouldAdvance = len == 3 && error == null && _prevCvvLen < 3;
     setState(() {
@@ -142,9 +149,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
     }
     if (_holder.trim().isEmpty) return;
     setState(() {
-      _holderError = isValidHolderName(_holder)
-          ? null
-          : 'Enter first and last name (e.g. John Doe)';
+      _holderError = isValidHolderName(_holder) ? null : _s.invalidHolderName;
     });
   }
 
@@ -179,16 +184,12 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
   String get _year => _expiryParts.length > 1 ? _expiryParts[1] : '';
   String get _cvv => _cvvController.text;
 
-  /// Mirrors create-booking's merchantTransactionId formula
-  /// (`booking-{id}` / `booking-venue-{groupId}`, capped at 32 chars) so the
-  /// result page can always show a transaction id — mandatory for support —
-  /// even when the verify response doesn't echo one back.
-  String get _merchantTxnFallback {
-    final id = widget.entityKindForVerify == 'concert_group'
-        ? 'booking-venue-${widget.entityId}'
-        : 'booking-${widget.entityId}';
-    return id.length > 32 ? id.substring(0, 32) : id;
-  }
+  /// Shown when the verify response doesn't echo a transaction id back — the
+  /// result page must always be able to show one for support.
+  String get _merchantTxnFallback => merchantTxnFallback(
+    kind: widget.entityKindForVerify,
+    id: widget.entityId,
+  );
 
   bool get _formValid =>
       luhnCheck(_number) &&
@@ -214,9 +215,9 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
           id: widget.entityId,
         );
         if (!locked) {
-          throw const HyperpayPaymentException(
+          throw HyperpayPaymentException(
             HyperpayFailureKind.failed,
-            'This slot is no longer available. Please start again.',
+            _s.slotNoLongerAvailable,
           );
         }
 
@@ -262,14 +263,15 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
         widget.onPaymentFailed?.call(result.description, merchantTxnId);
       }
     } on HyperpayPaymentException catch (e) {
-      if (e.kind != HyperpayFailureKind.cancelled) {
-        _errorText = e.message;
+      if (e.kind != HyperpayFailureKind.cancelled && mounted) {
+        setState(() => _errorText = e.message);
       }
     } catch (_) {
       // Verify (or another) network error. Keep _verifyPending set so the
       // next Pay tap retries only the verify step, not the channel call.
-      _errorText =
-          'Could not confirm payment — check your connection and tap Pay again.';
+      if (mounted) {
+        setState(() => _errorText = _s.couldNotConfirmPayment);
+      }
     } finally {
       if (mounted) {
         setState(() => _processing = false);
@@ -345,218 +347,155 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
   /// Generic card glyph until the brand is detected, then the matching
   /// Visa/Mastercard mark. The glyph is muted to the hint color so it reads
   /// as part of the placeholder state.
-  Widget _cardIcon(String? brand) {
-    if (brand == null) {
-      return Padding(
-        padding: const EdgeInsets.only(right: 12),
-        child: Icon(
-          Icons.credit_card,
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
-        ),
-      );
-    }
-    final asset = brand == 'VISA'
-        ? 'assets/icons/visa.svg'
-        : 'assets/icons/mastercard.svg';
-    return Padding(
-      padding: const EdgeInsets.only(right: 12),
-      child: SizedBox(
-        width: 32,
-        height: 20,
-        child: SvgPicture.asset(asset, fit: BoxFit.contain),
-      ),
-    );
-  }
+  Widget _cardIcon(String? brand) => Padding(
+    padding: const EdgeInsets.only(right: 12),
+    child: CardBrandIcon(brand: brand, width: 32, mutedPlaceholder: true),
+  );
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final brand = detectBrand(_number);
-    // Same inline en/ar pattern as the rest of the app. Card fields are
-    // forced LTR below regardless of locale — card numbers, expiry and CVV
-    // are Latin-digit formats and must not mirror under Arabic.
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    // Card fields are forced LTR below regardless of locale — card numbers,
+    // expiry and CVV are Latin-digit formats and must not mirror under Arabic.
+    final s = _s;
     // Explicit onSurface color: the app's dark textTheme is baked with
     // light-mode colors, so default-styled text renders dark-on-dark.
     final fieldStyle = theme.textTheme.bodyMedium?.copyWith(
       color: theme.colorScheme.onSurface,
     );
 
-    return Material(
-      color: theme.colorScheme.surface,
-      clipBehavior: Clip.antiAlias,
-      borderRadius: BorderRadius.vertical(
-        top: Radius.circular(AppSpacing.radiusXL),
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.outlineVariant,
-                    borderRadius: AppSpacing.borderRadiusXS,
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      isAr ? 'الدفع' : 'Payment',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.outline,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: _handleBack,
-                  ),
-                ],
-              ),
-              Directionality(
-                textDirection: TextDirection.ltr,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      key: const Key('card_number'),
-                      style: fieldStyle,
-                      controller: _numberController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(16),
-                        _CardNumberFormatter(),
-                      ],
-                      decoration: _decoration(
-                        context,
-                        '4111 1111 1111 1111',
-                        errorText: _numberError,
-                        suffixIcon: _cardIcon(brand),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            key: const Key('expiry'),
-                      style: fieldStyle,
-                            controller: _expiryController,
-                            focusNode: _expiryFocus,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(4),
-                              _ExpiryDateFormatter(),
-                            ],
-                            decoration: _decoration(
-                              context,
-                              '12/31',
-                              errorText: _expiryError,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: TextField(
-                            key: const Key('cvv'),
-                      style: fieldStyle,
-                            controller: _cvvController,
-                            focusNode: _cvvFocus,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(3),
-                            ],
-                            decoration: _decoration(
-                              context,
-                              'CVV',
-                              errorText: _cvvError,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    TextField(
-                      key: const Key('holder_name'),
-                      style: fieldStyle,
-                      controller: _holderController,
-                      focusNode: _holderFocus,
-                      textCapitalization: TextCapitalization.words,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
-                      ],
-                      decoration: _decoration(
-                        context,
-                        'Card Holder Name',
-                        errorText: _holderError,
-                      ),
-                    ),
+    return PaymentSheetShell(
+      onClose: _handleBack,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  key: const Key('card_number'),
+                  style: fieldStyle,
+                  controller: _numberController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(16),
+                    _CardNumberFormatter(),
                   ],
+                  decoration: _decoration(
+                    context,
+                    '4111 1111 1111 1111',
+                    errorText: _numberError,
+                    suffixIcon: _cardIcon(brand),
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              // Save-card opt-in: the checkout already carries the CIT
-              // registration; checking this asks verify-payment to persist
-              // the token for one-tap payments.
-              InkWell(
-                key: const Key('save_card_toggle'),
-                borderRadius: AppSpacing.borderRadiusLG,
-                onTap: _processing
-                    ? null
-                    : () => setState(() => _saveCard = !_saveCard),
-                child: Row(
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Checkbox(
-                      value: _saveCard,
-                      onChanged: _processing
-                          ? null
-                          : (v) => setState(() => _saveCard = v ?? false),
-                    ),
                     Expanded(
-                      child: Text(
-                        isAr
-                            ? 'احفظ هذه البطاقة للمدفوعات القادمة'
-                            : 'Save this card for future payments',
+                      child: TextField(
+                        key: const Key('expiry'),
                         style: fieldStyle,
+                        controller: _expiryController,
+                        focusNode: _expiryFocus,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(4),
+                          _ExpiryDateFormatter(),
+                        ],
+                        decoration: _decoration(
+                          context,
+                          '12/31',
+                          errorText: _expiryError,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: TextField(
+                        key: const Key('cvv'),
+                        style: fieldStyle,
+                        controller: _cvvController,
+                        focusNode: _cvvFocus,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(3),
+                        ],
+                        decoration: _decoration(
+                          context,
+                          'CVV',
+                          errorText: _cvvError,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              PrimaryActionButton(
-                label: isAr ? 'ادفع' : 'Pay',
-                isLoading: _processing,
-                onTap: _formValid && !_processing ? _pay : null,
-              ),
-              if (_errorText != null) ...[
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  _errorText!,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.danger,
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  key: const Key('holder_name'),
+                  style: fieldStyle,
+                  controller: _holderController,
+                  focusNode: _holderFocus,
+                  textCapitalization: TextCapitalization.words,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
+                  ],
+                  decoration: _decoration(
+                    context,
+                    s.cardHolderName,
+                    errorText: _holderError,
                   ),
                 ),
               ],
-            ],
+            ),
           ),
-        ),
+          const SizedBox(height: AppSpacing.sm),
+          // Save-card opt-in: the checkout already carries the CIT
+          // registration; checking this asks verify-payment to persist
+          // the token for one-tap payments.
+          InkWell(
+            key: const Key('save_card_toggle'),
+            borderRadius: AppSpacing.borderRadiusLG,
+            onTap: _processing
+                ? null
+                : () => setState(() => _saveCard = !_saveCard),
+            child: Row(
+              children: [
+                Checkbox(
+                  value: _saveCard,
+                  onChanged: _processing
+                      ? null
+                      : (v) => setState(() => _saveCard = v ?? false),
+                ),
+                Expanded(
+                  child: Text(s.saveCardForFuturePayments, style: fieldStyle),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          PrimaryActionButton(
+            label: s.pay,
+            isLoading: _processing,
+            onTap: _formValid && !_processing ? _pay : null,
+          ),
+          if (_errorText != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              _errorText!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColors.danger,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

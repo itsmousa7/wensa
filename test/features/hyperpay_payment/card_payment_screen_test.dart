@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:future_riverpod/core/widgets/primary_action_button.dart';
-import 'package:future_riverpod/features/hyperpay_payment/data/services/booking_lock_service.dart';
-import 'package:future_riverpod/features/hyperpay_payment/data/services/hyperpay_channel.dart';
-import 'package:future_riverpod/features/hyperpay_payment/data/services/hyperpay_verify_service.dart';
-import 'package:future_riverpod/features/hyperpay_payment/presentation/screens/card_payment_screen.dart';
+import 'package:future_riverpod/features/hyperpay_payment/hyperpay_payment.dart';
 
 Widget _wrap(Widget child) => MaterialApp(home: child);
 
@@ -12,8 +9,10 @@ class _FakeLockService extends BookingLockService {
   const _FakeLockService({this.locked = true});
   final bool locked;
   @override
-  Future<bool> lockForPayment({required String kind, required String id}) async =>
-      locked;
+  Future<bool> lockForPayment({
+    required String kind,
+    required String id,
+  }) async => locked;
 }
 
 class _FakeChannel extends HyperpayChannel {
@@ -72,8 +71,7 @@ class _DecliningVerifyService extends HyperpayVerifyService {
     required String id,
     required String referenceId,
     bool saveCard = false,
-  }) async =>
-      const VerifyResult(paid: false, description: 'declined');
+  }) async => const VerifyResult(paid: false, description: 'declined');
 }
 
 void main() {
@@ -131,8 +129,9 @@ void main() {
     expect(tester.widget<PrimaryActionButton>(payButton).onTap, isNull);
   });
 
-  testWidgets('save-card defaults to true and is passed through to verify',
-      (tester) async {
+  testWidgets('save-card defaults to true and is passed through to verify', (
+    tester,
+  ) async {
     final verify = _RecordingVerifyService();
     await tester.pumpWidget(
       _wrap(
@@ -165,8 +164,9 @@ void main() {
     expect(verify.lastSaveCard, isTrue);
   });
 
-  testWidgets('unchecking save-card is passed through to verify',
-      (tester) async {
+  testWidgets('unchecking save-card is passed through to verify', (
+    tester,
+  ) async {
     final verify = _RecordingVerifyService();
     await tester.pumpWidget(
       _wrap(
@@ -203,42 +203,44 @@ void main() {
   });
 
   testWidgets(
-      'declined verify without a server txn id falls back to booking-{id}',
-      (tester) async {
-    String? failedTxnId;
-    await tester.pumpWidget(
-      _wrap(
-        CardPaymentScreen(
-          checkoutId: 'chk_1',
-          referenceId: 'ref_1',
-          entityKindForVerify: 'booking',
-          entityId: 'b1',
-          paymentMode: 'TEST',
-          channel: const _FakeChannel(),
-          verifyService: _DecliningVerifyService(),
-          lockService: const _FakeLockService(),
-          onPaymentFailed: (_, txnId) => failedTxnId = txnId,
+    'declined verify without a server txn id falls back to booking-{id}',
+    (tester) async {
+      String? failedTxnId;
+      await tester.pumpWidget(
+        _wrap(
+          CardPaymentScreen(
+            checkoutId: 'chk_1',
+            referenceId: 'ref_1',
+            entityKindForVerify: 'booking',
+            entityId: 'b1',
+            paymentMode: 'TEST',
+            channel: const _FakeChannel(),
+            verifyService: _DecliningVerifyService(),
+            lockService: const _FakeLockService(),
+            onPaymentFailed: (_, txnId) => failedTxnId = txnId,
+          ),
         ),
-      ),
-    );
+      );
 
-    await tester.enterText(
-      find.byKey(const Key('card_number')),
-      '4111111111111111',
-    );
-    await tester.enterText(find.byKey(const Key('holder_name')), 'M ALHAMAD');
-    await tester.enterText(find.byKey(const Key('expiry')), '12/39');
-    await tester.enterText(find.byKey(const Key('cvv')), '123');
-    await tester.pump();
+      await tester.enterText(
+        find.byKey(const Key('card_number')),
+        '4111111111111111',
+      );
+      await tester.enterText(find.byKey(const Key('holder_name')), 'M ALHAMAD');
+      await tester.enterText(find.byKey(const Key('expiry')), '12/39');
+      await tester.enterText(find.byKey(const Key('cvv')), '123');
+      await tester.pump();
 
-    await tester.tap(find.byType(PrimaryActionButton));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byType(PrimaryActionButton));
+      await tester.pumpAndSettle();
 
-    expect(failedTxnId, 'booking-b1');
-  });
+      expect(failedTxnId, 'booking-b1');
+    },
+  );
 
-  testWidgets('expired hold blocks the charge and shows an error',
-      (tester) async {
+  testWidgets('expired hold blocks the charge and shows an error', (
+    tester,
+  ) async {
     final channel = _RecordingChannel();
     await tester.pumpWidget(
       _wrap(
@@ -267,7 +269,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(channel.submitCalled, isFalse);
-    expect(find.text('This slot is no longer available. Please start again.'),
-        findsOneWidget);
+    expect(
+      find.text('This slot is no longer available. Please start again.'),
+      findsOneWidget,
+    );
   });
 }

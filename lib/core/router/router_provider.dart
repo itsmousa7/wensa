@@ -20,6 +20,7 @@ import 'package:future_riverpod/features/bottom_bar/widgets/nav_shell.dart';
 import 'package:future_riverpod/features/events/presentation/pages/event_details_page.dart';
 import 'package:future_riverpod/features/favorites/presentation/pages/favorites_page.dart';
 import 'package:future_riverpod/features/home/presentation/pages/home_page.dart';
+import 'package:future_riverpod/features/hyperpay_payment/hyperpay_payment.dart';
 import 'package:future_riverpod/features/home/presentation/pages/splash_page.dart';
 import 'package:future_riverpod/features/notifications/fcm_service.dart';
 import 'package:future_riverpod/features/notifications/presentation/pages/notifications_page.dart';
@@ -27,7 +28,6 @@ import 'package:future_riverpod/features/onboarding/data/onboarding_provider.dar
 import 'package:future_riverpod/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:future_riverpod/features/places/presentation/pages/place_details_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/profile_page.dart';
-import 'package:future_riverpod/features/profile/presentation/pages/saved_cards_page.dart';
 import 'package:future_riverpod/features/profile/presentation/pages/theme_settings_page.dart';
 import 'package:future_riverpod/features/search/presentation/pages/search_page.dart';
 import 'package:go_router/go_router.dart';
@@ -176,8 +176,7 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: '/bookings/:id',
         name: RouteNames.ticketDetail,
-        builder: (_, s) =>
-            TicketDetailPage(id: s.pathParameters['id'] ?? ''),
+        builder: (_, s) => TicketDetailPage(id: s.pathParameters['id'] ?? ''),
       ),
       GoRoute(
         path: '/search',

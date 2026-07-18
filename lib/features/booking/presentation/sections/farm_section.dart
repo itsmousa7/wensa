@@ -9,9 +9,9 @@ import 'package:future_riverpod/features/booking/presentation/widgets/booking_da
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/shift_card.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
-import 'package:future_riverpod/features/hyperpay_payment/presentation/pages/hyperpay_payment_page.dart';
-import 'package:future_riverpod/features/hyperpay_payment/presentation/screens/payment_result_page.dart';
-import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart' show bookingsRefreshProvider;
+import 'package:future_riverpod/features/hyperpay_payment/hyperpay_payment.dart';
+import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
+    show bookingsRefreshProvider;
 import 'package:future_riverpod/features/discounts/domain/discount_math.dart';
 import 'package:future_riverpod/features/discounts/domain/models/auto_discount.dart';
 import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
@@ -38,15 +38,18 @@ class _FarmShiftNotifier extends Notifier<FarmShift?> {
 
 final _farmSelectedDateProvider =
     NotifierProvider.autoDispose<_FarmDateNotifier, DateTime>(
-        _FarmDateNotifier.new);
+      _FarmDateNotifier.new,
+    );
 
 final _farmSelectedShiftProvider =
     NotifierProvider.autoDispose<_FarmShiftNotifier, FarmShift?>(
-        _FarmShiftNotifier.new);
+      _FarmShiftNotifier.new,
+    );
 
 final _farmPromoProvider =
     NotifierProvider.autoDispose<_FarmPromoNotifier, PromoApplied?>(
-        _FarmPromoNotifier.new);
+      _FarmPromoNotifier.new,
+    );
 
 class _FarmPromoNotifier extends Notifier<PromoApplied?> {
   @override
@@ -58,7 +61,10 @@ class _FarmPromoNotifier extends Notifier<PromoApplied?> {
 /// [isToday] must be true when the selected date is today (local device date).
 /// Uses Baghdad time (UTC+3) for expiry comparison since farm shifts are
 /// configured in local Baghdad time.
-SlotAvailability computeShiftAvailability(FarmShift shift, {required bool isToday}) {
+SlotAvailability computeShiftAvailability(
+  FarmShift shift, {
+  required bool isToday,
+}) {
   if (shift.isClosed) return SlotAvailability.closed;
   if (isToday) {
     final parts = shift.startsTime.split(':');
@@ -107,10 +113,7 @@ class FarmSection extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 
 class _FarmBookingFormView extends ConsumerWidget {
-  const _FarmBookingFormView({
-    required this.placeId,
-    required this.placeName,
-  });
+  const _FarmBookingFormView({required this.placeId, required this.placeName});
 
   final String placeId;
   final String placeName;
@@ -189,34 +192,44 @@ class _FarmBookingFormView extends ConsumerWidget {
       farmShiftsProvider(placeId, bookingFormatDate(selectedDate)),
     );
     final submitState = ref.watch(bookingSubmitProvider);
-    final isLoading =
-        submitState.maybeWhen(loading: () => true, orElse: () => false);
+    final isLoading = submitState.maybeWhen(
+      loading: () => true,
+      orElse: () => false,
+    );
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final closedDatesAsync = ref.watch(placeClosedDatesProvider(placeId));
     final closedDates = closedDatesAsync.value ?? const <String>{};
 
     final placeAsync = ref.watch(placeDetailsProvider(placeId));
     final place = placeAsync.value;
-    final autoDiscount = ref.watch(bestAutoDiscountProvider(AutoDiscountKey(
-      orderType: 'bookings',
-      placeId: placeId,
-      merchantId: place?.merchantId,
-      categoryId: place?.categoryId,
-    )));
+    final autoDiscount = ref.watch(
+      bestAutoDiscountProvider(
+        AutoDiscountKey(
+          orderType: 'bookings',
+          placeId: placeId,
+          merchantId: place?.merchantId,
+          categoryId: place?.categoryId,
+        ),
+      ),
+    );
     final promo = ref.watch(_farmPromoProvider);
 
     // Opens the payment webview for the given booking details.
     // Defined here so it can be reused by both ref.listen and onAction.
-    void openCardPayment(String bookingId, String checkoutId,
-        String referenceId, String paymentMode) {
-      HyperpayPaymentPage.push(
+    void openCardPayment(
+      String bookingId,
+      String checkoutId,
+      String referenceId,
+      String paymentMode,
+    ) {
+      launchHyperpayPayment(
         context,
         checkoutId: checkoutId,
         referenceId: referenceId,
-        entityKindForVerify: 'booking',
+        entityKind: 'booking',
         entityId: bookingId,
         paymentMode: paymentMode,
-        onPaymentSuccess: (_, orderId, merchantTxnId) async {
+        onConfirmed: (orderId) async {
           try {
             await ref
                 .read(bookingRepositoryProvider)
@@ -225,45 +238,19 @@ class _FarmBookingFormView extends ConsumerWidget {
           ref.read(bookingSubmitProvider.notifier).reset();
           ref.read(bookingsRefreshProvider.notifier).bump();
           ref.invalidate(userPurchaseHistoryProvider);
-          if (context.mounted) {
-            PaymentResultPage.show(
-              context,
-              success: true,
-              merchantTransactionId: merchantTxnId,
-              onDone: () {
-                if (context.mounted) context.go('/bookings/$bookingId');
-              },
-            );
-          }
+          return () => context.go('/bookings/$bookingId');
         },
-        onPaymentFailed: (message, merchantTxnId) async {
-          // Release the pending row so the shift frees up immediately instead
-          // of staying "booked" until the expiry cron. The shift is only ever
-          // held by a confirmed (paid) booking.
+        onAborted: (_) async {
+          // Release the pending row server-side the moment the payment ends
+          // without success, so the shift becomes available again right away
+          // (no hot restart, no waiting on the expiry cron). cancelPending()
+          // reads the booking id from the success state, cancels via
+          // cancel_booking, then resets local state to idle — which also
+          // re-enables Proceed only after the row is gone, so a retry can't
+          // race the stale pending row.
           await ref.read(bookingSubmitProvider.notifier).cancelPending();
           ref.invalidate(
-              farmShiftsProvider(placeId, bookingFormatDate(selectedDate)));
-          if (!context.mounted) return;
-          PaymentResultPage.show(
-            context,
-            success: false,
-            message: message,
-            merchantTransactionId: merchantTxnId,
-          );
-        },
-        onPaymentCancelled: () async {
-          // Release the pending row server-side the moment the user closes the
-          // webview, so the shift becomes available again right away (no hot
-          // restart, no waiting on the expiry cron). cancelPending() reads the
-          // booking id from the success state, cancels via cancel_booking, then
-          // resets local state to idle — which also re-enables Proceed only
-          // after the row is gone, so a retry can't race the stale pending row.
-          await ref.read(bookingSubmitProvider.notifier).cancelPending();
-          ref.invalidate(
-              farmShiftsProvider(placeId, bookingFormatDate(selectedDate)));
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Payment cancelled.')),
+            farmShiftsProvider(placeId, bookingFormatDate(selectedDate)),
           );
         },
       );
@@ -328,21 +315,26 @@ class _FarmBookingFormView extends ConsumerWidget {
               if (shifts.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 8),
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   child: Text(
                     isAr
                         ? 'لا توجد أوردية متاحة لهذا الموقع.'
                         : 'No shifts available for this location.',
                     style: TextStyle(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.5)),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
                   ),
                 );
               }
-              final baghdadNow = DateTime.now().toUtc().add(const Duration(hours: 3));
-              final isToday = selectedDate.year == baghdadNow.year &&
+              final baghdadNow = DateTime.now().toUtc().add(
+                const Duration(hours: 3),
+              );
+              final isToday =
+                  selectedDate.year == baghdadNow.year &&
                   selectedDate.month == baghdadNow.month &&
                   selectedDate.day == baghdadNow.day;
               return Padding(
@@ -351,8 +343,10 @@ class _FarmBookingFormView extends ConsumerWidget {
                   children: shifts.map((shift) {
                     final isSelected =
                         selectedShift?.shiftType == shift.shiftType;
-                    final availability =
-                        computeShiftAvailability(shift, isToday: isToday);
+                    final availability = computeShiftAvailability(
+                      shift,
+                      isToday: isToday,
+                    );
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: ShiftCard(
@@ -383,13 +377,16 @@ class _FarmBookingFormView extends ConsumerWidget {
             transitionBuilder: (child, animation) => FadeTransition(
               opacity: animation,
               child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.08),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
+                position:
+                    Tween<Offset>(
+                      begin: const Offset(0, 0.08),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      ),
+                    ),
                 child: child,
               ),
             ),
@@ -406,7 +403,8 @@ class _FarmBookingFormView extends ConsumerWidget {
 
                       // Re-validate promo on subtotal change.
                       if (promo != null &&
-                          promo.finalAmount + promo.discountAmount != subtotal) {
+                          promo.finalAmount + promo.discountAmount !=
+                              subtotal) {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           ref.read(_farmPromoProvider.notifier).set(null);
                         });
@@ -416,20 +414,26 @@ class _FarmBookingFormView extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: BookingSummaryCard(
                           title: isAr ? 'ملخص الحجز' : 'Booking Summary',
-                          badgeText: _shiftLabel(selectedShift.shiftType,
-                              isArabic: isAr),
+                          badgeText: _shiftLabel(
+                            selectedShift.shiftType,
+                            isArabic: isAr,
+                          ),
                           rows: [
                             BookingSummaryRow(
                               icon: Icons.calendar_today_rounded,
                               label: isAr ? 'التاريخ' : 'Date',
-                              value: bookingDisplayDate(selectedDate,
-                                  isArabic: isAr),
+                              value: bookingDisplayDate(
+                                selectedDate,
+                                isArabic: isAr,
+                              ),
                             ),
                             BookingSummaryRow(
                               icon: Icons.wb_sunny_rounded,
                               label: isAr ? 'الوردية' : 'Shift',
-                              value: _shiftLabel(selectedShift.shiftType,
-                                  isArabic: isAr),
+                              value: _shiftLabel(
+                                selectedShift.shiftType,
+                                isArabic: isAr,
+                              ),
                             ),
                             BookingSummaryRow(
                               icon: Icons.schedule_rounded,
@@ -447,8 +451,9 @@ class _FarmBookingFormView extends ConsumerWidget {
                               ? '−${_FarmBookingFormView._formatIqd(eff.discount)}'
                               : null,
                           totalLabel: isAr ? 'الإجمالي' : 'Total Amount',
-                          totalValue:
-                              _FarmBookingFormView._formatIqd(eff.finalAmount),
+                          totalValue: _FarmBookingFormView._formatIqd(
+                            eff.finalAmount,
+                          ),
                           extraSlot: subtotal > 0
                               ? PromoCodeField(
                                   orderType: 'bookings',
@@ -463,20 +468,31 @@ class _FarmBookingFormView extends ConsumerWidget {
                                       .set(p),
                                 )
                               : null,
-                          actionLabel:
-                              isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
+                          actionLabel: isAr
+                              ? 'المتابعة للدفع'
+                              : 'Proceed to Payment',
                           onAction: () {
                             // If a pending booking already exists, reuse its payment URL
                             // instead of creating a new booking (avoids DB constraint error).
                             final current = ref.read(bookingSubmitProvider);
                             current.maybeWhen(
-                              success: (bookingId, checkoutId, holdUntil,
-                                  referenceId, paymentMode) {
-                                if (checkoutId.isNotEmpty) {
-                                  openCardPayment(bookingId, checkoutId,
-                                      referenceId, paymentMode);
-                                }
-                              },
+                              success:
+                                  (
+                                    bookingId,
+                                    checkoutId,
+                                    holdUntil,
+                                    referenceId,
+                                    paymentMode,
+                                  ) {
+                                    if (checkoutId.isNotEmpty) {
+                                      openCardPayment(
+                                        bookingId,
+                                        checkoutId,
+                                        referenceId,
+                                        paymentMode,
+                                      );
+                                    }
+                                  },
                               orElse: () {
                                 final shift = selectedShift;
                                 ref

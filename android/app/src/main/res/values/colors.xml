@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="notification_color">#489BAB</color>
+    <!-- Wensa dark header used by the 3DS challenge UI (MainActivity dialog,
+         AsyncPaymentActivity layout override, WensaChallengeTheme). -->
+    <color name="wensa_challenge_header">#1A1A2E</color>
 </resources>
