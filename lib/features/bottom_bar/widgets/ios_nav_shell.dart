@@ -101,10 +101,11 @@ class IosNavShell extends ConsumerWidget {
     // The search block's footprint (padding + button) is dead width taken from
     // the native CNTabBar. At the default 32+60+32 = 124pt, the 4 labeled tabs
     // get ~250–290pt on 375–414pt phones (iPhone 11/SE/mini) and the labels
-    // collide. Below 420pt, shrink the block so the tab bar wins back ~40pt.
+    // overlap the selection indicator. Below 420pt, shrink the block to
+    // 8+52+8 = 68pt so the tab bar wins back ~56pt.
     final compact = MediaQuery.sizeOf(context).width < 420;
-    final searchPadding = compact ? 14.0 : 32.0;
-    final searchButtonSize = compact ? 56.0 : 60.0;
+    final searchPadding = compact ? 8.0 : 32.0;
+    final searchButtonSize = compact ? 52.0 : 60.0;
 
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,

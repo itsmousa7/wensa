@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -15,7 +17,10 @@ class GoogleAuthService {
     final google = GoogleSignIn.instance;
 
     await google.initialize(
-      clientId: iosClient,
+      // clientId is iOS-only; Android resolves its OAuth client from the
+      // package name + signing SHA-1 registered in the Google console, and
+      // uses serverClientId (the WEB client) as the idToken audience.
+      clientId: Platform.isIOS ? iosClient : null,
       serverClientId: webClient,
     );
 

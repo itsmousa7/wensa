@@ -127,8 +127,8 @@ class _LiquidGlassBar extends StatelessWidget {
                 currentIndex: currentIndex,
                 tint: cs.primary,
                 height: 95,
-                iconSize: 18,
-                labelFontSize: 10,
+                iconSize: 16,
+                labelFontSize: 9,
                 onTap: onTap,
                 items: kNavItems
                     .map(
