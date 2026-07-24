@@ -43,6 +43,7 @@ interface BasePaylod {
   redirect_url?: string;
   promo_code?: string;
   guest_name?: string; // dashboard: name the booking is held under
+  client?: "dashboard"; // dashboard-only hint; narrows `source` (see below)
 }
 
 interface HourlyPayload extends BasePaylod {
@@ -130,11 +131,21 @@ Deno.serve(async (req: Request) => {
 
     // Dashboard powers (book on behalf of a customer, free path) are limited to
     // admins and to a merchant acting on its OWN merchant. A merchant hitting
-    // another merchant's place is treated as a regular paying customer; the
-    // unspoofable `source` label reflects that.
-    const isDashboard = callerRole === "admin" ||
+    // another merchant's place is treated as a regular paying customer.
+    const hasDashboardRole = callerRole === "admin" ||
       (callerRole === "merchant" && callerMerchantId !== null && callerMerchantId === ctx.merchantId);
-    const source = isDashboard ? callerRole : "mobile_app";
+    // An admin/merchant account can ALSO book through the mobile app as an
+    // ordinary customer — `hasDashboardRole` alone can't tell those apart since
+    // it's role+ownership only. `client: "dashboard"` is a hint the admin/merchant
+    // dashboards' CreateBookingModal sends (the mobile app never does). It is the
+    // gate for EVERY dashboard-only power: the free-booking path (payment toggle
+    // OFF) and the `source` label. Without it, a merchant booking at their own
+    // venue from the MOBILE app would hit the free path when their toggle is off,
+    // returning { free: true } with no checkout_id — the app then errors on the
+    // missing checkout while the slot is already booked. Gating on the hint keeps
+    // the toggle scoped to the dashboard; the mobile app always requires payment.
+    const isDashboardBooking = hasDashboardRole && body.client === "dashboard";
+    const source = isDashboardBooking ? callerRole : "mobile_app";
     // Dashboard bookings are owned by the staff caller; guest_name is the label.
     const effectiveUserId = callerId;
 
@@ -286,7 +297,7 @@ Deno.serve(async (req: Request) => {
     const merchantDiscountId = discount.merchantDiscountId;
 
     // ── Free path: dashboard booking for a merchant with payment toggle OFF ──
-    if (isDashboard && !(await dashboardPaymentRequired(SUPABASE_URL, svc, ctx.merchantId))) {
+    if (isDashboardBooking && !(await dashboardPaymentRequired(SUPABASE_URL, svc, ctx.merchantId))) {
       const freeFilter = isGroup ? `group_id=eq.${rpcResult.group_id}` : `id=eq.${rpcResult.id}`;
       const freePatch = isGroup
         ? { status: "confirmed", payment_status: "free", commission_pct: 0, source, guest_name: body.guest_name ?? null }
