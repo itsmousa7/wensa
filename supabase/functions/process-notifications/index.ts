@@ -255,6 +255,51 @@ async function sendToTokens(
   return { sent, errors, errorMsgs };
 }
 
+/// Atomically claim a due reminder row before sending anything.
+///
+/// Two invocations overlapping (the every-minute cron plus a manual trigger, or
+/// a slow run still going when the next tick starts) would otherwise both read
+/// reminder_sent_at IS NULL for the same row and both push — the user gets the
+/// same reminder twice. Stamping the column inside a single conditional UPDATE
+/// makes exactly one caller win: Postgres serialises the row write, and the
+/// loser's WHERE no longer matches, so it gets zero rows back.
+///
+/// Returns true only for the invocation that won the row.
+async function claimReminder(
+  supabase: any,
+  table: "bookings" | "memberships",
+  id: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .schema("bookings")
+    .from(table)
+    .update({ reminder_sent_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("reminder_sent_at", null)
+    .select("id");
+  if (error) {
+    console.error(`[claim] ${table} ${id} failed: ${error.message}`);
+    return false;
+  }
+  return (data?.length ?? 0) > 0;
+}
+
+/// Hand a claimed row back when every push for it failed, so the next tick can
+/// retry while the reminder is still inside its send window. Without this the
+/// claim above would turn a transient FCM error into a permanently skipped
+/// reminder.
+async function releaseReminder(
+  supabase: any,
+  table: "bookings" | "memberships",
+  id: string,
+): Promise<void> {
+  await supabase
+    .schema("bookings")
+    .from(table)
+    .update({ reminder_sent_at: null })
+    .eq("id", id);
+}
+
 Deno.serve(async (_req) => {
   try {
     const saRaw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
@@ -332,6 +377,10 @@ Deno.serve(async (_req) => {
         const titleEn = titleWithName(cfg.title_en, nm?.en ?? null);
         const titleAr = titleWithName(cfg.title_ar, nm?.ar ?? null);
 
+        // Claim before sending: a concurrent invocation that read the same due
+        // row loses here and skips, so the reminder goes out exactly once.
+        if (!(await claimReminder(supabase, "bookings", booking.id))) continue;
+
         const badge = (await getUnreadCount(supabase, booking.user_id)) + 1;
         const { sent, errors, errorMsgs } = await sendToTokens(
           supabase, tokens, user.preferred_locale ?? "en",
@@ -342,11 +391,6 @@ Deno.serve(async (_req) => {
         );
 
         if (sent > 0) {
-          await supabase
-            .schema("bookings")
-            .from("bookings")
-            .update({ reminder_sent_at: new Date().toISOString() })
-            .eq("id", booking.id);
           await supabase
             .schema("profiles")
             .from("user_notifications")
@@ -360,6 +404,9 @@ Deno.serve(async (_req) => {
               data: { booking_id: booking.id },
             });
           totalSent += sent;
+        } else {
+          // Nothing got through — give the row back so the next tick retries.
+          await releaseReminder(supabase, "bookings", booking.id);
         }
         if (errors > 0) {
           fcmErrors.push(...errorMsgs);
@@ -407,6 +454,8 @@ Deno.serve(async (_req) => {
           const titleEn = titleWithName(memCfg.title_en, nm?.en ?? null);
           const titleAr = titleWithName(memCfg.title_ar, nm?.ar ?? null);
 
+          if (!(await claimReminder(supabase, "memberships", m.id))) continue;
+
           const badge = (await getUnreadCount(supabase, m.user_id)) + 1;
           const { sent, errors, errorMsgs } = await sendToTokens(
             supabase, tokens, user.preferred_locale ?? "en",
@@ -417,11 +466,6 @@ Deno.serve(async (_req) => {
           );
 
           if (sent > 0) {
-            await supabase
-              .schema("bookings")
-              .from("memberships")
-              .update({ reminder_sent_at: new Date().toISOString() })
-              .eq("id", m.id);
             await supabase
               .schema("profiles")
               .from("user_notifications")
@@ -435,6 +479,8 @@ Deno.serve(async (_req) => {
                 data: { membership_id: m.id },
               });
             totalSent += sent;
+          } else {
+            await releaseReminder(supabase, "memberships", m.id);
           }
           if (errors > 0) {
             fcmErrors.push(...errorMsgs);
@@ -459,11 +505,17 @@ Deno.serve(async (_req) => {
         .select("id, preferred_locale");
 
       for (const broadcast of broadcasts) {
-        await supabase
+        // Same claim-before-send rule as the reminders above: pending → sending
+        // conditional on it still being pending, so two overlapping runs cannot
+        // both blast the same broadcast to every user.
+        const { data: claimed } = await supabase
           .schema("admin")
           .from("broadcasts")
           .update({ status: "sending" })
-          .eq("id", broadcast.id);
+          .eq("id", broadcast.id)
+          .eq("status", "pending")
+          .select("id");
+        if (!claimed?.length) continue;
 
         const audience = broadcast.target_user_id
           ? (allUsers ?? []).filter((u: any) => u.id === broadcast.target_user_id)
