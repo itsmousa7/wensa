@@ -23,6 +23,14 @@ const REMINDER_WINDOW_MIN = 5;
 /// 'paid'). Anything else is still pending, failed or refunded.
 const SETTLED_PAYMENT_STATUSES = ["paid", "free"];
 
+/// The timezone the business runs in. Memberships expire at local midnight
+/// (see the bookings_expire_memberships cron), and expiry reminders are timed
+/// against local civil time rather than UTC so they never land overnight.
+const OPERATING_TIMEZONE = "Asia/Baghdad";
+/// Local hour-of-day from which membership expiry reminders may be sent.
+/// Anything earlier reaches people while they are asleep.
+const MEMBERSHIP_SEND_HOUR_LOCAL = 10;
+
 function pemToDer(pem: string): Uint8Array {
   const b64 = pem
     .replace(/-----BEGIN PRIVATE KEY-----/g, "")
@@ -200,6 +208,37 @@ async function getEventNames(
     .in("id", ids);
   for (const row of data ?? []) map[row.id] = { en: row.title_en, ar: row.title_ar };
   return map;
+}
+
+/// Wall-clock date (YYYY-MM-DD) and hour in `tz` at instant `at`.
+///
+/// memberships.ends_at is a DATE, so there is no instant to compare against —
+/// only a calendar day. Reading "what day is it there right now" is therefore
+/// the only correct way to decide whether a membership is due, and it keeps the
+/// answer independent of the Postgres session TimeZone (a `date >= timestamptz`
+/// comparison silently re-anchors if that setting ever changes).
+function localDayAndHour(at: Date, tz: string): { day: string; hour: number } {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23", // keep midnight as 00, not 24
+  }).formatToParts(at);
+  const get = (type: string) => parts.find((p) => p.type === type)!.value;
+  return {
+    day: `${get("year")}-${get("month")}-${get("day")}`,
+    hour: Number(get("hour")),
+  };
+}
+
+/// Shift a YYYY-MM-DD calendar day by whole days. Anchored at UTC noon so the
+/// arithmetic can never tip into a neighbouring day.
+function addDays(day: string, days: number): string {
+  const d = new Date(`${day}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
 }
 
 /// Append a place/event name to a reminder title, e.g. "Booking Reminder — Foo".
@@ -417,11 +456,21 @@ Deno.serve(async (_req) => {
 
     // ── 2. Membership expiry reminders ───────────────────────────────────────
     const memCfg = reminders["membership"];
-    if (memCfg && memCfg.enabled) {
-      const leadMs = memCfg.lead_minutes * 60_000;
-      const windowMs = 30 * 60_000;
-      const targetFromIso = new Date(Date.now() + leadMs - windowMs).toISOString();
-      const targetToIso   = new Date(Date.now() + leadMs + windowMs).toISOString();
+    // ends_at is day-granular, so the lead is too: 1440 min → 1 day ahead. A
+    // sub-day lead rounds to same-day rather than being silently dropped, and
+    // finer granularity than a day is simply not available from a DATE column.
+    const memLeadDays = memCfg
+      ? Math.max(0, Math.round(memCfg.lead_minutes / 1440))
+      : 0;
+    const { day: localDay, hour: localHour } = localDayAndHour(
+      new Date(),
+      OPERATING_TIMEZONE,
+    );
+    // Hold off until the local send hour, then stay open for the rest of the
+    // day so a failed or missed hour still catches up (reminder_sent_at keeps
+    // it to one send). Previously this fired at 00:00 UTC = 03:00 local.
+    if (memCfg && memCfg.enabled && localHour >= MEMBERSHIP_SEND_HOUR_LOCAL) {
+      const targetDay = addDays(localDay, memLeadDays);
 
       const { data: dueMemberships } = await supabase
         .schema("bookings")
@@ -429,8 +478,7 @@ Deno.serve(async (_req) => {
         .select("id, user_id, ends_at, place_id")
         .eq("status", "active")
         .is("reminder_sent_at", null)
-        .gte("ends_at", targetFromIso)
-        .lte("ends_at", targetToIso);
+        .eq("ends_at", targetDay);
 
       if (dueMemberships?.length) {
         const userIds = [...new Set(dueMemberships.map((m: any) => m.user_id as string))];
