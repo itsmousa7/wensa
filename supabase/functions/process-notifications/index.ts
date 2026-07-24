@@ -18,6 +18,10 @@ interface ReminderConfig {
 
 const HOURLY_CATEGORIES = ["sports", "farm", "restaurant"];
 const REMINDER_WINDOW_MIN = 5;
+/// A booking is reminder-eligible once it is settled — either paid, or free
+/// (zero-price slots / fully-discounted bookings never get payment_status
+/// 'paid'). Anything else is still pending, failed or refunded.
+const SETTLED_PAYMENT_STATUSES = ["paid", "free"];
 
 function pemToDer(pem: string): Uint8Array {
   const b64 = pem
@@ -288,7 +292,7 @@ Deno.serve(async (_req) => {
         .from("bookings")
         .select("id, user_id, category, place_id, event_id")
         .eq("status", "confirmed")
-        .eq("payment_status", "paid")
+        .in("payment_status", SETTLED_PAYMENT_STATUSES)
         .is("reminder_sent_at", null)
         .gte("starts_at", from)
         .lte("starts_at", to);
