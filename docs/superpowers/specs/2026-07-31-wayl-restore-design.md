@@ -40,8 +40,12 @@ exist on both tables. Volume is pre-launch: 1 saved card, 87
 | 4 | App payment UI | Full revert to the Wayl webview |
 | 5 | Dashboard | Surgical revert — already done by parallel session |
 | 6 | Merchant plan/banner payments | Moot: already on Wayl since `525c17f` |
-| 7 | Mechanism | Restore-from-`main`, one clean commit |
+| 7 | Mechanism | Restore-from-`main`, one clean commit per repo |
 | 8 | `create-booking` source of truth | Dashboard's Wayl copy + re-applied gate |
+
+Decision 7 governs the Flutter surface only. `create-booking` is the one
+exception: its base is the dashboard's already-restored Wayl copy, **not**
+`main`'s — see below for why.
 
 Decision 2 deliberately diverges from the dashboard's freeze-in-tree convention.
 The dashboard froze a handful of TypeScript modules; the app would freeze ~553k
@@ -148,9 +152,9 @@ MCP; verify presence and stop if any is missing.
 Deploy order — no window where a checkout is issued against a function that
 can't confirm it:
 
-1. `create-booking` (unified file)
-2. `create-membership`
-3. `booking-action`
+1. `create-booking` — the unified file written in this work
+2. `create-membership` — deployed from the dashboard repo's `feature/wayl-restore`, already restored, no code change here
+3. `booking-action` — likewise; carries the `_shared/wayl.ts` `refundPayment()` path
 
 `wayl-webhook`, `booking-wayl-webhook`, and `wayl-refund` are already ACTIVE and
 need no redeploy. The `hyperpay-*` functions stay deployed but unused —
