@@ -104,7 +104,7 @@ class ContentShareCard extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(6),
                       child: Image.asset(
-                        'assets/icons/app_icon.png',
+                        'assets/icons/wensa_icon.png',
                         width: 22,
                         height: 22,
                         fit: BoxFit.cover,

@@ -17,7 +17,7 @@ class BrandedHeader extends StatelessWidget {
         ClipRRect(
           borderRadius: AppSpacing.borderRadiusSM,
           child: Image.asset(
-            'assets/icons/app_icon.png',
+            'assets/icons/wensa_icon.png',
             width: 28,
             height: 28,
             fit: BoxFit.cover,

@@ -21,6 +21,8 @@ void main() {
     expect(find.text('Cafe X'), findsWidgets);
     expect(find.text('Karrada, Baghdad'), findsOneWidget);
     expect(find.text('Discover on Wensa'), findsOneWidget);
-    expect(find.text('WENSA'), findsOneWidget);
+    // The card renders its own title-case footer brand; the upper-case 'WENSA'
+    // lives in BrandedHeader, which this widget does not use.
+    expect(find.text('Wensa'), findsOneWidget);
   });
 }
