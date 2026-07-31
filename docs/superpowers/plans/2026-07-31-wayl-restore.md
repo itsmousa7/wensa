@@ -393,6 +393,12 @@ and delete this whole `GoRoute` block (around lines 130-134):
       ),
 ```
 
+Then remove `'/saved-cards'` from the `_redirect` guarded-path list further down
+the same file (around line 300). **Corrected during execution** — an earlier
+draft named only the import and the `GoRoute`, missing this third reference. It
+is absent on `main`, and leaving it behind would guard a route that no longer
+exists.
+
 - [ ] **Step 8: Remove the now-unused route name**
 
 In `lib/core/router/router_names.dart`, delete line 21:
@@ -442,18 +448,30 @@ git rm --quiet supabase/functions/_shared/hyperpay.ts \
                supabase/functions/_shared/payments.ts
 ```
 
-- [ ] **Step 3: Check whether anything outside HyperPay uses `SceneDelegate`**
+- [ ] **Step 3: Delete the iOS SDK only**
 
 ```bash
-grep -rn "SceneDelegate" ios/ --include="*.swift" --include="*.plist" --include="*.pbxproj" | grep -v "ios/Runner/SceneDelegate.swift"
+git rm -r --quiet ios/HyperpaySDK
 ```
-Expected: no output — the file was added by HyperPay commits only and is not registered in `Info.plist` or the Xcode project. If this returns anything, stop and report rather than deleting.
 
-- [ ] **Step 4: Delete the iOS SDK and scene delegate**
+- [ ] **Step 4: Restore `SceneDelegate.swift` from `main` — do NOT delete it**
+
+**Corrected during execution.** An earlier draft of this plan said to delete
+`ios/Runner/SceneDelegate.swift`, on the mistaken reading that the branch added
+it. It does not: the file exists on `main` as a 40-line scene delegate hosting
+the `app.wensa.mobile/badge` channel that backs `clearBadge`. It is registered as
+`UISceneDelegateClassName` in `ios/Runner/Info.plist`, and neither `Info.plist`
+nor `project.pbxproj` was touched by the branch. Deleting it breaks iOS app
+launch. HyperPay merely *added* a second channel to it.
+
+Same pattern as `MainActivity.kt` in Step 7 — restore, don't remove:
 
 ```bash
-git rm -r --quiet ios/HyperpaySDK ios/Runner/SceneDelegate.swift
+git checkout main -- ios/Runner/SceneDelegate.swift
+grep -ci "hyperpay\|oppwa\|ipworks" ios/Runner/SceneDelegate.swift
+grep -c "app.wensa.mobile/badge" ios/Runner/SceneDelegate.swift
 ```
+Expected: `0` HyperPay references, `1` badge channel retained.
 
 - [ ] **Step 5: Remove the pod line from `ios/Podfile`**
 
