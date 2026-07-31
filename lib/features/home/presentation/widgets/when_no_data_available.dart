@@ -48,7 +48,7 @@ class CategoryFeedSection extends ConsumerWidget {
           children: [
             SizedBox(
               height: 200,
-              child: Lottie.asset('assets/lottie/animation/no_internet.json'),
+              child: Lottie.asset('assets/lottie/animation/empty.json'),
             ),
             const SizedBox(height: 12),
             Text(
@@ -175,7 +175,7 @@ class DiscountsFeedSection extends ConsumerWidget {
           children: [
             SizedBox(
               height: 200,
-              child: Lottie.asset('assets/lottie/animation/no_internet.json'),
+              child: Lottie.asset('assets/lottie/animation/empty.json'),
             ),
             const SizedBox(height: 12),
             Text(
