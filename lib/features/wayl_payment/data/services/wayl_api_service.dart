@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 
@@ -24,7 +25,11 @@ class WaylApiService {
   final http.Client _client;
 
   static http.Client _buildClient() {
-    if (WaylConfig.env == 'test') {
+    // Certificate validation is only ever bypassed in debug builds. `WaylConfig.env`
+    // is a compile-time const 'test', so gating on it alone shipped the bypass in
+    // release: every build accepted any certificate while sending the
+    // X-WAYL-AUTHENTICATION key on each status poll. kDebugMode is the real gate.
+    if (kDebugMode && WaylConfig.env == 'test') {
       final httpClient = HttpClient()
         ..badCertificateCallback = (_, _, _) => true;
       return IOClient(httpClient);
