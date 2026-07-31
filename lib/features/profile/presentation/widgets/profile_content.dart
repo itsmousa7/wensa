@@ -195,25 +195,6 @@ class ProfileContent extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // ── Payment ────────────────────────────────────────────────
-                SectionLabel(title: isAr ? 'الدفع' : 'Payment'),
-                const SizedBox(height: 10),
-                SettingsCard(
-                  children: [
-                    SettingsTile(
-                      icon: Icons.credit_card_rounded,
-                      iconColor: cs.primary,
-                      title: isAr ? 'البطاقات المحفوظة' : 'Saved Cards',
-                      onTap: () => context.pushNamed(
-                        RouteNames.savedCards,
-                        extra: isAr,
-                      ),
-                      showChevron: true,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
                 // ── Legal ──────────────────────────────────────────────────
                 SectionLabel(title: isAr ? 'قانوني' : 'Legal'),
                 const SizedBox(height: 10),

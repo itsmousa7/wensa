@@ -1,5 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 <uses-permission android:name="android.permission.CAMERA"/>
 <!-- Gallery selection uses the Android Photo Picker (no storage permission
      needed on API 33+). READ_EXTERNAL_STORAGE is a scoped fallback for
@@ -55,16 +54,6 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-
-        <!-- HyperPay mSDK 3DS challenge screen. Theme is replaced so the
-             activity uses the Wensa-branded header from the overridden
-             res/layout/async_payment_activity.xml instead of an action bar. -->
-        <activity
-            android:name="com.oppwa.mobile.connect.provider.AsyncPaymentActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@style/WensaChallengeTheme"
-            tools:replace="android:theme"/>
 
         <!-- Required by image_cropper (uCrop). Without this the cropper
              activity can't launch and the app crashes after picking a photo. -->

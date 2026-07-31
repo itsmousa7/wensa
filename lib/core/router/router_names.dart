@@ -18,7 +18,6 @@ class RouteNames {
   static const placeDetails = 'placeDetails';
   static const eventDetails = 'eventDetails';
   static const themeSettings = 'theme-settings';
-  static const savedCards = 'saved-cards';
   static const String bookingFlow = 'bookingFlow';
   static const String eventBookingFlow = 'eventBookingFlow';
   static const String bookingsHistory = 'bookingsHistory';

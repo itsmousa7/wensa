@@ -8,11 +8,12 @@ import 'package:future_riverpod/features/booking/domain/models/venue_layout.dart
 import 'package:future_riverpod/features/booking/domain/models/venue_section.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:future_riverpod/features/booking/domain/seat_validation.dart';
-import 'package:future_riverpod/features/hyperpay_payment/hyperpay_payment.dart';
+import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/hold_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/seat_map_web_view.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 import 'package:future_riverpod/core/widgets/primary_action_button.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
@@ -28,8 +29,8 @@ String _formatIqd(int amount) {
 }
 
 /// Route name used for the concert review / GA checkout bottom sheets so
-/// the parent listener can dismiss the right route once the HyperPay payment
-/// screen is ready to show — keeps the sheet visible while we wait on the
+/// the parent listener can dismiss the right route once the Wayl payment
+/// webview is ready to show — keeps the sheet visible while we wait on the
 /// create-booking round trip.
 const String _concertCheckoutSheetRoute = '_concert_checkout_sheet';
 
@@ -144,8 +145,8 @@ class ConcertSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
       next.maybeWhen(
-        success: (groupId, checkoutId, holdUntil, referenceId, paymentMode) {
-          if (checkoutId.isNotEmpty) {
+        success: (groupId, paymentUrl, holdUntil, waylReferenceId) {
+          if (paymentUrl.isNotEmpty) {
             // Re-anchor local hold timer to the server's actual expiry so
             // the client-side watcher doesn't fire a false "expired" message
             // while the user is inside the payment webview.
@@ -156,20 +157,17 @@ class ConcertSection extends ConsumerWidget {
             }
             // The review / GA sheet stays open with its loading spinner
             // while create-booking runs; dismiss it now that we have the
-            // checkout ID so the payment screen lands cleanly on the booking
-            // page.
+            // Wayl URL so the webview lands cleanly on the booking page.
             _dismissCheckoutSheet(context);
-            launchHyperpayPayment(
+            PaymentWebViewPage.push(
               context,
-              checkoutId: checkoutId,
-              referenceId: referenceId,
-              entityKind: 'concert_group',
-              entityId: groupId,
-              paymentMode: paymentMode,
-              onConfirmed: (orderId) async {
+              paymentUrl,
+              referenceId: waylReferenceId,
+              redirectionUrl: 'wansa://payment',
+              onPaymentSuccess: (_, orderId) async {
                 // Flip every row in the concert group to confirmed before
                 // the cron can expire it — same backstop as padel/farm in
-                // case the HyperPay webhook is delayed.
+                // case the Wayl webhook is delayed.
                 String? firstBookingId;
                 try {
                   firstBookingId = await ref
@@ -179,22 +177,46 @@ class ConcertSection extends ConsumerWidget {
                 ref.read(bookingSubmitProvider.notifier).reset();
                 ref.read(_concertSelectionProvider.notifier).reset();
                 ref.read(bookingsRefreshProvider.notifier).bump();
-                final bookingId = firstBookingId;
-                return () {
-                  if (bookingId != null && bookingId.isNotEmpty) {
-                    context.go('/bookings/$bookingId');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Payment successful! Your tickets are confirmed.',
+                      ),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  if (firstBookingId != null && firstBookingId.isNotEmpty) {
+                    context.go('/bookings/$firstBookingId');
                   } else {
                     context.goNamed('bookingsHistory');
                   }
-                };
+                }
               },
-              onAborted: (_) async {
+              onPaymentFailed: () async {
                 // Cancel the group so seats are released immediately rather
                 // than waiting up to 3 min for the cron to expire them.
                 await ref
                     .read(bookingSubmitProvider.notifier)
                     .cancelConcertGroup(groupId);
                 ref.invalidate(availableSeatsProvider(eventId));
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Payment failed. Please try again.'),
+                    backgroundColor: AppColors.danger,
+                  ),
+                );
+              },
+              onPaymentCancelled: () async {
+                await ref
+                    .read(bookingSubmitProvider.notifier)
+                    .cancelConcertGroup(groupId);
+                ref.invalidate(availableSeatsProvider(eventId));
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Payment cancelled.')),
+                );
               },
             );
           }
@@ -555,7 +577,7 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
           .read(bookingSubmitProvider)
           .maybeWhen(
             loading: () => true,
-            success: (_, _, _, _, _) => true,
+            success: (_, _, _, _) => true,
             orElse: () => false,
           );
       if (!isPaymentActive) {
@@ -698,7 +720,7 @@ class _HoldExpiryWatcher extends ConsumerWidget {
         .watch(bookingSubmitProvider)
         .maybeWhen(
           loading: () => true,
-          success: (_, _, _, _, _) => true,
+          success: (_, _, _, _) => true,
           orElse: () => false,
         );
 
@@ -843,7 +865,7 @@ class _ReviewSheet extends ConsumerWidget {
                   ? null
                   : () {
                       // Keep the sheet visible while create-booking runs.
-                      // The parent listener pops it once the checkout ID is
+                      // The parent listener pops it once the Wayl URL is
                       // ready (see `_dismissCheckoutSheet`).
                       ref
                           .read(bookingSubmitProvider.notifier)
@@ -996,10 +1018,9 @@ class _GASheetState extends ConsumerState<_GASheet> {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         "$_quantity",
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(
-                              color: Theme.of(context).colorScheme.outline,
-                            ),
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
                       ),
                     ),
                     IconButton.outlined(
@@ -1056,7 +1077,7 @@ class _GASheetState extends ConsumerState<_GASheet> {
                   ? null
                   : () {
                       // Keep the sheet visible until the parent's listener
-                      // dismisses it once the checkout ID is available.
+                      // dismisses it once the Wayl URL is available.
                       ref
                           .read(bookingSubmitProvider.notifier)
                           .createGeneralAdmissionBooking(

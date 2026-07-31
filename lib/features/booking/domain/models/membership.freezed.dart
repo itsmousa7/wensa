@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Membership {
 
- String get id; String get userId; String get merchantId; String get placeId; String get planId; MembershipStatus get status; String get membershipType; String get startsAt; String get endsAt; int get amountIqd; String? get paymentId; String? get paymentStatus; String get qrToken; bool get isFrozen; String? get createdAt;
+ String get id; String get userId; String get merchantId; String get placeId; String get planId; MembershipStatus get status; String get membershipType; String get startsAt; String get endsAt; int get amountIqd; String? get paymentId; String? get paymentStatus; String? get waylCode; String get qrToken; bool get isFrozen; String? get createdAt;
 /// Create a copy of Membership
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $MembershipCopyWith<Membership> get copyWith => _$MembershipCopyWithImpl<Members
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Membership&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.merchantId, merchantId) || other.merchantId == merchantId)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.planId, planId) || other.planId == planId)&&(identical(other.status, status) || other.status == status)&&(identical(other.membershipType, membershipType) || other.membershipType == membershipType)&&(identical(other.startsAt, startsAt) || other.startsAt == startsAt)&&(identical(other.endsAt, endsAt) || other.endsAt == endsAt)&&(identical(other.amountIqd, amountIqd) || other.amountIqd == amountIqd)&&(identical(other.paymentId, paymentId) || other.paymentId == paymentId)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.qrToken, qrToken) || other.qrToken == qrToken)&&(identical(other.isFrozen, isFrozen) || other.isFrozen == isFrozen)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Membership&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.merchantId, merchantId) || other.merchantId == merchantId)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.planId, planId) || other.planId == planId)&&(identical(other.status, status) || other.status == status)&&(identical(other.membershipType, membershipType) || other.membershipType == membershipType)&&(identical(other.startsAt, startsAt) || other.startsAt == startsAt)&&(identical(other.endsAt, endsAt) || other.endsAt == endsAt)&&(identical(other.amountIqd, amountIqd) || other.amountIqd == amountIqd)&&(identical(other.paymentId, paymentId) || other.paymentId == paymentId)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.waylCode, waylCode) || other.waylCode == waylCode)&&(identical(other.qrToken, qrToken) || other.qrToken == qrToken)&&(identical(other.isFrozen, isFrozen) || other.isFrozen == isFrozen)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,merchantId,placeId,planId,status,membershipType,startsAt,endsAt,amountIqd,paymentId,paymentStatus,qrToken,isFrozen,createdAt);
+int get hashCode => Object.hash(runtimeType,id,userId,merchantId,placeId,planId,status,membershipType,startsAt,endsAt,amountIqd,paymentId,paymentStatus,waylCode,qrToken,isFrozen,createdAt);
 
 @override
 String toString() {
-  return 'Membership(id: $id, userId: $userId, merchantId: $merchantId, placeId: $placeId, planId: $planId, status: $status, membershipType: $membershipType, startsAt: $startsAt, endsAt: $endsAt, amountIqd: $amountIqd, paymentId: $paymentId, paymentStatus: $paymentStatus, qrToken: $qrToken, isFrozen: $isFrozen, createdAt: $createdAt)';
+  return 'Membership(id: $id, userId: $userId, merchantId: $merchantId, placeId: $placeId, planId: $planId, status: $status, membershipType: $membershipType, startsAt: $startsAt, endsAt: $endsAt, amountIqd: $amountIqd, paymentId: $paymentId, paymentStatus: $paymentStatus, waylCode: $waylCode, qrToken: $qrToken, isFrozen: $isFrozen, createdAt: $createdAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $MembershipCopyWith<$Res>  {
   factory $MembershipCopyWith(Membership value, $Res Function(Membership) _then) = _$MembershipCopyWithImpl;
 @useResult
 $Res call({
- String id, String userId, String merchantId, String placeId, String planId, MembershipStatus status, String membershipType, String startsAt, String endsAt, int amountIqd, String? paymentId, String? paymentStatus, String qrToken, bool isFrozen, String? createdAt
+ String id, String userId, String merchantId, String placeId, String planId, MembershipStatus status, String membershipType, String startsAt, String endsAt, int amountIqd, String? paymentId, String? paymentStatus, String? waylCode, String qrToken, bool isFrozen, String? createdAt
 });
 
 
@@ -65,7 +65,7 @@ class _$MembershipCopyWithImpl<$Res>
 
 /// Create a copy of Membership
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? merchantId = null,Object? placeId = null,Object? planId = null,Object? status = null,Object? membershipType = null,Object? startsAt = null,Object? endsAt = null,Object? amountIqd = null,Object? paymentId = freezed,Object? paymentStatus = freezed,Object? qrToken = null,Object? isFrozen = null,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? merchantId = null,Object? placeId = null,Object? planId = null,Object? status = null,Object? membershipType = null,Object? startsAt = null,Object? endsAt = null,Object? amountIqd = null,Object? paymentId = freezed,Object? paymentStatus = freezed,Object? waylCode = freezed,Object? qrToken = null,Object? isFrozen = null,Object? createdAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -79,6 +79,7 @@ as String,endsAt: null == endsAt ? _self.endsAt : endsAt // ignore: cast_nullabl
 as String,amountIqd: null == amountIqd ? _self.amountIqd : amountIqd // ignore: cast_nullable_to_non_nullable
 as int,paymentId: freezed == paymentId ? _self.paymentId : paymentId // ignore: cast_nullable_to_non_nullable
 as String?,paymentStatus: freezed == paymentStatus ? _self.paymentStatus : paymentStatus // ignore: cast_nullable_to_non_nullable
+as String?,waylCode: freezed == waylCode ? _self.waylCode : waylCode // ignore: cast_nullable_to_non_nullable
 as String?,qrToken: null == qrToken ? _self.qrToken : qrToken // ignore: cast_nullable_to_non_nullable
 as String,isFrozen: null == isFrozen ? _self.isFrozen : isFrozen // ignore: cast_nullable_to_non_nullable
 as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
@@ -167,10 +168,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String userId,  String merchantId,  String placeId,  String planId,  MembershipStatus status,  String membershipType,  String startsAt,  String endsAt,  int amountIqd,  String? paymentId,  String? paymentStatus,  String qrToken,  bool isFrozen,  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String userId,  String merchantId,  String placeId,  String planId,  MembershipStatus status,  String membershipType,  String startsAt,  String endsAt,  int amountIqd,  String? paymentId,  String? paymentStatus,  String? waylCode,  String qrToken,  bool isFrozen,  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Membership() when $default != null:
-return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.planId,_that.status,_that.membershipType,_that.startsAt,_that.endsAt,_that.amountIqd,_that.paymentId,_that.paymentStatus,_that.qrToken,_that.isFrozen,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.planId,_that.status,_that.membershipType,_that.startsAt,_that.endsAt,_that.amountIqd,_that.paymentId,_that.paymentStatus,_that.waylCode,_that.qrToken,_that.isFrozen,_that.createdAt);case _:
   return orElse();
 
 }
@@ -188,10 +189,10 @@ return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.planI
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String userId,  String merchantId,  String placeId,  String planId,  MembershipStatus status,  String membershipType,  String startsAt,  String endsAt,  int amountIqd,  String? paymentId,  String? paymentStatus,  String qrToken,  bool isFrozen,  String? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String userId,  String merchantId,  String placeId,  String planId,  MembershipStatus status,  String membershipType,  String startsAt,  String endsAt,  int amountIqd,  String? paymentId,  String? paymentStatus,  String? waylCode,  String qrToken,  bool isFrozen,  String? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _Membership():
-return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.planId,_that.status,_that.membershipType,_that.startsAt,_that.endsAt,_that.amountIqd,_that.paymentId,_that.paymentStatus,_that.qrToken,_that.isFrozen,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.planId,_that.status,_that.membershipType,_that.startsAt,_that.endsAt,_that.amountIqd,_that.paymentId,_that.paymentStatus,_that.waylCode,_that.qrToken,_that.isFrozen,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -208,10 +209,10 @@ return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.planI
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String userId,  String merchantId,  String placeId,  String planId,  MembershipStatus status,  String membershipType,  String startsAt,  String endsAt,  int amountIqd,  String? paymentId,  String? paymentStatus,  String qrToken,  bool isFrozen,  String? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String userId,  String merchantId,  String placeId,  String planId,  MembershipStatus status,  String membershipType,  String startsAt,  String endsAt,  int amountIqd,  String? paymentId,  String? paymentStatus,  String? waylCode,  String qrToken,  bool isFrozen,  String? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Membership() when $default != null:
-return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.planId,_that.status,_that.membershipType,_that.startsAt,_that.endsAt,_that.amountIqd,_that.paymentId,_that.paymentStatus,_that.qrToken,_that.isFrozen,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.planId,_that.status,_that.membershipType,_that.startsAt,_that.endsAt,_that.amountIqd,_that.paymentId,_that.paymentStatus,_that.waylCode,_that.qrToken,_that.isFrozen,_that.createdAt);case _:
   return null;
 
 }
@@ -223,7 +224,7 @@ return $default(_that.id,_that.userId,_that.merchantId,_that.placeId,_that.planI
 @JsonSerializable()
 
 class _Membership implements Membership {
-  const _Membership({this.id = '', this.userId = '', this.merchantId = '', this.placeId = '', this.planId = '', this.status = MembershipStatus.pending, this.membershipType = '', this.startsAt = '', this.endsAt = '', this.amountIqd = 0, this.paymentId, this.paymentStatus, this.qrToken = '', this.isFrozen = false, this.createdAt});
+  const _Membership({this.id = '', this.userId = '', this.merchantId = '', this.placeId = '', this.planId = '', this.status = MembershipStatus.pending, this.membershipType = '', this.startsAt = '', this.endsAt = '', this.amountIqd = 0, this.paymentId, this.paymentStatus, this.waylCode, this.qrToken = '', this.isFrozen = false, this.createdAt});
   factory _Membership.fromJson(Map<String, dynamic> json) => _$MembershipFromJson(json);
 
 @override@JsonKey() final  String id;
@@ -238,6 +239,7 @@ class _Membership implements Membership {
 @override@JsonKey() final  int amountIqd;
 @override final  String? paymentId;
 @override final  String? paymentStatus;
+@override final  String? waylCode;
 @override@JsonKey() final  String qrToken;
 @override@JsonKey() final  bool isFrozen;
 @override final  String? createdAt;
@@ -255,16 +257,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Membership&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.merchantId, merchantId) || other.merchantId == merchantId)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.planId, planId) || other.planId == planId)&&(identical(other.status, status) || other.status == status)&&(identical(other.membershipType, membershipType) || other.membershipType == membershipType)&&(identical(other.startsAt, startsAt) || other.startsAt == startsAt)&&(identical(other.endsAt, endsAt) || other.endsAt == endsAt)&&(identical(other.amountIqd, amountIqd) || other.amountIqd == amountIqd)&&(identical(other.paymentId, paymentId) || other.paymentId == paymentId)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.qrToken, qrToken) || other.qrToken == qrToken)&&(identical(other.isFrozen, isFrozen) || other.isFrozen == isFrozen)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Membership&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.merchantId, merchantId) || other.merchantId == merchantId)&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.planId, planId) || other.planId == planId)&&(identical(other.status, status) || other.status == status)&&(identical(other.membershipType, membershipType) || other.membershipType == membershipType)&&(identical(other.startsAt, startsAt) || other.startsAt == startsAt)&&(identical(other.endsAt, endsAt) || other.endsAt == endsAt)&&(identical(other.amountIqd, amountIqd) || other.amountIqd == amountIqd)&&(identical(other.paymentId, paymentId) || other.paymentId == paymentId)&&(identical(other.paymentStatus, paymentStatus) || other.paymentStatus == paymentStatus)&&(identical(other.waylCode, waylCode) || other.waylCode == waylCode)&&(identical(other.qrToken, qrToken) || other.qrToken == qrToken)&&(identical(other.isFrozen, isFrozen) || other.isFrozen == isFrozen)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,merchantId,placeId,planId,status,membershipType,startsAt,endsAt,amountIqd,paymentId,paymentStatus,qrToken,isFrozen,createdAt);
+int get hashCode => Object.hash(runtimeType,id,userId,merchantId,placeId,planId,status,membershipType,startsAt,endsAt,amountIqd,paymentId,paymentStatus,waylCode,qrToken,isFrozen,createdAt);
 
 @override
 String toString() {
-  return 'Membership(id: $id, userId: $userId, merchantId: $merchantId, placeId: $placeId, planId: $planId, status: $status, membershipType: $membershipType, startsAt: $startsAt, endsAt: $endsAt, amountIqd: $amountIqd, paymentId: $paymentId, paymentStatus: $paymentStatus, qrToken: $qrToken, isFrozen: $isFrozen, createdAt: $createdAt)';
+  return 'Membership(id: $id, userId: $userId, merchantId: $merchantId, placeId: $placeId, planId: $planId, status: $status, membershipType: $membershipType, startsAt: $startsAt, endsAt: $endsAt, amountIqd: $amountIqd, paymentId: $paymentId, paymentStatus: $paymentStatus, waylCode: $waylCode, qrToken: $qrToken, isFrozen: $isFrozen, createdAt: $createdAt)';
 }
 
 
@@ -275,7 +277,7 @@ abstract mixin class _$MembershipCopyWith<$Res> implements $MembershipCopyWith<$
   factory _$MembershipCopyWith(_Membership value, $Res Function(_Membership) _then) = __$MembershipCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String userId, String merchantId, String placeId, String planId, MembershipStatus status, String membershipType, String startsAt, String endsAt, int amountIqd, String? paymentId, String? paymentStatus, String qrToken, bool isFrozen, String? createdAt
+ String id, String userId, String merchantId, String placeId, String planId, MembershipStatus status, String membershipType, String startsAt, String endsAt, int amountIqd, String? paymentId, String? paymentStatus, String? waylCode, String qrToken, bool isFrozen, String? createdAt
 });
 
 
@@ -292,7 +294,7 @@ class __$MembershipCopyWithImpl<$Res>
 
 /// Create a copy of Membership
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? merchantId = null,Object? placeId = null,Object? planId = null,Object? status = null,Object? membershipType = null,Object? startsAt = null,Object? endsAt = null,Object? amountIqd = null,Object? paymentId = freezed,Object? paymentStatus = freezed,Object? qrToken = null,Object? isFrozen = null,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? merchantId = null,Object? placeId = null,Object? planId = null,Object? status = null,Object? membershipType = null,Object? startsAt = null,Object? endsAt = null,Object? amountIqd = null,Object? paymentId = freezed,Object? paymentStatus = freezed,Object? waylCode = freezed,Object? qrToken = null,Object? isFrozen = null,Object? createdAt = freezed,}) {
   return _then(_Membership(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -306,6 +308,7 @@ as String,endsAt: null == endsAt ? _self.endsAt : endsAt // ignore: cast_nullabl
 as String,amountIqd: null == amountIqd ? _self.amountIqd : amountIqd // ignore: cast_nullable_to_non_nullable
 as int,paymentId: freezed == paymentId ? _self.paymentId : paymentId // ignore: cast_nullable_to_non_nullable
 as String?,paymentStatus: freezed == paymentStatus ? _self.paymentStatus : paymentStatus // ignore: cast_nullable_to_non_nullable
+as String?,waylCode: freezed == waylCode ? _self.waylCode : waylCode // ignore: cast_nullable_to_non_nullable
 as String?,qrToken: null == qrToken ? _self.qrToken : qrToken // ignore: cast_nullable_to_non_nullable
 as String,isFrozen: null == isFrozen ? _self.isFrozen : isFrozen // ignore: cast_nullable_to_non_nullable
 as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable

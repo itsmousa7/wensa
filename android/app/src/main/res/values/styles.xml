@@ -10,11 +10,4 @@
     <style name="NormalTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
-    <!-- HyperPay mSDK 3DS challenge screen (AsyncPaymentActivity). The activity
-         layout is overridden in res/layout/async_payment_activity.xml with a
-         Wensa header, so the theme must not add its own action bar. -->
-    <style name="WensaChallengeTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:statusBarColor">@color/wensa_challenge_header</item>
-        <item name="android:windowBackground">@android:color/white</item>
-    </style>
 </resources>
