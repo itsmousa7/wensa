@@ -2,8 +2,11 @@
 //
 // Reusable ticket visual (info section, tear line, QR), used both on the ticket
 // detail screen and inside the shareable ticket image.
+import 'dart:io';
 
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:future_riverpod/core/share/branded_header.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/qr_block.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
@@ -28,6 +31,7 @@ class TicketVisualCard extends StatefulWidget {
     required this.isArabic,
     required this.statusBadge,
     required this.cells,
+    this.waylCode,
     this.shareMode = false,
   });
 
@@ -36,6 +40,7 @@ class TicketVisualCard extends StatefulWidget {
   final bool isArabic;
   final Widget statusBadge;
   final List<TicketInfoCell> cells;
+  final String? waylCode;
   final bool shareMode;
 
   @override
@@ -97,6 +102,20 @@ class _TicketVisualCardState extends State<TicketVisualCard> {
                     widget.statusBadge,
                     const SizedBox(height: 20),
                     _InfoGrid(cells: widget.cells),
+                    if (widget.waylCode != null &&
+                        widget.waylCode!.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      if (widget.shareMode)
+                        _CodePill(
+                          code: widget.waylCode!,
+                          isArabic: widget.isArabic,
+                        )
+                      else
+                        _CodeFieldRow(
+                          code: widget.waylCode!,
+                          isArabic: widget.isArabic,
+                        ),
+                    ],
                   ],
                 ),
               ),
@@ -167,6 +186,7 @@ class ShareableTicketVisualCard extends StatelessWidget {
     required this.isArabic,
     required this.statusBadge,
     required this.cells,
+    this.waylCode,
   });
 
   final String qrToken;
@@ -174,6 +194,7 @@ class ShareableTicketVisualCard extends StatelessWidget {
   final bool isArabic;
   final Widget statusBadge;
   final List<TicketInfoCell> cells;
+  final String? waylCode;
 
   @override
   Widget build(BuildContext context) {
@@ -193,6 +214,7 @@ class ShareableTicketVisualCard extends StatelessWidget {
             isArabic: isArabic,
             statusBadge: statusBadge,
             cells: cells,
+            waylCode: waylCode,
             shareMode: true,
           ),
         ],
@@ -265,6 +287,179 @@ class _InfoGrid extends StatelessWidget {
           ],
         );
       }),
+    );
+  }
+}
+
+class _CodeFieldRow extends StatelessWidget {
+  const _CodeFieldRow({required this.code, required this.isArabic});
+  final String code;
+  final bool isArabic;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final borderColor = cs.onSurface.withValues(alpha: 0.18);
+    final labelColor = cs.primary;
+
+    void onCopy() {
+      Clipboard.setData(ClipboardData(text: code));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isArabic ? 'تم النسخ' : 'Copied'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+
+    // iOS — native Liquid Glass copy button. Android keeps the original
+    // bordered button.
+    final Widget copyButton = Platform.isIOS
+        ? CNButton.icon(
+            onPressed: onCopy,
+            icon: CNSymbol('doc.on.doc', size: 15, color: cs.primary),
+            config: const CNButtonConfig(
+              style: CNButtonStyle.glass,
+              width: 50,
+              minHeight: 34,
+            ),
+          )
+        : GestureDetector(
+            onTap: onCopy,
+            child: Container(
+              width: 50,
+              height: 34,
+              decoration: BoxDecoration(
+                borderRadius: AppSpacing.borderRadiusLG,
+                border: Border.all(color: borderColor, width: 1.2),
+              ),
+              child: Icon(
+                Icons.content_copy_rounded,
+                size: 20,
+                color: cs.onSurface.withValues(alpha: 0.55),
+              ),
+            ),
+          );
+
+    final textColumn = Expanded(
+      child: Column(
+        crossAxisAlignment:
+            isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            isArabic ? 'الرمز' : 'Code',
+            style: tt.labelSmall?.copyWith(
+              color: labelColor,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
+            ),
+            textDirection:
+                isArabic ? TextDirection.rtl : TextDirection.ltr,
+          ),
+          const SizedBox(height: 3),
+          Text(
+            code,
+            style: tt.titleSmall?.copyWith(
+              color: cs.onSurface,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+            textDirection:
+                isArabic ? TextDirection.rtl : TextDirection.ltr,
+          ),
+        ],
+      ),
+    );
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Force LTR on the Row so the explicit child order is visually respected
+    // regardless of the app's text direction (Arabic RTL would otherwise flip it).
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withValues(alpha: isDark ? 0.22 : 0.68),
+              Colors.white.withValues(alpha: isDark ? 0.08 : 0.32),
+            ],
+          ),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: isDark ? 0.38 : 0.85),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.50),
+              blurRadius: 6,
+              offset: const Offset(0, 1),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: isArabic
+              ? [copyButton, const SizedBox(width: 12), textColumn]
+              : [textColumn, const SizedBox(width: 12), copyButton],
+        ),
+      ),
+    );
+  }
+}
+
+class _CodePill extends StatelessWidget {
+  const _CodePill({required this.code, required this.isArabic});
+  final String code;
+  final bool isArabic;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final borderColor = cs.onSurface.withValues(alpha: 0.18);
+    final labelColor = cs.onSurface.withValues(alpha: 0.55);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor, width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            isArabic ? 'الرمز' : 'Code',
+            style: tt.labelMedium?.copyWith(
+              color: labelColor,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            code,
+            style: tt.bodyMedium?.copyWith(
+              color: cs.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 }
