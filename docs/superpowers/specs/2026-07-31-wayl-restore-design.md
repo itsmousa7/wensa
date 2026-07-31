@@ -41,11 +41,12 @@ exist on both tables. Volume is pre-launch: 1 saved card, 87
 | 5 | Dashboard | Surgical revert — already done by parallel session |
 | 6 | Merchant plan/banner payments | Moot: already on Wayl since `525c17f` |
 | 7 | Mechanism | Restore-from-`main`, one clean commit per repo |
-| 8 | `create-booking` source of truth | Dashboard's Wayl copy + re-applied gate |
+| 8 | `create-booking` source of truth | One unified file, written into both repos |
 
-Decision 7 governs the Flutter surface only. `create-booking` is the one
-exception: its base is the dashboard's already-restored Wayl copy, **not**
-`main`'s — see below for why.
+Decision 8 was originally "use the dashboard's Wayl copy as the base". Diffing
+the two Wayl copies during planning showed that would regress a fix, so the base
+is inverted — see below. The outcome is unchanged: one authoritative file, no
+drift.
 
 Decision 2 deliberately diverges from the dashboard's freeze-in-tree convention.
 The dashboard froze a handful of TypeScript modules; the app would freeze ~553k
@@ -55,22 +56,31 @@ bloats every clone and Xcode build. The asymmetry is recorded in the restore doc
 ## The `create-booking` defect
 
 `create-booking` exists in **both** repos and deploys to the same Supabase
-function. The copies have drifted, and neither is currently correct:
+function. Three copies are in play and **none** is currently correct:
 
-| Copy | Wayl | `f3f10c3` client-hint gate |
-|---|---|---|
-| app repo, 964 lines | no — HyperPay | yes |
-| dashboard repo, 933 lines | yes | **no** |
+| Copy | Wayl | `f3f10c3` client-hint gate | event-discount guard | `callRpc` typed |
+|---|---|---|---|---|
+| app `HEAD`, 964 lines | no — HyperPay | yes | yes | no |
+| app `main`, 952 lines | yes | no | **yes** | no |
+| dashboard `feature/wayl-restore`, 933 lines | yes | no | **no** | yes |
 
-The dashboard's `CreateBookingModal.tsx:212` sends `client: "dashboard"`, but its
-`create-booking` — restored wholesale as a 933-line new file by `3f328af` — has
-no `isDashboardBooking` gate to consume it. Deploying it as-is reintroduces the
-bug `f3f10c3` fixed: a merchant booking at their own venue *from the mobile app*,
-with their payment toggle off, takes the free-booking path — the slot is held and
-no `payment_url` is returned, so the app errors on a booking that already exists.
+**Defect 1 — the client-hint gate.** The dashboard's `CreateBookingModal.tsx:212`
+sends `client: "dashboard"`, but its `create-booking` — restored wholesale as a
+933-line new file by `3f328af` — has no `isDashboardBooking` gate to consume it.
+Deploying it as-is reintroduces the bug `f3f10c3` fixed: a merchant booking at
+their own venue *from the mobile app*, with their payment toggle off, takes the
+free-booking path — the slot is held and no `payment_url` is returned, so the app
+errors on a booking that already exists.
 
-**Resolution.** Take the dashboard's Wayl copy as the base, re-apply the
-`f3f10c3` gate onto it, and write the identical file into both repos.
+**Defect 2 — the event-discount guard.** `3f328af` restored from a snapshot
+predating `main`'s `isEventCategory()` guard. Without it, an app-wide auto
+discount (`applies_to: 'bookings'`) bleeds onto venue-seat and general-admission
+tickets, which are never supposed to be discounted.
+
+**Resolution.** Base on **`main`'s** copy — the only one with the event-discount
+guard — then add the `f3f10c3` gate and the dashboard's `callRpc` typing
+improvement. That is the union of all three fixes. Write the identical file into
+both repos.
 
 The gate is three renames plus one added condition:
 
@@ -112,8 +122,9 @@ non-payment work:
 
 ### Write the unified `create-booking`
 
-`supabase/functions/create-booking/index.ts` — dashboard's Wayl base with the
-`f3f10c3` gate re-applied, byte-identical in both repos.
+`supabase/functions/create-booking/index.ts` — `main`'s Wayl base, plus the
+`f3f10c3` gate and the `callRpc: Promise<Record<string, unknown>>` typing,
+byte-identical in both repos.
 
 ### Delete
 
