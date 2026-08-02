@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نزّل ونسة</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: linear-gradient(180deg, #ffffff 0%, #f2fbfc 100%);
+      color: #102b30;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2.25rem;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .logo {
+      width: min(150px, 38vw);
+      height: auto;
+    }
+
+    .spinner {
+      width: 34px;
+      height: 34px;
+      border: 3px solid #d6eef1;
+      border-top-color: #2f9bab;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #status {
+      font-size: 0.95rem;
+      color: #5c7a80;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: #5c7a80;
+      max-width: 300px;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      width: 100%;
+      max-width: 280px;
+    }
+    .actions.hidden { display: none; }
+
+    .store-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.7rem 1.25rem;
+      border-radius: 14px;
+      text-decoration: none;
+      background: #102b30;
+      color: #ffffff;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+      box-shadow: 0 6px 18px rgba(16, 43, 48, 0.15);
+    }
+    .store-btn:hover { transform: translateY(-1px); opacity: 0.92; }
+    .store-btn:active { transform: translateY(0); }
+
+    .store-btn.google { background: #ffffff; color: #102b30; border: 1.5px solid #dcebed; box-shadow: 0 6px 18px rgba(16, 43, 48, 0.06); }
+
+    .store-btn svg { width: 26px; height: 26px; flex-shrink: 0; }
+
+    .store-btn .label { text-align: start; line-height: 1.15; }
+    .store-btn .label .small { display: block; font-size: 0.68rem; opacity: 0.8; font-weight: 500; letter-spacing: 0.02em; }
+    .store-btn .label .big { display: block; font-size: 1.02rem; font-weight: 600; }
+
+    footer {
+      position: fixed;
+      bottom: 1.5rem;
+      font-size: 0.78rem;
+      color: #9bb3b7;
+    }
+    footer .dot { color: #2f9bab; }
+  </style>
+</head>
+<body>
+  <img class="logo" src="/assets/wensa-logo.png" alt="Wensa">
+
+  <div id="spinner" class="spinner"></div>
+  <p id="status">دانوديك للمتجر…</p>
+
+  <div id="actions" class="actions hidden">
+    <p class="subtitle">نزّل ونسة وشوف أحلى الأماكن والفعاليات</p>
+
+    <a id="iosBtn" class="store-btn apple" data-store-cta="ios" href="https://apps.apple.com/iq/app/wensa-%D9%88%D9%86%D8%B3%D8%A9/id6780271862">
+      <svg viewBox="0 0 384 512" fill="currentColor"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
+      <span class="label"><span class="small">نزّله من</span><span class="big">App Store</span></span>
+    </a>
+
+    <a id="androidBtn" class="store-btn google" data-store-cta="android" href="https://play.google.com/store/apps/details?id=app.wensa.mobile&pcampaignid=web_share">
+      <svg viewBox="0 0 512 512"><path fill="#00d2ab" d="M99.617 8.057c-2.652 1.564-4.502 4.365-4.502 8.365v475.156c0 4 1.85 6.802 4.502 8.365l1.048.58L353.51 265.417v-4.834L100.665 7.478z"/><path fill="#00a0ff" d="M363.836 335.166L353.51 260.583v-4.834l10.326-74.583.24.16 122.09 69.4c34.86 19.83 34.86 52.216 0 72.046l-122.09 69.4z"/><path fill="#ff3a44" d="M363.836 335.166l-124.34-124.583L99.617 495.943c5.108 5.408 13.552 6.09 23.056.68z"/><path fill="#00f076" d="M363.836 185.834L122.673 15.377c-9.504-5.41-17.948-4.728-23.056.68l139.879 140z"/></svg>
+      <span class="label"><span class="small">نزّله من</span><span class="big">Google Play</span></span>
+    </a>
+  </div>
+
+  <noscript>
+    <div class="actions">
+      <p class="subtitle">نزّل ونسة وشوف أحلى الأماكن والفعاليات</p>
+      <a class="store-btn apple" href="https://apps.apple.com/iq/app/wensa-%D9%88%D9%86%D8%B3%D8%A9/id6780271862">
+        <span class="label"><span class="small">نزّله من</span><span class="big">App Store</span></span>
+      </a>
+      <a class="store-btn google" href="https://play.google.com/store/apps/details?id=app.wensa.mobile&pcampaignid=web_share">
+        <span class="label"><span class="small">نزّله من</span><span class="big">Google Play</span></span>
+      </a>
+    </div>
+  </noscript>
+
+  <footer>wensa<span class="dot">.</span>app</footer>
+
+  <script src="/assets/inapp-redirect.js"></script>
+  <script>
+    (function () {
+      // No browserTarget: hand off straight to the store URL for this device
+      // so the browser opens the store and immediately defers to the native
+      // App Store / Play Store app. Routing via our own page instead would
+      // add a visible browser stop before the store.
+      var env = WensaInAppRedirect.init({
+        wholePage: true,
+        autoAttempt: true
+      });
+      var iosUrl = document.getElementById('iosBtn').href;
+      var androidUrl = document.getElementById('androidBtn').href;
+
+      function revealActions(message) {
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('status').textContent = message;
+        document.getElementById('actions').classList.remove('hidden');
+      }
+
+      // Only auto-navigate to a store when this is confirmed to be a real
+      // browser. Redirecting an in-app webview to the App Store renders a
+      // blank page, so anything we can't confirm must fall through to the
+      // buttons instead - a visible page is always better than a white one.
+      if (env.isRealBrowser && env.isIOS) {
+        location.replace(iosUrl);
+        return;
+      }
+      if (env.isRealBrowser && env.isAndroid) {
+        location.replace(androidUrl);
+        return;
+      }
+
+      if (env.isInApp) {
+        // canEscape (Instagram/Facebook): autoAttempt already fired the
+        // handoff and the buttons are the fallback. Otherwise (TikTok,
+        // Snapchat, ...) there's no working scheme, so a tap does a plain
+        // navigation to the store.
+        revealActions(env.canEscape ? 'دانوديك للمتجر…' : 'نزّل ونسة من المتجر');
+        return;
+      }
+
+      // Desktop, or a device we can't confidently classify: show both.
+      revealActions('اختار جهازك حتى تنزّل ونسة');
+    })();
+  </script>
+</body>
+</html>
