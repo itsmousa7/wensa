@@ -21,6 +21,7 @@ export const dict = {
     "footer.merchant": "صير تاجر",
     "footer.rights": "كل الحقوق محفوظة",
     "footer.tagline": "كل ونستك بمكان واحد",
+    "merchant.ctaRegister": "سجّل هسه",
   },
   en: {
     "nav.what": "What is Wensa",
@@ -34,6 +35,7 @@ export const dict = {
     "footer.merchant": "Become a merchant",
     "footer.rights": "All rights reserved",
     "footer.tagline": "Everything you do, in one place",
+    "merchant.ctaRegister": "Register now",
   },
 };
 

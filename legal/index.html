@@ -24,7 +24,49 @@
 </head>
 
 <body>
-  <main id="main"></main>
+  <a class="skip" href="#main" data-i18n="nav.skip">روح للمحتوى</a>
+
+  <header class="nav" data-nav>
+    <div class="nav__inner u-wrap">
+      <a class="nav__brand" href="/" aria-label="Wensa">
+        <img src="/assets/wensa-logo.png" alt="" width="112" height="34">
+      </a>
+
+      <nav class="nav__links" aria-label="Primary">
+        <a href="#what" data-i18n="nav.what">شنو ونسة</a>
+        <a href="#places" data-i18n="nav.places">الاماكن</a>
+        <a href="#download" data-i18n="nav.download">نزّل التطبيق</a>
+      </nav>
+
+      <div class="nav__actions">
+        <button class="pill" type="button" data-lang-toggle data-i18n="nav.langToggle">English</button>
+        <a class="btn btn--teal" href="/merchants" data-i18n="nav.merchant">صير تاجر بونسة</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- sections added in Tasks 7-11 -->
+  </main>
+
+  <footer class="foot">
+    <div class="foot__inner u-wrap">
+      <div>
+        <img src="/assets/wensa-logo.png" alt="Wensa" width="120" height="36">
+        <p class="foot__tag" data-i18n="footer.tagline">كل ونستك بمكان واحد</p>
+      </div>
+      <nav class="foot__links" aria-label="Footer">
+        <a href="/privacy" data-i18n="footer.privacy">سياسة الخصوصية</a>
+        <a href="/download" data-i18n="footer.download">نزّل التطبيق</a>
+        <a href="/merchants" data-i18n="footer.merchant">صير تاجر</a>
+      </nav>
+      <p class="foot__rights">
+        wensa<span class="foot__dot">.</span>app — <span data-i18n="footer.rights">كل الحقوق محفوظة</span>
+      </p>
+    </div>
+  </footer>
+
+  <script src="/assets/inapp-redirect.js"></script>
   <script type="module" src="/assets/js/main.js"></script>
 </body>
 

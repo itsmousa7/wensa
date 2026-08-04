@@ -30,3 +30,154 @@
     transform: none;
   }
 }
+
+/* ── Skip link ──────────────────────────────────────────────────────── */
+
+.skip {
+  position: absolute;
+  inset-block-start: -100px;
+  inset-inline-start: var(--space-2);
+  z-index: 100;
+  padding: var(--space-1) var(--space-2);
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--radius-sm);
+  transition: transform 0.2s var(--ease);
+}
+
+.skip:focus { transform: translateY(calc(100px + var(--space-2))); }
+
+/* ── Nav ────────────────────────────────────────────────────────────── */
+
+.nav {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--paper) 80%, transparent);
+  border-block-end: 1px solid transparent;
+  transition: background 0.3s var(--ease), border-color 0.3s var(--ease);
+}
+
+.nav.is-scrolled {
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: blur(14px);
+  border-block-end-color: var(--line);
+}
+
+.nav__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--nav-h);
+}
+
+.nav__brand { flex-shrink: 0; }
+
+/* The "shrink on scroll" is a transform on the wordmark, not a height change
+   on the bar. Animating the bar's height would relayout the whole page on
+   every scroll frame; scaling the logo is composited and costs nothing. */
+.nav__brand img {
+  width: 112px;
+  height: auto;
+  transform-origin: center;
+  transition: transform 0.3s var(--ease);
+}
+
+.nav.is-scrolled .nav__brand img { transform: scale(0.86); }
+
+.nav__links {
+  display: flex;
+  gap: var(--space-3);
+  margin-inline-start: auto;
+  font-size: var(--step--1);
+  color: var(--subink);
+}
+
+.nav__links a { transition: color 0.2s var(--ease); }
+.nav__links a:hover { color: var(--teal); }
+
+.nav__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}
+
+.nav__links + .nav__actions { margin-inline-start: 0; }
+
+@media (max-width: 900px) {
+  .nav__links { display: none; }
+  .nav__brand img { width: 92px; }
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: 0.7em 1.4em;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: var(--step--1);
+  white-space: nowrap;
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+.btn--teal {
+  background: var(--teal);
+  color: #fff;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--teal) 28%, transparent);
+}
+
+.btn--teal:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--teal) 38%, transparent);
+}
+
+.btn--teal:active { transform: translateY(0); }
+
+.btn--ghost {
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+}
+
+.btn--ghost:hover { transform: translateY(-2px); border-color: var(--teal); }
+
+.pill {
+  padding: 0.45em 0.9em;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  font-size: var(--step--1);
+  font-weight: 700;
+  color: var(--subink);
+  transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.pill:hover { color: var(--teal); border-color: var(--teal); transform: translateY(-1px); }
+
+/* ── Footer ─────────────────────────────────────────────────────────── */
+
+.foot {
+  margin-block-start: var(--space-8);
+  padding-block: var(--space-6);
+  border-block-start: 1px solid var(--line);
+}
+
+.foot__inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.foot__tag { color: var(--subink); font-size: var(--step--1); margin-block-start: var(--space-1); }
+
+.foot__links { display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--step--1); }
+.foot__links a { color: var(--subink); transition: color 0.2s var(--ease); }
+.foot__links a:hover { color: var(--teal); }
+
+.foot__rights { color: var(--subink); font-size: var(--step--1); }
+.foot__dot { color: var(--teal); }
