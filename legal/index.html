@@ -9,6 +9,18 @@
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/site.css">
+  <script>
+    // Runs before first paint. Deliberately not a module: modules defer, and a
+    // deferred language switch is a visible flash of the wrong direction.
+    (function () {
+      var q = new URLSearchParams(location.search).get('lang');
+      var stored = null;
+      try { stored = localStorage.getItem('wensa_lang'); } catch (e) { }
+      var lang = (q === 'en' || q === 'ar') ? q : (stored === 'en' ? 'en' : 'ar');
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    })();
+  </script>
 </head>
 
 <body>
