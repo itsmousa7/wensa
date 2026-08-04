@@ -740,12 +740,6 @@ test("every data-i18n key used in the HTML exists in both dictionaries", () => {
   }
 });
 
-test("no dictionary key is unused", () => {
-  const used = new Set(PAGES.flatMap((p) => i18nKeys(readLegal(p))));
-  const orphans = Object.keys(dict.ar).filter((k) => !used.has(k) && !k.startsWith("meta."));
-  assert.deepEqual(orphans, [], "these keys are defined but never referenced in the HTML");
-});
-
 test("hero rotations are the same length in both languages", () => {
   assert.ok(ROTATIONS.ar.length >= 3, "need at least 3 rotating words");
   assert.equal(ROTATIONS.ar.length, ROTATIONS.en.length,
@@ -907,7 +901,7 @@ In `index.html` and `merchants.html`, insert this as the last element inside `<h
 node --test web-tests/
 ```
 
-Expected: PASS. The `no dictionary key is unused` test passes vacuously for now because no `data-i18n` markup exists yet — it starts biting in Task 6.
+Expected: PASS. There is no orphan-key test yet — it is added in Task 6, once the shared nav/footer markup actually references `nav.*` and `footer.*`. Adding it here would fail immediately, since these 11 seed keys exist in the dictionary before any markup uses them.
 
 - [ ] **Step 6: Commit**
 
@@ -917,8 +911,9 @@ git commit -m "feat(site): bilingual engine with pre-paint language boot
 
 Dictionary-driven text swapping with no reload. A blocking head snippet
 applies the stored or query-param language before first paint so RTL/LTR
-never flashes. Tests enforce ar/en key parity, no orphan keys, and
-Arabic-Indic numerals in Arabic copy."
+never flashes. Tests enforce ar/en key parity and Arabic-Indic numerals in
+Arabic copy. The no-orphan-keys check lands in Task 6, once markup exists
+to reference the seeded nav/footer keys."
 ```
 
 ---
@@ -1254,7 +1249,8 @@ Create `wensa/web-tests/shell.test.mjs`:
 ```js
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readLegal, PAGES } from "./helpers.mjs";
+import { readLegal, i18nKeys, PAGES } from "./helpers.mjs";
+import { dict } from "../legal/assets/js/i18n.js";
 
 const DASHBOARD = "https://dashboard.wensa.app";
 
@@ -1299,6 +1295,16 @@ test("index.html links to the merchants page", () => {
 
 test("merchants.html links back to the landing page", () => {
   assert.match(readLegal("merchants.html"), /href="\/"/);
+});
+
+// This is the first task where markup actually references the seeded nav.*
+// and footer.* keys, so it is also the first point where "no orphan keys"
+// can hold. Every later task adds its own keys and markup together, so this
+// stays true through the rest of the plan.
+test("no dictionary key is unused", () => {
+  const used = new Set(PAGES.flatMap((p) => i18nKeys(readLegal(p))));
+  const orphans = Object.keys(dict.ar).filter((k) => !used.has(k) && !k.startsWith("meta."));
+  assert.deepEqual(orphans, [], "these keys are defined but never referenced in the HTML");
 });
 ```
 
