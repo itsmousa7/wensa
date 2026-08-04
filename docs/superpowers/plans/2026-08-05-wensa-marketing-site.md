@@ -2207,6 +2207,16 @@ Expected: FAIL — the sections do not exist.
 | `trust.iqd` | `دفع بالدينار` | `Pay in IQD` |
 | `trust.qr` | `تذكرة QR` | `QR ticket` |
 | `trust.cancel` | `إلغاء سهل` | `Easy cancellation` |
+| `num.1` | `١` | `1` |
+| `num.2` | `٢` | `2` |
+| `num.3` | `٣` | `3` |
+
+`num.1`–`num.3` are shared step-number labels, reused by both the "how it
+works" steps here and the merchant "how to join" steps in Task 12 (which
+also adds `num.4`). Without `data-i18n`, these would stay as Arabic-Indic
+digits even after switching to English — the global constraint that Arabic
+copy uses Arabic-Indic numerals says nothing about English copy, and
+English step numbers must read as 1/2/3, not ١/٢/٣.
 
 - [ ] **Step 4: Add the markup**
 
@@ -2249,19 +2259,19 @@ After the ticker in `index.html`:
           </svg>
 
           <article class="step" data-reveal data-reveal-delay="1">
-            <span class="step__num">١</span>
+            <span class="step__num" data-i18n="num.1">١</span>
             <h3 data-i18n="how.s1.title">نزّل التطبيق</h3>
             <p class="u-sub" data-i18n="how.s1.body">مجاني على iOS و Android.</p>
           </article>
 
           <article class="step" data-reveal data-reveal-delay="2">
-            <span class="step__num">٢</span>
+            <span class="step__num" data-i18n="num.2">٢</span>
             <h3 data-i18n="how.s2.title">اختار مكانك</h3>
             <p class="u-sub" data-i18n="how.s2.body">دور حسب النوع، المنطقة، او التقييم.</p>
           </article>
 
           <article class="step" data-reveal data-reveal-delay="3">
-            <span class="step__num">٣</span>
+            <span class="step__num" data-i18n="num.3">٣</span>
             <h3 data-i18n="how.s3.title">احجز وروح</h3>
             <p class="u-sub" data-i18n="how.s3.body">ادفع بالدينار وتذكرتك تجيك QR.</p>
           </article>
@@ -2931,8 +2941,8 @@ cannot drift into implying a paid plan is mandatory."
 - Create: `wensa/web-tests/merchant-body.test.mjs`
 
 **Interfaces:**
-- Consumes: `.cards`, `.steps`, `.step__num` from Task 9.
-- Produces: nothing new — reuses existing components.
+- Consumes: `.cards`, `.steps`, `.step__num` from Task 9, and the shared `num.1`–`num.3` dictionary keys Task 9 introduced.
+- Produces: the `num.4` dictionary key, for the fourth join step.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -2997,6 +3007,7 @@ Expected: FAIL — the sections do not exist.
 | `join.s3.body` | `فريقنا يتأكد من المعلومات ويوثق مكانك.` | `Our team checks the details and verifies your venue.` |
 | `join.s4.title` | `افتح واستقبل حجوزات` | `Go live and take bookings` |
 | `join.s4.body` | `مكانك يظهر بالتطبيق وتبدي تستقبل حجوزات.` | `Your venue appears in the app and bookings start coming in.` |
+| `num.4` | `٤` | `4` |
 
 - [ ] **Step 4: Add the markup**
 
@@ -3043,22 +3054,22 @@ After the offer section in `merchants.html`:
             <path d="M0 1 H1000" data-line-draw fill="none" stroke="var(--teal)" stroke-width="2" stroke-dasharray="6 8" />
           </svg>
           <article class="step" data-reveal data-reveal-delay="1">
-            <span class="step__num">١</span>
+            <span class="step__num" data-i18n="num.1">١</span>
             <h3 data-i18n="join.s1.title">سجّل حسابك</h3>
             <p class="u-sub" data-i18n="join.s1.body">اسم، ايميل ورقم تلفون — بدقيقة.</p>
           </article>
           <article class="step" data-reveal data-reveal-delay="2">
-            <span class="step__num">٢</span>
+            <span class="step__num" data-i18n="num.2">٢</span>
             <h3 data-i18n="join.s2.title">ضيف مكانك</h3>
             <p class="u-sub" data-i18n="join.s2.body">صور، دوام، وموقع على الخريطة.</p>
           </article>
           <article class="step" data-reveal data-reveal-delay="3">
-            <span class="step__num">٣</span>
+            <span class="step__num" data-i18n="num.3">٣</span>
             <h3 data-i18n="join.s3.title">نراجع ونوثق</h3>
             <p class="u-sub" data-i18n="join.s3.body">فريقنا يتأكد من المعلومات ويوثق مكانك.</p>
           </article>
           <article class="step" data-reveal data-reveal-delay="4">
-            <span class="step__num">٤</span>
+            <span class="step__num" data-i18n="num.4">٤</span>
             <h3 data-i18n="join.s4.title">افتح واستقبل حجوزات</h3>
             <p class="u-sub" data-i18n="join.s4.body">مكانك يظهر بالتطبيق وتبدي تستقبل حجوزات.</p>
           </article>
