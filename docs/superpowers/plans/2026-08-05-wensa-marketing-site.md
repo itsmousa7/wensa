@@ -281,6 +281,7 @@ survive the change."
 - Create: `wensa/legal/assets/fonts/graphik-ar-medium.woff2`
 - Create: `wensa/legal/assets/fonts/graphik-ar-bold.woff2`
 - Create: `wensa/legal/assets/fonts/ibm-plex-sans-{300,400,500,600,700}.woff2`
+- Create: `wensa/legal/assets/fonts/IBM-Plex-Sans-LICENSE.txt` — the OFL license text, kept alongside the redistributed font files as a matter of good practice; harmless and correctly attributed.
 - Create: `wensa/web-tests/fonts.test.mjs`
 
 **Interfaces:**
