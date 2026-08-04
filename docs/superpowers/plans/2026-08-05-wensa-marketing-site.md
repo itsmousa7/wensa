@@ -72,12 +72,16 @@
 - Consumes: nothing.
 - Produces: `LEGAL_DIR` (absolute path string), `readLegal(relPath) -> string`, `legalJson(relPath) -> object`, `localRefs(html) -> string[]` — all exported from `web-tests/helpers.mjs` and used by every later test file.
 
-- [ ] **Step 1: Create the branch**
+- [ ] **Step 1: Confirm you're on the right branch**
+
+Work happens in the `feat/marketing-site` worktree, already created and checked out before implementation started.
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa
-git checkout -b feat/marketing-site
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
+git branch --show-current
 ```
+
+Expected: `feat/marketing-site`. If this prints something else, stop and report — do not create a new branch.
 
 - [ ] **Step 2: Write the test helpers**
 
@@ -184,7 +188,7 @@ test("legal pages are untouched and still present", () => {
 - [ ] **Step 4: Run the tests and confirm they fail**
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
 node --test web-tests/
 ```
 
@@ -240,7 +244,7 @@ Create `wensa/legal/merchants.html` with the same structure, changing only `<tit
 - [ ] **Step 7: Create empty placeholders so the stylesheet links resolve**
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/legal
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site/legal
 mkdir -p assets/css assets/js assets/fonts assets/img
 printf '/* filled in Task 3 */\n' > assets/css/base.css
 printf '/* filled in Task 5 onward */\n' > assets/css/site.css
@@ -250,7 +254,7 @@ printf '// filled in Task 5 onward\n' > assets/js/main.js
 - [ ] **Step 8: Run the tests and confirm they pass**
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
 node --test web-tests/
 ```
 
@@ -259,7 +263,7 @@ Expected: PASS, 6/6.
 - [ ] **Step 9: Commit**
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
 git add web-tests legal/index.html legal/merchants.html legal/vercel.json legal/assets
 git commit -m "feat(site): scaffold marketing pages and free the root route
 
@@ -324,7 +328,7 @@ test("the duplicate and Arabic-less source faces are not shipped", () => {
 - [ ] **Step 2: Run it and confirm it fails**
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
 node --test web-tests/fonts.test.mjs
 ```
 
@@ -335,13 +339,13 @@ Expected: FAIL, 7 missing-file failures.
 `fonttools` is not installed and macOS Python is externally managed, so use a throwaway venv. Note the source→target mapping: `graphik-light.ttf` reports the internal name *Graphik Arabic Medium*, so it becomes the **medium** face.
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
 python3 -m venv /tmp/wensa-fontvenv
 /tmp/wensa-fontvenv/bin/pip install --quiet "fonttools[woff]"
 /tmp/wensa-fontvenv/bin/python - <<'PY'
 from fontTools.ttLib import TTFont
-SRC = "/Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/assets/fonts"
-DST = "/Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/legal/assets/fonts"
+SRC = "/Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site/assets/fonts"
+DST = "/Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site/legal/assets/fonts"
 for src, dst in [("graphik-light.ttf", "graphik-ar-medium.woff2"),
                  ("graphik-bold.ttf",  "graphik-ar-bold.woff2")]:
     f = TTFont(f"{SRC}/{src}")
@@ -362,7 +366,7 @@ IBM Plex Sans is OFL-licensed. Take the pre-built WOFF2 files from `@fontsource/
 cd /tmp
 npm pack @fontsource/ibm-plex-sans@5.3.0
 tar -xzf fontsource-ibm-plex-sans-5.3.0.tgz
-DST=/Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/legal/assets/fonts
+DST=/Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site/legal/assets/fonts
 for w in 300 400 500 600 700; do
   cp "package/files/ibm-plex-sans-latin-${w}-normal.woff2" "$DST/ibm-plex-sans-${w}.woff2"
 done
@@ -379,7 +383,7 @@ rm -rf /tmp/wensa-fontvenv /tmp/package /tmp/fontsource-ibm-plex-sans-5.3.0.tgz
 - [ ] **Step 6: Run the tests and confirm they pass**
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
 node --test web-tests/
 ```
 
@@ -1569,7 +1573,7 @@ Expected: PASS. The i18n orphan-key test now has real markup to check against.
 - [ ] **Step 8: Verify in a browser**
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/legal
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site/legal
 python3 -m http.server 4173
 ```
 
@@ -1791,7 +1795,7 @@ Inside `<main id="main">` in `index.html`:
 **Screenshot placeholder.** `assets/img/screen-home.png` does not exist yet (spec §10a). Until the real screenshots arrive, generate a neutral placeholder so layout can be verified:
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/legal/assets/img
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site/legal/assets/img
 python3 -c "
 from PIL import Image, ImageDraw
 im = Image.new('RGB', (780, 1688), '#E8EEF0')
@@ -2291,7 +2295,7 @@ After the ticker in `index.html`:
 Create the two extra placeholder screenshots the same way as in Task 7:
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/legal/assets/img
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site/legal/assets/img
 python3 -c "
 from PIL import Image, ImageDraw
 for name in ['screen-book.png', 'screen-ticket.png']:
@@ -2585,7 +2589,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: Run the cutouts**
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
 CHARS="/Users/mousaalhamad/Desktop/Wensa/Wensa_Marketing_Campaign/characters"
 python3 tools/cutout.py "$CHARS/thumb_okay_posture.png" legal/assets/img/character-thumbsup.png
 python3 tools/cutout.py "$CHARS/register.PNG"           legal/assets/img/character-register.png
@@ -2598,7 +2602,7 @@ Open both outputs and inspect the hair edges. If a halo remains, raise `TOLERANC
 The QR points at `/download`, so it inherits the existing in-app-browser handling rather than hardcoding a store URL.
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
 python3 -m venv /tmp/wensa-qr
 /tmp/wensa-qr/bin/pip install --quiet "qrcode[pil]"
 /tmp/wensa-qr/bin/python -c "
@@ -3623,7 +3627,7 @@ Expected: PASS across all test files.
 - [ ] **Step 5: Verify responsiveness in a real browser**
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/legal
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site/legal
 python3 -m http.server 4173
 ```
 
@@ -3695,7 +3699,7 @@ on purpose: everything inside `legal/` is publicly served.
 - [ ] **Step 8: Run the full suite one final time**
 
 ```bash
-cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
 node --test web-tests/
 ```
 
