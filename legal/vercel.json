@@ -11,9 +11,6 @@
       ]
     }
   ],
-  "redirects": [
-    { "source": "/", "destination": "/privacy", "permanent": false }
-  ],
   "rewrites": [
     { "source": "/placeDetails", "destination": "/open" },
     { "source": "/eventDetails", "destination": "/open" }
