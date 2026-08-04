@@ -189,7 +189,7 @@ test("legal pages are untouched and still present", () => {
 
 ```bash
 cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: FAIL. `root no longer redirects to /privacy` fails because the redirect is still there, and `both marketing pages exist` fails because neither file has been created.
@@ -255,7 +255,7 @@ printf '// filled in Task 5 onward\n' > assets/js/main.js
 
 ```bash
 cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS, 6/6.
@@ -384,7 +384,7 @@ rm -rf /tmp/wensa-fontvenv /tmp/package /tmp/fontsource-ibm-plex-sans-5.3.0.tgz
 
 ```bash
 cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS. All seven font files present, both exclusions holding.
@@ -672,7 +672,7 @@ p { text-wrap: pretty; }
 - [ ] **Step 4: Run the tests and confirm they pass**
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS.
@@ -902,7 +902,7 @@ In `index.html` and `merchants.html`, insert this as the last element inside `<h
 - [ ] **Step 5: Run the tests and confirm they pass**
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS. There is no orphan-key test yet — it is added in Task 6, once the shared nav/footer markup actually references `nav.*` and `footer.*`. Adding it here would fail immediately, since these 11 seed keys exist in the dictionary before any markup uses them.
@@ -1215,7 +1215,7 @@ Replace the placeholder in `wensa/legal/assets/css/site.css` with:
 - [ ] **Step 5: Run the tests and confirm they pass**
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS, including the four `parallaxOffset` assertions and both CSS guards.
@@ -1565,7 +1565,7 @@ if (window.WensaInAppRedirect) window.WensaInAppRedirect.init();
 - [ ] **Step 7: Run the tests and confirm they pass**
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS. The i18n orphan-key test now has real markup to check against.
@@ -1901,7 +1901,7 @@ initRotator();
 - [ ] **Step 7: Run the tests and confirm they pass**
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS.
@@ -2113,7 +2113,7 @@ Append to `site.css`:
 - [ ] **Step 6: Run the tests and confirm they pass**
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS.
@@ -2407,7 +2407,7 @@ Append to `site.css`:
 - [ ] **Step 6: Run the tests and confirm they pass**
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS.
@@ -2733,7 +2733,7 @@ Append to `site.css`:
 - [ ] **Step 9: Run the tests and confirm they pass**
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS, including the alpha-channel assertion on both cutouts.
@@ -2920,7 +2920,7 @@ Append to `site.css`:
 - [ ] **Step 6: Run the tests and confirm they pass**
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS.
@@ -3102,7 +3102,7 @@ Append to `site.css`:
 - [ ] **Step 6: Run the tests and confirm they pass**
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS.
@@ -3296,7 +3296,7 @@ Append to `site.css`:
 - [ ] **Step 6: Run the tests and confirm they pass**
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS.
@@ -3479,7 +3479,7 @@ Append to `site.css`:
 - [ ] **Step 6: Run the tests and confirm they pass**
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS.
@@ -3582,7 +3582,7 @@ test("the landing page declares the Arabic Iraqi locale", () => {
 - [ ] **Step 2: Run them and confirm they fail**
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: FAIL on every meta assertion.
@@ -3619,7 +3619,7 @@ In `merchants.html`, add the same block with these substitutions: description `�
 - [ ] **Step 4: Run the tests and confirm they pass**
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS across all test files.
@@ -3667,7 +3667,7 @@ cd legal && python3 -m http.server 4173
 ## Tests
 
 ```bash
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 No dependencies — Node's built-in runner. `web-tests/` lives outside `legal/`
@@ -3700,7 +3700,7 @@ on purpose: everything inside `legal/` is publicly served.
 
 ```bash
 cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
-node --test web-tests/
+node --test 'web-tests/*.test.mjs'
 ```
 
 Expected: PASS, every file. Record the actual pass count in the commit message.
@@ -3722,7 +3722,7 @@ disk, so a renamed asset cannot ship as a 404."
 
 Deployment is automatic: pushing to `main` deploys the `wensa-privacy` Vercel project to production. Before merging `feat/marketing-site`:
 
-1. Confirm `node --test web-tests/` passes.
+1. Confirm `node --test 'web-tests/*.test.mjs'` passes.
 2. Confirm the browser checks in Task 15 Step 5 pass at every breakpoint in both languages.
 3. Confirm `/privacy`, `/download`, `/open`, `/placeDetails`, `/eventDetails`, and both `.well-known` files still resolve on the preview deployment — the `vercel.json` edit in Task 1 is the only change that could break them.
 4. Test a real store button from inside the Instagram in-app browser on an actual iPhone. This cannot be verified in a desktop browser.
