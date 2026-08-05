@@ -28,6 +28,19 @@ export const dict = {
     "hero.sub": "مطاعم، ملاعب، مزارع وحفلات — كلها بتطبيق واحد. شوف، احجز، وادفع بالدينار، وتذكرتك تجيك QR.",
     "hero.ios": "نزّله من App Store",
     "hero.android": "نزّله من Google Play",
+    // The nine categories the app's home screen actually renders — see
+    // lib/features/home/presentation/widgets/category_bar.dart. Do not add a
+    // category here that the app does not have.
+    "cat.sports": "رياضة",
+    "cat.restaurants": "مطاعم",
+    "cat.music": "موسيقى",
+    "cat.malls": "مولات",
+    "cat.cafes": "كافيهات",
+    "cat.cinema": "سينما",
+    "cat.festivals": "مهرجانات",
+    "cat.farms": "مزارع",
+    "cat.discounts": "خصومات",
+    "ticker.label": "شنو تلگه بونسة",
   },
   en: {
     "nav.what": "What is Wensa",
@@ -48,6 +61,16 @@ export const dict = {
     "hero.sub": "Restaurants, courts, farms and concerts — all in one app. Browse, book, pay in IQD, and get a QR ticket.",
     "hero.ios": "Download on the App Store",
     "hero.android": "Get it on Google Play",
+    "cat.sports": "Sports",
+    "cat.restaurants": "Restaurants",
+    "cat.music": "Music",
+    "cat.malls": "Malls",
+    "cat.cafes": "Cafes",
+    "cat.cinema": "Cinema",
+    "cat.festivals": "Festivals",
+    "cat.farms": "Farms",
+    "cat.discounts": "Discounts",
+    "ticker.label": "What you'll find on Wensa",
   },
 };
 

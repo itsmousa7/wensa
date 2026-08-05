@@ -256,3 +256,60 @@
   font: inherit;
   font-weight: inherit;
 }
+
+/* ── Category ticker ────────────────────────────────────────────────────
+   Two identical halves translated by -50% give a seamless loop with no JS.
+   Direction is right-to-left in both languages, so the animation is written
+   against a fixed axis rather than a logical one. */
+
+.ticker-wrap {
+  padding-block: var(--space-4);
+  border-block: 1px solid var(--line);
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+}
+
+.ticker {
+  display: flex;
+  width: max-content;
+  animation: ticker-slide 38s linear infinite;
+}
+
+.ticker:hover,
+.ticker:focus-within { animation-play-state: paused; }
+
+.ticker__set {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding-inline: calc(var(--space-5) / 2);
+  list-style: none;
+}
+
+.ticker__set li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--step-1);
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.ticker__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--teal);
+  flex-shrink: 0;
+}
+
+@keyframes ticker-slide {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker { animation: none; }
+  .ticker-wrap { overflow-x: auto; }
+}
