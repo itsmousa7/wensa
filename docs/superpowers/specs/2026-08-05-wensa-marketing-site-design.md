@@ -183,9 +183,11 @@ The nine categories are the ones the app's home screen actually renders
 Implementation: one flex row containing the set duplicated twice, translated by
 `-50%` over a linear loop, giving a seamless cycle with no JS ticking. Direction is
 right→left in both languages. `mask-image` fades both edges into the canvas.
-Pauses on hover and on focus-within. Each item is an icon plus its label; icons are
-inline SVG derived from the app's Lottie category assets (no runtime Lottie library,
-so nothing is added to the bundle).
+Pauses on hover and on focus-within. Each item is a small teal dot plus its label —
+simpler than deriving inline SVG from the app's Lottie category assets (as originally
+planned here), decided during Task 8's implementation and carried without revising
+this section until now. No runtime Lottie library either way, so nothing is added to
+the bundle.
 
 ---
 
@@ -194,8 +196,8 @@ so nothing is added to the bundle).
 | # | Section | Content |
 |---|---|---|
 | 1 | Nav | Same as landing; primary CTA becomes **سجّل هسه** → `https://dashboard.wensa.app`. |
-| 2 | Hero | Notebook character (cut out), headline `خلي مكانك يوصل لكل بغداد`, orange offer badge, CTAs `سجّل هسه` + `شوف الاسعار`. |
-| 3 | The offer | Single large card — see wording below. |
+| 2 | Hero | Notebook character (cut out), headline `خلي مكانك يوصل لكل بغداد`, CTAs `سجّل هسه` + `شوف الاسعار`. |
+| 3 | The offer | Single large card, carrying the page's one orange hit (the badge) — see wording below. Moved here from the hero during implementation: keeping orange confined to the offer card is what makes the sitewide "one accent hit" rule actually hold, rather than splitting it across two sections. |
 | 4 | Benefits | Six cards: reach app users · bookings 24/7 · paid in IQD · QR check-in at the door · real analytics · banners and promotion. |
 | 5 | How to join | Four steps with the same SVG line-draw: register → add your place and photos → we review and verify → go live and take bookings. |
 | 6 | Pricing | Three real plan cards (below). |

@@ -3650,7 +3650,7 @@ Run Lighthouse (mobile, simulated slow 4G) against both `http://localhost:4173/`
 
 **Verified during implementation:** `/` passes (97 perf / 96 a11y). `/merchants` initially failed (81 perf) due to `legal/assets/img/character-register.png` — at 533 KB, this is the single largest asset on either page. The character PNGs (`character-register.png`, `character-thumbsup.png`) come from Task 10's `rembg` ML segmentation, which outputs full 32-bit-per-pixel RGBA with no palette reduction — correct for cutout *quality*, but far larger than the flat-shaded, limited-palette art actually needs.
 
-**Do not resize these images** — an earlier attempt to fix this by shrinking their pixel dimensions was rejected: it visibly softened the character art and touched files outside this step's actual evidence (only `character-register.png` was ever shown to be the cause; `character-thumbsup.png` and `legal/assets/wensa-logo.png` were resized on a hunch, not on measurement). The correct fix is **palette quantization at the same pixel dimensions** — verified to cut `character-register.png` from 533 KB to ~79 KB (85% smaller) with no visible quality loss and a byte-identical alpha channel at the transparent/opaque boundaries:
+**Do not resize these images** — an earlier attempt to fix this by shrinking their pixel dimensions was rejected: it visibly softened the character art and touched files outside this step's actual evidence (only `character-register.png` was ever shown to be the cause; `character-thumbsup.png` and `legal/assets/wensa-logo.png` were resized on a hunch, not on measurement). The correct fix is **palette quantization at the same pixel dimensions**:
 
 ```bash
 cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
@@ -3669,6 +3669,8 @@ for name in ["character-register.png", "character-thumbsup.png"]:
 PY
 rm -rf /tmp/wensa-imgopt
 ```
+
+**What actually shipped, and why the number differs from a first measurement:** saving in Pillow's native palette mode (as the script above does) produces PNG color type 3, which fails Task 10's own alpha-channel guard test (`download.test.mjs`, which only accepts color type 4 or 6 — palette mode was never a valid output for these files). A first, pre-commit measurement of the raw palette-mode file showed `character-register.png` at 533 KB → ~79 KB (85% smaller) — that number was never shippable on its own. The version that actually shipped adds one line, `q = q.convert("RGBA")`, before saving, trading some of the theoretical savings to stay in a valid color type: **533 KB → 187,852 B (≈65% smaller)**. Still clears the Lighthouse gate (81 → 91) with no test changes and no scope expansion beyond the two character files. If maximum compression ever matters more than this margin, revisit `download.test.mjs`'s color-type assertion deliberately — don't silently drop back to palette mode.
 
 Both character images get this treatment for consistency (same ML-cutout origin, same fix applies), even though only `character-register.png` was shown to fail the gate — `character-thumbsup.png` ships to every landing-page visitor and the fix is free. `legal/assets/wensa-logo.png` is NOT touched — nothing measured it as a bottleneck.
 
