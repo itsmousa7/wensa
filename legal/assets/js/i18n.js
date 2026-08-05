@@ -61,6 +61,12 @@ export const dict = {
     "num.1": "١",
     "num.2": "٢",
     "num.3": "٣",
+    "dl.title": "نزّل ونسة وابدا",
+    "dl.body": "مجاني، وبالعربي، ومصمم للعراق. نزّله وشوف شنو اكو هاي الليلة.",
+    "dl.qr": "صوّر الكود بكاميرتك",
+    "band.title": "عندك مطعم او ملعب؟",
+    "band.body": "اول شهر علينا — برو مجاناً و٠٪ عمولة.",
+    "band.cta": "صير تاجر بونسة",
   },
   en: {
     "nav.what": "What is Wensa",
@@ -111,6 +117,12 @@ export const dict = {
     "num.1": "1",
     "num.2": "2",
     "num.3": "3",
+    "dl.title": "Get Wensa and go",
+    "dl.body": "Free, in Arabic, and built for Iraq. Download it and see what's on tonight.",
+    "dl.qr": "Scan with your camera",
+    "band.title": "Own a restaurant or a court?",
+    "band.body": "Your first month is on us — Pro free and 0% commission.",
+    "band.cta": "Become a merchant",
   },
 };
 

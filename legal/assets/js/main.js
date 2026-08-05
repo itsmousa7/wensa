@@ -14,8 +14,9 @@ initCounters();
 initLineDraw();
 initRotator();
 
-// Store buttons only. Unlike /download, this page must NOT use
-// { wholePage: true, autoAttempt: true } — wholePage makes the first tap
-// anywhere jump to the App Store, which would break every link on a marketing
-// page, and autoAttempt would fire an escape before the visitor reads anything.
+// Store buttons only. Unlike /download, this page must NOT opt into the
+// redirect helper's "whole page" tap-to-store mode or its on-load escape
+// attempt — the former would break every link on a marketing page by making
+// the first tap anywhere jump to the App Store, and the latter would fire
+// before the visitor has read anything. Init with defaults only.
 if (window.WensaInAppRedirect) window.WensaInAppRedirect.init();
