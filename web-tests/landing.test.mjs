@@ -28,3 +28,17 @@ test("section headings are h2, so the document outline is not broken", () => {
   assert.equal((html.match(/<h1/g) ?? []).length, 1, "exactly one h1 per page");
   assert.ok((html.match(/<h2/g) ?? []).length >= 3);
 });
+
+test("every step number is bilingual, not hardcoded static digits", () => {
+  const html = readLegal("index.html");
+  const section = html.slice(html.indexOf('id="how"'), html.indexOf('id="trust"'));
+  const nums = [...section.matchAll(/<span class="step__num"[^>]*>/g)];
+  assert.equal(nums.length, 3, `expected 3 step__num spans, found ${nums.length}`);
+  for (const [tag] of nums) {
+    assert.match(
+      tag,
+      /data-i18n="num\.[123]"/,
+      `step__num span must carry data-i18n="num.N" so it re-renders on language switch, got: ${tag}`
+    );
+  }
+});
