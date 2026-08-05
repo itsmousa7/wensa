@@ -33,6 +33,8 @@ const PENDING = ["faq.a1", "faq.a2", "faq.a3", "faq.a4"];
 test("placeholder answers are explicitly marked, never silently invented", () => {
   for (const key of PENDING) {
     assert.match(dict.ar[key], /\[PENDING\]/,
-      `${key} must stay marked until the business supplies the real answer`);
+      `ar.${key} must stay marked until the business supplies the real answer`);
+    assert.match(dict.en[key], /\[PENDING\]/,
+      `en.${key} must stay marked until the business supplies the real answer`);
   }
 });
