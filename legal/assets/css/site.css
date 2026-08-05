@@ -563,3 +563,38 @@
 .plan__price { font-size: var(--step-2); font-weight: 700; color: var(--teal); }
 .plan__note { font-size: var(--step--1); font-weight: 700; color: var(--teal); }
 .plan__features { color: var(--subink); font-size: var(--step--1); line-height: 2; }
+
+/* ── FAQ ────────────────────────────────────────────────────────────────
+   Native <details> so it works with JS off and is keyboard-accessible for
+   free. Only the marker rotation is styled. */
+
+.faq { max-width: 760px; margin-inline: auto; margin-block-start: var(--space-4); }
+
+.faq details {
+  border-block-end: 1px solid var(--line);
+  padding-block: var(--space-2);
+}
+
+.faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-weight: 700;
+  list-style: none;
+}
+
+.faq summary::-webkit-details-marker { display: none; }
+
+.faq summary::after {
+  content: "+";
+  color: var(--teal);
+  font-size: var(--step-2);
+  line-height: 1;
+  transition: transform 0.25s var(--ease);
+}
+
+.faq details[open] summary::after { transform: rotate(45deg); }
+
+.faq p { margin-block-start: var(--space-2); color: var(--subink); }
