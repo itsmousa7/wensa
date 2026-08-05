@@ -2767,6 +2767,17 @@ test("orange is used exactly once on the merchants page", () => {
   assert.equal(hits, 1, "ORANGE is the offer badge and nothing else — one hit per frame");
 });
 
+test("no CSS rule besides .offer__badge references the orange token", () => {
+  const css = readLegal("assets/css/site.css");
+  const rules = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)]
+    .filter(([, , body]) => /var\(--orange\)/.test(body));
+  const offenders = rules
+    .filter(([, selector]) => !selector.trim().split(",").every((s) => s.trim() === ".offer__badge"))
+    .map(([, selector]) => selector.trim());
+  assert.deepEqual(offenders, [],
+    "only .offer__badge may use --orange — a card-level tint (border/background) would make orange a second, diffuse hit instead of the one sharp one the badge provides");
+});
+
 test("both merchant CTAs point at the dashboard", () => {
   const html = readLegal("merchants.html");
   const links = (html.match(/https:\/\/dashboard\.wensa\.app/g) ?? []).length;
@@ -2855,9 +2866,9 @@ Append to `site.css`:
   margin-inline: auto;
   padding: var(--space-5) var(--space-4);
   text-align: center;
-  border: 1px solid color-mix(in srgb, var(--orange) 30%, transparent);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--orange) 5%, var(--paper));
+  background: #fff;
 }
 
 .offer__badge {
