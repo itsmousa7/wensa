@@ -313,3 +313,96 @@
   .ticker { animation: none; }
   .ticker-wrap { overflow-x: auto; }
 }
+
+/* ── Sections ───────────────────────────────────────────────────────── */
+
+.section { padding-block: clamp(var(--space-5), 7vw, var(--space-7)); }
+.section > .u-wrap > h2 { margin-block-end: var(--space-4); }
+
+/* ── Cards ──────────────────────────────────────────────────────────── */
+
+.cards {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.card__shot {
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--teal-soft);
+  aspect-ratio: 4 / 3;
+}
+
+.card__shot img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+
+/* ── Steps ──────────────────────────────────────────────────────────── */
+
+.steps {
+  position: relative;
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+}
+
+.steps__line {
+  position: absolute;
+  inset-block-start: 22px;
+  inset-inline: 8%;
+  width: 84%;
+  height: 2px;
+  z-index: 0;
+}
+
+@media (max-width: 760px) { .steps__line { display: none; } }
+
+.step { position: relative; z-index: 1; display: flex; flex-direction: column; gap: var(--space-1); }
+
+.step__num {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--step-0);
+  margin-block-end: var(--space-1);
+}
+
+/* ── Trust ──────────────────────────────────────────────────────────── */
+
+.trust__list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-5);
+  list-style: none;
+  padding-block: var(--space-4);
+  border-block: 1px solid var(--line);
+}
+
+.trust__list li {
+  font-weight: 700;
+  color: var(--subink);
+  font-size: var(--step-0);
+}
+
+.trust__list li::before { content: "✓"; color: var(--teal); margin-inline-end: 0.4em; }
