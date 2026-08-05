@@ -22,6 +22,12 @@ export const dict = {
     "footer.rights": "كل الحقوق محفوظة",
     "footer.tagline": "كل ونستك بمكان واحد",
     "merchant.ctaRegister": "سجّل هسه",
+    "hero.eyebrow": "نزل هسه — مجاناً",
+    "hero.lead": "احجز",
+    "hero.trail": "بثانية وحدة",
+    "hero.sub": "مطاعم، ملاعب، مزارع وحفلات — كلها بتطبيق واحد. شوف، احجز، وادفع بالدينار، وتذكرتك تجيك QR.",
+    "hero.ios": "نزّله من App Store",
+    "hero.android": "نزّله من Google Play",
   },
   en: {
     "nav.what": "What is Wensa",
@@ -36,6 +42,12 @@ export const dict = {
     "footer.rights": "All rights reserved",
     "footer.tagline": "Everything you do, in one place",
     "merchant.ctaRegister": "Register now",
+    "hero.eyebrow": "Out now — free",
+    "hero.lead": "Book",
+    "hero.trail": "in one second",
+    "hero.sub": "Restaurants, courts, farms and concerts — all in one app. Browse, book, pay in IQD, and get a QR ticket.",
+    "hero.ios": "Download on the App Store",
+    "hero.android": "Get it on Google Play",
   },
 };
 

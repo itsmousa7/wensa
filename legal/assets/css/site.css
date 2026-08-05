@@ -181,3 +181,78 @@
 
 .foot__rights { color: var(--subink); font-size: var(--step--1); }
 .foot__dot { color: var(--teal); }
+
+/* ── Hero ───────────────────────────────────────────────────────────── */
+
+.hero {
+  padding-block: clamp(var(--space-5), 8vw, var(--space-8));
+  background:
+    radial-gradient(120% 80% at 80% 0%, color-mix(in srgb, var(--teal) 9%, transparent), transparent 60%),
+    var(--paper);
+}
+
+.hero__inner {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: 1fr;
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .hero__inner { grid-template-columns: 1.15fr 0.85fr; }
+}
+
+.hero__copy { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.hero__title { font-size: var(--step-5); }
+
+.hero__cta { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-block-start: var(--space-2); }
+
+.hero__art { display: flex; justify-content: center; }
+
+.phone {
+  width: min(300px, 70vw);
+  padding: 10px;
+  border-radius: 42px;
+  background: var(--ink);
+  box-shadow: 0 30px 70px color-mix(in srgb, var(--ink) 22%, transparent);
+}
+
+.phone img { border-radius: 32px; }
+
+/* ── Rotator ────────────────────────────────────────────────────────── */
+
+.rotator {
+  --rotator-swap: 520ms;
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  color: var(--teal);
+}
+
+.rotator__word {
+  display: inline-block;
+  width: var(--rotator-w, auto);
+  transition:
+    width var(--rotator-swap) var(--ease),
+    transform calc(var(--rotator-swap) / 2) var(--ease),
+    opacity calc(var(--rotator-swap) / 2) var(--ease);
+}
+
+.rotator__word.is-out { transform: translate3d(0, -0.9em, 0); opacity: 0; }
+.rotator__word.is-in { animation: rotator-in calc(var(--rotator-swap) / 2) var(--ease); }
+
+@keyframes rotator-in {
+  from { transform: translate3d(0, 0.9em, 0); opacity: 0; }
+  to { transform: translate3d(0, 0, 0); opacity: 1; }
+}
+
+/* Off-screen twin used only to measure the next word's width. */
+.rotator__mirror {
+  position: absolute;
+  visibility: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+  font: inherit;
+  font-weight: inherit;
+}
