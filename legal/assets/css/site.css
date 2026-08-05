@@ -507,3 +507,14 @@
   font-weight: 700;
   font-size: var(--step--1);
 }
+
+.card--flat {
+  background: transparent;
+  border-color: var(--line);
+}
+
+.card--flat:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--teal) 40%, transparent);
+  box-shadow: none;
+}
