@@ -31,11 +31,6 @@ on purpose: everything inside `legal/` is publicly served.
       elements to the trust strip.
 - [ ] Point the `dashboard.wensa.app` DNS record at the admin dashboard
       project — every merchant CTA already targets it.
-- [ ] Fix the nav overflow at 320px width: `.nav__actions` (language toggle +
-      merchant CTA pill) doesn't fit next to the wordmark at exactly 320px on
-      either page, in either language, causing a horizontal scrollbar. Fine
-      at 390px and up. Traces to the shared nav shell CSS (`.nav__actions` in
-      `site.css`), not anything page-specific.
 - [ ] Finish the tap-target audit sitewide. `.btn` now has `min-height: 44px`
       (final review fix wave), but footer/nav text links still render at
       ~22–25px, and the in-app-browser redirect toast's close/copy-link
