@@ -2957,6 +2957,24 @@ test("step numbers use Arabic-Indic digits in the shipped markup", () => {
   const nums = [...html.matchAll(/class="step__num"[^>]*>([^<]+)</g)].map((m) => m[1].trim());
   assert.deepEqual(nums, ["١", "٢", "٣", "٤"]);
 });
+
+// Task 9 added an equivalent test for index.html's 3-step section after an
+// earlier plan draft shipped step numbers as bare static digits with no
+// data-i18n, which silently broke on language switch. That test only scans
+// index.html — merchants.html's 4 join steps need their own guard, since a
+// digit-matching test alone (above) would pass identically whether or not
+// data-i18n is actually present.
+test("every join-step number is bilingual, not a hardcoded static digit", () => {
+  const html = readLegal("merchants.html");
+  const section = html.slice(html.indexOf('id="join"'), html.indexOf('id="pricing"'));
+  const tags = [...section.matchAll(/<span class="step__num"[^>]*>/g)].map((m) => m[0]);
+  assert.equal(tags.length, 4, "expected 4 step__num spans in the join section");
+  const expectedKeys = ["num.1", "num.2", "num.3", "num.4"];
+  tags.forEach((tag, i) => {
+    assert.match(tag, new RegExp(`data-i18n="${expectedKeys[i]}"`),
+      `step__num span ${i + 1} must carry data-i18n="${expectedKeys[i]}", not a bare digit`);
+  });
+});
 ```
 
 - [ ] **Step 2: Run it and confirm it fails**
