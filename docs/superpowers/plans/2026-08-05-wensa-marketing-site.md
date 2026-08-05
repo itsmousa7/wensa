@@ -2513,90 +2513,58 @@ Expected: FAIL on the cutouts and the merchant band.
 
 - [ ] **Step 3: Write the cutout script**
 
-Create `wensa/tools/cutout.py`. The source images are 1086×1448 RGB with a soft warm-grey gradient background sampling around `(232,220,220)` to `(243,229,232)` at the corners — flat enough for a tolerant flood fill from the border, which unlike a global color threshold will not punch holes in the subject's white shirt.
+**Revision note (this step originally specified a border-seeded flood fill; that approach is provably wrong for these specific source images and has been replaced before any implementer attempted it against this revision of the plan).** The flood-fill design assumed the subject's colors were far enough from the background's gradient for a per-step color-distance tolerance to walk the gradient without crossing into the subject. Direct pixel sampling disproved that: both characters wear white/light garments whose shaded areas — e.g. `(229,217,215)` on the T-shirt — sit inside the *same* warm-grey family as the studio background corners — e.g. `(232,219,219)`. A tolerance sweep from 3 to 50 found a hard cliff at tolerance 14, past which the fill consumes the entire garment down to bare outline strokes; the whole originally-specified "safe" range (26–50) sits on the catastrophic side of that cliff, and even the range below the cliff (≤13) still loses visible garment area. No tolerance value threads this needle, because there is no color-distance boundary to find — the colors genuinely interleave. This is a property of these renders, not a bug in the flood-fill implementation.
+
+Create `wensa/tools/cutout.py` using **ML-based background segmentation (`rembg`, the U²-Net model)** instead, which classifies foreground/background by learned object structure rather than raw color distance — verified directly against both source images: the shirt, shoes, and all garment detail come through intact, corners are genuinely transparent (alpha 0, confirmed pixel-by-pixel, not merely rendered black), and a full run (including the one-time ~176 MB model download, cached outside the repo at `~/.u2net/`) takes under 2 seconds per image once cached.
 
 ```python
 #!/usr/bin/env python3
 """Remove the studio background from the Wensa character renders.
 
-The backgrounds are a soft warm-grey gradient, not a flat color, so a global
-threshold would either leave a halo or eat the subject's white shirt. A
-border-seeded flood fill with a per-seed tolerance only removes pixels
-actually connected to the edge, which keeps the shirt and the eye whites.
+Uses ML segmentation (rembg / U^2-Net) rather than a color-distance
+technique. The source renders' garments (white T-shirt, white dress shirt)
+sit in the same warm-grey color family as the studio background gradient —
+verified by direct pixel sampling — so no flood-fill or threshold tolerance
+can separate them by color alone. Segmentation classifies by learned object
+structure instead, which is unaffected by the color overlap.
 
 Usage:  python3 tools/cutout.py <input.png> <output.png>
 """
 import sys
-from collections import deque
-from PIL import Image, ImageFilter
-
-TOLERANCE = 34   # max per-channel distance from the local seed color
-FEATHER = 1.1    # gaussian blur radius applied to the alpha edge
+from rembg import remove
+from PIL import Image
 
 
 def cutout(src_path, dst_path):
-    im = Image.open(src_path).convert("RGBA")
-    w, h = im.size
-    px = im.load()
+    im = Image.open(src_path)
+    out = remove(im)
 
-    alpha = [255] * (w * h)
-    seen = bytearray(w * h)
-    queue = deque()
-
-    def seed(x, y):
-        i = y * w + x
-        if not seen[i]:
-            seen[i] = 1
-            queue.append((x, y, px[x, y][:3]))
-
-    for x in range(w):
-        seed(x, 0)
-        seed(x, h - 1)
-    for y in range(h):
-        seed(0, y)
-        seed(w - 1, y)
-
-    while queue:
-        x, y, ref = queue.popleft()
-        r, g, b, _ = px[x, y]
-        if max(abs(r - ref[0]), abs(g - ref[1]), abs(b - ref[2])) > TOLERANCE:
-            continue
-        alpha[y * w + x] = 0
-        # Re-seed with this pixel's color so the fill tracks the gradient.
-        here = (r, g, b)
-        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
-            if 0 <= nx < w and 0 <= ny < h:
-                i = ny * w + nx
-                if not seen[i]:
-                    seen[i] = 1
-                    queue.append((nx, ny, here))
-
-    mask = Image.new("L", (w, h))
-    mask.putdata(alpha)
-    mask = mask.filter(ImageFilter.GaussianBlur(FEATHER))
-    im.putalpha(mask)
-
-    bbox = im.getbbox()
+    bbox = out.getbbox()
     if bbox:
-        im = im.crop(bbox)
-    im.save(dst_path)
-    print(f"{src_path} -> {dst_path}  {im.size}  transparent")
+        out = out.crop(bbox)
+    out.save(dst_path)
+    print(f"{src_path} -> {dst_path}  {out.size}  transparent")
 
 
 if __name__ == "__main__":
     cutout(sys.argv[1], sys.argv[2])
 ```
 
-- [ ] **Step 4: Run the cutouts**
+- [ ] **Step 4: Install rembg in a throwaway venv and run the cutouts**
+
+Same throwaway-tooling discipline as Task 2's font conversion: install into a venv outside the repo, run the script, delete the venv. `rembg` needs `onnxruntime`; the first run downloads and caches the ~176 MB U²-Net model to `~/.u2net/` (outside the repo, not committed) — subsequent runs reuse the cache and take under 2 seconds per image.
 
 ```bash
 cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
+python3 -m venv /tmp/wensa-rembg
+/tmp/wensa-rembg/bin/pip install --quiet rembg onnxruntime
 CHARS="/Users/mousaalhamad/Desktop/Wensa/Wensa_Marketing_Campaign/characters"
-python3 tools/cutout.py "$CHARS/thumb_okay_posture.png" legal/assets/img/character-thumbsup.png
-python3 tools/cutout.py "$CHARS/register.PNG"           legal/assets/img/character-register.png
+/tmp/wensa-rembg/bin/python3 tools/cutout.py "$CHARS/thumb_okay_posture.png" legal/assets/img/character-thumbsup.png
+/tmp/wensa-rembg/bin/python3 tools/cutout.py "$CHARS/register.PNG"           legal/assets/img/character-register.png
+rm -rf /tmp/wensa-rembg
 ```
 
-Open both outputs and inspect the hair edges. If a halo remains, raise `TOLERANCE` to 44 and re-run. If the shirt starts eroding, drop it to 26. **Do not exceed 50** — beyond that the fill leaks into the skin tones.
+Open both outputs and inspect them directly (the Read tool displays images) — confirm the garment is fully intact (no line-art-only ghosting) and the background is genuinely gone, not just visually dark. If either cutout shows visible garment loss or a residual halo, that is a real defect worth escalating — do not attempt to "fix" it by reintroducing a color-distance technique; the diagnosis above already establishes why that approach cannot work on these particular renders.
 
 - [ ] **Step 5: Generate the download QR**
 
@@ -2745,10 +2713,12 @@ Expected: PASS, including the alpha-channel assertion on both cutouts.
 git add legal/index.html legal/assets/css/site.css legal/assets/js/i18n.js legal/assets/img tools/cutout.py web-tests/download.test.mjs
 git commit -m "feat(site): download section, character cutouts and merchant band
 
-tools/cutout.py flood-fills from the border rather than thresholding
-globally, so the studio gradient goes but the subject's white shirt stays.
-Tests assert the store URLs still match download.html and that main.js
-never enables wholePage/autoAttempt."
+tools/cutout.py uses rembg (U^2-Net) ML segmentation rather than a
+color-distance technique: the source renders' garments and studio
+background occupy overlapping RGB ranges, so no flood-fill or threshold
+tolerance can separate them, verified by direct pixel sampling. Tests
+assert the store URLs still match download.html and that main.js never
+enables wholePage/autoAttempt."
 ```
 
 ---
