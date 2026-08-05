@@ -28,7 +28,9 @@ test("the closing CTA sends merchants to the dashboard", () => {
 // Spec section 10b: the answers are supplied by the business, not invented here.
 // This test documents which ones are still placeholders. Delete the entries from
 // PENDING as each real answer lands; the test then guards them against regression.
-const PENDING = ["faq.a1", "faq.a2", "faq.a3", "faq.a4"];
+// All four landed 2026-08-05 (13% commission, free weekly/monthly transfers,
+// no contract required, multi-venue accounts) — none pending anymore.
+const PENDING = [];
 
 test("placeholder answers are explicitly marked, never silently invented", () => {
   for (const key of PENDING) {

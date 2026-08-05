@@ -22,9 +22,9 @@ on purpose: everything inside `legal/` is publicly served.
 
 ## Before launch
 
-- [ ] Replace the placeholder screenshots in `legal/assets/img/screen-*.png`
+- [x] Replace the placeholder screenshots in `legal/assets/img/screen-*.png`
       with real light-mode exports (home, venue/book, QR ticket).
-- [ ] Replace the four `[PENDING]` FAQ answers in `legal/assets/js/i18n.js`
+- [x] Replace the four `[PENDING]` FAQ answers in `legal/assets/js/i18n.js`
       and delete the matching entries from `PENDING` in `web-tests/faq.test.mjs`.
 - [ ] Add Instagram, TikTok, and support/WhatsApp links to the footer.
 - [ ] Decide whether to publish trust numbers; if so, add `data-counter`

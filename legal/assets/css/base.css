@@ -78,14 +78,14 @@
   --font-en: "IBM Plex Sans", system-ui, sans-serif;
   --font: var(--font-ar);
 
-  /* Fluid type: 320px → 1440px viewport */
-  --step--1: clamp(0.83rem, 0.79rem + 0.19vw, 0.94rem);
-  --step-0: clamp(1rem, 0.93rem + 0.36vw, 1.19rem);
-  --step-1: clamp(1.2rem, 1.08rem + 0.6vw, 1.5rem);
-  --step-2: clamp(1.44rem, 1.25rem + 0.95vw, 1.9rem);
-  --step-3: clamp(1.73rem, 1.43rem + 1.5vw, 2.4rem);
-  --step-4: clamp(2.07rem, 1.6rem + 2.35vw, 3.03rem);
-  --step-5: clamp(2.49rem, 1.75rem + 3.68vw, 4.5rem);
+  /* Fluid type: 320px → 1440px viewport (scaled to ~76% of the original ramp) */
+  --step--1: clamp(0.64rem, 0.6rem + 0.14vw, 0.72rem);
+  --step-0: clamp(0.77rem, 0.71rem + 0.27vw, 0.91rem);
+  --step-1: clamp(0.92rem, 0.82rem + 0.46vw, 1.15rem);
+  --step-2: clamp(1.11rem, 0.96rem + 0.73vw, 1.45rem);
+  --step-3: clamp(1.33rem, 1.1rem + 1.15vw, 1.84rem);
+  --step-4: clamp(1.58rem, 1.22rem + 1.8vw, 2.32rem);
+  --step-5: clamp(1.9rem, 1.34rem + 2.81vw, 3.44rem);
 
   --space-1: 0.5rem;
   --space-2: 1rem;

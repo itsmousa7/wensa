@@ -4,8 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title data-i18n="meta.home.title">ونسة — كل ونستك بمكان واحد</title>
-  <meta name="description" content="ونسة — كل ونستك بمكان واحد. مطاعم، ملاعب، مزارع وحفلات: شوف، احجز، وادفع بالدينار." data-i18n-attr="content:meta.home.desc">
+  <title data-i18n="meta.home.title">ونسة: كل ونستك بمكان واحد</title>
+  <meta name="description" content="ونسة: كل ونستك بمكان واحد. مطاعم، ملاعب، مزارع وحفلات: شوف، احجز، وادفع بالبطاقة."
+    data-i18n-attr="content:meta.home.desc">
   <link rel="canonical" href="https://wensa.app/">
   <link rel="alternate" hreflang="ar" href="https://wensa.app/">
   <link rel="alternate" hreflang="en" href="https://wensa.app/?lang=en">
@@ -14,8 +15,9 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="ونسة">
   <meta property="og:url" content="https://wensa.app/">
-  <meta property="og:title" content="ونسة — كل ونستك بمكان واحد" data-i18n-attr="content:meta.home.title">
-  <meta property="og:description" content="مطاعم، ملاعب، مزارع وحفلات: شوف، احجز، وادفع بالدينار." data-i18n-attr="content:meta.home.desc">
+  <meta property="og:title" content="ونسة: كل ونستك بمكان واحد" data-i18n-attr="content:meta.home.title">
+  <meta property="og:description" content="مطاعم، ملاعب، مزارع وحفلات: شوف، احجز، وادفع بالبطاقة."
+    data-i18n-attr="content:meta.home.desc">
   <meta property="og:image" content="https://wensa.app/assets/og-wensa.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -69,31 +71,43 @@
     <section class="hero">
       <div class="hero__inner u-wrap">
         <div class="hero__copy">
-          <p class="u-eyebrow" data-reveal data-i18n="hero.eyebrow">نزل هسه — مجاناً</p>
+          <p class="u-eyebrow" data-reveal data-i18n="hero.eyebrow">نزل هسه، مجاناً</p>
 
           <h1 class="hero__title" data-reveal data-reveal-delay="1">
-            <span data-i18n="hero.lead">احجز</span>
-            <span class="rotator"><span class="rotator__word" data-rotator>بادل</span></span>
-            <span data-i18n="hero.trail">بثانية وحدة</span>
+            <span class="hero__title-row">
+              <span data-i18n="hero.lead">احجز</span>
+              <span class="rotator"><span class="rotator__word" data-rotator>بادل</span></span>
+            </span>
+            <span class="hero__title-row" data-i18n="hero.trail">بثانية وحدة</span>
           </h1>
 
           <p class="u-sub" data-reveal data-reveal-delay="2" data-i18n="hero.sub">
-            مطاعم، ملاعب، مزارع وحفلات — كلها بتطبيق واحد. شوف، احجز، وادفع بالدينار، وتذكرتك تجيك QR.
+            مطاعم، ملاعب، مزارع وحفلات، كلها بتطبيق واحد. شوف، احجز، وادفع بالبطاقة، وتذكرتك تجيك QR.
           </p>
 
           <div class="hero__cta" data-reveal data-reveal-delay="3">
             <a class="btn btn--teal" data-store-cta="ios"
-               href="https://apps.apple.com/iq/app/wensa-%D9%88%D9%86%D8%B3%D8%A9/id6780271862"
-               data-i18n="hero.ios">نزّله من App Store</a>
+              href="https://apps.apple.com/iq/app/wensa-%D9%88%D9%86%D8%B3%D8%A9/id6780271862">
+              <svg class="btn__icon" viewBox="0 0 384 512" aria-hidden="true">
+                <path fill="currentColor"
+                  d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
+              </svg>
+              <span data-i18n="hero.ios">نزّله من App Store</span>
+            </a>
             <a class="btn btn--ghost" data-store-cta="android"
-               href="https://play.google.com/store/apps/details?id=app.wensa.mobile"
-               data-i18n="hero.android">نزّله من Google Play</a>
+              href="https://play.google.com/store/apps/details?id=app.wensa.mobile">
+              <svg class="btn__icon" viewBox="0 0 512 512" aria-hidden="true">
+                <path fill="currentColor"
+                  d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z" />
+              </svg>
+              <span data-i18n="hero.android">نزّله من Google Play</span>
+            </a>
           </div>
         </div>
 
         <div class="hero__art" data-reveal data-reveal-delay="2">
           <div class="phone" data-parallax="24">
-            <img src="/assets/img/screen-home.png" alt="" width="390" height="844" loading="eager" fetchpriority="high">
+            <img src="/assets/img/home-screen.png" alt="" width="390" height="844" loading="eager" fetchpriority="high">
           </div>
         </div>
       </div>
@@ -133,21 +147,26 @@
 
         <div class="cards">
           <article class="card" data-reveal data-reveal-delay="1">
-            <div class="card__shot"><img src="/assets/img/screen-home.png" alt="" width="390" height="844" loading="lazy"></div>
+            <div class="card__shot"><img src="/assets/img/screen-home.png" alt="" width="390" height="844"
+                loading="lazy"></div>
             <h3 data-i18n="what.c1.title">دور وشوف</h3>
-            <p class="u-sub" data-i18n="what.c1.body">كل الاماكن الحلوة ببغداد بمكان واحد — صور، دوام، تقييمات، وموقع.</p>
+            <p class="u-sub" data-i18n="what.c1.body">كل الاماكن الحلوة ببغداد بمكان واحد: صور، دوام، تقييمات، وموقع.
+            </p>
           </article>
 
           <article class="card" data-reveal data-reveal-delay="2">
-            <div class="card__shot"><img src="/assets/img/screen-book.png" alt="" width="390" height="844" loading="lazy"></div>
+            <div class="card__shot"><img src="/assets/img/screen-book.png" alt="" width="390" height="844"
+                loading="lazy"></div>
             <h3 data-i18n="what.c2.title">احجز بثانية</h3>
-            <p class="u-sub" data-i18n="what.c2.body">طاولة، ملعب، شاليه او تذكرة حفلة — احجز وانت كاعد وادفع بالدينار.</p>
+            <p class="u-sub" data-i18n="what.c2.body">احجز طاولة، ملعب، مزرعة او تذكرة حفلة وانت كاعد وادفع بالبطاقة.
+            </p>
           </article>
 
           <article class="card" data-reveal data-reveal-delay="3">
-            <div class="card__shot"><img src="/assets/img/screen-ticket.png" alt="" width="390" height="844" loading="lazy"></div>
+            <div class="card__shot"><img src="/assets/img/screen-ticket.png" alt="" width="390" height="844"
+                loading="lazy"></div>
             <h3 data-i18n="what.c3.title">تذكرتك QR</h3>
-            <p class="u-sub" data-i18n="what.c3.body">تذكرتك تجيك بالتطبيق. وريها عالباب وخلص — ماكو ورق وماكو لخبطة.</p>
+            <p class="u-sub" data-i18n="what.c3.body">تذكرتك تجيك بالتطبيق. وريها عالباب وخلص، ماكو ورق وماكو لخبطة.</p>
           </article>
         </div>
       </div>
@@ -159,7 +178,8 @@
 
         <div class="steps">
           <svg class="steps__line" viewBox="0 0 1000 2" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M0 1 H1000" data-line-draw fill="none" stroke="var(--teal)" stroke-width="2" stroke-dasharray="6 8" />
+            <path d="M0 1 H1000" data-line-draw fill="none" stroke="var(--teal)" stroke-width="2"
+              stroke-dasharray="6 8" />
           </svg>
 
           <article class="step" data-reveal data-reveal-delay="1">
@@ -177,7 +197,7 @@
           <article class="step" data-reveal data-reveal-delay="3">
             <span class="step__num" data-i18n="num.3">٣</span>
             <h3 data-i18n="how.s3.title">احجز وروح</h3>
-            <p class="u-sub" data-i18n="how.s3.body">ادفع بالدينار وتذكرتك تجيك QR.</p>
+            <p class="u-sub" data-i18n="how.s3.body">ادفع بالبطاقة وتذكرتك تجيك QR.</p>
           </article>
         </div>
       </div>
@@ -185,7 +205,7 @@
 
     <section class="section trust" id="trust">
       <ul class="trust__list u-wrap">
-        <li data-reveal data-reveal-delay="1" data-i18n="trust.iqd">دفع بالدينار</li>
+        <li data-reveal data-reveal-delay="1" data-i18n="trust.iqd">دفع بالبطاقة</li>
         <li data-reveal data-reveal-delay="2" data-i18n="trust.qr">تذكرة QR</li>
         <li data-reveal data-reveal-delay="3" data-i18n="trust.cancel">إلغاء سهل</li>
       </ul>
@@ -201,11 +221,21 @@
 
           <div class="hero__cta" data-reveal data-reveal-delay="2">
             <a class="btn btn--teal" data-store-cta="ios"
-               href="https://apps.apple.com/iq/app/wensa-%D9%88%D9%86%D8%B3%D8%A9/id6780271862"
-               data-i18n="hero.ios">نزّله من App Store</a>
+              href="https://apps.apple.com/iq/app/wensa-%D9%88%D9%86%D8%B3%D8%A9/id6780271862">
+              <svg class="btn__icon" viewBox="0 0 384 512" aria-hidden="true">
+                <path fill="currentColor"
+                  d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
+              </svg>
+              <span data-i18n="hero.ios">نزّله من App Store</span>
+            </a>
             <a class="btn btn--ghost" data-store-cta="android"
-               href="https://play.google.com/store/apps/details?id=app.wensa.mobile"
-               data-i18n="hero.android">نزّله من Google Play</a>
+              href="https://play.google.com/store/apps/details?id=app.wensa.mobile">
+              <svg class="btn__icon" viewBox="0 0 512 512" aria-hidden="true">
+                <path fill="currentColor"
+                  d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z" />
+              </svg>
+              <span data-i18n="hero.android">نزّله من Google Play</span>
+            </a>
           </div>
 
           <figure class="dl__qr" data-reveal data-reveal-delay="3">
@@ -214,18 +244,19 @@
           </figure>
         </div>
 
-        <img class="dl__char" src="/assets/img/character-thumbsup.png" alt=""
-             data-parallax="18" loading="lazy" width="405" height="1232">
+        <img class="dl__char" src="/assets/img/character-thumbsup.png" alt="" data-parallax="18" loading="lazy"
+          width="264" height="800">
       </div>
     </section>
 
     <section class="band">
       <div class="band__inner u-wrap">
         <div>
-          <h2 data-reveal data-i18n="band.title">عندك مطعم او ملعب؟</h2>
-          <p data-reveal data-reveal-delay="1" data-i18n="band.body">اول شهر علينا — برو مجاناً و٠٪ عمولة.</p>
+          <h2 data-reveal data-i18n="band.title">عندك مزرعة او ملعب؟</h2>
+          <p data-reveal data-reveal-delay="1" data-i18n="band.body">اول شهر علينا: برو مجاناً و٠٪ عمولة.</p>
         </div>
-        <a class="btn btn--paper" href="/merchants" data-reveal data-reveal-delay="2" data-i18n="band.cta">صير تاجر بونسة</a>
+        <a class="btn btn--paper" href="/merchants" data-reveal data-reveal-delay="2" data-i18n="band.cta">صير تاجر
+          بونسة</a>
       </div>
     </section>
   </main>
@@ -242,7 +273,7 @@
         <a href="/merchants" data-i18n="footer.merchant">صير تاجر</a>
       </nav>
       <p class="foot__rights">
-        wensa<span class="foot__dot">.</span>app — <span data-i18n="footer.rights">كل الحقوق محفوظة</span>
+        wensa<span class="foot__dot">.</span>app, <span data-i18n="footer.rights">كل الحقوق محفوظة</span>
       </p>
     </div>
   </footer>
