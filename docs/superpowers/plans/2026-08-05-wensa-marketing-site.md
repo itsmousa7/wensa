@@ -3289,7 +3289,7 @@ Append to `site.css`:
 
 .plan__name { font-size: var(--step-1); }
 .plan__price { font-size: var(--step-2); font-weight: 700; color: var(--teal); }
-.plan__note { font-size: var(--step--1); font-weight: 700; color: var(--orange); }
+.plan__note { font-size: var(--step--1); font-weight: 700; color: var(--teal); }
 .plan__features { color: var(--subink); font-size: var(--step--1); line-height: 2; }
 ```
 
