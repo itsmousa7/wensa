@@ -3646,7 +3646,33 @@ Then in DevTools, enable *Rendering → Emulate prefers-reduced-motion: reduce* 
 
 - [ ] **Step 6: Check performance**
 
-Run Lighthouse (mobile, simulated slow 4G) against `http://localhost:4173/`. Performance must be ≥ 90 and Accessibility ≥ 95. If performance is short, the usual causes in this build are the placeholder screenshots being oversized — run them through `sips -Z 780` — or fonts not being preloaded.
+Run Lighthouse (mobile, simulated slow 4G) against both `http://localhost:4173/` and `http://localhost:4173/merchants`. Performance must be ≥ 90 and Accessibility ≥ 95 on **both** pages. If performance is short, the usual causes in this build are the placeholder screenshots being oversized — run them through `sips -Z 780` — or fonts not being preloaded.
+
+**Verified during implementation:** `/` passes (97 perf / 96 a11y). `/merchants` initially failed (81 perf) due to `legal/assets/img/character-register.png` — at 533 KB, this is the single largest asset on either page. The character PNGs (`character-register.png`, `character-thumbsup.png`) come from Task 10's `rembg` ML segmentation, which outputs full 32-bit-per-pixel RGBA with no palette reduction — correct for cutout *quality*, but far larger than the flat-shaded, limited-palette art actually needs.
+
+**Do not resize these images** — an earlier attempt to fix this by shrinking their pixel dimensions was rejected: it visibly softened the character art and touched files outside this step's actual evidence (only `character-register.png` was ever shown to be the cause; `character-thumbsup.png` and `legal/assets/wensa-logo.png` were resized on a hunch, not on measurement). The correct fix is **palette quantization at the same pixel dimensions** — verified to cut `character-register.png` from 533 KB to ~79 KB (85% smaller) with no visible quality loss and a byte-identical alpha channel at the transparent/opaque boundaries:
+
+```bash
+cd /Users/mousaalhamad/Desktop/Wensa/wensa_app/wensa/.worktrees/feat-marketing-site
+python3 -m venv /tmp/wensa-imgopt
+/tmp/wensa-imgopt/bin/pip install --quiet pillow
+/tmp/wensa-imgopt/bin/python3 - <<'PY'
+from PIL import Image
+for name in ["character-register.png", "character-thumbsup.png"]:
+    path = f"legal/assets/img/{name}"
+    im = Image.open(path).convert("RGBA")
+    before = im.size
+    q = im.quantize(colors=256, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.FLOYDSTEINBERG)
+    q.save(path, optimize=True)
+    after = Image.open(path)
+    print(f"{name}: {before} -> {after.size} (dimensions unchanged, palette-quantized)")
+PY
+rm -rf /tmp/wensa-imgopt
+```
+
+Both character images get this treatment for consistency (same ML-cutout origin, same fix applies), even though only `character-register.png` was shown to fail the gate — `character-thumbsup.png` ships to every landing-page visitor and the fix is free. `legal/assets/wensa-logo.png` is NOT touched — nothing measured it as a bottleneck.
+
+After running this, verify: (1) dimensions are unchanged for both files (`python3 -c "from PIL import Image; print(Image.open('legal/assets/img/character-register.png').size)"` should still print `(435, 1286)`), (2) corners are still genuinely transparent and the garment area still genuinely opaque (open each PNG, convert to RGBA, check a corner pixel is `(0,0,0,0)` and a garment-area pixel has alpha 250+), (3) visually inspect both with the Read tool — no visible banding or dithering artifacts, (4) re-run Lighthouse on `/merchants` and confirm it now passes ≥ 90.
 
 - [ ] **Step 7: Write the launch checklist**
 
