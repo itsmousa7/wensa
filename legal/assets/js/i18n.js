@@ -21,6 +21,11 @@ export const dict = {
     "footer.merchant": "صير تاجر",
     "footer.rights": "كل الحقوق محفوظة",
     "footer.tagline": "كل ونستك بمكان واحد",
+    "meta.home.title": "ونسة — كل ونستك بمكان واحد",
+    "meta.home.desc": "ونسة — كل ونستك بمكان واحد. مطاعم، ملاعب، مزارع وحفلات: شوف، احجز، وادفع بالدينار.",
+    "meta.merchants.title": "صير تاجر بونسة",
+    "meta.merchants.desc": "صير تاجر بونسة — اول شهر برو مجاناً و٠٪ عمولة. خلي مكانك يوصل لكل بغداد.",
+    "meta.ogLocale": "ar_IQ",
     "merchant.ctaRegister": "سجّل هسه",
     "merchant.eyebrow": "لأصحاب الاماكن",
     "merchant.title": "خلي مكانك يوصل لكل بغداد",
@@ -136,6 +141,11 @@ export const dict = {
     "footer.merchant": "Become a merchant",
     "footer.rights": "All rights reserved",
     "footer.tagline": "Everything you do, in one place",
+    "meta.home.title": "Wensa — Everything you do, in one place",
+    "meta.home.desc": "Wensa — everything you do, in one place. Restaurants, courts, farms and concerts: browse, book, and pay in IQD.",
+    "meta.merchants.title": "Become a Wensa merchant",
+    "meta.merchants.desc": "Become a Wensa merchant — first month Pro free and 0% commission. Put your venue in front of all Baghdad.",
+    "meta.ogLocale": "en_US",
     "merchant.ctaRegister": "Register now",
     "merchant.eyebrow": "For venue owners",
     "merchant.title": "Put your venue in front of all Baghdad",
@@ -261,6 +271,14 @@ export function applyLang(lang) {
   for (const el of document.querySelectorAll("[data-i18n]")) {
     const value = table[el.dataset.i18n];
     if (value !== undefined) el.textContent = value;
+  }
+
+  // The toggle's own label is written in the OPPOSITE language on purpose
+  // ("English" while the page is Arabic, and vice versa), so it needs its own
+  // lang attribute or a screen reader applies the page's voice/pronunciation
+  // rules to text in the other script.
+  for (const btn of document.querySelectorAll("[data-lang-toggle]")) {
+    btn.lang = safe === "ar" ? "en" : "ar";
   }
 
   // data-i18n-attr="aria-label:nav.merchant" — key writes into a named attribute

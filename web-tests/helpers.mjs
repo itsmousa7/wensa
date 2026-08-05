@@ -36,11 +36,30 @@ export function localRefs(text) {
 }
 
 // Every data-i18n key used in a chunk of HTML.
+//
+// Two distinct attributes carry keys and they encode them differently:
+//   data-i18n="key"                       -- the value IS the key.
+//   data-i18n-attr="attr:key[,attr2:key2]" -- one or more "attr:key" pairs;
+//     only the key half of each pair belongs in the dictionary. Matching
+//     data-i18n-attr with the same plain regex as data-i18n would (wrongly)
+//     extract "content:meta.home.desc" as a literal key.
 export function i18nKeys(html) {
   const out = new Set();
-  const re = /data-i18n(?:-[a-z]+)?\s*=\s*["']([^"']+)["']/g;
+
+  const attrRe = /data-i18n-attr\s*=\s*["']([^"']+)["']/g;
   let m;
-  while ((m = re.exec(html)) !== null) out.add(m[1]);
+  while ((m = attrRe.exec(html)) !== null) {
+    for (const pair of m[1].split(",")) {
+      const key = pair.split(":")[1]?.trim();
+      if (key) out.add(key);
+    }
+  }
+
+  // "data-i18n=" only — "data-i18n-attr=" never matches this because the
+  // literal "-attr" sits between "data-i18n" and "=" for that attribute.
+  const plainRe = /\bdata-i18n\s*=\s*["']([^"']+)["']/g;
+  while ((m = plainRe.exec(html)) !== null) out.add(m[1]);
+
   return [...out];
 }
 

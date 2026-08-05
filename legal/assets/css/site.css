@@ -118,6 +118,7 @@
   justify-content: center;
   gap: var(--space-1);
   padding: 0.7em 1.4em;
+  min-height: 44px;
   border-radius: 999px;
   font-weight: 700;
   font-size: var(--step--1);
@@ -172,6 +173,15 @@
   align-items: flex-start;
   justify-content: space-between;
 }
+
+/* Unlike .nav__brand img, the footer wordmark had no dedicated sizing rule —
+   only the global img/svg reset (max-width: 100%; height: auto) applied, so
+   the browser used the width HTML attribute directly as the rendered width.
+   That made the width attribute load-bearing for actual layout, not just an
+   aspect-ratio hint, so correcting it to the logo's real pixel dimensions
+   (final review, Fix 1) needed an explicit width here to keep the rendered
+   size exactly what it already was. */
+.foot__inner img { width: 120px; height: auto; }
 
 .foot__tag { color: var(--subink); font-size: var(--step--1); margin-block-start: var(--space-1); }
 
