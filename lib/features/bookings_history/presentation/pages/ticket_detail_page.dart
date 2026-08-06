@@ -214,6 +214,14 @@ class _BookingDetailBody extends ConsumerWidget {
             value: _shiftTypeLabel(d['shift_type']?.toString() ?? '', isArabic),
           ),
         );
+        if (d['party_size'] != null) {
+          extraCells.add(
+            TicketInfoCell(
+              label: isArabic ? 'عدد الضيوف' : 'Guests',
+              value: d['party_size'].toString(),
+            ),
+          );
+        }
 
       case BookingCategory.venueSeat:
         final row = d['row']?.toString() ?? '';
