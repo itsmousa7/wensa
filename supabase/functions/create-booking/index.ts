@@ -55,6 +55,7 @@ interface ShiftPayload extends BasePaylod {
   place_id: string;
   date: string;
   shift_type: "day" | "night" | "full";
+  party_size?: number;
 }
 
 interface VenueSeatPayload extends BasePaylod {
@@ -181,6 +182,7 @@ Deno.serve(async (req: Request) => {
         p_place_id:   p.place_id,
         p_date:       p.date,
         p_shift_type: p.shift_type,
+        p_party_size: p.party_size ?? null,
       });
       subtotalIqd     = rpcResult.amount_iqd as number;
       referenceId     = `booking_${rpcResult.id}_${ts}`;
