@@ -56,6 +56,7 @@ interface ShiftPayload extends BasePaylod {
   date: string;
   shift_type: "day" | "night" | "full";
   party_size?: number;
+  bringing_party?: boolean;
 }
 
 interface VenueSeatPayload extends BasePaylod {
@@ -179,10 +180,11 @@ Deno.serve(async (req: Request) => {
     } else if (body.category === "shift") {
       const p = body as ShiftPayload;
       rpcResult = await callRpc(SUPABASE_URL, jwt, "bookings", "create_farm_booking", {
-        p_place_id:   p.place_id,
-        p_date:       p.date,
-        p_shift_type: p.shift_type,
-        p_party_size: p.party_size ?? null,
+        p_place_id:       p.place_id,
+        p_date:           p.date,
+        p_shift_type:     p.shift_type,
+        p_party_size:     p.party_size ?? null,
+        p_bringing_party: p.bringing_party ?? false,
       });
       subtotalIqd     = rpcResult.amount_iqd as number;
       referenceId     = `booking_${rpcResult.id}_${ts}`;
