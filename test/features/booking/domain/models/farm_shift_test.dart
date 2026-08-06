@@ -58,4 +58,28 @@ void main() {
       expect(shift.partyExtraPersonFeeIqd, 0);
     });
   });
+
+  group('FarmShift.fromJson price override', () {
+    const baseJson = {
+      'place_id': 'place-abc',
+      'shift_type': 'day',
+      'starts_time': '08:00:00',
+      'ends_time': '18:00:00',
+      'price_iqd': 250000,
+    };
+
+    test('parses standard_price_iqd when an override is active', () {
+      final shift = FarmShift.fromJson({
+        ...baseJson,
+        'standard_price_iqd': 200000,
+      });
+      expect(shift.priceIqd, 250000);
+      expect(shift.standardPriceIqd, 200000);
+    });
+
+    test('standardPriceIqd defaults to null when absent (no override)', () {
+      final shift = FarmShift.fromJson(baseJson);
+      expect(shift.standardPriceIqd, isNull);
+    });
+  });
 }
