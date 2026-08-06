@@ -76,7 +76,7 @@ class PartyOptionCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  isAr ? 'هل تحضر مجموعة؟' : 'Bringing a party?',
+                  isAr ? 'هل تحضر مجموعة؟' : 'Making a party?',
                   style: (tt.titleSmall ?? const TextStyle()).copyWith(
                     fontWeight: FontWeight.w700,
                     color: isOn ? cs.primary : cs.onSurface,
@@ -96,16 +96,16 @@ class PartyOptionCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Transform.scale(
-            scaleX: isAr ? -1 : 1,
-            child: Platform.isIOS
-                ? CNSwitch(value: isOn, onChanged: onToggle)
-                : Switch.adaptive(
-                    value: isOn,
-                    onChanged: onToggle,
-                    activeTrackColor: cs.primary,
-                  ),
-          ),
+          Platform.isIOS
+              ? Transform.scale(
+                  scaleX: isAr ? -1 : 1,
+                  child: CNSwitch(value: isOn, onChanged: onToggle),
+                )
+              : Switch.adaptive(
+                  value: isOn,
+                  onChanged: onToggle,
+                  activeTrackColor: cs.primary,
+                ),
         ],
       ),
     );

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
 /// Guest-count stepper shown under the shift picker in [FarmSection]
 /// whenever the selected shift has party pricing configured — independent

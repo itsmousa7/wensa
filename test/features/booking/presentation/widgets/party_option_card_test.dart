@@ -12,7 +12,7 @@ void main() {
       isOn: false,
       onToggle: (_) {},
     )));
-    expect(find.text('Bringing a party?'), findsOneWidget);
+    expect(find.text('Making a party?'), findsOneWidget);
     expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
 
     await tester.pumpWidget(wrap(PartyOptionCard(
