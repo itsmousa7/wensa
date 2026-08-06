@@ -7,6 +7,7 @@ import 'package:future_riverpod/features/booking/presentation/providers/availabi
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/guest_count_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/party_option_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/shift_card.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
@@ -323,6 +324,7 @@ class _FarmBookingFormView extends ConsumerWidget {
               ref.read(_farmSelectedDateProvider.notifier).set(date);
               ref.read(_farmSelectedShiftProvider.notifier).set(null);
               ref.read(_farmPartyOnProvider.notifier).set(false);
+              ref.read(_farmPartyCountProvider.notifier).set(1);
               // Release any pending booking row server-side so the next
               // Proceed doesn't collide with it.
               ref.read(bookingSubmitProvider.notifier).cancelPending();
@@ -385,6 +387,7 @@ class _FarmBookingFormView extends ConsumerWidget {
                               .read(_farmSelectedShiftProvider.notifier)
                               .set(isSelected ? null : shift);
                           ref.read(_farmPartyOnProvider.notifier).set(false);
+                          ref.read(_farmPartyCountProvider.notifier).set(1);
                           // Release any pending booking row server-side.
                           ref
                               .read(bookingSubmitProvider.notifier)
@@ -399,35 +402,37 @@ class _FarmBookingFormView extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
 
-          // ── Party option (shown only when the selected shift allows it) ──
+          // ── Party toggle + guest counter (independent of each other) ─────
           if (selectedShift != null && selectedShift.partyEnabled) ...[
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: PartyOptionCard(
-                includedPersons: selectedShift.partyIncludedPersons,
                 flatFeeIqd: selectedShift.partyFlatFeeIqd,
-                extraPersonFeeIqd: selectedShift.partyExtraPersonFeeIqd,
                 isOn: partyOn,
-                guestCount: partyCount,
                 onToggle: (v) {
                   ref.read(_farmPartyOnProvider.notifier).set(v);
-                  if (v) {
-                    ref
-                        .read(_farmPartyCountProvider.notifier)
-                        .set(selectedShift.partyIncludedPersons);
-                  }
                   // A previously-created pending booking (from an earlier
                   // Proceed tap) was priced without this change — release it
                   // so the next Proceed creates a fresh, correctly-priced one.
                   ref.read(bookingSubmitProvider.notifier).cancelPending();
                 },
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: GuestCountCard(
+                includedPersons: selectedShift.partyIncludedPersons,
+                extraPersonFeeIqd: selectedShift.partyExtraPersonFeeIqd,
+                guestCount: partyCount,
                 onGuestCountChanged: (v) {
                   ref.read(_farmPartyCountProvider.notifier).set(v);
                   ref.read(bookingSubmitProvider.notifier).cancelPending();
                 },
               ),
             ),
+            const SizedBox(height: 16),
           ],
 
           // ── Booking summary card (animated) ────────────────────────
@@ -450,12 +455,12 @@ class _FarmBookingFormView extends ConsumerWidget {
                 ? Builder(
                     key: const ValueKey('summary-visible'),
                     builder: (context) {
-                      final partyFee = partyOn
-                          ? selectedShift.partyFlatFeeIqd +
-                              (partyCount - selectedShift.partyIncludedPersons)
-                                      .clamp(0, 1 << 30) *
-                                  selectedShift.partyExtraPersonFeeIqd
-                          : 0;
+                      final extraGuests = (partyCount -
+                              selectedShift.partyIncludedPersons)
+                          .clamp(0, 1 << 30);
+                      final partyFee =
+                          (partyOn ? selectedShift.partyFlatFeeIqd : 0) +
+                              extraGuests * selectedShift.partyExtraPersonFeeIqd;
                       final subtotal = selectedShift.priceIqd + partyFee;
                       final eff = _FarmBookingFormView._resolveEffective(
                         subtotal: subtotal,
@@ -503,15 +508,12 @@ class _FarmBookingFormView extends ConsumerWidget {
                                 value: _FarmBookingFormView._formatIqd(
                                     selectedShift.partyFlatFeeIqd),
                               ),
-                            if (partyOn &&
-                                partyCount >
-                                    selectedShift.partyIncludedPersons)
+                            if (extraGuests > 0)
                               BookingSummaryRow(
                                 icon: Icons.person_add_alt_1_rounded,
                                 label: isAr ? 'ضيوف إضافيون' : 'Extra guests',
                                 value: _FarmBookingFormView._formatIqd(
-                                  (partyCount -
-                                          selectedShift.partyIncludedPersons) *
+                                  extraGuests *
                                       selectedShift.partyExtraPersonFeeIqd,
                                 ),
                               ),
@@ -564,7 +566,9 @@ class _FarmBookingFormView extends ConsumerWidget {
                                       date: bookingFormatDate(selectedDate),
                                       shiftType: shift.shiftType,
                                       promoCode: promo?.code,
-                                      partySize: partyOn ? partyCount : null,
+                                      partySize:
+                                          shift.partyEnabled ? partyCount : null,
+                                      bringingParty: partyOn,
                                     );
                               },
                             );
