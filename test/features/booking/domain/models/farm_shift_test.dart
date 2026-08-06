@@ -26,4 +26,36 @@ void main() {
       expect(shift.isAvailable, isTrue);
     });
   });
+
+  group('FarmShift.fromJson party fields', () {
+    const baseJson = {
+      'place_id': 'place-abc',
+      'shift_type': 'day',
+      'starts_time': '08:00:00',
+      'ends_time': '18:00:00',
+      'price_iqd': 100000,
+    };
+
+    test('parses party fields when present', () {
+      final shift = FarmShift.fromJson({
+        ...baseJson,
+        'party_enabled': true,
+        'party_included_persons': 10,
+        'party_flat_fee_iqd': 20000,
+        'party_extra_person_fee_iqd': 5000,
+      });
+      expect(shift.partyEnabled, isTrue);
+      expect(shift.partyIncludedPersons, 10);
+      expect(shift.partyFlatFeeIqd, 20000);
+      expect(shift.partyExtraPersonFeeIqd, 5000);
+    });
+
+    test('defaults party fields when absent', () {
+      final shift = FarmShift.fromJson(baseJson);
+      expect(shift.partyEnabled, isFalse);
+      expect(shift.partyIncludedPersons, 1);
+      expect(shift.partyFlatFeeIqd, 0);
+      expect(shift.partyExtraPersonFeeIqd, 0);
+    });
+  });
 }

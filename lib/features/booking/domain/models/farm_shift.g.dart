@@ -16,6 +16,11 @@ _FarmShift _$FarmShiftFromJson(Map<String, dynamic> json) => _FarmShift(
   priceIqd: (json['priceIqd'] as num?)?.toInt() ?? 0,
   isAvailable: json['isAvailable'] as bool? ?? true,
   isClosed: json['isClosed'] as bool? ?? false,
+  partyEnabled: json['partyEnabled'] as bool? ?? false,
+  partyIncludedPersons: (json['partyIncludedPersons'] as num?)?.toInt() ?? 1,
+  partyFlatFeeIqd: (json['partyFlatFeeIqd'] as num?)?.toInt() ?? 0,
+  partyExtraPersonFeeIqd:
+      (json['partyExtraPersonFeeIqd'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$FarmShiftToJson(_FarmShift instance) =>
@@ -27,6 +32,10 @@ Map<String, dynamic> _$FarmShiftToJson(_FarmShift instance) =>
       'priceIqd': instance.priceIqd,
       'isAvailable': instance.isAvailable,
       'isClosed': instance.isClosed,
+      'partyEnabled': instance.partyEnabled,
+      'partyIncludedPersons': instance.partyIncludedPersons,
+      'partyFlatFeeIqd': instance.partyFlatFeeIqd,
+      'partyExtraPersonFeeIqd': instance.partyExtraPersonFeeIqd,
     };
 
 const _$FarmShiftTypeEnumMap = {
