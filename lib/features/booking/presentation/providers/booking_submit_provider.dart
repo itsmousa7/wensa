@@ -67,6 +67,7 @@ class BookingSubmit extends _$BookingSubmit {
     required String date, // 'yyyy-MM-dd'
     required FarmShiftType shiftType,
     String? promoCode,
+    int? partySize,
   }) async {
     state = const BookingSubmitState.loading();
     try {
@@ -80,6 +81,7 @@ class BookingSubmit extends _$BookingSubmit {
           'shift_type': shiftType.name,
           if (promoCode != null && promoCode.isNotEmpty)
             'promo_code': promoCode.toUpperCase(),
+          if (partySize != null) 'party_size': partySize,
         },
       );
       if (result.status != 200) throw Exception(result.data.toString());
