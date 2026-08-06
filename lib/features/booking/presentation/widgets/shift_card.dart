@@ -58,6 +58,15 @@ class ShiftCard extends StatelessWidget {
     );
   }
 
+  String _formattedStandardPrice() {
+    final standard = shift.standardPriceIqd;
+    if (standard == null) return '';
+    return standard.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -210,6 +219,32 @@ class ShiftCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  if (shift.standardPriceIqd != null) ...[
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 2),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: cs.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        isAr ? 'سعر خاص' : 'Special price',
+                        style: (tt.labelSmall ?? const TextStyle()).copyWith(
+                          color: cs.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      _formattedStandardPrice(),
+                      style: (tt.bodySmall ?? const TextStyle()).copyWith(
+                        color: subtextColor,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  ],
                   AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 200),
                     style: (tt.titleMedium ?? const TextStyle()).copyWith(

@@ -62,4 +62,66 @@ void main() {
       expect(tapped, isTrue);
     });
   });
+
+  group('ShiftCard price override', () {
+    const overriddenShift = FarmShift(
+      placeId: 'p1',
+      shiftType: FarmShiftType.day,
+      startsTime: '08:00:00',
+      endsTime: '18:00:00',
+      priceIqd: 300000,
+      standardPriceIqd: 200000,
+      isAvailable: true,
+    );
+
+    Widget buildOverriddenCard() {
+      return MaterialApp(
+        home: Scaffold(
+          body: ShiftCard(
+            shift: overriddenShift,
+            isSelected: false,
+            availability: SlotAvailability.available,
+            onTap: () {},
+          ),
+        ),
+      );
+    }
+
+    testWidgets('shows the struck-through standard price and a badge',
+        (tester) async {
+      await tester.pumpWidget(buildOverriddenCard());
+      expect(find.text('300,000'), findsOneWidget);
+      expect(find.text('200,000'), findsOneWidget);
+      expect(find.text('Special price'), findsOneWidget);
+      final standardPriceText =
+          tester.widget<Text>(find.text('200,000'));
+      expect(
+        standardPriceText.style?.decoration,
+        TextDecoration.lineThrough,
+      );
+    });
+
+    testWidgets('shows no strikethrough or badge when there is no override',
+        (tester) async {
+      const shift = FarmShift(
+        placeId: 'p1',
+        shiftType: FarmShiftType.day,
+        startsTime: '08:00:00',
+        endsTime: '18:00:00',
+        priceIqd: 200000,
+        isAvailable: true,
+      );
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: ShiftCard(
+            shift: shift,
+            isSelected: false,
+            availability: SlotAvailability.available,
+            onTap: () {},
+          ),
+        ),
+      ));
+      expect(find.text('Special price'), findsNothing);
+    });
+  });
 }
