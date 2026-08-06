@@ -96,13 +96,16 @@ class PartyOptionCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Platform.isIOS
-              ? CNSwitch(value: isOn, onChanged: onToggle)
-              : Switch.adaptive(
-                  value: isOn,
-                  onChanged: onToggle,
-                  activeTrackColor: cs.primary,
-                ),
+          Transform.scale(
+            scaleX: isAr ? -1 : 1,
+            child: Platform.isIOS
+                ? CNSwitch(value: isOn, onChanged: onToggle)
+                : Switch.adaptive(
+                    value: isOn,
+                    onChanged: onToggle,
+                    activeTrackColor: cs.primary,
+                  ),
+          ),
         ],
       ),
     );
