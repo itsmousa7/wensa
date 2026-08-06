@@ -222,6 +222,14 @@ class _BookingDetailBody extends ConsumerWidget {
             ),
           );
         }
+        if (d['party_fee_iqd'] != null) {
+          extraCells.add(
+            TicketInfoCell(
+              label: isArabic ? 'رسوم الحفلة' : 'Party Fee',
+              value: _amount((d['party_fee_iqd'] as num).toInt()),
+            ),
+          );
+        }
 
       case BookingCategory.venueSeat:
         final row = d['row']?.toString() ?? '';

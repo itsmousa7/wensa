@@ -496,25 +496,25 @@ class _FarmBookingFormView extends ConsumerWidget {
                               value:
                                   '${_toTime12h(selectedShift.startsTime)} – ${_toTime12h(selectedShift.endsTime)}',
                             ),
-                            if (partyOn) ...[
+                            if (partyOn && selectedShift.partyFlatFeeIqd > 0)
                               BookingSummaryRow(
                                 icon: Icons.groups_rounded,
                                 label: isAr ? 'رسوم الحفلة' : 'Party fee',
                                 value: _FarmBookingFormView._formatIqd(
                                     selectedShift.partyFlatFeeIqd),
                               ),
-                              if (partyCount >
-                                  selectedShift.partyIncludedPersons)
-                                BookingSummaryRow(
-                                  icon: Icons.person_add_alt_1_rounded,
-                                  label: isAr ? 'ضيوف إضافيون' : 'Extra guests',
-                                  value: _FarmBookingFormView._formatIqd(
-                                    (partyCount -
-                                            selectedShift.partyIncludedPersons) *
-                                        selectedShift.partyExtraPersonFeeIqd,
-                                  ),
+                            if (partyOn &&
+                                partyCount >
+                                    selectedShift.partyIncludedPersons)
+                              BookingSummaryRow(
+                                icon: Icons.person_add_alt_1_rounded,
+                                label: isAr ? 'ضيوف إضافيون' : 'Extra guests',
+                                value: _FarmBookingFormView._formatIqd(
+                                  (partyCount -
+                                          selectedShift.partyIncludedPersons) *
+                                      selectedShift.partyExtraPersonFeeIqd,
                                 ),
-                            ],
+                              ),
                           ],
                           subtotalLabel: isAr ? 'المجموع' : 'Subtotal',
                           subtotalValue: eff.discount > 0

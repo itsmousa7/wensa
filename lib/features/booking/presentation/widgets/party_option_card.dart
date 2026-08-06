@@ -39,16 +39,18 @@ class PartyOptionCard extends StatelessWidget {
 
     final extraGuests = (guestCount - includedPersons).clamp(0, 1 << 30);
     final extraTotal = extraGuests * extraPersonFeeIqd;
-    final String helperText;
-    if (extraGuests <= 0) {
-      helperText = isAr
-          ? 'بدون رسوم إضافية حتى $includedPersons ضيوف'
-          : 'No extra charge up to $includedPersons guests';
-    } else {
-      helperText = isAr
-          ? '+${_formatIqd(extraTotal)} د.ع لـ $extraGuests ضيوف إضافيين'
-          : '+${_formatIqd(extraTotal)} IQD for $extraGuests extra guest(s)';
-    }
+    final String overagePart = extraGuests <= 0
+        ? (isAr
+            ? 'بدون رسوم إضافية حتى $includedPersons ضيوف'
+            : 'No extra charge up to $includedPersons guests')
+        : (isAr
+            ? '+${_formatIqd(extraTotal)} د.ع لـ $extraGuests ضيوف إضافيين'
+            : '+${_formatIqd(extraTotal)} IQD for $extraGuests extra guest(s)');
+    final String helperText = flatFeeIqd > 0
+        ? (isAr
+            ? '${_formatIqd(flatFeeIqd)} د.ع رسوم الحفلة · $overagePart'
+            : '${_formatIqd(flatFeeIqd)} IQD party fee · $overagePart')
+        : overagePart;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 240),

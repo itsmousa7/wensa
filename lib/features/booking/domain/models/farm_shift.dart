@@ -34,4 +34,3 @@ abstract class FarmShift with _$FarmShift {
     partyExtraPersonFeeIqd: (json['party_extra_person_fee_iqd'] as num?)?.toInt() ?? 0,
   );
 }
-

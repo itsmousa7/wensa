@@ -28,7 +28,10 @@ void main() {
     )));
     await tester.pumpAndSettle();
     expect(find.text('10'), findsOneWidget);
-    expect(find.text('No extra charge up to 10 guests'), findsOneWidget);
+    expect(
+      find.text('20,000 IQD party fee · No extra charge up to 10 guests'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('shows overage fee and tapping + increments the count', (tester) async {
@@ -43,7 +46,10 @@ void main() {
       onGuestCountChanged: (v) => changedTo = v,
     )));
     await tester.pumpAndSettle();
-    expect(find.text('+10,000 IQD for 2 extra guest(s)'), findsOneWidget);
+    expect(
+      find.text('20,000 IQD party fee · +10,000 IQD for 2 extra guest(s)'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byIcon(Icons.add_rounded));
     await tester.pump();
