@@ -15,6 +15,9 @@ _FarmShift _$FarmShiftFromJson(Map<String, dynamic> json) => _FarmShift(
   endsTime: json['endsTime'] as String? ?? '',
   priceIqd: (json['priceIqd'] as num?)?.toInt() ?? 0,
   standardPriceIqd: (json['standardPriceIqd'] as num?)?.toInt(),
+  overrideWeekdays: (json['overrideWeekdays'] as List<dynamic>?)
+      ?.map((e) => (e as num).toInt())
+      .toList(),
   isAvailable: json['isAvailable'] as bool? ?? true,
   isClosed: json['isClosed'] as bool? ?? false,
   partyEnabled: json['partyEnabled'] as bool? ?? false,
@@ -32,6 +35,7 @@ Map<String, dynamic> _$FarmShiftToJson(_FarmShift instance) =>
       'endsTime': instance.endsTime,
       'priceIqd': instance.priceIqd,
       'standardPriceIqd': instance.standardPriceIqd,
+      'overrideWeekdays': instance.overrideWeekdays,
       'isAvailable': instance.isAvailable,
       'isClosed': instance.isClosed,
       'partyEnabled': instance.partyEnabled,

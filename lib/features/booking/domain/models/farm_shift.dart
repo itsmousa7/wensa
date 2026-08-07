@@ -13,6 +13,7 @@ abstract class FarmShift with _$FarmShift {
     @Default('') String endsTime,
     @Default(0) int priceIqd,
     int? standardPriceIqd,
+    List<int>? overrideWeekdays,
     @Default(true) bool isAvailable,
     @Default(false) bool isClosed,
     @Default(false) bool partyEnabled,
@@ -28,6 +29,9 @@ abstract class FarmShift with _$FarmShift {
     endsTime: json['ends_time'] ?? '',
     priceIqd: (json['price_iqd'] as num?)?.toInt() ?? 0,
     standardPriceIqd: (json['standard_price_iqd'] as num?)?.toInt(),
+    overrideWeekdays: (json['override_weekdays'] as List?)
+        ?.map((e) => (e as num).toInt())
+        .toList(),
     isAvailable: (json['is_available'] as bool?) ?? true,
     isClosed: (json['is_closed'] as bool?) ?? false,
     partyEnabled: (json['party_enabled'] as bool?) ?? false,

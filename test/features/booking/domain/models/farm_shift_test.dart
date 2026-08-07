@@ -82,4 +82,27 @@ void main() {
       expect(shift.standardPriceIqd, isNull);
     });
   });
+
+  group('FarmShift.fromJson override weekdays', () {
+    const baseJson = {
+      'place_id': 'place-abc',
+      'shift_type': 'day',
+      'starts_time': '08:00:00',
+      'ends_time': '18:00:00',
+      'price_iqd': 250000,
+    };
+
+    test('parses override_weekdays when present', () {
+      final shift = FarmShift.fromJson({
+        ...baseJson,
+        'override_weekdays': [4, 5],
+      });
+      expect(shift.overrideWeekdays, [4, 5]);
+    });
+
+    test('overrideWeekdays defaults to null when absent', () {
+      final shift = FarmShift.fromJson(baseJson);
+      expect(shift.overrideWeekdays, isNull);
+    });
+  });
 }
