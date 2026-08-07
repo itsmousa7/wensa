@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 
 /// Guest-count stepper shown under the shift picker in [FarmSection]
 /// whenever the selected shift has party pricing configured — independent
@@ -12,12 +13,17 @@ class GuestCountCard extends StatelessWidget {
     required this.extraPersonFeeIqd,
     required this.guestCount,
     required this.onGuestCountChanged,
+    this.showError = false,
   });
 
   final int includedPersons;
   final int extraPersonFeeIqd;
   final int guestCount;
   final ValueChanged<int> onGuestCountChanged;
+
+  /// True once the user has tried to proceed without entering a guest
+  /// count — flips the card into its error styling.
+  final bool showError;
 
   static String _formatIqd(int amount) {
     return amount.toString().replaceAllMapped(
@@ -34,20 +40,29 @@ class GuestCountCard extends StatelessWidget {
 
     final extraGuests = (guestCount - includedPersons).clamp(0, 1 << 30);
     final extraTotal = extraGuests * extraPersonFeeIqd;
-    final String helperText = extraGuests <= 0
+    final bool isEmpty = guestCount <= 0;
+    final bool hasError = showError && isEmpty;
+    final String helperText = hasError
         ? (isAr
-            ? 'بدون رسوم إضافية حتى $includedPersons ضيوف'
-            : 'No extra charge up to $includedPersons guests')
-        : (isAr
-            ? '+${_formatIqd(extraTotal)} د.ع لـ $extraGuests ضيوف إضافيين'
-            : '+${_formatIqd(extraTotal)} IQD for $extraGuests extra guest(s)');
+            ? 'الرجاء إدخال عدد الأشخاص'
+            : 'Please enter the number of guests')
+        : extraGuests <= 0
+            ? (isAr
+                ? 'بدون رسوم إضافية حتى $includedPersons ضيوف'
+                : 'No extra charge up to $includedPersons guests')
+            : (isAr
+                ? '+${_formatIqd(extraTotal)} د.ع لـ $extraGuests ضيوف إضافيين'
+                : '+${_formatIqd(extraTotal)} IQD for $extraGuests extra guest(s)');
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: cs.surface,
+        color: hasError ? AppColors.danger.withValues(alpha: 0.06) : cs.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cs.outlineVariant, width: 0.5),
+        border: Border.all(
+          color: hasError ? AppColors.danger : cs.outlineVariant,
+          width: hasError ? 1.5 : 0.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: cs.shadow.withValues(alpha: 0.04),
@@ -70,7 +85,7 @@ class GuestCountCard extends StatelessWidget {
               ),
               _StepperButton(
                 icon: Icons.remove_rounded,
-                onTap: guestCount > 1
+                onTap: guestCount > 0
                     ? () => onGuestCountChanged(guestCount - 1)
                     : null,
               ),
@@ -79,8 +94,10 @@ class GuestCountCard extends StatelessWidget {
                 child: Text(
                   '$guestCount',
                   textAlign: TextAlign.center,
-                  style: (tt.titleMedium ?? const TextStyle())
-                      .copyWith(fontWeight: FontWeight.w800),
+                  style: (tt.titleMedium ?? const TextStyle()).copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: hasError ? AppColors.danger : null,
+                  ),
                 ),
               ),
               _StepperButton(
@@ -93,8 +110,14 @@ class GuestCountCard extends StatelessWidget {
           Text(
             helperText,
             style: (tt.bodySmall ?? const TextStyle()).copyWith(
-              color: extraGuests > 0 ? cs.primary : cs.onSurface.withValues(alpha: 0.5),
-              fontWeight: extraGuests > 0 ? FontWeight.w600 : FontWeight.w400,
+              color: hasError
+                  ? AppColors.danger
+                  : extraGuests > 0
+                      ? cs.primary
+                      : cs.onSurface.withValues(alpha: 0.5),
+              fontWeight: hasError || extraGuests > 0
+                  ? FontWeight.w600
+                  : FontWeight.w400,
             ),
           ),
         ],

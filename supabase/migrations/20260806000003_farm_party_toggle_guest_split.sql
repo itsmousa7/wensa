@@ -6,7 +6,7 @@
 -- The party flat fee and the per-guest overage fee were bundled together:
 -- sending a guest count at all implied the flat fee applied. This splits
 -- them into two independent inputs:
---   - p_bringing_party: customer opted into the flat party fee
+--   - p_bringing_party: customer opted into the flat Extra Guests Fee
 --   - p_party_size: headcount, drives the per-guest overage fee
 -- regardless of each other.
 

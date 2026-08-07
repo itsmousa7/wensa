@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/farm_shift.dart';
 import 'package:future_riverpod/features/booking/domain/models/slot_availability.dart';
+import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
+import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
@@ -10,9 +13,8 @@ import 'package:future_riverpod/features/booking/presentation/widgets/booking_su
 import 'package:future_riverpod/features/booking/presentation/widgets/guest_count_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/party_option_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/shift_card.dart';
-import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
-import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
-import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart' show bookingsRefreshProvider;
+import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
+    show bookingsRefreshProvider;
 import 'package:future_riverpod/features/discounts/domain/discount_math.dart';
 import 'package:future_riverpod/features/discounts/domain/models/auto_discount.dart';
 import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
@@ -20,7 +22,6 @@ import 'package:future_riverpod/features/discounts/presentation/providers/user_p
 import 'package:future_riverpod/features/discounts/presentation/widgets/promo_code_field.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 
 // ---------------------------------------------------------------------------
 // Local state notifiers
@@ -40,15 +41,18 @@ class _FarmShiftNotifier extends Notifier<FarmShift?> {
 
 final _farmSelectedDateProvider =
     NotifierProvider.autoDispose<_FarmDateNotifier, DateTime>(
-        _FarmDateNotifier.new);
+      _FarmDateNotifier.new,
+    );
 
 final _farmSelectedShiftProvider =
     NotifierProvider.autoDispose<_FarmShiftNotifier, FarmShift?>(
-        _FarmShiftNotifier.new);
+      _FarmShiftNotifier.new,
+    );
 
 final _farmPromoProvider =
     NotifierProvider.autoDispose<_FarmPromoNotifier, PromoApplied?>(
-        _FarmPromoNotifier.new);
+      _FarmPromoNotifier.new,
+    );
 
 class _FarmPromoNotifier extends Notifier<PromoApplied?> {
   @override
@@ -64,23 +68,39 @@ class _FarmPartyOnNotifier extends Notifier<bool> {
 
 class _FarmPartyCountNotifier extends Notifier<int> {
   @override
-  int build() => 1;
+  int build() => 0;
   void set(int v) => state = v;
+}
+
+class _FarmGuestCountErrorNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+  void set(bool v) => state = v;
 }
 
 final _farmPartyOnProvider =
     NotifierProvider.autoDispose<_FarmPartyOnNotifier, bool>(
-        _FarmPartyOnNotifier.new);
+      _FarmPartyOnNotifier.new,
+    );
 
 final _farmPartyCountProvider =
     NotifierProvider.autoDispose<_FarmPartyCountNotifier, int>(
-        _FarmPartyCountNotifier.new);
+      _FarmPartyCountNotifier.new,
+    );
+
+final _farmGuestCountErrorProvider =
+    NotifierProvider.autoDispose<_FarmGuestCountErrorNotifier, bool>(
+      _FarmGuestCountErrorNotifier.new,
+    );
 
 /// Computes [SlotAvailability] for a farm shift.
 /// [isToday] must be true when the selected date is today (local device date).
 /// Uses Baghdad time (UTC+3) for expiry comparison since farm shifts are
 /// configured in local Baghdad time.
-SlotAvailability computeShiftAvailability(FarmShift shift, {required bool isToday}) {
+SlotAvailability computeShiftAvailability(
+  FarmShift shift, {
+  required bool isToday,
+}) {
   if (shift.isClosed) return SlotAvailability.closed;
   if (isToday) {
     final parts = shift.startsTime.split(':');
@@ -129,10 +149,7 @@ class FarmSection extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 
 class _FarmBookingFormView extends ConsumerWidget {
-  const _FarmBookingFormView({
-    required this.placeId,
-    required this.placeName,
-  });
+  const _FarmBookingFormView({required this.placeId, required this.placeName});
 
   final String placeId;
   final String placeName;
@@ -209,30 +226,40 @@ class _FarmBookingFormView extends ConsumerWidget {
     final selectedShift = ref.watch(_farmSelectedShiftProvider);
     final partyOn = ref.watch(_farmPartyOnProvider);
     final partyCount = ref.watch(_farmPartyCountProvider);
+    final guestCountError = ref.watch(_farmGuestCountErrorProvider);
     final shiftsAsync = ref.watch(
       farmShiftsProvider(placeId, bookingFormatDate(selectedDate)),
     );
     final submitState = ref.watch(bookingSubmitProvider);
-    final isLoading =
-        submitState.maybeWhen(loading: () => true, orElse: () => false);
+    final isLoading = submitState.maybeWhen(
+      loading: () => true,
+      orElse: () => false,
+    );
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final closedDatesAsync = ref.watch(placeClosedDatesProvider(placeId));
     final closedDates = closedDatesAsync.value ?? const <String>{};
 
     final placeAsync = ref.watch(placeDetailsProvider(placeId));
     final place = placeAsync.value;
-    final autoDiscount = ref.watch(bestAutoDiscountProvider(AutoDiscountKey(
-      orderType: 'bookings',
-      placeId: placeId,
-      merchantId: place?.merchantId,
-      categoryId: place?.categoryId,
-    )));
+    final autoDiscount = ref.watch(
+      bestAutoDiscountProvider(
+        AutoDiscountKey(
+          orderType: 'bookings',
+          placeId: placeId,
+          merchantId: place?.merchantId,
+          categoryId: place?.categoryId,
+        ),
+      ),
+    );
     final promo = ref.watch(_farmPromoProvider);
 
     // Opens the payment webview for the given booking details.
     // Defined here so it can be reused by both ref.listen and onAction.
     void openPaymentWebView(
-        String bookingId, String paymentUrl, String waylReferenceId) {
+      String bookingId,
+      String paymentUrl,
+      String waylReferenceId,
+    ) {
       PaymentWebViewPage.push(
         context,
         paymentUrl,
@@ -263,7 +290,8 @@ class _FarmBookingFormView extends ConsumerWidget {
           // held by a confirmed (paid) booking.
           await ref.read(bookingSubmitProvider.notifier).cancelPending();
           ref.invalidate(
-              farmShiftsProvider(placeId, bookingFormatDate(selectedDate)));
+            farmShiftsProvider(placeId, bookingFormatDate(selectedDate)),
+          );
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -309,7 +337,8 @@ class _FarmBookingFormView extends ConsumerWidget {
               ref.read(_farmSelectedDateProvider.notifier).set(date);
               ref.read(_farmSelectedShiftProvider.notifier).set(null);
               ref.read(_farmPartyOnProvider.notifier).set(false);
-              ref.read(_farmPartyCountProvider.notifier).set(1);
+              ref.read(_farmPartyCountProvider.notifier).set(0);
+              ref.read(_farmGuestCountErrorProvider.notifier).set(false);
               // Release any pending booking row server-side so the next
               // Proceed doesn't collide with it.
               ref.read(bookingSubmitProvider.notifier).cancelPending();
@@ -336,21 +365,26 @@ class _FarmBookingFormView extends ConsumerWidget {
               if (shifts.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 8),
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   child: Text(
                     isAr
                         ? 'لا توجد أوردية متاحة لهذا الموقع.'
                         : 'No shifts available for this location.',
                     style: TextStyle(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.5)),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
                   ),
                 );
               }
-              final baghdadNow = DateTime.now().toUtc().add(const Duration(hours: 3));
-              final isToday = selectedDate.year == baghdadNow.year &&
+              final baghdadNow = DateTime.now().toUtc().add(
+                const Duration(hours: 3),
+              );
+              final isToday =
+                  selectedDate.year == baghdadNow.year &&
                   selectedDate.month == baghdadNow.month &&
                   selectedDate.day == baghdadNow.day;
               return Padding(
@@ -359,8 +393,10 @@ class _FarmBookingFormView extends ConsumerWidget {
                   children: shifts.map((shift) {
                     final isSelected =
                         selectedShift?.shiftType == shift.shiftType;
-                    final availability =
-                        computeShiftAvailability(shift, isToday: isToday);
+                    final availability = computeShiftAvailability(
+                      shift,
+                      isToday: isToday,
+                    );
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: ShiftCard(
@@ -372,7 +408,10 @@ class _FarmBookingFormView extends ConsumerWidget {
                               .read(_farmSelectedShiftProvider.notifier)
                               .set(isSelected ? null : shift);
                           ref.read(_farmPartyOnProvider.notifier).set(false);
-                          ref.read(_farmPartyCountProvider.notifier).set(1);
+                          ref.read(_farmPartyCountProvider.notifier).set(0);
+                          ref
+                              .read(_farmGuestCountErrorProvider.notifier)
+                              .set(false);
                           // Release any pending booking row server-side.
                           ref
                               .read(bookingSubmitProvider.notifier)
@@ -387,36 +426,44 @@ class _FarmBookingFormView extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
 
-          // ── Party toggle + guest counter (independent of each other) ─────
-          if (selectedShift != null && selectedShift.partyEnabled) ...[
+          // ── Party toggle (flat-fee bundle) and guest counter (extra-guest
+          // fee) are independent features, gated separately ─────────────
+          if (selectedShift != null &&
+              (selectedShift.partyEnabled ||
+                  selectedShift.partyExtraPersonFeeIqd > 0)) ...[
             const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: PartyOptionCard(
-                flatFeeIqd: selectedShift.partyFlatFeeIqd,
-                isOn: partyOn,
-                onToggle: (v) {
-                  ref.read(_farmPartyOnProvider.notifier).set(v);
-                  // A previously-created pending booking (from an earlier
-                  // Proceed tap) was priced without this change — release it
-                  // so the next Proceed creates a fresh, correctly-priced one.
-                  ref.read(bookingSubmitProvider.notifier).cancelPending();
-                },
+            if (selectedShift.partyEnabled) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: PartyOptionCard(
+                  flatFeeIqd: selectedShift.partyFlatFeeIqd,
+                  isOn: partyOn,
+                  onToggle: (v) {
+                    ref.read(_farmPartyOnProvider.notifier).set(v);
+                    // A previously-created pending booking (from an earlier
+                    // Proceed tap) was priced without this change — release it
+                    // so the next Proceed creates a fresh, correctly-priced one.
+                    ref.read(bookingSubmitProvider.notifier).cancelPending();
+                  },
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: GuestCountCard(
-                includedPersons: selectedShift.partyIncludedPersons,
-                extraPersonFeeIqd: selectedShift.partyExtraPersonFeeIqd,
-                guestCount: partyCount,
-                onGuestCountChanged: (v) {
-                  ref.read(_farmPartyCountProvider.notifier).set(v);
-                  ref.read(bookingSubmitProvider.notifier).cancelPending();
-                },
+              const SizedBox(height: 12),
+            ],
+            if (!partyOn && selectedShift.partyExtraPersonFeeIqd > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: GuestCountCard(
+                  includedPersons: selectedShift.extraGuestThresholdPersons,
+                  extraPersonFeeIqd: selectedShift.partyExtraPersonFeeIqd,
+                  guestCount: partyCount,
+                  showError: guestCountError,
+                  onGuestCountChanged: (v) {
+                    ref.read(_farmPartyCountProvider.notifier).set(v);
+                    ref.read(_farmGuestCountErrorProvider.notifier).set(false);
+                    ref.read(bookingSubmitProvider.notifier).cancelPending();
+                  },
+                ),
               ),
-            ),
             const SizedBox(height: 16),
           ],
 
@@ -426,13 +473,16 @@ class _FarmBookingFormView extends ConsumerWidget {
             transitionBuilder: (child, animation) => FadeTransition(
               opacity: animation,
               child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.08),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
+                position:
+                    Tween<Offset>(
+                      begin: const Offset(0, 0.08),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      ),
+                    ),
                 child: child,
               ),
             ),
@@ -440,12 +490,18 @@ class _FarmBookingFormView extends ConsumerWidget {
                 ? Builder(
                     key: const ValueKey('summary-visible'),
                     builder: (context) {
-                      final extraGuests = (partyCount -
-                              selectedShift.partyIncludedPersons)
-                          .clamp(0, 1 << 30);
+                      final guestCountRequired =
+                          !partyOn &&
+                          selectedShift.partyExtraPersonFeeIqd > 0 &&
+                          partyCount <= 0;
+                      final extraGuests = partyOn
+                          ? 0
+                          : (partyCount -
+                                    selectedShift.extraGuestThresholdPersons)
+                                .clamp(0, 1 << 30);
                       final partyFee =
                           (partyOn ? selectedShift.partyFlatFeeIqd : 0) +
-                              extraGuests * selectedShift.partyExtraPersonFeeIqd;
+                          extraGuests * selectedShift.partyExtraPersonFeeIqd;
                       final subtotal = selectedShift.priceIqd + partyFee;
                       final eff = _FarmBookingFormView._resolveEffective(
                         subtotal: subtotal,
@@ -455,7 +511,8 @@ class _FarmBookingFormView extends ConsumerWidget {
 
                       // Re-validate promo on subtotal change.
                       if (promo != null &&
-                          promo.finalAmount + promo.discountAmount != subtotal) {
+                          promo.finalAmount + promo.discountAmount !=
+                              subtotal) {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           ref.read(_farmPromoProvider.notifier).set(null);
                         });
@@ -465,20 +522,26 @@ class _FarmBookingFormView extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: BookingSummaryCard(
                           title: isAr ? 'ملخص الحجز' : 'Booking Summary',
-                          badgeText: _shiftLabel(selectedShift.shiftType,
-                              isArabic: isAr),
+                          badgeText: _shiftLabel(
+                            selectedShift.shiftType,
+                            isArabic: isAr,
+                          ),
                           rows: [
                             BookingSummaryRow(
                               icon: Icons.calendar_today_rounded,
                               label: isAr ? 'التاريخ' : 'Date',
-                              value: bookingDisplayDate(selectedDate,
-                                  isArabic: isAr),
+                              value: bookingDisplayDate(
+                                selectedDate,
+                                isArabic: isAr,
+                              ),
                             ),
                             BookingSummaryRow(
                               icon: Icons.wb_sunny_rounded,
                               label: isAr ? 'الوردية' : 'Shift',
-                              value: _shiftLabel(selectedShift.shiftType,
-                                  isArabic: isAr),
+                              value: _shiftLabel(
+                                selectedShift.shiftType,
+                                isArabic: isAr,
+                              ),
                             ),
                             BookingSummaryRow(
                               icon: Icons.schedule_rounded,
@@ -489,9 +552,12 @@ class _FarmBookingFormView extends ConsumerWidget {
                             if (partyOn && selectedShift.partyFlatFeeIqd > 0)
                               BookingSummaryRow(
                                 icon: Icons.groups_rounded,
-                                label: isAr ? 'رسوم الحفلة' : 'Party fee',
+                                label: isAr
+                                    ? 'رسوم الضيوف الاضافيين'
+                                    : 'Extra Guests Fee',
                                 value: _FarmBookingFormView._formatIqd(
-                                    selectedShift.partyFlatFeeIqd),
+                                  selectedShift.partyFlatFeeIqd,
+                                ),
                               ),
                             if (extraGuests > 0)
                               BookingSummaryRow(
@@ -512,8 +578,9 @@ class _FarmBookingFormView extends ConsumerWidget {
                               ? '−${_FarmBookingFormView._formatIqd(eff.discount)}'
                               : null,
                           totalLabel: isAr ? 'الإجمالي' : 'Total Amount',
-                          totalValue:
-                              _FarmBookingFormView._formatIqd(eff.finalAmount),
+                          totalValue: _FarmBookingFormView._formatIqd(
+                            eff.finalAmount,
+                          ),
                           extraSlot: subtotal > 0
                               ? PromoCodeField(
                                   orderType: 'bookings',
@@ -528,20 +595,46 @@ class _FarmBookingFormView extends ConsumerWidget {
                                       .set(p),
                                 )
                               : null,
-                          actionLabel:
-                              isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
+                          actionLabel: isAr
+                              ? 'المتابعة للدفع'
+                              : 'Proceed to Payment',
                           onAction: () {
+                            if (guestCountRequired) {
+                              ref
+                                  .read(_farmGuestCountErrorProvider.notifier)
+                                  .set(true);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isAr
+                                        ? 'الرجاء إدخال عدد الأشخاص القادمين'
+                                        : 'Please enter the number of guests',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
                             // If a pending booking already exists, reuse its payment URL
                             // instead of creating a new booking (avoids DB constraint error).
                             final current = ref.read(bookingSubmitProvider);
                             current.maybeWhen(
-                              success: (bookingId, paymentUrl, holdUntil,
-                                  waylReferenceId) {
-                                if (paymentUrl.isNotEmpty) {
-                                  openPaymentWebView(
-                                      bookingId, paymentUrl, waylReferenceId);
-                                }
-                              },
+                              success:
+                                  (
+                                    bookingId,
+                                    paymentUrl,
+                                    holdUntil,
+                                    waylReferenceId,
+                                  ) {
+                                    if (paymentUrl.isNotEmpty) {
+                                      openPaymentWebView(
+                                        bookingId,
+                                        paymentUrl,
+                                        waylReferenceId,
+                                      );
+                                    }
+                                  },
                               orElse: () {
                                 final shift = selectedShift;
                                 ref
@@ -552,7 +645,10 @@ class _FarmBookingFormView extends ConsumerWidget {
                                       shiftType: shift.shiftType,
                                       promoCode: promo?.code,
                                       partySize:
-                                          shift.partyEnabled ? partyCount : null,
+                                          (!partyOn &&
+                                              shift.partyExtraPersonFeeIqd > 0)
+                                          ? partyCount
+                                          : null,
                                       bringingParty: partyOn,
                                     );
                               },

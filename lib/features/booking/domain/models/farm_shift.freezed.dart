@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$FarmShift {
 
- String get placeId; FarmShiftType get shiftType; String get startsTime; String get endsTime; int get priceIqd; int? get standardPriceIqd; List<int>? get overrideWeekdays; bool get isAvailable; bool get isClosed; bool get partyEnabled; int get partyIncludedPersons; int get partyFlatFeeIqd; int get partyExtraPersonFeeIqd;
+ String get placeId; FarmShiftType get shiftType; String get startsTime; String get endsTime; int get priceIqd; int? get standardPriceIqd; List<int>? get overrideWeekdays; bool get isAvailable; bool get isClosed; bool get partyEnabled; int get partyIncludedPersons; int get partyFlatFeeIqd; int get partyExtraPersonFeeIqd; int get extraGuestThresholdPersons;
 /// Create a copy of FarmShift
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $FarmShiftCopyWith<FarmShift> get copyWith => _$FarmShiftCopyWithImpl<FarmShift>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FarmShift&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.shiftType, shiftType) || other.shiftType == shiftType)&&(identical(other.startsTime, startsTime) || other.startsTime == startsTime)&&(identical(other.endsTime, endsTime) || other.endsTime == endsTime)&&(identical(other.priceIqd, priceIqd) || other.priceIqd == priceIqd)&&(identical(other.standardPriceIqd, standardPriceIqd) || other.standardPriceIqd == standardPriceIqd)&&const DeepCollectionEquality().equals(other.overrideWeekdays, overrideWeekdays)&&(identical(other.isAvailable, isAvailable) || other.isAvailable == isAvailable)&&(identical(other.isClosed, isClosed) || other.isClosed == isClosed)&&(identical(other.partyEnabled, partyEnabled) || other.partyEnabled == partyEnabled)&&(identical(other.partyIncludedPersons, partyIncludedPersons) || other.partyIncludedPersons == partyIncludedPersons)&&(identical(other.partyFlatFeeIqd, partyFlatFeeIqd) || other.partyFlatFeeIqd == partyFlatFeeIqd)&&(identical(other.partyExtraPersonFeeIqd, partyExtraPersonFeeIqd) || other.partyExtraPersonFeeIqd == partyExtraPersonFeeIqd));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FarmShift&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.shiftType, shiftType) || other.shiftType == shiftType)&&(identical(other.startsTime, startsTime) || other.startsTime == startsTime)&&(identical(other.endsTime, endsTime) || other.endsTime == endsTime)&&(identical(other.priceIqd, priceIqd) || other.priceIqd == priceIqd)&&(identical(other.standardPriceIqd, standardPriceIqd) || other.standardPriceIqd == standardPriceIqd)&&const DeepCollectionEquality().equals(other.overrideWeekdays, overrideWeekdays)&&(identical(other.isAvailable, isAvailable) || other.isAvailable == isAvailable)&&(identical(other.isClosed, isClosed) || other.isClosed == isClosed)&&(identical(other.partyEnabled, partyEnabled) || other.partyEnabled == partyEnabled)&&(identical(other.partyIncludedPersons, partyIncludedPersons) || other.partyIncludedPersons == partyIncludedPersons)&&(identical(other.partyFlatFeeIqd, partyFlatFeeIqd) || other.partyFlatFeeIqd == partyFlatFeeIqd)&&(identical(other.partyExtraPersonFeeIqd, partyExtraPersonFeeIqd) || other.partyExtraPersonFeeIqd == partyExtraPersonFeeIqd)&&(identical(other.extraGuestThresholdPersons, extraGuestThresholdPersons) || other.extraGuestThresholdPersons == extraGuestThresholdPersons));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,placeId,shiftType,startsTime,endsTime,priceIqd,standardPriceIqd,const DeepCollectionEquality().hash(overrideWeekdays),isAvailable,isClosed,partyEnabled,partyIncludedPersons,partyFlatFeeIqd,partyExtraPersonFeeIqd);
+int get hashCode => Object.hash(runtimeType,placeId,shiftType,startsTime,endsTime,priceIqd,standardPriceIqd,const DeepCollectionEquality().hash(overrideWeekdays),isAvailable,isClosed,partyEnabled,partyIncludedPersons,partyFlatFeeIqd,partyExtraPersonFeeIqd,extraGuestThresholdPersons);
 
 @override
 String toString() {
-  return 'FarmShift(placeId: $placeId, shiftType: $shiftType, startsTime: $startsTime, endsTime: $endsTime, priceIqd: $priceIqd, standardPriceIqd: $standardPriceIqd, overrideWeekdays: $overrideWeekdays, isAvailable: $isAvailable, isClosed: $isClosed, partyEnabled: $partyEnabled, partyIncludedPersons: $partyIncludedPersons, partyFlatFeeIqd: $partyFlatFeeIqd, partyExtraPersonFeeIqd: $partyExtraPersonFeeIqd)';
+  return 'FarmShift(placeId: $placeId, shiftType: $shiftType, startsTime: $startsTime, endsTime: $endsTime, priceIqd: $priceIqd, standardPriceIqd: $standardPriceIqd, overrideWeekdays: $overrideWeekdays, isAvailable: $isAvailable, isClosed: $isClosed, partyEnabled: $partyEnabled, partyIncludedPersons: $partyIncludedPersons, partyFlatFeeIqd: $partyFlatFeeIqd, partyExtraPersonFeeIqd: $partyExtraPersonFeeIqd, extraGuestThresholdPersons: $extraGuestThresholdPersons)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $FarmShiftCopyWith<$Res>  {
   factory $FarmShiftCopyWith(FarmShift value, $Res Function(FarmShift) _then) = _$FarmShiftCopyWithImpl;
 @useResult
 $Res call({
- String placeId, FarmShiftType shiftType, String startsTime, String endsTime, int priceIqd, int? standardPriceIqd, List<int>? overrideWeekdays, bool isAvailable, bool isClosed, bool partyEnabled, int partyIncludedPersons, int partyFlatFeeIqd, int partyExtraPersonFeeIqd
+ String placeId, FarmShiftType shiftType, String startsTime, String endsTime, int priceIqd, int? standardPriceIqd, List<int>? overrideWeekdays, bool isAvailable, bool isClosed, bool partyEnabled, int partyIncludedPersons, int partyFlatFeeIqd, int partyExtraPersonFeeIqd, int extraGuestThresholdPersons
 });
 
 
@@ -65,7 +65,7 @@ class _$FarmShiftCopyWithImpl<$Res>
 
 /// Create a copy of FarmShift
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? placeId = null,Object? shiftType = null,Object? startsTime = null,Object? endsTime = null,Object? priceIqd = null,Object? standardPriceIqd = freezed,Object? overrideWeekdays = freezed,Object? isAvailable = null,Object? isClosed = null,Object? partyEnabled = null,Object? partyIncludedPersons = null,Object? partyFlatFeeIqd = null,Object? partyExtraPersonFeeIqd = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? placeId = null,Object? shiftType = null,Object? startsTime = null,Object? endsTime = null,Object? priceIqd = null,Object? standardPriceIqd = freezed,Object? overrideWeekdays = freezed,Object? isAvailable = null,Object? isClosed = null,Object? partyEnabled = null,Object? partyIncludedPersons = null,Object? partyFlatFeeIqd = null,Object? partyExtraPersonFeeIqd = null,Object? extraGuestThresholdPersons = null,}) {
   return _then(_self.copyWith(
 placeId: null == placeId ? _self.placeId : placeId // ignore: cast_nullable_to_non_nullable
 as String,shiftType: null == shiftType ? _self.shiftType : shiftType // ignore: cast_nullable_to_non_nullable
@@ -80,6 +80,7 @@ as bool,partyEnabled: null == partyEnabled ? _self.partyEnabled : partyEnabled /
 as bool,partyIncludedPersons: null == partyIncludedPersons ? _self.partyIncludedPersons : partyIncludedPersons // ignore: cast_nullable_to_non_nullable
 as int,partyFlatFeeIqd: null == partyFlatFeeIqd ? _self.partyFlatFeeIqd : partyFlatFeeIqd // ignore: cast_nullable_to_non_nullable
 as int,partyExtraPersonFeeIqd: null == partyExtraPersonFeeIqd ? _self.partyExtraPersonFeeIqd : partyExtraPersonFeeIqd // ignore: cast_nullable_to_non_nullable
+as int,extraGuestThresholdPersons: null == extraGuestThresholdPersons ? _self.extraGuestThresholdPersons : extraGuestThresholdPersons // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -165,10 +166,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String placeId,  FarmShiftType shiftType,  String startsTime,  String endsTime,  int priceIqd,  int? standardPriceIqd,  List<int>? overrideWeekdays,  bool isAvailable,  bool isClosed,  bool partyEnabled,  int partyIncludedPersons,  int partyFlatFeeIqd,  int partyExtraPersonFeeIqd)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String placeId,  FarmShiftType shiftType,  String startsTime,  String endsTime,  int priceIqd,  int? standardPriceIqd,  List<int>? overrideWeekdays,  bool isAvailable,  bool isClosed,  bool partyEnabled,  int partyIncludedPersons,  int partyFlatFeeIqd,  int partyExtraPersonFeeIqd,  int extraGuestThresholdPersons)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _FarmShift() when $default != null:
-return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_that.priceIqd,_that.standardPriceIqd,_that.overrideWeekdays,_that.isAvailable,_that.isClosed,_that.partyEnabled,_that.partyIncludedPersons,_that.partyFlatFeeIqd,_that.partyExtraPersonFeeIqd);case _:
+return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_that.priceIqd,_that.standardPriceIqd,_that.overrideWeekdays,_that.isAvailable,_that.isClosed,_that.partyEnabled,_that.partyIncludedPersons,_that.partyFlatFeeIqd,_that.partyExtraPersonFeeIqd,_that.extraGuestThresholdPersons);case _:
   return orElse();
 
 }
@@ -186,10 +187,10 @@ return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String placeId,  FarmShiftType shiftType,  String startsTime,  String endsTime,  int priceIqd,  int? standardPriceIqd,  List<int>? overrideWeekdays,  bool isAvailable,  bool isClosed,  bool partyEnabled,  int partyIncludedPersons,  int partyFlatFeeIqd,  int partyExtraPersonFeeIqd)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String placeId,  FarmShiftType shiftType,  String startsTime,  String endsTime,  int priceIqd,  int? standardPriceIqd,  List<int>? overrideWeekdays,  bool isAvailable,  bool isClosed,  bool partyEnabled,  int partyIncludedPersons,  int partyFlatFeeIqd,  int partyExtraPersonFeeIqd,  int extraGuestThresholdPersons)  $default,) {final _that = this;
 switch (_that) {
 case _FarmShift():
-return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_that.priceIqd,_that.standardPriceIqd,_that.overrideWeekdays,_that.isAvailable,_that.isClosed,_that.partyEnabled,_that.partyIncludedPersons,_that.partyFlatFeeIqd,_that.partyExtraPersonFeeIqd);case _:
+return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_that.priceIqd,_that.standardPriceIqd,_that.overrideWeekdays,_that.isAvailable,_that.isClosed,_that.partyEnabled,_that.partyIncludedPersons,_that.partyFlatFeeIqd,_that.partyExtraPersonFeeIqd,_that.extraGuestThresholdPersons);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -206,10 +207,10 @@ return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String placeId,  FarmShiftType shiftType,  String startsTime,  String endsTime,  int priceIqd,  int? standardPriceIqd,  List<int>? overrideWeekdays,  bool isAvailable,  bool isClosed,  bool partyEnabled,  int partyIncludedPersons,  int partyFlatFeeIqd,  int partyExtraPersonFeeIqd)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String placeId,  FarmShiftType shiftType,  String startsTime,  String endsTime,  int priceIqd,  int? standardPriceIqd,  List<int>? overrideWeekdays,  bool isAvailable,  bool isClosed,  bool partyEnabled,  int partyIncludedPersons,  int partyFlatFeeIqd,  int partyExtraPersonFeeIqd,  int extraGuestThresholdPersons)?  $default,) {final _that = this;
 switch (_that) {
 case _FarmShift() when $default != null:
-return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_that.priceIqd,_that.standardPriceIqd,_that.overrideWeekdays,_that.isAvailable,_that.isClosed,_that.partyEnabled,_that.partyIncludedPersons,_that.partyFlatFeeIqd,_that.partyExtraPersonFeeIqd);case _:
+return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_that.priceIqd,_that.standardPriceIqd,_that.overrideWeekdays,_that.isAvailable,_that.isClosed,_that.partyEnabled,_that.partyIncludedPersons,_that.partyFlatFeeIqd,_that.partyExtraPersonFeeIqd,_that.extraGuestThresholdPersons);case _:
   return null;
 
 }
@@ -221,7 +222,7 @@ return $default(_that.placeId,_that.shiftType,_that.startsTime,_that.endsTime,_t
 @JsonSerializable()
 
 class _FarmShift implements FarmShift {
-  const _FarmShift({this.placeId = '', this.shiftType = FarmShiftType.day, this.startsTime = '', this.endsTime = '', this.priceIqd = 0, this.standardPriceIqd, final  List<int>? overrideWeekdays, this.isAvailable = true, this.isClosed = false, this.partyEnabled = false, this.partyIncludedPersons = 1, this.partyFlatFeeIqd = 0, this.partyExtraPersonFeeIqd = 0}): _overrideWeekdays = overrideWeekdays;
+  const _FarmShift({this.placeId = '', this.shiftType = FarmShiftType.day, this.startsTime = '', this.endsTime = '', this.priceIqd = 0, this.standardPriceIqd, final  List<int>? overrideWeekdays, this.isAvailable = true, this.isClosed = false, this.partyEnabled = false, this.partyIncludedPersons = 1, this.partyFlatFeeIqd = 0, this.partyExtraPersonFeeIqd = 0, this.extraGuestThresholdPersons = 1}): _overrideWeekdays = overrideWeekdays;
   factory _FarmShift.fromJson(Map<String, dynamic> json) => _$FarmShiftFromJson(json);
 
 @override@JsonKey() final  String placeId;
@@ -245,6 +246,7 @@ class _FarmShift implements FarmShift {
 @override@JsonKey() final  int partyIncludedPersons;
 @override@JsonKey() final  int partyFlatFeeIqd;
 @override@JsonKey() final  int partyExtraPersonFeeIqd;
+@override@JsonKey() final  int extraGuestThresholdPersons;
 
 /// Create a copy of FarmShift
 /// with the given fields replaced by the non-null parameter values.
@@ -259,16 +261,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _FarmShift&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.shiftType, shiftType) || other.shiftType == shiftType)&&(identical(other.startsTime, startsTime) || other.startsTime == startsTime)&&(identical(other.endsTime, endsTime) || other.endsTime == endsTime)&&(identical(other.priceIqd, priceIqd) || other.priceIqd == priceIqd)&&(identical(other.standardPriceIqd, standardPriceIqd) || other.standardPriceIqd == standardPriceIqd)&&const DeepCollectionEquality().equals(other._overrideWeekdays, _overrideWeekdays)&&(identical(other.isAvailable, isAvailable) || other.isAvailable == isAvailable)&&(identical(other.isClosed, isClosed) || other.isClosed == isClosed)&&(identical(other.partyEnabled, partyEnabled) || other.partyEnabled == partyEnabled)&&(identical(other.partyIncludedPersons, partyIncludedPersons) || other.partyIncludedPersons == partyIncludedPersons)&&(identical(other.partyFlatFeeIqd, partyFlatFeeIqd) || other.partyFlatFeeIqd == partyFlatFeeIqd)&&(identical(other.partyExtraPersonFeeIqd, partyExtraPersonFeeIqd) || other.partyExtraPersonFeeIqd == partyExtraPersonFeeIqd));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _FarmShift&&(identical(other.placeId, placeId) || other.placeId == placeId)&&(identical(other.shiftType, shiftType) || other.shiftType == shiftType)&&(identical(other.startsTime, startsTime) || other.startsTime == startsTime)&&(identical(other.endsTime, endsTime) || other.endsTime == endsTime)&&(identical(other.priceIqd, priceIqd) || other.priceIqd == priceIqd)&&(identical(other.standardPriceIqd, standardPriceIqd) || other.standardPriceIqd == standardPriceIqd)&&const DeepCollectionEquality().equals(other._overrideWeekdays, _overrideWeekdays)&&(identical(other.isAvailable, isAvailable) || other.isAvailable == isAvailable)&&(identical(other.isClosed, isClosed) || other.isClosed == isClosed)&&(identical(other.partyEnabled, partyEnabled) || other.partyEnabled == partyEnabled)&&(identical(other.partyIncludedPersons, partyIncludedPersons) || other.partyIncludedPersons == partyIncludedPersons)&&(identical(other.partyFlatFeeIqd, partyFlatFeeIqd) || other.partyFlatFeeIqd == partyFlatFeeIqd)&&(identical(other.partyExtraPersonFeeIqd, partyExtraPersonFeeIqd) || other.partyExtraPersonFeeIqd == partyExtraPersonFeeIqd)&&(identical(other.extraGuestThresholdPersons, extraGuestThresholdPersons) || other.extraGuestThresholdPersons == extraGuestThresholdPersons));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,placeId,shiftType,startsTime,endsTime,priceIqd,standardPriceIqd,const DeepCollectionEquality().hash(_overrideWeekdays),isAvailable,isClosed,partyEnabled,partyIncludedPersons,partyFlatFeeIqd,partyExtraPersonFeeIqd);
+int get hashCode => Object.hash(runtimeType,placeId,shiftType,startsTime,endsTime,priceIqd,standardPriceIqd,const DeepCollectionEquality().hash(_overrideWeekdays),isAvailable,isClosed,partyEnabled,partyIncludedPersons,partyFlatFeeIqd,partyExtraPersonFeeIqd,extraGuestThresholdPersons);
 
 @override
 String toString() {
-  return 'FarmShift(placeId: $placeId, shiftType: $shiftType, startsTime: $startsTime, endsTime: $endsTime, priceIqd: $priceIqd, standardPriceIqd: $standardPriceIqd, overrideWeekdays: $overrideWeekdays, isAvailable: $isAvailable, isClosed: $isClosed, partyEnabled: $partyEnabled, partyIncludedPersons: $partyIncludedPersons, partyFlatFeeIqd: $partyFlatFeeIqd, partyExtraPersonFeeIqd: $partyExtraPersonFeeIqd)';
+  return 'FarmShift(placeId: $placeId, shiftType: $shiftType, startsTime: $startsTime, endsTime: $endsTime, priceIqd: $priceIqd, standardPriceIqd: $standardPriceIqd, overrideWeekdays: $overrideWeekdays, isAvailable: $isAvailable, isClosed: $isClosed, partyEnabled: $partyEnabled, partyIncludedPersons: $partyIncludedPersons, partyFlatFeeIqd: $partyFlatFeeIqd, partyExtraPersonFeeIqd: $partyExtraPersonFeeIqd, extraGuestThresholdPersons: $extraGuestThresholdPersons)';
 }
 
 
@@ -279,7 +281,7 @@ abstract mixin class _$FarmShiftCopyWith<$Res> implements $FarmShiftCopyWith<$Re
   factory _$FarmShiftCopyWith(_FarmShift value, $Res Function(_FarmShift) _then) = __$FarmShiftCopyWithImpl;
 @override @useResult
 $Res call({
- String placeId, FarmShiftType shiftType, String startsTime, String endsTime, int priceIqd, int? standardPriceIqd, List<int>? overrideWeekdays, bool isAvailable, bool isClosed, bool partyEnabled, int partyIncludedPersons, int partyFlatFeeIqd, int partyExtraPersonFeeIqd
+ String placeId, FarmShiftType shiftType, String startsTime, String endsTime, int priceIqd, int? standardPriceIqd, List<int>? overrideWeekdays, bool isAvailable, bool isClosed, bool partyEnabled, int partyIncludedPersons, int partyFlatFeeIqd, int partyExtraPersonFeeIqd, int extraGuestThresholdPersons
 });
 
 
@@ -296,7 +298,7 @@ class __$FarmShiftCopyWithImpl<$Res>
 
 /// Create a copy of FarmShift
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? placeId = null,Object? shiftType = null,Object? startsTime = null,Object? endsTime = null,Object? priceIqd = null,Object? standardPriceIqd = freezed,Object? overrideWeekdays = freezed,Object? isAvailable = null,Object? isClosed = null,Object? partyEnabled = null,Object? partyIncludedPersons = null,Object? partyFlatFeeIqd = null,Object? partyExtraPersonFeeIqd = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? placeId = null,Object? shiftType = null,Object? startsTime = null,Object? endsTime = null,Object? priceIqd = null,Object? standardPriceIqd = freezed,Object? overrideWeekdays = freezed,Object? isAvailable = null,Object? isClosed = null,Object? partyEnabled = null,Object? partyIncludedPersons = null,Object? partyFlatFeeIqd = null,Object? partyExtraPersonFeeIqd = null,Object? extraGuestThresholdPersons = null,}) {
   return _then(_FarmShift(
 placeId: null == placeId ? _self.placeId : placeId // ignore: cast_nullable_to_non_nullable
 as String,shiftType: null == shiftType ? _self.shiftType : shiftType // ignore: cast_nullable_to_non_nullable
@@ -311,6 +313,7 @@ as bool,partyEnabled: null == partyEnabled ? _self.partyEnabled : partyEnabled /
 as bool,partyIncludedPersons: null == partyIncludedPersons ? _self.partyIncludedPersons : partyIncludedPersons // ignore: cast_nullable_to_non_nullable
 as int,partyFlatFeeIqd: null == partyFlatFeeIqd ? _self.partyFlatFeeIqd : partyFlatFeeIqd // ignore: cast_nullable_to_non_nullable
 as int,partyExtraPersonFeeIqd: null == partyExtraPersonFeeIqd ? _self.partyExtraPersonFeeIqd : partyExtraPersonFeeIqd // ignore: cast_nullable_to_non_nullable
+as int,extraGuestThresholdPersons: null == extraGuestThresholdPersons ? _self.extraGuestThresholdPersons : extraGuestThresholdPersons // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }

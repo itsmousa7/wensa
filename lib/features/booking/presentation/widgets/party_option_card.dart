@@ -4,7 +4,7 @@ import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
-/// Toggle for the flat party fee, shown under the shift picker in
+/// Toggle for the flat Extra Guests Fee, shown under the shift picker in
 /// [FarmSection] when the selected shift has party pricing enabled.
 /// Purely presentational — the caller owns all state. Guest-count
 /// entry lives separately in [GuestCountCard].
@@ -76,7 +76,7 @@ class PartyOptionCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  isAr ? 'هل تحضر مجموعة؟' : 'Making a party?',
+                  isAr ? 'لديك حفلة؟' : 'Making a party?',
                   style: (tt.titleSmall ?? const TextStyle()).copyWith(
                     fontWeight: FontWeight.w700,
                     color: isOn ? cs.primary : cs.onSurface,
@@ -86,26 +86,27 @@ class PartyOptionCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     isAr
-                        ? '${_formatIqd(flatFeeIqd)} د.ع رسوم الحفلة'
-                        : '${_formatIqd(flatFeeIqd)} IQD party fee',
-                    style: (tt.bodySmall ?? const TextStyle())
-                        .copyWith(color: cs.onSurface.withValues(alpha: 0.5)),
+                        ? '${_formatIqd(flatFeeIqd)} د.ع رسوم الضيوف الاضافيين'
+                        : '${_formatIqd(flatFeeIqd)} IQD Extra Guests Fee',
+                    style: (tt.bodySmall ?? const TextStyle()).copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                    ),
                   ),
                 ],
               ],
             ),
           ),
           const SizedBox(width: 8),
-          Platform.isIOS
-              ? Transform.scale(
-                  scaleX: isAr ? -1 : 1,
-                  child: CNSwitch(value: isOn, onChanged: onToggle),
-                )
-              : Switch.adaptive(
-                  value: isOn,
-                  onChanged: onToggle,
-                  activeTrackColor: cs.primary,
-                ),
+          Transform.scale(
+            scaleX: isAr ? -1 : 1,
+            child: Platform.isIOS
+                ? CNSwitch(value: isOn, onChanged: onToggle)
+                : Switch.adaptive(
+                    value: isOn,
+                    onChanged: onToggle,
+                    activeTrackColor: cs.primary,
+                  ),
+          ),
         ],
       ),
     );

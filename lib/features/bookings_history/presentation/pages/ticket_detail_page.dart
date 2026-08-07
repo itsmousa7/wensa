@@ -5,9 +5,9 @@ import 'dart:io';
 import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:future_riverpod/core/widgets/glass_back_button.dart';
 import 'package:future_riverpod/core/share/share_link.dart';
 import 'package:future_riverpod/core/share/share_service.dart';
+import 'package:future_riverpod/core/widgets/glass_back_button.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership.dart';
@@ -223,9 +223,12 @@ class _BookingDetailBody extends ConsumerWidget {
           );
         }
         if (d['party_fee_iqd'] != null) {
+          final isPartyFlatFee = d['bringing_party'] == true;
           extraCells.add(
             TicketInfoCell(
-              label: isArabic ? 'رسوم الحفلة' : 'Party Fee',
+              label: isPartyFlatFee
+                  ? (isArabic ? 'رسوم الحفلة' : 'Party Fee')
+                  : (isArabic ? 'رسوم الضيوف الاضافيين' : 'Extra Guests Fee'),
               value: _amount((d['party_fee_iqd'] as num).toInt()),
             ),
           );
@@ -493,7 +496,7 @@ class _TicketScreenState extends State<_TicketScreen> {
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: const StadiumBorder(),
-                side: BorderSide.none,
+                side: BorderSide(color: cs.outline, width: 1.5),
               ),
             ),
           ),

@@ -20,6 +20,7 @@ abstract class FarmShift with _$FarmShift {
     @Default(1) int partyIncludedPersons,
     @Default(0) int partyFlatFeeIqd,
     @Default(0) int partyExtraPersonFeeIqd,
+    @Default(1) int extraGuestThresholdPersons,
   }) = _FarmShift;
 
   factory FarmShift.fromJson(Map<String, dynamic> json) => FarmShift(
@@ -38,5 +39,7 @@ abstract class FarmShift with _$FarmShift {
     partyIncludedPersons: (json['party_included_persons'] as num?)?.toInt() ?? 1,
     partyFlatFeeIqd: (json['party_flat_fee_iqd'] as num?)?.toInt() ?? 0,
     partyExtraPersonFeeIqd: (json['party_extra_person_fee_iqd'] as num?)?.toInt() ?? 0,
+    extraGuestThresholdPersons:
+        (json['extra_guest_threshold_persons'] as num?)?.toInt() ?? 1,
   );
 }
