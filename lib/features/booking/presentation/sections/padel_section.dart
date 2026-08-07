@@ -290,25 +290,6 @@ class _BookingFormView extends ConsumerWidget {
             ),
           );
         },
-        onPaymentCancelled: () async {
-          // Release the pending row server-side the moment the user closes the
-          // webview, so the slot becomes available again right away (no hot
-          // restart, no waiting on the expiry cron). cancelPending() reads the
-          // booking id from the success state, cancels via cancel_booking, then
-          // resets local state to idle — which also re-enables Proceed only
-          // after the row is gone, so a retry can't race the stale pending row.
-          await ref.read(bookingSubmitProvider.notifier).cancelPending();
-          if (selectedCourt != null) {
-            ref.invalidate(availableSlotsProvider(
-              courtId: selectedCourt.id,
-              date: bookingFormatDate(selectedDate),
-            ));
-          }
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Payment cancelled.')),
-          );
-        },
       );
     }
 

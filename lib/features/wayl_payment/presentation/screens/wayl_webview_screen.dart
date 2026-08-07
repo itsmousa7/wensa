@@ -22,7 +22,6 @@ class WaylWebViewScreen extends StatefulWidget {
     this.apiService,
     this.onPaymentSuccess,
     this.onPaymentFailed,
-    this.onPaymentCancelled,
   });
 
   final String paymentUrl;
@@ -31,7 +30,6 @@ class WaylWebViewScreen extends StatefulWidget {
   final WaylApiService? apiService;
   final void Function(String referenceId, String orderId)? onPaymentSuccess;
   final void Function()? onPaymentFailed;
-  final void Function()? onPaymentCancelled;
 
   @override
   State<WaylWebViewScreen> createState() => _WaylWebViewScreenState();
@@ -56,14 +54,13 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
   @override
   void dispose() {
     _pollingTimer?.cancel();
-    // If we leave the screen without success/failure (X button, system back,
-    // gesture, OS pop), treat it as a user cancel so the parent can release
-    // any pending booking row server-side. Guarded by `_resultHandled` to
-    // avoid double-firing alongside success/failure.
-    if (!_resultHandled) {
-      _resultHandled = true;
-      widget.onPaymentCancelled?.call();
-    }
+    // Leaving the screen without a detected success/failure (X button,
+    // system back, gesture, OS pop) does NOT mean the payment was cancelled
+    // — the customer may still complete it, or it may already be settling
+    // server-side. Do nothing here; a genuinely abandoned pending booking
+    // is released later by the server-side hold-expiry cron (status becomes
+    // 'expired', not 'cancelled').
+    _resultHandled = true;
     super.dispose();
   }
 
@@ -278,16 +275,11 @@ class _WaylWebViewScreenState extends State<WaylWebViewScreen> {
     return Scaffold(
       appBar: AppBar(
         leadingWidth: GlassBackButton.appBarLeadingWidth,
-        // Fire the cancel callback BEFORE pop so the parent's state reset +
-        // snackbar happen immediately, rather than waiting ~300ms for the
-        // pop animation to complete before dispose() fires. System-back /
-        // gesture pops still get caught by the guarded dispose() handler.
+        // Mark handled so a navigation event racing the pop animation can't
+        // be mistaken for a payment result.
         leading: GlassBackButton.appBarLeading(
           onPressed: () {
-            if (!_resultHandled) {
-              _resultHandled = true;
-              widget.onPaymentCancelled?.call();
-            }
+            _resultHandled = true;
             Navigator.pop(context);
           },
         ),

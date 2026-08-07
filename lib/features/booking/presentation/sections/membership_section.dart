@@ -64,6 +64,56 @@ class MembershipSection extends ConsumerStatefulWidget {
   ConsumerState<MembershipSection> createState() => _MembershipSectionState();
 }
 
+/// Opens the payment webview for the given membership row. Shared by the
+/// success listener and by a Proceed re-tap that finds an already-pending
+/// membership — closing the webview no longer cancels the pending row, so a
+/// retry must resume it instead of creating a new one, which would hit the
+/// DB constraint on the still-open row.
+void _openMembershipPaymentWebView(
+  BuildContext context,
+  WidgetRef ref,
+  String bookingId,
+  String paymentUrl,
+  String waylReferenceId,
+) {
+  PaymentWebViewPage.push(
+    context,
+    paymentUrl,
+    referenceId: waylReferenceId,
+    redirectionUrl: 'wansa://payment',
+    onPaymentSuccess: (_, orderId) async {
+      try {
+        await ref
+            .read(bookingRepositoryProvider)
+            .confirmMembershipPayment(bookingId, orderId);
+      } catch (_) {}
+      ref.read(membershipSubmitProvider.notifier).reset();
+      ref.read(bookingsRefreshProvider.notifier).bump();
+      ref.invalidate(userPurchaseHistoryProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Payment successful! Your membership is now active.',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+        context.go('/bookings/m_$bookingId');
+      }
+    },
+    onPaymentFailed: () {
+      ref.read(membershipSubmitProvider.notifier).reset();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Payment failed. Please try again.'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    },
+  );
+}
+
 class _MembershipSectionState extends ConsumerState<MembershipSection> {
   @override
   Widget build(BuildContext context) {
@@ -71,54 +121,8 @@ class _MembershipSectionState extends ConsumerState<MembershipSection> {
       next.maybeWhen(
         success: (bookingId, paymentUrl, holdUntil, waylReferenceId) {
           if (paymentUrl.isNotEmpty) {
-            PaymentWebViewPage.push(
-              context,
-              paymentUrl,
-              referenceId: waylReferenceId,
-              redirectionUrl: 'wansa://payment',
-              onPaymentSuccess: (_, orderId) async {
-                try {
-                  await ref
-                      .read(bookingRepositoryProvider)
-                      .confirmMembershipPayment(bookingId, orderId);
-                } catch (_) {}
-                ref.read(membershipSubmitProvider.notifier).reset();
-                ref.read(bookingsRefreshProvider.notifier).bump();
-                ref.invalidate(userPurchaseHistoryProvider);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Payment successful! Your membership is now active.',
-                      ),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  context.go('/bookings/m_$bookingId');
-                }
-              },
-              onPaymentFailed: () {
-                ref.read(membershipSubmitProvider.notifier).reset();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Payment failed. Please try again.'),
-                    backgroundColor: AppColors.danger,
-                  ),
-                );
-              },
-              onPaymentCancelled: () async {
-                // Await the server-side cancel before releasing the Proceed
-                // button — otherwise the next tap races the still-`pending`
-                // membership row and hits a constraint conflict.
-                await ref
-                    .read(membershipSubmitProvider.notifier)
-                    .cancelPending();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Payment cancelled.')),
-                );
-              },
-            );
+            _openMembershipPaymentWebView(
+                context, ref, bookingId, paymentUrl, waylReferenceId);
           } else {
             ref.read(membershipSubmitProvider.notifier).reset();
             ScaffoldMessenger.of(context).showSnackBar(
@@ -386,14 +390,30 @@ class _MembershipFormView extends ConsumerWidget {
                           actionLabel:
                               isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
                           onAction: () {
-                            final plan = selectedPlan;
-                            ref
-                                .read(membershipSubmitProvider.notifier)
-                                .createMembership(
-                                  placeId: placeId,
-                                  planId: plan.id,
-                                  promoCode: promo?.code,
-                                );
+                            // If a pending membership already exists, reuse
+                            // its payment URL instead of creating a new one
+                            // (avoids the DB constraint on the still-open
+                            // pending row).
+                            final current = ref.read(membershipSubmitProvider);
+                            current.maybeWhen(
+                              success: (bookingId, paymentUrl, holdUntil,
+                                  waylReferenceId) {
+                                if (paymentUrl.isNotEmpty) {
+                                  _openMembershipPaymentWebView(context, ref,
+                                      bookingId, paymentUrl, waylReferenceId);
+                                }
+                              },
+                              orElse: () {
+                                final plan = selectedPlan;
+                                ref
+                                    .read(membershipSubmitProvider.notifier)
+                                    .createMembership(
+                                      placeId: placeId,
+                                      planId: plan.id,
+                                      promoCode: promo?.code,
+                                    );
+                              },
+                            );
                           },
                           isLoading: isLoading,
                         ),

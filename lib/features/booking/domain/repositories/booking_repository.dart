@@ -222,10 +222,6 @@ class BookingRepository {
     );
   }
 
-  Future<void> cancelMembership(String id) async {
-    await _client.schema('bookings').rpc('cancel_membership', params: {'p_id': id});
-  }
-
   /// Quote pricing for a GA section (no booking row created).
   Future<({int priceIqd, int remaining})> previewGABooking({
     required String eventId,

@@ -16,7 +16,6 @@ class PaymentWebViewPage {
     String? redirectionUrl,
     void Function(String referenceId, String orderId)? onPaymentSuccess,
     void Function()? onPaymentFailed,
-    void Function()? onPaymentCancelled,
   }) {
     return Navigator.of(context).push<void>(
       MaterialPageRoute(
@@ -26,7 +25,6 @@ class PaymentWebViewPage {
           redirectionUrl: redirectionUrl,
           onPaymentSuccess: onPaymentSuccess,
           onPaymentFailed: onPaymentFailed,
-          onPaymentCancelled: onPaymentCancelled,
         ),
       ),
     );

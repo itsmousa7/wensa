@@ -40,6 +40,82 @@ void _dismissCheckoutSheet(BuildContext context) {
   ).popUntil((route) => route.settings.name != _concertCheckoutSheetRoute);
 }
 
+/// Opens the payment webview for a concert group. Shared by the success
+/// listener and by a Proceed re-tap that finds an already-pending group —
+/// closing the webview no longer cancels the pending group, so a retry must
+/// resume it instead of creating a new one, which would conflict with the
+/// still-held seats.
+void _openConcertPaymentWebView(
+  BuildContext context,
+  WidgetRef ref, {
+  required String eventId,
+  required String groupId,
+  required String paymentUrl,
+  required String holdUntil,
+  required String waylReferenceId,
+}) {
+  // Re-anchor local hold timer to the server's actual expiry so the
+  // client-side watcher doesn't fire a false "expired" message while the
+  // user is inside the payment webview.
+  if (holdUntil.isNotEmpty) {
+    ref.read(_concertSelectionProvider.notifier).setHoldUntil(holdUntil);
+  }
+  // The review / GA sheet stays open with its loading spinner while
+  // create-booking runs; dismiss it now that we have the Wayl URL so the
+  // webview lands cleanly on the booking page.
+  _dismissCheckoutSheet(context);
+  PaymentWebViewPage.push(
+    context,
+    paymentUrl,
+    referenceId: waylReferenceId,
+    redirectionUrl: 'wansa://payment',
+    onPaymentSuccess: (_, orderId) async {
+      // Flip every row in the concert group to confirmed before the cron
+      // can expire it — same backstop as padel/farm in case the Wayl
+      // webhook is delayed.
+      String? firstBookingId;
+      try {
+        firstBookingId = await ref
+            .read(bookingRepositoryProvider)
+            .confirmConcertGroupPayment(groupId, orderId);
+      } catch (_) {}
+      ref.read(bookingSubmitProvider.notifier).reset();
+      ref.read(_concertSelectionProvider.notifier).reset();
+      ref.read(bookingsRefreshProvider.notifier).bump();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Payment successful! Your tickets are confirmed.',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+        if (firstBookingId != null && firstBookingId.isNotEmpty) {
+          context.go('/bookings/$firstBookingId');
+        } else {
+          context.goNamed('bookingsHistory');
+        }
+      }
+    },
+    onPaymentFailed: () async {
+      // Cancel the group so seats are released immediately rather than
+      // waiting up to 3 min for the cron to expire them.
+      await ref.read(bookingSubmitProvider.notifier).cancelConcertGroup(
+            groupId,
+          );
+      ref.invalidate(availableSeatsProvider(eventId));
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Payment failed. Please try again.'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    },
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Local state — concert selection (two-level: overview → section)
 // ---------------------------------------------------------------------------
@@ -147,77 +223,14 @@ class ConcertSection extends ConsumerWidget {
       next.maybeWhen(
         success: (groupId, paymentUrl, holdUntil, waylReferenceId) {
           if (paymentUrl.isNotEmpty) {
-            // Re-anchor local hold timer to the server's actual expiry so
-            // the client-side watcher doesn't fire a false "expired" message
-            // while the user is inside the payment webview.
-            if (holdUntil.isNotEmpty) {
-              ref
-                  .read(_concertSelectionProvider.notifier)
-                  .setHoldUntil(holdUntil);
-            }
-            // The review / GA sheet stays open with its loading spinner
-            // while create-booking runs; dismiss it now that we have the
-            // Wayl URL so the webview lands cleanly on the booking page.
-            _dismissCheckoutSheet(context);
-            PaymentWebViewPage.push(
+            _openConcertPaymentWebView(
               context,
-              paymentUrl,
-              referenceId: waylReferenceId,
-              redirectionUrl: 'wansa://payment',
-              onPaymentSuccess: (_, orderId) async {
-                // Flip every row in the concert group to confirmed before
-                // the cron can expire it — same backstop as padel/farm in
-                // case the Wayl webhook is delayed.
-                String? firstBookingId;
-                try {
-                  firstBookingId = await ref
-                      .read(bookingRepositoryProvider)
-                      .confirmConcertGroupPayment(groupId, orderId);
-                } catch (_) {}
-                ref.read(bookingSubmitProvider.notifier).reset();
-                ref.read(_concertSelectionProvider.notifier).reset();
-                ref.read(bookingsRefreshProvider.notifier).bump();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Payment successful! Your tickets are confirmed.',
-                      ),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  if (firstBookingId != null && firstBookingId.isNotEmpty) {
-                    context.go('/bookings/$firstBookingId');
-                  } else {
-                    context.goNamed('bookingsHistory');
-                  }
-                }
-              },
-              onPaymentFailed: () async {
-                // Cancel the group so seats are released immediately rather
-                // than waiting up to 3 min for the cron to expire them.
-                await ref
-                    .read(bookingSubmitProvider.notifier)
-                    .cancelConcertGroup(groupId);
-                ref.invalidate(availableSeatsProvider(eventId));
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Payment failed. Please try again.'),
-                    backgroundColor: AppColors.danger,
-                  ),
-                );
-              },
-              onPaymentCancelled: () async {
-                await ref
-                    .read(bookingSubmitProvider.notifier)
-                    .cancelConcertGroup(groupId);
-                ref.invalidate(availableSeatsProvider(eventId));
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Payment cancelled.')),
-                );
-              },
+              ref,
+              eventId: eventId,
+              groupId: groupId,
+              paymentUrl: paymentUrl,
+              holdUntil: holdUntil,
+              waylReferenceId: waylReferenceId,
             );
           }
         },
@@ -864,17 +877,40 @@ class _ReviewSheet extends ConsumerWidget {
               onTap: selectedSeats.isEmpty
                   ? null
                   : () {
-                      // Keep the sheet visible while create-booking runs.
-                      // The parent listener pops it once the Wayl URL is
-                      // ready (see `_dismissCheckoutSheet`).
-                      ref
-                          .read(bookingSubmitProvider.notifier)
-                          .createConcertBooking(
-                            eventId: eventId,
-                            seatIds: selectedSeats
-                                .map((s) => s.seatId)
-                                .toList(),
-                          );
+                      // If a pending group already exists (e.g. the user
+                      // closed the payment webview and is retrying), reuse
+                      // its payment URL instead of creating a new one —
+                      // avoids conflicting with the still-held seats.
+                      final current = ref.read(bookingSubmitProvider);
+                      current.maybeWhen(
+                        success: (groupId, paymentUrl, holdUntil,
+                            waylReferenceId) {
+                          if (paymentUrl.isNotEmpty) {
+                            _openConcertPaymentWebView(
+                              context,
+                              ref,
+                              eventId: eventId,
+                              groupId: groupId,
+                              paymentUrl: paymentUrl,
+                              holdUntil: holdUntil,
+                              waylReferenceId: waylReferenceId,
+                            );
+                          }
+                        },
+                        orElse: () {
+                          // Keep the sheet visible while create-booking runs.
+                          // The parent listener pops it once the Wayl URL is
+                          // ready (see `_dismissCheckoutSheet`).
+                          ref
+                              .read(bookingSubmitProvider.notifier)
+                              .createConcertBooking(
+                                eventId: eventId,
+                                seatIds: selectedSeats
+                                    .map((s) => s.seatId)
+                                    .toList(),
+                              );
+                        },
+                      );
                     },
             ),
             // Keep the CTA clear of the system navigation / gesture bar.
@@ -1076,15 +1112,38 @@ class _GASheetState extends ConsumerState<_GASheet> {
               onTap: remaining <= 0 || price <= 0
                   ? null
                   : () {
-                      // Keep the sheet visible until the parent's listener
-                      // dismisses it once the Wayl URL is available.
-                      ref
-                          .read(bookingSubmitProvider.notifier)
-                          .createGeneralAdmissionBooking(
-                            eventId: widget.eventId,
-                            sectionId: widget.section.id,
-                            quantity: _quantity,
-                          );
+                      // If a pending group already exists (e.g. the user
+                      // closed the payment webview and is retrying), reuse
+                      // its payment URL instead of creating a new one.
+                      final current = ref.read(bookingSubmitProvider);
+                      current.maybeWhen(
+                        success: (groupId, paymentUrl, holdUntil,
+                            waylReferenceId) {
+                          if (paymentUrl.isNotEmpty) {
+                            _openConcertPaymentWebView(
+                              context,
+                              ref,
+                              eventId: widget.eventId,
+                              groupId: groupId,
+                              paymentUrl: paymentUrl,
+                              holdUntil: holdUntil,
+                              waylReferenceId: waylReferenceId,
+                            );
+                          }
+                        },
+                        orElse: () {
+                          // Keep the sheet visible until the parent's
+                          // listener dismisses it once the Wayl URL is
+                          // available.
+                          ref
+                              .read(bookingSubmitProvider.notifier)
+                              .createGeneralAdmissionBooking(
+                                eventId: widget.eventId,
+                                sectionId: widget.section.id,
+                                quantity: _quantity,
+                              );
+                        },
+                      );
                     },
             ),
             if (price <= 0)
