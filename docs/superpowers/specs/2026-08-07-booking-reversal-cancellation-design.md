@@ -1,165 +1,112 @@
 # Booking reversal → cancellation design
 
-## Problem
+> **Revised 2026-08-07, same day.** The original version of this spec (below
+> this notice, for history) assumed no reversal/cancellation handling existed
+> anywhere in the codebase, and designed a new `payment_status = 'reversed'`
+> value, a new `reverse_booking` RPC, a new DB column, and cron-based
+> notification delivery. That assumption was **wrong**: while auditing the
+> live Supabase project it turned out a complete pipeline already exists in
+> production, in edge functions that were never pulled into this git
+> repository (`booking-action`, `booking-notification`,
+> `booking-wayl-webhook`, `wayl-refund`, and others — none of these appear
+> anywhere in `supabase/functions/` locally; only `create-booking` and
+> `process-notifications` do). This revision describes what's actually there
+> and the small, real gap.
+
+## What already exists (live, in production)
+
+- **`booking-action`** (verify_jwt, admin/merchant-only): cancelling a paid
+  booking calls Wayl's refund API, then
+  `PATCH bookings SET status='cancelled', payment_status='refunded'`. It
+  never deletes a row. A free/unpaid booking is cancelled the same way, with
+  `payment_status='cancelled'` instead.
+- **`booking-notification`** (fired by a DB trigger on `bookings.bookings`
+  status changes, `pg_net`-based — the trigger itself isn't in any local
+  migration file either): on `new_status === 'cancelled'`, sends a bilingual
+  FCM push and writes to `profiles.user_notifications`, deduped on
+  `(user_id, kind, data.booking_id)`. Title is already **"Booking Cancelled" /
+  "تم إلغاء الحجز"**. Body is generic: *"Your booking has been cancelled.
+  Contact us if you have questions."* / *"للأسف تم إلغاء حجزك. تواصل معنا إن
+  كان لديك استفسار."* — or, when `payment_status === 'refunded'` (the
+  `isRefund` branch, `kind: 'booking_refund'`), a refund-amount-aware body via
+  `getRefundCopy()`: *"Your booking at {place} was cancelled and {amount} IQD
+  was returned to your account."*
+- **Booking history UI** (`ticket_status_badge.dart`, already in this repo):
+  renders `BookingStatus.cancelled` as a red "Cancelled"/"ملغى" badge — no
+  changes needed, confirmed unchanged from the original spec.
+
+So two of the three original requirements are already met: bookings are never
+deleted on reversal, and a "Booking Cancelled" notification already fires.
+
+## The actual gap
+
+Neither `getCopy()`'s `'cancelled'` branch nor `getRefundCopy()` (both in the
+live `booking-notification/index.ts`) tell the user to book again, and
+neither varies by booking category. That's the only missing piece.
+
+## Scope of the fix
+
+Edit the two copy-producing functions in `booking-notification/index.ts`
+(pulled into this repo at `supabase/functions/booking-notification/index.ts`
+as part of this change, since it doesn't exist locally yet) so the body ends
+with a category-aware call to action:
+
+- `padel`, `football` (hourly courts) → append "Book another hour!" /
+  "احجز ساعة أخرى!"
+- `farm`, `restaurant`, `concert` (date/shift-based) → append "Book another
+  day!" / "احجز يومًا آخر!"
+
+Both the plain-cancellation body (`getCopy`) and the refund body
+(`getRefundCopy`) get this treatment, since a payment reversal is exactly the
+`isRefund` path (`payment_status === 'refunded'`) — "reversed" in the user's
+original request maps to this existing refund flow; there is no separate
+`'reversed'` state anywhere in the schema, live or local.
+
+`getRefundCopy()` currently only receives `placeName` and `amountIqd` — it
+needs the booking's `category` threaded in too, exactly like `getCopy()`
+already receives it.
+
+## Out of scope
+
+- No DB schema changes (no new column, no new enum value, no new RPC) — the
+  existing `status`/`payment_status` values and the existing trigger cover
+  everything needed.
+- No changes to `booking-action`, the DB trigger, `booking-wayl-webhook`, or
+  any other function in the pipeline — only the copy inside
+  `booking-notification`.
+- No attempt to reconcile the broader drift between this git repo and the
+  live project (the dozen-plus other untracked edge functions) — out of
+  scope for this task.
+
+## Testing
+
+`booking-notification` has no local test harness (it isn't even in the repo
+today). Verification is: read the deployed function's source after
+`deploy_edge_function` to confirm the new copy is present
+(`pg`-style text is not applicable here; use `get_edge_function` and check
+the returned source), then trigger a real cancellation against a disposable
+test booking (via `booking-action` or a direct status-change on a throwaway
+row) and confirm the push/inbox body includes the right CTA for both an
+hourly and a date-based category, in both languages.
+
+---
+
+## Original spec (superseded, kept for history)
+
+<details>
+<summary>Click to expand the original (incorrect-premise) design</summary>
+
+### Problem
 
 When a booking's payment is reversed, there is currently no handling for it
 anywhere in the codebase: `bookings.bookings.payment_status` only allows
 `pending | paid | failed`, and no reversal/webhook path exists (only
 `create-booking`, which issues Wayl payment links, and `process-notifications`,
-the reminder/broadcast cron, exist as edge functions). The requirement is that
-a reversed booking must never be deleted — it should show as **Cancelled** in
-the user's booking history (same as any other cancelled booking), and the user
-should get a notification telling them the booking was cancelled and inviting
-them to book again, worded for the booking's type (an hour for court sports,
-a day for date/shift-based bookings).
+the reminder/broadcast cron, exist as edge functions).
 
-## Scope
+*(This premise was wrong — see the revision notice above. The rest of the
+original spec, which built a `reverse_booking` RPC, a new
+`payment_status = 'reversed'` value, and cron-based notification delivery, is
+omitted here since none of it should be built.)*
 
-This spec covers only the `bookings.bookings` table (padel/football/farm/
-restaurant/concert). Memberships are a separate table/flow and are out of
-scope — nothing about "book another day/hour" applies to a membership renewal.
-
-Out of scope (explicitly deferred, per the "simplest approach" the user chose):
-- Building a Wayl (or any) webhook receiver that detects reversals
-  automatically. Nothing in this repo currently receives that signal from
-  Wayl, and wiring a real webhook is a separate piece of work.
-- Any admin-portal UI button to trigger a reversal. For now the action is
-  invoked directly (SQL editor / service-role call) by whoever discovers the
-  reversal.
-
-The deliverable here is the *handling* once a reversal is known: the DB
-function that marks the booking, and the user-facing effects (history display,
-notification) that follow from it.
-
-## Data model changes
-
-**`bookings.bookings`** (migration, extending
-`20260427000003_bookings_main_table.sql`'s constraint):
-- `payment_status` check constraint gains `'reversed'` →
-  `CHECK (payment_status IN ('pending', 'paid', 'failed', 'reversed'))`.
-- New column `cancellation_notified_at timestamptz NULL` — mirrors the
-  existing `reminder_sent_at` claim-column used by the reminder cron, so the
-  "your booking was cancelled" push fires exactly once per booking.
-
-**`profiles.user_notifications`** (extending
-`20260601000004_user_notifications.sql`'s `kind` check constraint):
-- Add `'booking_cancelled'` to the allowed `kind` values.
-
-No change to `bookings.booking_status` — `'cancelled'` already exists and is
-already fully handled by the booking-history UI (see below), so a reversed
-booking becomes indistinguishable from any other cancelled booking in the UI.
-`payment_status = 'reversed'` is the only marker of *why* it was cancelled,
-kept for bookkeeping/finance and to let the notification cron find exactly
-these bookings.
-
-## `bookings.reverse_booking` RPC
-
-New SQL function, same file family as `cancel_booking`
-(`bookings_rpcs.sql` conventions):
-
-```sql
-CREATE OR REPLACE FUNCTION bookings.reverse_booking(p_id uuid)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = bookings, auth, public
-AS $$
-DECLARE
-  v_booking bookings.bookings%ROWTYPE;
-BEGIN
-  IF NOT public.is_admin() THEN
-    RAISE EXCEPTION 'Forbidden' USING ERRCODE = 'P0001';
-  END IF;
-
-  SELECT * INTO v_booking FROM bookings.bookings WHERE id = p_id;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Booking not found' USING ERRCODE = 'P0002';
-  END IF;
-
-  IF v_booking.status = 'cancelled' THEN
-    RETURN; -- idempotent no-op, matches confirm_payment's style
-  END IF;
-
-  UPDATE bookings.bookings
-  SET status = 'cancelled', payment_status = 'reversed'
-  WHERE id = p_id;
-
-  IF v_booking.category = 'concert' AND v_booking.group_id IS NOT NULL THEN
-    DELETE FROM bookings.event_seat_holds WHERE group_id = v_booking.group_id;
-  END IF;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.reverse_booking(p_id uuid)
-RETURNS void LANGUAGE sql SECURITY DEFINER SET search_path = bookings, public
-AS $$ SELECT bookings.reverse_booking(p_id); $$;
-```
-
-- Restricted to admins via `public.is_admin()` (the existing pattern used by
-  `cancel_booking`), rather than a bare service-role carve-out — reuses the
-  established convention instead of inventing a new one. Concretely,
-  `is_admin()` checks `admin.admin_roles` against `auth.uid()`, which is
-  `NULL` for a bare service-role call with no user JWT — so this must be
-  called by an authenticated admin (e.g. from the merchant/admin portal with
-  their own session), not by an unattended service-role script. That's
-  intentional for the "manual admin action" scope of this spec.
-- Idempotent: calling it twice on an already-cancelled booking is a silent
-  no-op, matching `confirm_payment`'s style.
-- Mirrors `cancel_booking`'s seat-hold cleanup for concerts.
-- No `hold_until`/pending-specific logic needed since a reversal only makes
-  sense on an already-paid (`confirmed`) booking.
-
-## Notification delivery
-
-Rather than adding a new event-driven push path (which would duplicate the
-FCM/localization plumbing that already exists), this reuses the existing
-`process-notifications` cron exactly the way membership-expiry reminders do:
-poll for due rows, claim, send, record.
-
-New section in `supabase/functions/process-notifications/index.ts`, after the
-existing broadcast section:
-
-- Query: `bookings.bookings` where `payment_status = 'reversed' AND
-  cancellation_notified_at IS NULL`.
-- Claim: same conditional-`UPDATE ... WHERE cancellation_notified_at IS NULL`
-  pattern as `claimReminder`, to stay safe under concurrent cron ticks.
-- Wording:
-  - Title (en/ar): `"Booking Cancelled"` / `"تم إلغاء الحجز"`.
-  - Body depends on `category`:
-    - `padel`, `football` (hourly courts) → `"Book another hour"` /
-      `"احجز ساعة أخرى"`.
-    - `farm`, `restaurant`, `concert` (date/shift-based) → `"Book another
-      day"` / `"احجز يومًا آخر"`.
-  - Title gets the place/event name appended via the existing
-    `titleWithName` helper, same as reminders do.
-- Sends via the existing `sendToTokens` (push, per-device locale, stale-token
-  pruning) and inserts one row into `profiles.user_notifications` with
-  `kind: 'booking_cancelled'`, `data: { booking_id }`.
-- Latency: up to one cron tick behind the `reverse_booking` call (the cron
-  interval is whatever `process-notifications` already runs on — this spec
-  doesn't change that cadence). Acceptable for a cancellation notice.
-
-## Booking history UI
-
-No changes. `TicketStatusBadge` already renders `BookingStatus.cancelled` as
-a red "Cancelled" / "ملغى" badge (`ticket_status_badge.dart`), and the
-bookings-history queries already include cancelled bookings — a reversed
-booking becomes a normal cancelled booking to every existing UI code path.
-
-## Testing
-
-- Neither `cancel_booking` nor `confirm_payment` — the two closest existing
-  RPCs — have SQL tests today; `supabase/tests/` holds a single unrelated
-  suite (`plans_quotas.sql`), written as manual `RAISE`-assertion `DO` blocks
-  rather than pgTAP. `reverse_booking` will follow that same precedent: a new
-  `supabase/tests/reverse_booking.sql` covering non-admin rejection, unknown
-  id (`P0002`), the happy path (`status`/`payment_status` flip), idempotent
-  re-call, and concert seat-hold release.
-- `process-notifications`: no existing test harness for the Deno function in
-  this repo (the reminder/membership/broadcast sections it already has are
-  unverified by automated tests too), so the new section will be verified
-  manually against a seeded `reversed` booking after deploy — consistent with
-  how the rest of that function is validated today.
-- No Flutter-side changes, so no new widget tests — existing
-  `bookings_history_page_tabs_test.dart` coverage of the cancelled state
-  already applies.
+</details>
