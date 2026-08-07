@@ -67,6 +67,28 @@ class ShiftCard extends StatelessWidget {
     );
   }
 
+  // 0=Sunday … 6=Saturday — matches bookings.place_hours.weekday's
+  // convention and this table's own `weekday` column.
+  static const _enWeekdayAbbr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  static const _arWeekdayAbbr = [
+    'أحد',
+    'اثنين',
+    'ثلاثاء',
+    'أربعاء',
+    'خميس',
+    'جمعة',
+    'سبت',
+  ];
+
+  String _overrideDaysLabel({required bool isAr}) {
+    final days = shift.overrideWeekdays;
+    if (days == null || days.isEmpty) return '';
+    final names = days
+        .map((d) => isAr ? _arWeekdayAbbr[d] : _enWeekdayAbbr[d])
+        .toList();
+    return isAr ? names.join(' و') : names.join(' & ');
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -229,7 +251,11 @@ class ShiftCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        isAr ? 'سعر خاص' : 'Special price',
+                        (shift.overrideWeekdays?.isNotEmpty ?? false)
+                            ? (isAr
+                                ? 'سعر خاص · ${_overrideDaysLabel(isAr: true)}'
+                                : 'Special price · ${_overrideDaysLabel(isAr: false)}')
+                            : (isAr ? 'سعر خاص' : 'Special price'),
                         style: (tt.labelSmall ?? const TextStyle()).copyWith(
                           color: cs.primary,
                           fontWeight: FontWeight.w600,

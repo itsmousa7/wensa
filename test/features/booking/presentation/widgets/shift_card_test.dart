@@ -124,4 +124,56 @@ void main() {
       expect(find.text('Special price'), findsNothing);
     });
   });
+
+  group('ShiftCard override weekday hint', () {
+    testWidgets('appends the weekday list to the badge when overrideWeekdays is set',
+        (tester) async {
+      const shift = FarmShift(
+        placeId: 'p1',
+        shiftType: FarmShiftType.day,
+        startsTime: '08:00:00',
+        endsTime: '18:00:00',
+        priceIqd: 300000,
+        standardPriceIqd: 200000,
+        overrideWeekdays: [4, 5],
+        isAvailable: true,
+      );
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: ShiftCard(
+            shift: shift,
+            isSelected: false,
+            availability: SlotAvailability.available,
+            onTap: () {},
+          ),
+        ),
+      ));
+      expect(find.text('Special price · Thu & Fri'), findsOneWidget);
+    });
+
+    testWidgets('badge shows plain "Special price" when overrideWeekdays is null',
+        (tester) async {
+      const shift = FarmShift(
+        placeId: 'p1',
+        shiftType: FarmShiftType.day,
+        startsTime: '08:00:00',
+        endsTime: '18:00:00',
+        priceIqd: 300000,
+        standardPriceIqd: 200000,
+        isAvailable: true,
+      );
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: ShiftCard(
+            shift: shift,
+            isSelected: false,
+            availability: SlotAvailability.available,
+            onTap: () {},
+          ),
+        ),
+      ));
+      expect(find.text('Special price'), findsOneWidget);
+      expect(find.text('Special price · Thu & Fri'), findsNothing);
+    });
+  });
 }
