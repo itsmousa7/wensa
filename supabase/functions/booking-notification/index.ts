@@ -29,7 +29,7 @@ interface NotifCopy {
 }
 
 /** Booking categories billed/booked by the hour, as opposed to by the day/shift. */
-const HOURLY_CATEGORIES = ["padel", "football"];
+const HOURLY_CATEGORIES = ["sports"];
 
 /**
  * "Book again" call to action for a cancelled booking, worded for how that
