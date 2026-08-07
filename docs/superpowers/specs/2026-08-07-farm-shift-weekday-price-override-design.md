@@ -88,6 +88,6 @@ New migration(s) on top of current live state:
 
 - Merchant adds Thursday + Friday overrides at 300,000 IQD for the Night shift (standing price 200,000).
 - Mobile: any date's Night shift card shows "Special price · Thu & Fri" regardless of the currently selected date; on an actual Thursday or Friday, the price shown is 300,000 with 200,000 struck through; on any other day, 200,000 with no strikethrough.
-- Booking on a Thursday charges exactly 300,000 (+ party fee if applicable); booking on a Tuesday charges 200,000.
+- Booking on a Thursday charges exactly 300,000 (+ Extra Guests Fee if applicable); booking on a Tuesday charges 200,000.
 - Dashboard: merchant deletes the Friday row → mobile stops showing 300,000/badge-mention-of-Friday on Fridays, Thursday still applies.
 - Shifts with no weekday overrides configured behave exactly as before (`standard_price_iqd`/`override_weekdays` both empty/null) — regression check.

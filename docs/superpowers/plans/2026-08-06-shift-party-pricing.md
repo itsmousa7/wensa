@@ -519,7 +519,7 @@ Replace with:
         bkgSaveShift: "Save",
         bkgPartyPricing: "Party Pricing",
         bkgPartyIncluded: "Included Guests",
-        bkgPartyFlatFee: "Party Fee",
+        bkgPartyFlatFee: "Extra Guests Fee",
         bkgPartyExtraFee: "Fee per Extra Guest",
         bkgComingSoon: "Booking config coming soon for this category",
 ```
@@ -539,7 +539,7 @@ Replace with:
         bkgSaveShift: "حفظ",
         bkgPartyPricing: "أسعار الحفلات",
         bkgPartyIncluded: "عدد الضيوف المشمولين",
-        bkgPartyFlatFee: "رسوم الحفلة",
+        bkgPartyFlatFee: "رسوم الضيوف الاضافيين",
         bkgPartyExtraFee: "رسوم كل ضيف إضافي",
         bkgComingSoon: "إعدادات الحجز لهذه الفئة قريباً",
 ```
@@ -1274,7 +1274,7 @@ class PartyOptionCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  isAr ? 'هل تحضر مجموعة؟' : 'Bringing a party?',
+                  isAr ? 'لديك حفلة؟' : 'Having a Party?',
                   style: (tt.titleSmall ?? const TextStyle()).copyWith(
                     fontWeight: FontWeight.w700,
                     color: isOn ? cs.primary : cs.onSurface,
@@ -1679,7 +1679,7 @@ Replace with:
                             if (partyOn) ...[
                               BookingSummaryRow(
                                 icon: Icons.groups_rounded,
-                                label: isAr ? 'رسوم الحفلة' : 'Party fee',
+                                label: isAr ? 'رسوم الضيوف الاضافيين' : 'Extra Guests Fee',
                                 value: _FarmBookingFormView._formatIqd(
                                     selectedShift.partyFlatFeeIqd),
                               ),
@@ -1840,7 +1840,7 @@ flutter run
 
 Walk through:
 1. As merchant/admin in the dashboard, enable party pricing on a farm's day shift: included = 10, flat fee = 20,000 IQD, extra = 5,000 IQD/guest. Leave night/full untouched.
-2. In the mobile app, open that farm's shift booking flow, select the day shift — confirm the "Bringing a party?" card appears; select the night shift — confirm it does NOT appear.
+2. In the mobile app, open that farm's shift booking flow, select the day shift — confirm the "Having a Party?" card appears; select the night shift — confirm it does NOT appear.
 3. Re-select the day shift, toggle the party switch on — stepper appears at 10, helper text reads "No extra charge up to 10 guests", summary total includes +20,000 IQD.
 4. Tap `+` three times (to 13) — helper text updates to "+15,000 IQD for 3 extra guest(s)", summary total increases by another 15,000 IQD.
 5. Apply a promo code — confirm the discount is computed against the full (base + party) subtotal.

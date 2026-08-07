@@ -5,22 +5,22 @@
 
 ## Problem
 
-The just-shipped party pricing feature (see [2026-08-06-shift-party-pricing-design.md](./2026-08-06-shift-party-pricing-design.md)) bundles two different concepts into one `PartyOptionCard` + one "bringing a party?" toggle:
+The just-shipped party pricing feature (see [2026-08-06-shift-party-pricing-design.md](./2026-08-06-shift-party-pricing-design.md)) bundles two different concepts into one `PartyOptionCard` + one "Having a Party?" toggle:
 
-1. A flat party fee, charged the moment the toggle is switched on.
+1. A flat Extra Guests Fee, charged the moment the toggle is switched on.
 2. A per-guest overage fee, charged once a guest count (only enterable while the toggle is on) exceeds the merchant's included headcount.
 
 This has three problems, all reported against the live screen:
 
 - The toggle's `Switch.adaptive` looks and behaves differently from the frosted/native switch already used for the language toggle in Settings (`CNSwitch`), so the app feels inconsistent.
-- Coupling the guest count to the toggle means a customer who isn't "bringing a party" in the flat-fee sense has no way to tell the merchant how many people are actually coming — so a group that quietly exceeds the included headcount on a "normal" (toggle-off) booking is never charged the overage the merchant configured.
+- Coupling the guest count to the toggle means a customer who isn't "Having a Party" in the flat-fee sense has no way to tell the merchant how many people are actually coming — so a group that quietly exceeds the included headcount on a "normal" (toggle-off) booking is never charged the overage the merchant configured.
 - Visually, the `PartyOptionCard` block and the `BookingSummaryCard` below it render with no vertical gap, so on smaller screens the two containers collide.
 
 ## Goal
 
 Split the single card into two independent concerns, restyle the switch, and fix the spacing bug:
 
-1. **Party toggle** — a plain on/off switch, no guest number attached. Adds the shift's flat party fee when on. Uses the same glass/native switch as the Settings language toggle.
+1. **Party toggle** — a plain on/off switch, no guest number attached. Adds the shift's flat Extra Guests Fee when on. Uses the same glass/native switch as the Settings language toggle.
 2. **Guest counter** — a separate "How many people are going?" stepper, shown whenever the selected shift has party pricing configured (i.e. a guest limit exists), independent of the toggle. Defaults to `1`. Whenever the count exceeds the shift's included-guest limit, the overage fee is charged — regardless of whether the toggle is on.
 3. Both fees are additive and fully independent: turning the toggle off does not clear or hide the guest counter, and lowering the guest count back under the limit does not affect the toggle.
 
@@ -88,7 +88,7 @@ CREATE OR REPLACE FUNCTION bookings.create_farm_booking(
 
 ### `PartyOptionCard` (rewrite) — `lib/features/booking/presentation/widgets/party_option_card.dart`
 
-Drops the guest stepper and the `AnimatedSize` reveal entirely. Becomes a stateless row: icon, "Bringing a party?" / "هل تحضر مجموعة؟" label, and the switch. Helper text (when `flatFeeIqd > 0`) states the flat fee only, e.g. "20,000 IQD party fee" — no guest-count-derived text since guest count no longer belongs to this widget.
+Drops the guest stepper and the `AnimatedSize` reveal entirely. Becomes a stateless row: icon, "Having a Party?" / "لديك حفلة؟" label, and the switch. Helper text (when `flatFeeIqd > 0`) states the flat fee only, e.g. "20,000 IQD Extra Guests Fee" — no guest-count-derived text since guest count no longer belongs to this widget.
 
 Switch: mirror `profile_content.dart:124-139` —
 
@@ -131,7 +131,7 @@ A second, separate container (own border/shadow, matching `PartyOptionCard`'s vi
   final partyFee = (partyOn ? selectedShift.partyFlatFeeIqd : 0)
       + extraGuests * selectedShift.partyExtraPersonFeeIqd;
   ```
-- Summary rows: "Party fee" shown when `partyOn && flatFeeIqd > 0` (unchanged condition); "Extra guests" shown when `extraGuests > 0` (drops the `partyOn &&` guard it has today).
+- Summary rows: "Extra Guests Fee" shown when `partyOn && flatFeeIqd > 0` (unchanged condition); "Extra guests" shown when `extraGuests > 0` (drops the `partyOn &&` guard it has today).
 - `onAction` passes both fields to `createFarmBooking`: `partySize: selectedShift.partyEnabled ? partyCount : null, bringingParty: partyOn`.
 
 ### `booking_submit_provider.dart`
@@ -169,8 +169,8 @@ Customer taps "Proceed to Payment"
 
 ## Testing Notes
 
-- Shift with `included: 10, flat: 20,000, extra: 5,000`, toggle **off**, guest count raised to 13 → summary shows base price + `3 * 5,000 = 15,000` "Extra guests" row, **no** "Party fee" row.
-- Same shift, toggle **on**, guest count left at 1 → summary shows base price + `20,000` "Party fee" row, **no** "Extra guests" row.
+- Shift with `included: 10, flat: 20,000, extra: 5,000`, toggle **off**, guest count raised to 13 → summary shows base price + `3 * 5,000 = 15,000` "Extra guests" row, **no** "Extra Guests Fee" row.
+- Same shift, toggle **on**, guest count left at 1 → summary shows base price + `20,000` "Extra Guests Fee" row, **no** "Extra guests" row.
 - Toggle on **and** count raised to 13 → both rows shown, total includes both components.
 - Switch renders as `CNSwitch` on iOS, `Switch.adaptive` on Android, matching the Settings language toggle's implementation.
 - No visible gap/overlap between the party section and `BookingSummaryCard` on a small-height device (the originally reported bug).

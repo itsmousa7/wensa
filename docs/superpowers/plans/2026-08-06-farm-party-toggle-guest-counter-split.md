@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Split the farm-shift "bringing a party?" toggle from its guest-count stepper into two independent widgets, restyle the toggle to match the Settings language switch, decouple their fees server-side, and fix a spacing bug where the party card collides with the booking summary card.
+**Goal:** Split the farm-shift "Having a Party?" toggle from its guest-count stepper into two independent widgets, restyle the toggle to match the Settings language switch, decouple their fees server-side, and fix a spacing bug where the party card collides with the booking summary card.
 
 **Architecture:** `PartyOptionCard` shrinks to a bare toggle (flat fee only). A new `GuestCountCard` owns the guest stepper (overage fee only), shown whenever the shift has party pricing configured, independent of the toggle. The two fees, previously bundled behind one "guest count implies flat fee" RPC parameter, become two independent RPC parameters (`p_party_size`, `p_bringing_party`) threaded through the `create-booking` edge function and `booking_submit_provider.dart`.
 
@@ -38,7 +38,7 @@
 -- The party flat fee and the per-guest overage fee were bundled together:
 -- sending a guest count at all implied the flat fee applied. This splits
 -- them into two independent inputs:
---   - p_bringing_party: customer opted into the flat party fee
+--   - p_bringing_party: customer opted into the flat Extra Guests Fee
 --   - p_party_size: headcount, drives the per-guest overage fee
 -- regardless of each other.
 
@@ -351,7 +351,7 @@ void main() {
       isOn: false,
       onToggle: (_) {},
     )));
-    expect(find.text('Bringing a party?'), findsOneWidget);
+    expect(find.text('Having a Party?'), findsOneWidget);
     expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
 
     await tester.pumpWidget(wrap(PartyOptionCard(
@@ -369,7 +369,7 @@ void main() {
       isOn: true,
       onToggle: (_) {},
     )));
-    expect(find.text('20,000 IQD party fee'), findsOneWidget);
+    expect(find.text('20,000 IQD Extra Guests Fee'), findsOneWidget);
   });
 
   testWidgets('hides the helper text when flatFeeIqd is 0', (tester) async {
@@ -378,7 +378,7 @@ void main() {
       isOn: true,
       onToggle: (_) {},
     )));
-    expect(find.text('20,000 IQD party fee'), findsNothing);
+    expect(find.text('20,000 IQD Extra Guests Fee'), findsNothing);
   });
 
   testWidgets('tapping the switch calls onToggle with the flipped value',
@@ -401,7 +401,7 @@ Note: this test runs on the default (non-iOS) test platform, so `PartyOptionCard
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `flutter test test/features/booking/presentation/widgets/party_option_card_test.dart`
-Expected: FAIL — compile errors, since `PartyOptionCard` doesn't yet accept `flatFeeIqd`/`isOn`/`onToggle`-only construction (current constructor requires `includedPersons`, `guestCount`, etc.) and the "20,000 IQD party fee" text doesn't exist standalone.
+Expected: FAIL — compile errors, since `PartyOptionCard` doesn't yet accept `flatFeeIqd`/`isOn`/`onToggle`-only construction (current constructor requires `includedPersons`, `guestCount`, etc.) and the "20,000 IQD Extra Guests Fee" text doesn't exist standalone.
 
 - [ ] **Step 3: Rewrite the widget**
 
@@ -414,7 +414,7 @@ import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 
-/// Toggle for the flat party fee, shown under the shift picker in
+/// Toggle for the flat Extra Guests Fee, shown under the shift picker in
 /// [FarmSection] when the selected shift has party pricing enabled.
 /// Purely presentational — the caller owns all state. Guest-count
 /// entry lives separately in [GuestCountCard].
@@ -486,7 +486,7 @@ class PartyOptionCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  isAr ? 'هل تحضر مجموعة؟' : 'Bringing a party?',
+                  isAr ? 'لديك حفلة؟' : 'Having a Party?',
                   style: (tt.titleSmall ?? const TextStyle()).copyWith(
                     fontWeight: FontWeight.w700,
                     color: isOn ? cs.primary : cs.onSurface,
@@ -496,8 +496,8 @@ class PartyOptionCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     isAr
-                        ? '${_formatIqd(flatFeeIqd)} د.ع رسوم الحفلة'
-                        : '${_formatIqd(flatFeeIqd)} IQD party fee',
+                        ? '${_formatIqd(flatFeeIqd)} د.ع رسوم الضيوف الاضافيين'
+                        : '${_formatIqd(flatFeeIqd)} IQD Extra Guests Fee',
                     style: (tt.bodySmall ?? const TextStyle())
                         .copyWith(color: cs.onSurface.withValues(alpha: 0.5)),
                   ),
@@ -961,7 +961,7 @@ Replace (around lines 499-517):
                             if (partyOn && selectedShift.partyFlatFeeIqd > 0)
                               BookingSummaryRow(
                                 icon: Icons.groups_rounded,
-                                label: isAr ? 'رسوم الحفلة' : 'Party fee',
+                                label: isAr ? 'رسوم الضيوف الاضافيين' : 'Extra Guests Fee',
                                 value: _FarmBookingFormView._formatIqd(
                                     selectedShift.partyFlatFeeIqd),
                               ),
@@ -985,7 +985,7 @@ with:
                             if (partyOn && selectedShift.partyFlatFeeIqd > 0)
                               BookingSummaryRow(
                                 icon: Icons.groups_rounded,
-                                label: isAr ? 'رسوم الحفلة' : 'Party fee',
+                                label: isAr ? 'رسوم الضيوف الاضافيين' : 'Extra Guests Fee',
                                 value: _FarmBookingFormView._formatIqd(
                                     selectedShift.partyFlatFeeIqd),
                               ),
@@ -1066,7 +1066,7 @@ Use a place/shift already known to have `party_enabled = true` (per the Testing 
 
 - [ ] **Step 3: Verify the toggle renders the native glass switch**
 
-Confirm the "Bringing a party?" switch visually matches the language toggle in Settings (Profile → Language) — same frosted/native look, not the flat Material `Switch.adaptive` track.
+Confirm the "Having a Party?" switch visually matches the language toggle in Settings (Profile → Language) — same frosted/native look, not the flat Material `Switch.adaptive` track.
 
 - [ ] **Step 4: Verify the two cards and spacing**
 
@@ -1074,8 +1074,8 @@ Confirm: `PartyOptionCard` and `GuestCountCard` render as two visually distinct 
 
 - [ ] **Step 5: Verify toggle/counter independence**
 
-- With the toggle **off**, raise the guest count above the included limit → confirm the summary shows only an "Extra guests" row (no "Party fee" row), and the total reflects the overage.
-- Turn the toggle **on** with the guest count still at its default (1, under the limit) → confirm the summary shows only a "Party fee" row (no "Extra guests" row).
+- With the toggle **off**, raise the guest count above the included limit → confirm the summary shows only an "Extra guests" row (no "Extra Guests Fee" row), and the total reflects the overage.
+- Turn the toggle **on** with the guest count still at its default (1, under the limit) → confirm the summary shows only a "Extra Guests Fee" row (no "Extra guests" row).
 - With both the toggle on and the guest count above the limit → confirm both rows appear and the total is the sum of both.
 
 - [ ] **Step 6: Complete one booking through to payment**

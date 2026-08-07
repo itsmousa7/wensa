@@ -181,7 +181,7 @@ Customer proceeds to payment
 ## Testing Notes
 
 - Merchant adds an override for the Night shift, 2026-08-20, 300,000 IQD (standing price 200,000) → mobile shows 2026-08-20's Night shift at 300,000 with 200,000 struck through and a "Special price" badge; Day/Full shifts and every other date show the standing price, no badge.
-- Complete a booking on the overridden date → booking's `amount_iqd` is 300,000 (+ party fee if applicable); dashboard's booking list shows the same amount.
+- Complete a booking on the overridden date → booking's `amount_iqd` is 300,000 (+ Extra Guests Fee if applicable); dashboard's booking list shows the same amount.
 - Merchant deletes the override → next fetch of that date shows the standing price again, no badge.
 - Attempt to add a second override for the same place/shift/date → dashboard shows a duplicate-key error toast, no row created.
 - Farm shifts with no overrides configured anywhere behave exactly as before — regression check (`standard_price_iqd` is `NULL` everywhere, `ShiftCard` renders unchanged).

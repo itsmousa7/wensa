@@ -12,10 +12,10 @@ Farm shift bookings (`bookings.farm_shifts` — day / night / full day) currentl
 Let merchants (and admins, who share the same dashboard write access) configure, per shift, optional "party pricing":
 - Enable/disable
 - Included guests (covered by the base shift price)
-- Flat party fee (charged the moment the customer says they're bringing a party)
+- Flat Extra Guests Fee (charged the moment the customer says they're Having a Party)
 - Extra-guest fee (charged per guest beyond "included guests")
 
-Let customers, in the shift booking flow, toggle "bringing a party?" and enter a guest count, seeing the price update live before paying. The server computes and enforces the final charge — the client only ever transmits a guest count, never a price.
+Let customers, in the shift booking flow, toggle "Having a Party?" and enter a guest count, seeing the price update live before paying. The server computes and enforces the final charge — the client only ever transmits a guest count, never a price.
 
 ## Pricing Formula
 
@@ -117,7 +117,7 @@ Both roles render the exact same component today: `PlaceBookingTab` → `ShiftPa
 - `saveShift(type)`: include the four new fields in the upsert `payload`, parsing numeric inputs the same way `price_iqd` is parsed (strip commas, `parseInt`).
 - **UI** — inside each shift card's body (only rendered when the shift itself is `enabled`), below the existing Start/End/Price row, add a divider and a "Party Pricing" sub-section:
   - A `Toggle` — "Allow parties on this shift"
-  - When on, three compact fields in a row: **Included Guests** (number), **Party Fee** (IQD), **Fee per Extra Guest** (IQD)
+  - When on, three compact fields in a row: **Included Guests** (number), **Extra Guests Fee** (IQD), **Fee per Extra Guest** (IQD)
   - No separate save button — covered by the shift's existing **Save** button
   - Icon: a plain inline SVG people/group icon (never an emoji, per dashboard convention), colored with the shift's existing `SHIFT_COLOR[type]` accent when the sub-toggle is on, `C.text4` otherwise
 
@@ -154,10 +154,10 @@ Parse the matching snake_case keys in `fromJson` (defaulting the same way `isAva
 
 - New local state: `_FarmPartyOnNotifier` (bool, default false) and `_FarmPartySizeNotifier` (int, default synced to the selected shift's `partyIncludedPersons`), both `autoDispose`. Reset (like the existing promo reset) whenever the date or shift selection changes.
 - New card, `PartyOptionCard` (new widget file `lib/features/booking/presentation/widgets/party_option_card.dart`), rendered between the shift picker and the booking summary card, only when `selectedShift != null && selectedShift.partyEnabled`:
-  - Header row: people icon + "Bringing a party?" / "هل تحضر مجموعة؟" + a `Switch`
+  - Header row: people icon + "Having a Party?" / "لديك حفلة؟" + a `Switch`
   - `AnimatedSize` reveal when on: a guest-count stepper (−/+ buttons around a number), min `1`, starting value = `shift.partyIncludedPersons`
   - Live helper text below the stepper: "No extra charge up to {N} guests" when `count <= included`, or "+{fee} IQD for {n} extra guest(s)" when over
-- `BookingSummaryCard` rows: when party is on, add "Party fee" (flat fee) and, when `count > included`, "Extra guests" rows before the subtotal — the existing `_resolveEffective` discount logic already operates generically on `subtotal`, so promo/auto-discount naturally apply to the party-inclusive total with no special-casing.
+- `BookingSummaryCard` rows: when party is on, add "Extra Guests Fee" (flat fee) and, when `count > included`, "Extra guests" rows before the subtotal — the existing `_resolveEffective` discount logic already operates generically on `subtotal`, so promo/auto-discount naturally apply to the party-inclusive total with no special-casing.
 - `subtotal` computation becomes `selectedShift.priceIqd + (partyOn ? partyFlatFee + max(0, count - included) * extraFee : 0)`.
 - `onAction` (Proceed to Payment) passes `partySize: partyOn ? count : null` into `createFarmBooking`.
 
