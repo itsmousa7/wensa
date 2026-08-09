@@ -68,12 +68,34 @@
   box-shadow: 0 12px 30px -20px rgba(24, 38, 43, 0.25);
 }
 
+/* The brand and primary CTA stay pinned to the physical right edge, and the
+   language pill to the physical left, in both languages — the chrome is
+   brand furniture, not translated content, so it shouldn't mirror with the
+   page's reading direction the way the nav links and body copy do.
+   flex-direction:row already renders right-to-left in an RTL container, so
+   Arabic needs no override; row-reverse in the LTR container re-creates
+   that same right-to-left placement without touching the `direction`
+   property, so text inside each item still renders normally. */
 .nav__inner {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-3);
   min-height: var(--nav-h);
+  flex-direction: row;
 }
+
+[dir="ltr"] .nav__inner { flex-direction: row-reverse; }
+
+.nav__brandgroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+  flex-direction: row;
+}
+
+[dir="ltr"] .nav__brandgroup { flex-direction: row-reverse; }
 
 .nav__brand { flex-shrink: 0; }
 
@@ -92,22 +114,12 @@
 .nav__links {
   display: flex;
   gap: var(--space-3);
-  margin-inline-start: auto;
   font-size: var(--step--1);
   color: var(--subink);
 }
 
 .nav__links a { transition: color 0.2s var(--ease); }
 .nav__links a:hover { color: var(--teal); }
-
-.nav__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-inline-start: auto;
-}
-
-.nav__links + .nav__actions { margin-inline-start: 0; }
 
 @media (max-width: 900px) {
   .nav__links { display: none; }
