@@ -414,11 +414,14 @@ class _MembershipCard extends ConsumerWidget {
       placeName = isArabic ? 'عضوية' : 'Membership';
     }
 
-    final expiresIn = membership.status == MembershipStatus.active
+    final expiresIn = membership.status == MembershipStatus.active && membership.startsAt.isNotEmpty
         ? _formatExpiresIn(membership.endsAt, isArabic)
         : '';
-    final dateRange =
-        _formatDateRange(membership.startsAt, membership.endsAt, isArabic);
+    final notYetActivated =
+        membership.status == MembershipStatus.active && membership.startsAt.isEmpty;
+    final dateRange = notYetActivated
+        ? (isArabic ? 'امسح رمز QR للتفعيل' : 'Scan to activate')
+        : _formatDateRange(membership.startsAt, membership.endsAt, isArabic);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),

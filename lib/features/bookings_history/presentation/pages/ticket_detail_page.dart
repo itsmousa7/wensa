@@ -353,15 +353,28 @@ class _MembershipDetailBody extends ConsumerWidget {
           : (isArabic ? 'عضوية' : 'Membership');
     }
 
+    final notYetActivated =
+        membership.status == MembershipStatus.active && membership.startsAt.isEmpty;
+
     final cells = [
-      TicketInfoCell(
-        label: isArabic ? 'صالح من' : 'Valid From',
-        value: _date(membership.startsAt),
-      ),
-      TicketInfoCell(
-        label: isArabic ? 'صالح حتى' : 'Valid Until',
-        value: _date(membership.endsAt),
-      ),
+      if (notYetActivated)
+        TicketInfoCell(
+          label: isArabic ? 'الحالة' : 'Status',
+          value: isArabic
+              ? 'لم يتم التفعيل بعد — امسح رمز QR عند الزيارة الأولى'
+              : 'Not yet activated — scan at your first visit',
+          forceLtr: false,
+        )
+      else ...[
+        TicketInfoCell(
+          label: isArabic ? 'صالح من' : 'Valid From',
+          value: _date(membership.startsAt),
+        ),
+        TicketInfoCell(
+          label: isArabic ? 'صالح حتى' : 'Valid Until',
+          value: _date(membership.endsAt),
+        ),
+      ],
       TicketInfoCell(
         label: isArabic ? 'المبلغ' : 'Amount',
         value: _amount(membership.amountIqd),
