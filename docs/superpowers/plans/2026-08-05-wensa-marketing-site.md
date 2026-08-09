@@ -3388,7 +3388,7 @@ Expected: FAIL — the `faq.*` keys do not exist.
 | `faq.title` | `اسئلة شائعة` | `Frequently asked` |
 | `faq.q1` | `شكد العمولة؟` | `What's the commission?` |
 | `faq.a1` | `[PENDING] العمولة تنحدد حسب الاتفاق — تواصل ويانا.` | `[PENDING] Commission is set per agreement — get in touch.` |
-| `faq.q2` | `امتى توصلني فلوسي؟` | `When do I get paid?` |
+| `faq.q2` | `شوكت توصلني فلوسي؟` | `When do I get paid?` |
 | `faq.a2` | `[PENDING] التحويل يوصل لحسابك البنكي حسب دورة الدفع.` | `[PENDING] Transfers reach your bank account on the payout cycle.` |
 | `faq.q3` | `اكو عقد لازم اوقعه؟` | `Do I need to sign a contract?` |
 | `faq.a3` | `[PENDING] تكدر تبدي بدون عقد طويل.` | `[PENDING] You can start without a long-term contract.` |
@@ -3411,7 +3411,7 @@ After the pricing section in `merchants.html`:
             <p data-i18n="faq.a1">[PENDING] العمولة تنحدد حسب الاتفاق — تواصل ويانا.</p>
           </details>
           <details>
-            <summary data-i18n="faq.q2">امتى توصلني فلوسي؟</summary>
+            <summary data-i18n="faq.q2">شوكت توصلني فلوسي؟</summary>
             <p data-i18n="faq.a2">[PENDING] التحويل يوصل لحسابك البنكي حسب دورة الدفع.</p>
           </details>
           <details>
