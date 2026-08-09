@@ -428,6 +428,8 @@
 .rotator__word {
   display: inline-block;
   width: var(--rotator-w, auto);
+  overflow: hidden;
+  white-space: nowrap;
   transition:
     width var(--rotator-swap) var(--ease),
     transform calc(var(--rotator-swap) / 2) var(--ease),
