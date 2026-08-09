@@ -421,14 +421,21 @@
   --rotator-swap: 520ms;
   display: inline-block;
   overflow: hidden;
-  vertical-align: bottom;
+  /* vertical-align: bottom aligns this box to the line's descent edge, not
+     the text baseline — fine for Latin's shallow descent, but it visibly
+     dropped the Arabic word below "Book"/"احجز". baseline keeps both
+     languages level with the plain text next to it. */
+  vertical-align: baseline;
   color: var(--teal);
 }
 
 .rotator__word {
   display: inline-block;
   width: var(--rotator-w, auto);
-  overflow: hidden;
+  /* No overflow:hidden here: it would make this box's *bottom margin edge*
+     the CSS baseline instead of the text's own baseline, knocking it out of
+     line with the surrounding words. The parent .rotator already clips
+     horizontal overflow, so nowrap alone is enough to stop mid-swap wrap. */
   white-space: nowrap;
   transition:
     width var(--rotator-swap) var(--ease),
