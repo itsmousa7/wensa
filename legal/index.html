@@ -178,7 +178,13 @@
 
         <div class="steps">
           <svg class="steps__line" viewBox="0 0 1000 2" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M0 1 H1000" data-line-draw fill="none" stroke="var(--teal)" stroke-width="2"
+            <defs>
+              <linearGradient id="stepsGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="var(--teal)" />
+                <stop offset="100%" stop-color="var(--orange)" />
+              </linearGradient>
+            </defs>
+            <path d="M0 1 H1000" data-line-draw fill="none" stroke="url(#stepsGrad)" stroke-width="2"
               stroke-dasharray="6 8" />
           </svg>
 

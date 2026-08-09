@@ -53,15 +53,19 @@
   position: sticky;
   inset-block-start: 0;
   z-index: 50;
-  background: color-mix(in srgb, var(--paper) 80%, transparent);
+  background: color-mix(in srgb, var(--paper) 55%, transparent);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
   border-block-end: 1px solid transparent;
-  transition: background 0.3s var(--ease), border-color 0.3s var(--ease);
+  transition: background 0.3s var(--ease), border-color 0.3s var(--ease), box-shadow 0.3s var(--ease), backdrop-filter 0.3s var(--ease);
 }
 
 .nav.is-scrolled {
-  background: color-mix(in srgb, var(--paper) 92%, transparent);
-  backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--paper) 78%, transparent);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
   border-block-end-color: var(--line);
+  box-shadow: 0 12px 30px -20px rgba(24, 38, 43, 0.25);
 }
 
 .nav__inner {
@@ -113,6 +117,7 @@
 /* ── Buttons ────────────────────────────────────────────────────────── */
 
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -123,42 +128,73 @@
   font-weight: 700;
   font-size: var(--step--1);
   white-space: nowrap;
-  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), border-color 0.25s var(--ease), background 0.25s var(--ease);
 }
 
 .btn__icon { width: 18px; height: 18px; flex-shrink: 0; }
 
+/* A soft diagonal highlight sweeps across on hover — the "glassy sheen" that
+   reads as premium on Apple/fintech CTAs. Purely decorative, ::after so it
+   never displaces the label or icon. */
+.btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.35) 48%, transparent 66%);
+  transform: translateX(-120%);
+  transition: transform 0.6s var(--ease);
+  pointer-events: none;
+}
+
+.btn:hover::after { transform: translateX(120%); }
+
+.btn > * { position: relative; z-index: 2; }
+
 .btn--teal {
-  background: var(--teal);
+  background: linear-gradient(155deg, color-mix(in srgb, var(--teal) 90%, white 14%), var(--teal) 55%, color-mix(in srgb, var(--teal) 88%, black 12%));
   color: #fff;
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--teal) 28%, transparent);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset, 0 6px 18px color-mix(in srgb, var(--teal) 32%, transparent);
 }
 
 .btn--teal:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 26px color-mix(in srgb, var(--teal) 38%, transparent);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 14px 30px color-mix(in srgb, var(--teal) 42%, transparent);
 }
 
 .btn--teal:active { transform: translateY(0); }
 
 .btn--ghost {
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--glass-border);
+  background: color-mix(in srgb, white 45%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: var(--ink);
 }
 
-.btn--ghost:hover { transform: translateY(-2px); border-color: var(--teal); }
+.btn--ghost:hover {
+  transform: translateY(-2px);
+  border-color: var(--teal);
+  background: color-mix(in srgb, white 70%, transparent);
+  box-shadow: var(--shadow-rest);
+}
 
 .pill {
   padding: 0.45em 0.9em;
   border-radius: 999px;
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--glass-border);
+  background: color-mix(in srgb, white 40%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   font-size: var(--step--1);
   font-weight: 700;
   color: var(--subink);
-  transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease);
+  transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease), background 0.2s var(--ease);
 }
 
-.pill:hover { color: var(--teal); border-color: var(--teal); transform: translateY(-1px); }
+.pill:hover { color: var(--teal); border-color: var(--teal); background: color-mix(in srgb, white 65%, transparent); transform: translateY(-1px); }
 
 /* ── Footer ─────────────────────────────────────────────────────────── */
 
@@ -303,13 +339,30 @@
 /* ── Hero ───────────────────────────────────────────────────────────── */
 
 .hero {
+  position: relative;
   padding-block: clamp(var(--space-5), 8vw, var(--space-8));
+  overflow: hidden;
+  background: var(--paper);
+}
+
+/* Layered ambient mesh — the calm, out-of-focus color blobs that read as
+   "premium fintech hero" (Wayl/ZainCash) instead of a flat tint. Sits behind
+   everything via z-index, blurred so it never competes with copy contrast. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -10%;
+  z-index: 0;
   background:
-    radial-gradient(120% 80% at 80% 0%, color-mix(in srgb, var(--teal) 9%, transparent), transparent 60%),
-    var(--paper);
+    radial-gradient(38% 45% at 82% 8%, color-mix(in srgb, var(--teal) 20%, transparent), transparent 70%),
+    radial-gradient(30% 32% at 6% 30%, color-mix(in srgb, var(--orange) 10%, transparent), transparent 70%),
+    radial-gradient(26% 30% at 60% 92%, color-mix(in srgb, var(--yellow) 12%, transparent), transparent 70%);
+  filter: blur(10px);
 }
 
 .hero__inner {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: var(--space-6);
   grid-template-columns: 1fr;
@@ -320,9 +373,9 @@
   .hero__inner { grid-template-columns: 1.15fr 0.85fr; }
 }
 
-.hero__copy { display: flex; flex-direction: column; gap: var(--space-3); }
+.hero__copy { display: flex; flex-direction: column; gap: var(--space-3); align-items: flex-start; }
 
-.hero__title { font-size: var(--step-5); }
+.hero__title { font-size: var(--step-5); letter-spacing: -0.01em; }
 
 /* Each row is forced onto its own line regardless of viewport width, so the
    animated word always lands at the end of the first line rather than
@@ -331,14 +384,33 @@
 
 .hero__cta { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-block-start: var(--space-2); }
 
-.hero__art { display: flex; justify-content: center; }
+.hero__art { position: relative; display: flex; justify-content: center; }
 
+/* Glow anchored behind the phone so the mock reads as floating light,
+   matching the "device with an aura" treatment on Apple/Wayl product shots. */
+.hero__art::before {
+  content: "";
+  position: absolute;
+  inset: 6% 14%;
+  z-index: 0;
+  background:
+    radial-gradient(60% 60% at 50% 42%, color-mix(in srgb, var(--teal) 26%, transparent), transparent 72%);
+  filter: blur(36px);
+}
+
+/* No CSS transform animation here: [data-parallax] already drives .phone's
+   transform via inline styles on scroll (motion.js), and a CSS animation on
+   the same property would fight it frame-to-frame. */
 .phone {
+  position: relative;
+  z-index: 1;
   width: min(300px, 70vw);
   padding: 10px;
   border-radius: 42px;
-  background: var(--ink);
-  box-shadow: 0 30px 70px color-mix(in srgb, var(--ink) 22%, transparent);
+  background: linear-gradient(160deg, #2b3a40, var(--ink) 60%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 40px 80px -20px color-mix(in srgb, var(--ink) 45%, transparent);
 }
 
 .phone img { border-radius: 32px; }
@@ -386,9 +458,11 @@
    against a fixed axis rather than a logical one. */
 
 .ticker-wrap {
+  position: relative;
   padding-block: var(--space-4);
   border-block: 1px solid var(--line);
   overflow: hidden;
+  background: color-mix(in srgb, var(--teal) 4%, var(--paper));
   mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
 }
 
@@ -413,6 +487,13 @@
   display: flex;
   align-items: center;
   gap: var(--space-1);
+  padding: 0.55em 1.1em;
+  border-radius: 999px;
+  background: color-mix(in srgb, white 55%, transparent);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-rest);
   font-size: var(--step-1);
   font-weight: 700;
   color: var(--ink);
@@ -424,6 +505,7 @@
   height: 7px;
   border-radius: 50%;
   background: var(--teal);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--teal) 20%, transparent);
   flex-shrink: 0;
 }
 
@@ -442,6 +524,34 @@
 .section { padding-block: clamp(var(--space-5), 7vw, var(--space-7)); }
 .section > .u-wrap > h2 { margin-block-end: var(--space-4); }
 
+.section.dl {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--teal) 3%, var(--paper));
+}
+
+.section.dl::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(32% 55% at 88% 30%, color-mix(in srgb, var(--teal) 14%, transparent), transparent 70%),
+    radial-gradient(26% 40% at 10% 85%, color-mix(in srgb, var(--orange) 8%, transparent), transparent 70%);
+  filter: blur(6px);
+}
+
+.section.dl .dl__inner { position: relative; z-index: 1; }
+
+/* Alternating tint on the process/benefit sections gives the page a rhythm
+   (light → tinted → light) instead of one unbroken paper-colored scroll —
+   the same trick Apple/Wayl marketing pages use between content blocks. */
+.section#how,
+.section#benefits,
+.section#join {
+  background: color-mix(in srgb, var(--teal) 3%, var(--paper));
+}
+
 /* ── Cards ──────────────────────────────────────────────────────────── */
 
 .cards {
@@ -451,29 +561,44 @@
 }
 
 .card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: #fff;
-  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-rest);
+  transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s var(--ease);
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 18px 40px color-mix(in srgb, var(--ink) 10%, transparent);
+  transform: translateY(-6px);
+  border-color: color-mix(in srgb, var(--teal) 35%, var(--glass-border));
+  box-shadow: var(--shadow-lift);
 }
 
 .card__shot {
+  position: relative;
   overflow: hidden;
   border-radius: var(--radius-sm);
   background: var(--teal-soft);
   aspect-ratio: 4 / 3;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset;
 }
 
-.card__shot img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+.card__shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transition: transform 0.5s var(--ease);
+}
+
+.card:hover .card__shot img { transform: scale(1.04); }
 
 /* ── Steps ──────────────────────────────────────────────────────────── */
 
@@ -503,7 +628,8 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--teal);
+  background: linear-gradient(155deg, color-mix(in srgb, var(--teal) 88%, white 16%), var(--teal) 60%, color-mix(in srgb, var(--teal) 85%, black 12%));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 10px 22px -8px color-mix(in srgb, var(--teal) 55%, transparent);
   color: #fff;
   font-weight: 700;
   font-size: var(--step-0);
@@ -549,31 +675,66 @@
   display: none;
   align-items: center;
   gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-rest);
   font-size: var(--step--1);
   color: var(--subink);
+  width: fit-content;
 }
+
+.dl__qr img { border-radius: var(--radius-sm); }
 
 /* A QR is only useful to someone on a different device from the one holding
    the camera, so it is desktop-only. */
 @media (min-width: 900px) { .dl__qr { display: flex; } }
 
-.dl__char { justify-self: center; width: min(250px, 60vw); height: auto; }
+.dl__char {
+  position: relative;
+  justify-self: center;
+  width: min(250px, 60vw);
+  height: auto;
+  z-index: 1;
+}
 
 /* ── Band ───────────────────────────────────────────────────────────── */
 
 .band {
-  background: var(--teal);
-  color: #fff;
-  padding-block: var(--space-6);
+  padding-block: var(--space-7);
 }
 
 .band__inner {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
   align-items: center;
   justify-content: space-between;
+  overflow: hidden;
+  padding: var(--space-5) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--teal) 92%, white 8%), var(--teal) 55%, color-mix(in srgb, var(--teal) 78%, #0e2a33 22%));
+  color: #fff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.16) inset, 0 30px 60px -26px color-mix(in srgb, var(--teal) 55%, transparent);
 }
+
+/* Same soft-blob ambience as the hero, tuned lighter so it reads as a glossy
+   highlight on the saturated teal rather than a competing hue. */
+.band__inner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(38% 70% at 88% -10%, rgba(255, 255, 255, 0.22), transparent 70%),
+    radial-gradient(30% 50% at 8% 118%, color-mix(in srgb, var(--orange) 30%, transparent), transparent 70%);
+}
+
+.band__inner > * { position: relative; z-index: 1; }
 
 .band h2 { font-size: var(--step-3); }
 .band p { opacity: 0.92; margin-block-start: var(--space-1); }
@@ -599,16 +760,33 @@
   margin-inline: auto;
   padding: var(--space-5) var(--space-4);
   text-align: center;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: #fff;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-rest);
+}
+
+/* The orange glow lives behind the card, echoing the single orange badge
+   in front of it — WENSA_BRAND_SKILL.md §1 rule 3 still holds, this is a
+   tint of that same hue, not a second brand color. */
+.offer::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  z-index: -1;
+  background:
+    radial-gradient(45% 60% at 50% -10%, color-mix(in srgb, var(--orange) 16%, transparent), transparent 70%);
+  filter: blur(20px);
 }
 
 .offer__badge {
   display: inline-block;
   padding: 0.35em 1em;
   border-radius: 999px;
-  background: var(--orange);
+  background: linear-gradient(155deg, color-mix(in srgb, var(--orange) 90%, white 14%), var(--orange) 60%, color-mix(in srgb, var(--orange) 85%, black 10%));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 8px 18px -6px color-mix(in srgb, var(--orange) 50%, transparent);
   color: #fff;
   font-size: var(--step--1);
   font-weight: 700;
@@ -631,16 +809,26 @@
   font-size: var(--step--1);
 }
 
+/* Benefit tiles on the merchant page have no image, so the accent moves to a
+   hairline top edge that lights up teal on hover instead of a photo. */
 .card--flat {
-  background: transparent;
-  border-color: var(--line);
+  padding-block-start: calc(var(--space-3) + 3px);
+  overflow: hidden;
 }
 
-.card--flat:hover {
-  transform: translateY(-4px);
-  border-color: color-mix(in srgb, var(--teal) 40%, transparent);
-  box-shadow: none;
+.card--flat::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--teal), color-mix(in srgb, var(--teal) 40%, var(--orange)));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 0.4s var(--ease);
 }
+
+.card--flat:hover::before { transform: scaleX(1); }
 
 /* ── Plans ──────────────────────────────────────────────────────────── */
 
@@ -657,26 +845,51 @@
   flex-direction: column;
   gap: var(--space-1);
   padding: var(--space-4) var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: #fff;
-  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-rest);
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.3s var(--ease);
 }
 
-.plan:hover { transform: translateY(-4px); box-shadow: 0 18px 40px color-mix(in srgb, var(--ink) 10%, transparent); }
+.plan:hover {
+  transform: translateY(-6px);
+  border-color: color-mix(in srgb, var(--teal) 35%, var(--glass-border));
+  box-shadow: var(--shadow-lift);
+}
 
+/* The popular plan gets a gradient ring instead of a flat border — padding
+   trick: gradient background + inset white background clip to a border-width
+   inset, so the "border" is actually a sliver of the gradient showing through. */
 .plan--popular {
-  border-color: var(--teal);
-  background: var(--teal-soft);
+  border-color: transparent;
+  background:
+    var(--glass-bg) padding-box,
+    linear-gradient(155deg, var(--teal), color-mix(in srgb, var(--teal) 45%, var(--orange))) border-box;
+  border: 2px solid transparent;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.plan--popular::before {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  z-index: -1;
+  background: radial-gradient(60% 70% at 50% 0%, color-mix(in srgb, var(--teal) 22%, transparent), transparent 70%);
+  filter: blur(18px);
 }
 
 .plan__badge {
   position: absolute;
-  inset-block-start: -12px;
+  inset-block-start: -14px;
   inset-inline-start: var(--space-3);
-  padding: 0.3em 0.9em;
+  padding: 0.35em 1em;
   border-radius: 999px;
-  background: var(--teal);
+  background: linear-gradient(155deg, color-mix(in srgb, var(--teal) 90%, white 14%), var(--teal) 60%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 8px 18px -6px color-mix(in srgb, var(--teal) 50%, transparent);
   color: #fff;
   font-size: var(--step--1);
   font-weight: 700;
@@ -691,11 +904,24 @@
    Native <details> so it works with JS off and is keyboard-accessible for
    free. Only the marker rotation is styled. */
 
-.faq { max-width: 760px; margin-inline: auto; margin-block-start: var(--space-4); }
+.faq { max-width: 760px; margin-inline: auto; margin-block-start: var(--space-4); display: flex; flex-direction: column; gap: var(--space-1); }
 
 .faq details {
-  border-block-end: 1px solid var(--line);
-  padding-block: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, white 40%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background 0.25s var(--ease), border-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+
+.faq details:hover { background: color-mix(in srgb, white 60%, transparent); }
+
+.faq details[open] {
+  border-color: color-mix(in srgb, var(--teal) 30%, var(--glass-border));
+  background: color-mix(in srgb, white 65%, transparent);
+  box-shadow: var(--shadow-rest);
 }
 
 .faq summary {

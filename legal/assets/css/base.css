@@ -74,6 +74,15 @@
   --teal-soft: color-mix(in srgb, var(--teal) 10%, var(--paper));
   --line: color-mix(in srgb, var(--ink) 12%, transparent);
 
+  /* Shared glass/elevation vocabulary so every "premium" surface (cards,
+     panels, popovers) reads as one material instead of N one-off recipes. */
+  --glass-bg: linear-gradient(165deg, color-mix(in srgb, white 66%, var(--paper)), color-mix(in srgb, white 18%, var(--paper)));
+  --glass-border: color-mix(in srgb, white 65%, var(--line));
+  --glass-blur: blur(20px) saturate(160%);
+  --shadow-rest: 0 1px 1px rgba(24, 38, 43, 0.03), 0 16px 32px -24px rgba(24, 38, 43, 0.2);
+  --shadow-lift: 0 1px 1px rgba(24, 38, 43, 0.04), 0 30px 50px -22px rgba(24, 38, 43, 0.28);
+  --radius-lg: 28px;
+
   --font-ar: "Graphik Arabic", "IBM Plex Sans", system-ui, sans-serif;
   --font-en: "IBM Plex Sans", system-ui, sans-serif;
   --font: var(--font-ar);
@@ -157,12 +166,33 @@ p { text-wrap: pretty; }
 }
 
 .u-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.4em 0.9em 0.4em 0.7em;
+  border-radius: 999px;
+  background: color-mix(in srgb, white 50%, transparent);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   font-size: var(--step--1);
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--teal);
   text-transform: uppercase;
 }
+
+.u-eyebrow::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--teal) 22%, transparent);
+  flex-shrink: 0;
+}
+
+[dir="rtl"] .u-eyebrow { padding: 0.4em 0.7em 0.4em 0.9em; }
 
 [lang="ar"] .u-eyebrow { letter-spacing: 0; text-transform: none; }
 
