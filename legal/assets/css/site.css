@@ -420,12 +420,15 @@
 .rotator {
   --rotator-swap: 520ms;
   display: inline-block;
-  overflow: hidden;
-  /* vertical-align: bottom aligns this box to the line's descent edge, not
-     the text baseline — fine for Latin's shallow descent, but it visibly
-     dropped the Arabic word below "Book"/"احجز". baseline keeps both
-     languages level with the plain text next to it. */
-  vertical-align: baseline;
+  /* Clip via clip-path, not overflow: an inline-block whose `overflow` is
+     anything but `visible` reports ITS OWN BOTTOM EDGE as its baseline
+     instead of its text's true baseline (CSS2.1 §10.8.1) — the box's height
+     (and so the offset) shifts per word depending on that word's glyphs,
+     which is exactly why alignment kept drifting word-to-word. clip-path
+     clips painting without touching `overflow`, so the true text baseline
+     is what aligns with "Book"/"احجز", for every word, every time. */
+  overflow: visible;
+  clip-path: inset(0);
   color: var(--teal);
 }
 
