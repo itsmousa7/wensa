@@ -363,6 +363,7 @@ class _MembershipDetailBody extends ConsumerWidget {
           value: isArabic
               ? 'لم يتم التفعيل بعد — امسح رمز QR عند الزيارة الأولى'
               : 'Not yet activated — scan at your first visit',
+          forceLtr: false,
         )
       else ...[
         TicketInfoCell(

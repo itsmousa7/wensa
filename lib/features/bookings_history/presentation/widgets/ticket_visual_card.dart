@@ -16,9 +16,10 @@ const double _kTearHalf = 14.0;
 const double _kNotchRadius = 14.0;
 
 class TicketInfoCell {
-  const TicketInfoCell({required this.label, required this.value});
+  const TicketInfoCell({required this.label, required this.value, this.forceLtr = true});
   final String label;
   final String value;
+  final bool forceLtr;
 }
 
 /// The ticket card visual. Stateful only to measure the top section so the
@@ -269,7 +270,7 @@ class _InfoGrid extends StatelessWidget {
                         // block still sits on the start edge under the label.
                         Text(
                           cell.value,
-                          textDirection: TextDirection.ltr,
+                          textDirection: cell.forceLtr ? TextDirection.ltr : null,
                           style: tt.titleMedium?.copyWith(
                             fontSize: 16.5,
                             fontWeight: FontWeight.w800,

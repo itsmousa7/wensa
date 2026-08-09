@@ -207,8 +207,6 @@ class _MembershipFormView extends ConsumerWidget {
     );
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
-    final today = DateTime.now();
-
     final placeAsync = ref.watch(placeDetailsProvider(placeId));
     final place = placeAsync.value;
     final autoDiscount = ref.watch(bestAutoDiscountProvider(AutoDiscountKey(
@@ -346,22 +344,8 @@ class _MembershipFormView extends ConsumerWidget {
                               icon: Icons.date_range_rounded,
                               label: isAr ? 'المدة' : 'Duration',
                               value: isAr
-                                  ? '${selectedPlan.durationDays} أيام'
-                                  : '${selectedPlan.durationDays} days',
-                            ),
-                            BookingSummaryRow(
-                              icon: Icons.event_available_rounded,
-                              label: isAr ? 'تاريخ البداية' : 'Start Date',
-                              value: bookingFormatDate(today),
-                            ),
-                            BookingSummaryRow(
-                              icon: Icons.event_busy_rounded,
-                              label: isAr ? 'تاريخ الانتهاء' : 'End Date',
-                              value: bookingFormatDate(
-                                today.add(
-                                  Duration(days: selectedPlan.durationDays),
-                                ),
-                              ),
+                                  ? 'صالحة ${selectedPlan.durationDays} يوماً من أول زيارة'
+                                  : 'Valid for ${selectedPlan.durationDays} day${selectedPlan.durationDays == 1 ? '' : 's'} from your first visit',
                             ),
                           ],
                           subtotalLabel: isAr ? 'المجموع' : 'Subtotal',

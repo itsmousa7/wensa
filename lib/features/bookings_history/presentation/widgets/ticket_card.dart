@@ -414,7 +414,7 @@ class _MembershipCard extends ConsumerWidget {
       placeName = isArabic ? 'عضوية' : 'Membership';
     }
 
-    final expiresIn = membership.status == MembershipStatus.active
+    final expiresIn = membership.status == MembershipStatus.active && membership.startsAt.isNotEmpty
         ? _formatExpiresIn(membership.endsAt, isArabic)
         : '';
     final notYetActivated =
