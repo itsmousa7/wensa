@@ -163,12 +163,27 @@
 /* ── Footer ─────────────────────────────────────────────────────────── */
 
 .foot {
+  position: relative;
   margin-block-start: var(--space-8);
   padding-block: var(--space-6);
-  border-block-start: 1px solid var(--line);
+  overflow: hidden;
+}
+
+/* A hairline gradient reads as considerably more refined than a flat
+   border, and the soft radial blobs give the frosted-glass card below
+   something ambient to actually pick up in its blur/highlight. */
+.foot::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--teal) 45%, transparent) 50%, transparent);
 }
 
 .foot__inner {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
@@ -194,24 +209,96 @@
 .foot__rights { color: var(--subink); font-size: var(--step--1); }
 .foot__dot { color: var(--teal); }
 
-.foot__contact { display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--step--1); }
-.foot__contact a { color: var(--subink); transition: color 0.2s var(--ease); }
-.foot__contact a:hover { color: var(--teal); }
+/* Frosted glass card: layered box-shadow (contact shadow + ambient drop +
+   inner top highlight) is what sells the "floating pane of glass" read,
+   not the blur alone. */
+.foot__connect {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: linear-gradient(165deg, color-mix(in srgb, white 60%, var(--paper)), color-mix(in srgb, white 15%, var(--paper)));
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid color-mix(in srgb, white 65%, var(--line));
+  box-shadow:
+    0 1px 1px rgba(24, 38, 43, 0.03),
+    0 24px 40px -26px rgba(24, 38, 43, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
 
-.foot__social { display: flex; gap: var(--space-2); }
+/* Glow anchored to the card itself (not a footer corner) so it stays put
+   under the card regardless of where flex-wrap/RTL puts it. */
+.foot__connect::before {
+  content: "";
+  position: absolute;
+  inset: -28px;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 25% 20%, color-mix(in srgb, var(--teal) 22%, transparent), transparent 60%),
+    radial-gradient(circle at 80% 85%, color-mix(in srgb, var(--orange) 14%, transparent), transparent 55%);
+  filter: blur(28px);
+}
+
+.foot__connect-label {
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal);
+}
+
+[lang="ar"] .foot__connect-label { letter-spacing: 0; text-transform: none; }
+
+.foot__connect-row { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+
+.foot__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: var(--step--1);
+  font-weight: 600;
+  transition: background 0.25s var(--ease), border-color 0.25s var(--ease), box-shadow 0.25s var(--ease), transform 0.25s var(--ease);
+}
+
+.foot__pill-icon { width: 14px; height: 14px; color: var(--teal); flex-shrink: 0; }
+
+.foot__pill:hover {
+  background: #fff;
+  border-color: var(--teal);
+  box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--teal) 55%, transparent);
+  transform: translateY(-2px);
+}
+
+.foot__social { display: flex; gap: var(--space-1); }
 .foot__social a {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
   border: 1px solid var(--line);
   color: var(--subink);
-  transition: color 0.2s var(--ease), border-color 0.2s var(--ease), transform 0.2s var(--ease);
+  transition: color 0.25s var(--ease), background 0.25s var(--ease), border-color 0.25s var(--ease), box-shadow 0.25s var(--ease), transform 0.25s var(--ease);
 }
-.foot__social a:hover { color: var(--teal); border-color: var(--teal); transform: translateY(-1px); }
-.foot__social svg { width: 18px; height: 18px; }
+.foot__social a:hover {
+  color: var(--teal);
+  background: #fff;
+  border-color: var(--teal);
+  box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--teal) 55%, transparent);
+  transform: translateY(-2px) scale(1.06);
+}
+.foot__social svg { width: 17px; height: 17px; }
 
 /* ── Hero ───────────────────────────────────────────────────────────── */
 
