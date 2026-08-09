@@ -417,8 +417,11 @@ class _MembershipCard extends ConsumerWidget {
     final expiresIn = membership.status == MembershipStatus.active
         ? _formatExpiresIn(membership.endsAt, isArabic)
         : '';
-    final dateRange =
-        _formatDateRange(membership.startsAt, membership.endsAt, isArabic);
+    final notYetActivated =
+        membership.status == MembershipStatus.active && membership.startsAt.isEmpty;
+    final dateRange = notYetActivated
+        ? (isArabic ? 'امسح رمز QR للتفعيل' : 'Scan to activate')
+        : _formatDateRange(membership.startsAt, membership.endsAt, isArabic);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
