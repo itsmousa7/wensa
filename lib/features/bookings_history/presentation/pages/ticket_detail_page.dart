@@ -12,6 +12,7 @@ import 'package:future_riverpod/features/booking/domain/models/booking.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
+import 'package:future_riverpod/features/bookings_history/presentation/providers/membership_realtime_provider.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/ticket_status_badge.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/ticket_visual_card.dart';
@@ -294,6 +295,10 @@ class _MembershipDetail extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Keeps a live Realtime subscription open on this one row for as long as
+    // this page is on screen, so a merchant's Activate button press elsewhere
+    // updates this ticket without the user pulling to refresh.
+    ref.watch(membershipRealtimeSyncProvider(membershipId));
     final asyncMemberships = ref.watch(userMembershipsProvider);
     return asyncMemberships.when(
       loading: () => const Center(child: CircularProgressIndicator()),

@@ -344,8 +344,8 @@ class _MembershipFormView extends ConsumerWidget {
                               icon: Icons.date_range_rounded,
                               label: isAr ? 'المدة' : 'Duration',
                               value: isAr
-                                  ? 'صالحة ${selectedPlan.durationDays} يوماً من أول زيارة'
-                                  : 'Valid for ${selectedPlan.durationDays} day${selectedPlan.durationDays == 1 ? '' : 's'} from your first visit',
+                                  ? 'صالحة ${selectedPlan.durationDays} يوماً من أول تفعيل'
+                                  : 'Valid for ${selectedPlan.durationDays} day${selectedPlan.durationDays == 1 ? '' : 's'} from your first activation',
                             ),
                           ],
                           subtotalLabel: isAr ? 'المجموع' : 'Subtotal',
