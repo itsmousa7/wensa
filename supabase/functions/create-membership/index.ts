@@ -163,6 +163,29 @@ Deno.serve(async (req: Request) => {
     const promoCodeId     = discount.promoCodeId;
     const autoDiscountId  = discount.autoDiscountId;
 
+    // ── Look up merchant commission (needed by both the cash and Wayl paths) ──
+    // Priority: temp override (when current Asia/Baghdad date is in window)
+    //           → merchant.commission_percentage → 12% default.
+    let commissionPct: number = 12;
+    if (merchantId) {
+      try {
+        const merchantRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/merchants?id=eq.${merchantId}` +
+          `&select=commission_percentage,temp_commission_percentage,temp_commission_from,temp_commission_to`,
+          { headers: { ...svc, "Accept-Profile": "business" } },
+        );
+        if (merchantRes.ok) {
+          const [merchant] = await merchantRes.json() as {
+            commission_percentage: number | null;
+            temp_commission_percentage: number | null;
+            temp_commission_from: string | null;
+            temp_commission_to:   string | null;
+          }[];
+          commissionPct = resolveCommissionPct(merchant);
+        }
+      } catch { /* default 12% */ }
+    }
+
     // ── Free path: dashboard membership for a merchant with payment toggle OFF ──
     if (isDashboardPurchase && !(await dashboardPaymentRequired(SUPABASE_URL, svc, merchantId))) {
       await fetch(`${SUPABASE_URL}/rest/v1/memberships?id=eq.${membershipId}`, {
@@ -195,13 +218,22 @@ Deno.serve(async (req: Request) => {
         );
         return json({ error: "cash_disabled" }, 400);
       }
-      await fetch(`${SUPABASE_URL}/rest/v1/memberships?id=eq.${membershipId}`, {
+      // Use return=representation (not the shared minimal-return headers) so we
+      // can verify the PATCH actually matched a row before telling the client
+      // their cash membership is confirmed — a silent failure here would leave
+      // the row `pending`, which auto-expires via memberships_expire_pending
+      // while the customer believes they're signed up.
+      const cashRes = await fetch(`${SUPABASE_URL}/rest/v1/memberships?id=eq.${membershipId}`, {
         method: "PATCH",
-        headers: { ...svc, "Accept-Profile": "bookings", "Content-Profile": "bookings" },
+        headers: {
+          ...svc, "Accept-Profile": "bookings", "Content-Profile": "bookings",
+          Prefer: "return=representation",
+        },
         body: JSON.stringify({
           status:              "active",
           payment_status:      "paid",
           payment_method:      "cash",
+          commission_pct:      commissionPct,
           amount_iqd:          finalIqd,
           original_amount_iqd: subtotalIqd,
           discount_amount_iqd: discountAmount,
@@ -213,6 +245,16 @@ Deno.serve(async (req: Request) => {
           guest_name:          body.guest_name ?? null,
         }),
       });
+      if (!cashRes.ok) {
+        const cashErr = await cashRes.json().catch(() => ({}));
+        console.error(`create-membership: cash PATCH failed ${cashRes.status} id=${membershipId}`, cashErr);
+        return json({ error: "Failed to confirm cash membership" }, 500);
+      }
+      const cashUpdated = await cashRes.json().catch(() => []) as unknown[];
+      if (!Array.isArray(cashUpdated) || !cashUpdated.length) {
+        console.error(`create-membership: cash PATCH affected 0 rows id=${membershipId}`);
+        return json({ error: "Failed to confirm cash membership" }, 500);
+      }
       return json({ membership_id: membershipId, cash: true, amount_iqd: finalIqd, source }, 200);
     }
 
@@ -257,28 +299,7 @@ Deno.serve(async (req: Request) => {
     const paymentUrl = waylJson.data.url;
     const waylCode   = waylJson.data.code;
 
-    // ── Look up merchant commission to snapshot onto membership ────────────
-    // Priority: temp override (when current Asia/Baghdad date is in window)
-    //           → merchant.commission_percentage → 12% default.
-    let commissionPct: number = 12;
-    if (merchantId) {
-      try {
-        const merchantRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/merchants?id=eq.${merchantId}` +
-          `&select=commission_percentage,temp_commission_percentage,temp_commission_from,temp_commission_to`,
-          { headers: { ...svc, "Accept-Profile": "business" } },
-        );
-        if (merchantRes.ok) {
-          const [merchant] = await merchantRes.json() as {
-            commission_percentage: number | null;
-            temp_commission_percentage: number | null;
-            temp_commission_from: string | null;
-            temp_commission_to:   string | null;
-          }[];
-          commissionPct = resolveCommissionPct(merchant);
-        }
-      } catch { /* default 12% */ }
-    }
+    // commissionPct was already resolved above (shared with the cash path).
 
     // ── Persist payment_id, commission, and discount audit on the row ──────
     await fetch(
@@ -572,7 +593,7 @@ async function cashEnabled(
     );
     if (!res.ok) return false;
     const [row] = await res.json() as { cash_enabled: boolean | null }[];
-    return row?.cash_enabled !== false;
+    return row?.cash_enabled === true; // only true when a row was found and explicitly opted in
   } catch {
     return false;
   }
