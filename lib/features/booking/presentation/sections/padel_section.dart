@@ -8,6 +8,7 @@ import 'package:future_riverpod/features/booking/presentation/providers/booking_
 import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_label.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_sheet.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/slot_grid.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
@@ -295,9 +296,16 @@ class _BookingFormView extends ConsumerWidget {
 
     ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
       next.maybeWhen(
-        success: (bookingId, paymentUrl, holdUntil, waylReferenceId) {
+        success: (bookingId, paymentUrl, holdUntil, waylReferenceId, cash) {
           if (paymentUrl.isNotEmpty) {
             openPaymentWebView(bookingId, paymentUrl, waylReferenceId);
+          } else if (cash) {
+            goToCashBookingSuccess(
+              context: context,
+              ref: ref,
+              routeId: bookingId,
+              resetSubmitState: ref.read(bookingSubmitProvider.notifier).reset,
+            );
           }
         },
         error: (message) {
@@ -553,31 +561,47 @@ class _BookingFormView extends ConsumerWidget {
                               : null,
                           actionLabel:
                               isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
-                          onAction: () {
+                          onAction: () async {
                             // If a pending booking already exists, reuse its payment URL
                             // instead of creating a new booking (avoids DB constraint error).
                             final current = ref.read(bookingSubmitProvider);
-                            current.maybeWhen(
+                            final resumed = current.maybeWhen(
                               success: (bookingId, paymentUrl, holdUntil,
-                                  waylReferenceId) {
+                                  waylReferenceId, cash) {
                                 if (paymentUrl.isNotEmpty) {
                                   openPaymentWebView(
                                       bookingId, paymentUrl, waylReferenceId);
+                                } else if (cash) {
+                                  goToCashBookingSuccess(
+                                    context: context,
+                                    ref: ref,
+                                    routeId: bookingId,
+                                    resetSubmitState: ref
+                                        .read(bookingSubmitProvider.notifier)
+                                        .reset,
+                                  );
                                 }
+                                return true;
                               },
-                              orElse: () {
-                                final sorted = selectedSlots.toList()..sort();
-                                ref
-                                    .read(bookingSubmitProvider.notifier)
-                                    .createPadelBooking(
-                                      placeId: placeId,
-                                      courtId: selectedCourt.id,
-                                      startsAt: sorted.first,
-                                      hours: selectedSlots.length,
-                                      promoCode: promo?.code,
-                                    );
-                              },
+                              orElse: () => false,
                             );
+                            if (resumed) return;
+                            final method = await showPaymentMethodSheet(
+                              context,
+                              cashEnabled: place?.cashEnabled ?? true,
+                            );
+                            if (method == null) return;
+                            final sorted = selectedSlots.toList()..sort();
+                            ref
+                                .read(bookingSubmitProvider.notifier)
+                                .createPadelBooking(
+                                  placeId: placeId,
+                                  courtId: selectedCourt.id,
+                                  startsAt: sorted.first,
+                                  hours: selectedSlots.length,
+                                  promoCode: promo?.code,
+                                  paymentMethod: method,
+                                );
                           },
                           isLoading: isLoading,
                         ),
