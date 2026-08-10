@@ -1,3 +1,4 @@
+import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -13,6 +14,7 @@ class MembershipSubmit extends _$MembershipSubmit {
   Future<void> createMembership({
     required String placeId,
     required String planId,
+    required PaymentMethod paymentMethod,
     String? promoCode,
   }) async {
     state = const BookingSubmitState.loading();
@@ -23,6 +25,7 @@ class MembershipSubmit extends _$MembershipSubmit {
         body: {
           'place_id': placeId,
           'plan_id': planId,
+          'payment_method': paymentMethod.name,
           if (promoCode != null && promoCode.isNotEmpty)
             'promo_code': promoCode.toUpperCase(),
         },
@@ -34,6 +37,7 @@ class MembershipSubmit extends _$MembershipSubmit {
         paymentUrl: data['payment_url'] as String? ?? '',
         holdUntil: '',
         waylReferenceId: data['reference_id'] as String? ?? '',
+        cash: data['cash'] == true,
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
