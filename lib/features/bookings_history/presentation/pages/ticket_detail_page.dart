@@ -360,21 +360,14 @@ class _MembershipDetailBody extends ConsumerWidget {
       if (notYetActivated)
         TicketInfoCell(
           label: isArabic ? 'الحالة' : 'Status',
-          value: isArabic
-              ? 'لم يتم التفعيل بعد — امسح رمز QR عند الزيارة الأولى'
-              : 'Not yet activated — scan at your first visit',
+          value: isArabic ? 'امسح للتفعيل' : 'Scan to activate',
           forceLtr: false,
         )
-      else ...[
+      else
         TicketInfoCell(
-          label: isArabic ? 'صالح من' : 'Valid From',
-          value: _date(membership.startsAt),
-        ),
-        TicketInfoCell(
-          label: isArabic ? 'صالح حتى' : 'Valid Until',
+          label: isArabic ? 'تنتهي في' : 'Expires On',
           value: _date(membership.endsAt),
         ),
-      ],
       TicketInfoCell(
         label: isArabic ? 'المبلغ' : 'Amount',
         value: _amount(membership.amountIqd),
