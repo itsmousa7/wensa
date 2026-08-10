@@ -60,10 +60,17 @@ Deno.serve(async (req: Request) => {
       return json({ error: "action must be 'cancel' or 'confirm'" }, 400);
     }
     const table = body.is_membership ? "memberships" : "bookings";
+    // `group_id` (concert seat groups) only exists on bookings.bookings, not
+    // bookings.memberships — requesting it for memberships makes PostgREST
+    // 400 with "column memberships.group_id does not exist", which this
+    // function turns into a 500, breaking cancel for every membership.
+    const selectCols = body.is_membership
+      ? "id,merchant_id,status,payment_status,paid_at,payment_id,amount_iqd,payment_method"
+      : "id,merchant_id,status,payment_status,paid_at,group_id,payment_id,amount_iqd,payment_method";
 
     // ── Load the row (service role bypasses RLS) ──────────────────────────
     const rowRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}&select=id,merchant_id,status,payment_status,paid_at,group_id,payment_id,amount_iqd,payment_method&limit=1`,
+      `${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}&select=${selectCols}&limit=1`,
       { headers: { ...svc, "Accept-Profile": "bookings" } },
     );
     if (!rowRes.ok) throw new Error(`Lookup failed: ${rowRes.status}`);
