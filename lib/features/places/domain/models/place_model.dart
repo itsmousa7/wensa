@@ -22,6 +22,7 @@ abstract class PlaceModel with _$PlaceModel {
     double? longitude,
     String? coverImageUrl,
     String? logoUrl,
+    @Default(true) bool cashEnabled,
     @Default(<String>[]) List<String> additionalImages, // ← ADD THIS
     @Default(false) bool isNew,
     @Default(false) bool isTrending,
@@ -59,6 +60,7 @@ abstract class PlaceModel with _$PlaceModel {
     longitude: (json['longitude'] as num?)?.toDouble(),
     coverImageUrl: json['cover_image_url'],
     logoUrl: json['logo_url'],
+    cashEnabled: json['cash_enabled'] as bool? ?? true,
     additionalImages:
         (json['additional_images'] as List<dynamic>?) // ← ADD THIS
             ?.map((e) => e as String)

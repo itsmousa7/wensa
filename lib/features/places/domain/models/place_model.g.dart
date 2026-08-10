@@ -23,6 +23,7 @@ _PlaceModel _$PlaceModelFromJson(Map<String, dynamic> json) => _PlaceModel(
   longitude: (json['longitude'] as num?)?.toDouble(),
   coverImageUrl: json['coverImageUrl'] as String?,
   logoUrl: json['logoUrl'] as String?,
+  cashEnabled: json['cashEnabled'] as bool? ?? true,
   additionalImages:
       (json['additionalImages'] as List<dynamic>?)
           ?.map((e) => e as String)
@@ -65,6 +66,7 @@ Map<String, dynamic> _$PlaceModelToJson(_PlaceModel instance) =>
       'longitude': instance.longitude,
       'coverImageUrl': instance.coverImageUrl,
       'logoUrl': instance.logoUrl,
+      'cashEnabled': instance.cashEnabled,
       'additionalImages': instance.additionalImages,
       'isNew': instance.isNew,
       'isTrending': instance.isTrending,

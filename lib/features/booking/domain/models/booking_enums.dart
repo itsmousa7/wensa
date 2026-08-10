@@ -1,5 +1,7 @@
 enum BookingCategory { hourly, shift, reservation, venueSeat, membership }
 
+enum PaymentMethod { wayl, cash }
+
 enum BookingStatus { pending, confirmed, completed, cancelled, expired, noShow, used }
 
 
