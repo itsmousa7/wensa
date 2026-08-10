@@ -18,6 +18,8 @@ abstract class BookingSubmitState with _$BookingSubmitState {
     // Wayl referenceId (e.g. "booking_{uuid}_{ts}") — use this for polling,
     // NOT bookingId which is just the raw UUID.
     required String waylReferenceId,
+    // True when the booking was confirmed via cash (no Wayl link exists).
+    @Default(false) bool cash,
   }) = _Success;
   const factory BookingSubmitState.error(String message) = _Error;
 }
