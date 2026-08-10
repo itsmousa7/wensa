@@ -7,6 +7,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 part 'booking_submit_provider.freezed.dart';
 part 'booking_submit_provider.g.dart';
 
+String _friendlyErrorMessage(Object error) {
+  final text = error.toString();
+  if (text.contains('cash_disabled')) {
+    return 'Cash payment is no longer available for this booking. Please choose E-Payment instead.';
+  }
+  return text;
+}
+
 @freezed
 abstract class BookingSubmitState with _$BookingSubmitState {
   const factory BookingSubmitState.idle() = _Idle;
@@ -63,7 +71,7 @@ class BookingSubmit extends _$BookingSubmit {
         cash: data['cash'] == true,
       );
     } catch (e) {
-      state = BookingSubmitState.error(e.toString());
+      state = BookingSubmitState.error(_friendlyErrorMessage(e));
     }
   }
 
@@ -103,7 +111,7 @@ class BookingSubmit extends _$BookingSubmit {
         cash: data['cash'] == true,
       );
     } catch (e) {
-      state = BookingSubmitState.error(e.toString());
+      state = BookingSubmitState.error(_friendlyErrorMessage(e));
     }
   }
 
@@ -138,7 +146,7 @@ class BookingSubmit extends _$BookingSubmit {
         waylReferenceId: data['reference_id'] as String? ?? '',
       );
     } catch (e) {
-      state = BookingSubmitState.error(e.toString());
+      state = BookingSubmitState.error(_friendlyErrorMessage(e));
     }
   }
 
@@ -174,7 +182,7 @@ class BookingSubmit extends _$BookingSubmit {
         cash: data['cash'] == true,
       );
     } catch (e) {
-      state = BookingSubmitState.error(e.toString());
+      state = BookingSubmitState.error(_friendlyErrorMessage(e));
     }
   }
 
@@ -206,7 +214,7 @@ class BookingSubmit extends _$BookingSubmit {
         cash: data['cash'] == true,
       );
     } catch (e) {
-      state = BookingSubmitState.error(e.toString());
+      state = BookingSubmitState.error(_friendlyErrorMessage(e));
     }
   }
 

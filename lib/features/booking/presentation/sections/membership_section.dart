@@ -410,7 +410,7 @@ class _MembershipFormView extends ConsumerWidget {
                             if (resumed) return;
                             final method = await showPaymentMethodSheet(
                               context,
-                              cashEnabled: place?.cashEnabled ?? true,
+                              cashEnabled: place?.cashEnabled ?? false,
                             );
                             if (method == null) return;
                             final plan = selectedPlan;

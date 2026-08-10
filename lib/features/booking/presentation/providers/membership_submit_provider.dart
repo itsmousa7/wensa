@@ -6,6 +6,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 part 'membership_submit_provider.g.dart';
 
+String _friendlyErrorMessage(Object error) {
+  final text = error.toString();
+  if (text.contains('cash_disabled')) {
+    return 'Cash payment is no longer available for this booking. Please choose E-Payment instead.';
+  }
+  return text;
+}
+
 @riverpod
 class MembershipSubmit extends _$MembershipSubmit {
   @override
@@ -40,7 +48,7 @@ class MembershipSubmit extends _$MembershipSubmit {
         cash: data['cash'] == true,
       );
     } catch (e) {
-      state = BookingSubmitState.error(e.toString());
+      state = BookingSubmitState.error(_friendlyErrorMessage(e));
     }
   }
 
@@ -50,7 +58,7 @@ class MembershipSubmit extends _$MembershipSubmit {
       await ref.read(bookingRepositoryProvider).freezeMembership(id);
       state = const BookingSubmitState.idle();
     } catch (e) {
-      state = BookingSubmitState.error(e.toString());
+      state = BookingSubmitState.error(_friendlyErrorMessage(e));
     }
   }
 
@@ -60,7 +68,7 @@ class MembershipSubmit extends _$MembershipSubmit {
       await ref.read(bookingRepositoryProvider).resumeMembership(id);
       state = const BookingSubmitState.idle();
     } catch (e) {
-      state = BookingSubmitState.error(e.toString());
+      state = BookingSubmitState.error(_friendlyErrorMessage(e));
     }
   }
 

@@ -316,6 +316,15 @@ class _FarmBookingFormView extends ConsumerWidget {
               routeId: bookingId,
               resetSubmitState: ref.read(bookingSubmitProvider.notifier).reset,
             );
+          } else {
+            ref.read(bookingSubmitProvider.notifier).reset();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                    'Unable to get payment link. Please try again.'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
           }
         },
         error: (message) {
@@ -659,7 +668,7 @@ class _FarmBookingFormView extends ConsumerWidget {
                             if (resumed) return;
                             final method = await showPaymentMethodSheet(
                               context,
-                              cashEnabled: place?.cashEnabled ?? true,
+                              cashEnabled: place?.cashEnabled ?? false,
                             );
                             if (method == null) return;
                             final shift = selectedShift;

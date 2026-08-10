@@ -250,6 +250,17 @@ class ConcertSection extends ConsumerWidget {
               );
               context.goNamed('bookingsHistory');
             }
+          } else {
+            ref.read(bookingSubmitProvider.notifier).reset();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text(
+                      'Unable to get payment link. Please try again.'),
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
+              );
+            }
           }
         },
         error: (message) {
@@ -791,7 +802,7 @@ class _ReviewSheet extends ConsumerWidget {
       orElse: () => false,
     );
     final eventCashEnabled =
-        ref.watch(eventDetailsProvider(eventId)).value?.cashEnabled ?? true;
+        ref.watch(eventDetailsProvider(eventId)).value?.cashEnabled ?? false;
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return DraggableScrollableSheet(
@@ -991,7 +1002,7 @@ class _GASheetState extends ConsumerState<_GASheet> {
     );
     final eventCashEnabled =
         ref.watch(eventDetailsProvider(widget.eventId)).value?.cashEnabled ??
-            true;
+            false;
 
     return SafeArea(
       child: Padding(
