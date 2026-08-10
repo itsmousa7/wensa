@@ -12,6 +12,7 @@ import 'package:future_riverpod/features/booking/presentation/widgets/booking_da
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/guest_count_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/party_option_card.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_sheet.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/shift_card.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
     show bookingsRefreshProvider;
@@ -305,9 +306,16 @@ class _FarmBookingFormView extends ConsumerWidget {
 
     ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
       next.maybeWhen(
-        success: (bookingId, paymentUrl, holdUntil, waylReferenceId) {
+        success: (bookingId, paymentUrl, holdUntil, waylReferenceId, cash) {
           if (paymentUrl.isNotEmpty) {
             openPaymentWebView(bookingId, paymentUrl, waylReferenceId);
+          } else if (cash) {
+            goToCashBookingSuccess(
+              context: context,
+              ref: ref,
+              routeId: bookingId,
+              resetSubmitState: ref.read(bookingSubmitProvider.notifier).reset,
+            );
           }
         },
         error: (message) {
@@ -598,7 +606,7 @@ class _FarmBookingFormView extends ConsumerWidget {
                           actionLabel: isAr
                               ? 'المتابعة للدفع'
                               : 'Proceed to Payment',
-                          onAction: () {
+                          onAction: () async {
                             if (guestCountRequired) {
                               ref
                                   .read(_farmGuestCountErrorProvider.notifier)
@@ -619,13 +627,14 @@ class _FarmBookingFormView extends ConsumerWidget {
                             // If a pending booking already exists, reuse its payment URL
                             // instead of creating a new booking (avoids DB constraint error).
                             final current = ref.read(bookingSubmitProvider);
-                            current.maybeWhen(
+                            final resumed = current.maybeWhen(
                               success:
                                   (
                                     bookingId,
                                     paymentUrl,
                                     holdUntil,
                                     waylReferenceId,
+                                    cash,
                                   ) {
                                     if (paymentUrl.isNotEmpty) {
                                       openPaymentWebView(
@@ -633,26 +642,42 @@ class _FarmBookingFormView extends ConsumerWidget {
                                         paymentUrl,
                                         waylReferenceId,
                                       );
+                                    } else if (cash) {
+                                      goToCashBookingSuccess(
+                                        context: context,
+                                        ref: ref,
+                                        routeId: bookingId,
+                                        resetSubmitState: ref
+                                            .read(bookingSubmitProvider.notifier)
+                                            .reset,
+                                      );
                                     }
+                                    return true;
                                   },
-                              orElse: () {
-                                final shift = selectedShift;
-                                ref
-                                    .read(bookingSubmitProvider.notifier)
-                                    .createFarmBooking(
-                                      placeId: placeId,
-                                      date: bookingFormatDate(selectedDate),
-                                      shiftType: shift.shiftType,
-                                      promoCode: promo?.code,
-                                      partySize:
-                                          (!partyOn &&
-                                              shift.partyExtraPersonFeeIqd > 0)
-                                          ? partyCount
-                                          : null,
-                                      bringingParty: partyOn,
-                                    );
-                              },
+                              orElse: () => false,
                             );
+                            if (resumed) return;
+                            final method = await showPaymentMethodSheet(
+                              context,
+                              cashEnabled: place?.cashEnabled ?? true,
+                            );
+                            if (method == null) return;
+                            final shift = selectedShift;
+                            ref
+                                .read(bookingSubmitProvider.notifier)
+                                .createFarmBooking(
+                                  placeId: placeId,
+                                  date: bookingFormatDate(selectedDate),
+                                  shiftType: shift.shiftType,
+                                  promoCode: promo?.code,
+                                  partySize:
+                                      (!partyOn &&
+                                          shift.partyExtraPersonFeeIqd > 0)
+                                      ? partyCount
+                                      : null,
+                                  bringingParty: partyOn,
+                                  paymentMethod: method,
+                                );
                           },
                           isLoading: isLoading,
                         ),
