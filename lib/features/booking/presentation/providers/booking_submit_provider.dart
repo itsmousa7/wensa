@@ -236,7 +236,7 @@ class BookingSubmit extends _$BookingSubmit {
   Future<void> cancelPending() async {
     final current = state;
     final bookingId = current.maybeWhen(
-      success: (id, _, _, _) => id,
+      success: (id, _, _, _, _) => id,
       orElse: () => null,
     );
     if (bookingId == null || bookingId.isEmpty) {
