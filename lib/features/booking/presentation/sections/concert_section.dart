@@ -12,12 +12,14 @@ import 'package:future_riverpod/features/booking/presentation/pages/payment_webv
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/hold_provider.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_sheet.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/seat_map_web_view.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 import 'package:future_riverpod/core/widgets/primary_action_button.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
     show bookingsRefreshProvider;
+import 'package:future_riverpod/features/events/presentation/providers/event_details_provider.dart';
 import 'package:go_router/go_router.dart';
 
 String _formatIqd(int amount) {
@@ -221,7 +223,7 @@ class ConcertSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
       next.maybeWhen(
-        success: (groupId, paymentUrl, holdUntil, waylReferenceId) {
+        success: (groupId, paymentUrl, holdUntil, waylReferenceId, cash) {
           if (paymentUrl.isNotEmpty) {
             _openConcertPaymentWebView(
               context,
@@ -232,6 +234,22 @@ class ConcertSection extends ConsumerWidget {
               holdUntil: holdUntil,
               waylReferenceId: waylReferenceId,
             );
+          } else if (cash) {
+            _dismissCheckoutSheet(context);
+            ref.read(bookingSubmitProvider.notifier).reset();
+            ref.read(_concertSelectionProvider.notifier).reset();
+            ref.read(bookingsRefreshProvider.notifier).bump();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Booking confirmed! Pay with cash at the venue.',
+                  ),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              context.goNamed('bookingsHistory');
+            }
           }
         },
         error: (message) {
@@ -590,7 +608,7 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
           .read(bookingSubmitProvider)
           .maybeWhen(
             loading: () => true,
-            success: (_, _, _, _) => true,
+            success: (_, _, _, _, _) => true,
             orElse: () => false,
           );
       if (!isPaymentActive) {
@@ -733,7 +751,7 @@ class _HoldExpiryWatcher extends ConsumerWidget {
         .watch(bookingSubmitProvider)
         .maybeWhen(
           loading: () => true,
-          success: (_, _, _, _) => true,
+          success: (_, _, _, _, _) => true,
           orElse: () => false,
         );
 
@@ -772,6 +790,8 @@ class _ReviewSheet extends ConsumerWidget {
       loading: () => true,
       orElse: () => false,
     );
+    final eventCashEnabled =
+        ref.watch(eventDetailsProvider(eventId)).value?.cashEnabled ?? true;
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return DraggableScrollableSheet(
@@ -876,15 +896,15 @@ class _ReviewSheet extends ConsumerWidget {
               isLoading: isLoading,
               onTap: selectedSeats.isEmpty
                   ? null
-                  : () {
+                  : () async {
                       // If a pending group already exists (e.g. the user
                       // closed the payment webview and is retrying), reuse
                       // its payment URL instead of creating a new one —
                       // avoids conflicting with the still-held seats.
                       final current = ref.read(bookingSubmitProvider);
-                      current.maybeWhen(
+                      final resumed = current.maybeWhen(
                         success: (groupId, paymentUrl, holdUntil,
-                            waylReferenceId) {
+                            waylReferenceId, cash) {
                           if (paymentUrl.isNotEmpty) {
                             _openConcertPaymentWebView(
                               context,
@@ -896,21 +916,28 @@ class _ReviewSheet extends ConsumerWidget {
                               waylReferenceId: waylReferenceId,
                             );
                           }
+                          return true;
                         },
-                        orElse: () {
-                          // Keep the sheet visible while create-booking runs.
-                          // The parent listener pops it once the Wayl URL is
-                          // ready (see `_dismissCheckoutSheet`).
-                          ref
-                              .read(bookingSubmitProvider.notifier)
-                              .createConcertBooking(
-                                eventId: eventId,
-                                seatIds: selectedSeats
-                                    .map((s) => s.seatId)
-                                    .toList(),
-                              );
-                        },
+                        orElse: () => false,
                       );
+                      if (resumed) return;
+                      final method = await showPaymentMethodSheet(
+                        context,
+                        cashEnabled: eventCashEnabled,
+                      );
+                      if (method == null) return;
+                      // Keep the sheet visible while create-booking runs.
+                      // The parent listener pops it once the Wayl URL is
+                      // ready (see `_dismissCheckoutSheet`).
+                      ref
+                          .read(bookingSubmitProvider.notifier)
+                          .createConcertBooking(
+                            eventId: eventId,
+                            seatIds: selectedSeats
+                                .map((s) => s.seatId)
+                                .toList(),
+                            paymentMethod: method,
+                          );
                     },
             ),
             // Keep the CTA clear of the system navigation / gesture bar.
@@ -962,6 +989,9 @@ class _GASheetState extends ConsumerState<_GASheet> {
       loading: () => true,
       orElse: () => false,
     );
+    final eventCashEnabled =
+        ref.watch(eventDetailsProvider(widget.eventId)).value?.cashEnabled ??
+            true;
 
     return SafeArea(
       child: Padding(
@@ -1111,14 +1141,14 @@ class _GASheetState extends ConsumerState<_GASheet> {
               isLoading: isLoading,
               onTap: remaining <= 0 || price <= 0
                   ? null
-                  : () {
+                  : () async {
                       // If a pending group already exists (e.g. the user
                       // closed the payment webview and is retrying), reuse
                       // its payment URL instead of creating a new one.
                       final current = ref.read(bookingSubmitProvider);
-                      current.maybeWhen(
+                      final resumed = current.maybeWhen(
                         success: (groupId, paymentUrl, holdUntil,
-                            waylReferenceId) {
+                            waylReferenceId, cash) {
                           if (paymentUrl.isNotEmpty) {
                             _openConcertPaymentWebView(
                               context,
@@ -1130,20 +1160,27 @@ class _GASheetState extends ConsumerState<_GASheet> {
                               waylReferenceId: waylReferenceId,
                             );
                           }
+                          return true;
                         },
-                        orElse: () {
-                          // Keep the sheet visible until the parent's
-                          // listener dismisses it once the Wayl URL is
-                          // available.
-                          ref
-                              .read(bookingSubmitProvider.notifier)
-                              .createGeneralAdmissionBooking(
-                                eventId: widget.eventId,
-                                sectionId: widget.section.id,
-                                quantity: _quantity,
-                              );
-                        },
+                        orElse: () => false,
                       );
+                      if (resumed) return;
+                      final method = await showPaymentMethodSheet(
+                        context,
+                        cashEnabled: eventCashEnabled,
+                      );
+                      if (method == null) return;
+                      // Keep the sheet visible until the parent's
+                      // listener dismisses it once the Wayl URL is
+                      // available.
+                      ref
+                          .read(bookingSubmitProvider.notifier)
+                          .createGeneralAdmissionBooking(
+                            eventId: widget.eventId,
+                            sectionId: widget.section.id,
+                            quantity: _quantity,
+                            paymentMethod: method,
+                          );
                     },
             ),
             if (price <= 0)
