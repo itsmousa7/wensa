@@ -40,6 +40,7 @@ interface BasePaylod {
   promo_code?: string;
   guest_name?: string; // dashboard: name the booking is held under
   client?: "dashboard"; // dashboard-only hint; narrows `source` (see below)
+  payment_method?: "wayl" | "cash"; // customer's choice; default "wayl"
 }
 
 interface HourlyPayload extends BasePaylod {
@@ -330,6 +331,59 @@ Deno.serve(async (req: Request) => {
         group_id:    isGroup  ? rpcResult.group_id : undefined,
         free:        true,
         amount_iqd:  finalIqd,
+        source,
+      }, 200);
+    }
+
+    // ── Cash path: customer pays the merchant in person ─────────────────────
+    if (body.payment_method === "cash") {
+      if (!(await cashEnabled(SUPABASE_URL, svc, ctx.merchantId))) {
+        // Roll back the pending row(s) — same cleanup as the promo-rejected path.
+        if (isGroup) {
+          await fetch(
+            `${SUPABASE_URL}/rest/v1/bookings?group_id=eq.${rpcResult.group_id}`,
+            { method: "DELETE", headers: { ...svc, "Accept-Profile": "bookings", "Content-Profile": "bookings" } },
+          );
+        } else {
+          await fetch(
+            `${SUPABASE_URL}/rest/v1/bookings?id=eq.${rpcResult.id}`,
+            { method: "DELETE", headers: { ...svc, "Accept-Profile": "bookings", "Content-Profile": "bookings" } },
+          );
+        }
+        return json({ error: "cash_disabled" }, 400);
+      }
+      const cashFilter = isGroup ? `group_id=eq.${rpcResult.group_id}` : `id=eq.${rpcResult.id}`;
+      const cashPatch = isGroup
+        ? {
+            status: "confirmed", payment_status: "paid", payment_method: "cash",
+            hold_until: null, source, guest_name: body.guest_name ?? null,
+          }
+        : {
+            status:               "confirmed",
+            payment_status:       "paid",
+            payment_method:       "cash",
+            hold_until:           null,
+            amount_iqd:           finalIqd,
+            original_amount_iqd:  subtotalIqd,
+            discount_amount_iqd:  discountAmount,
+            discount_source:      discountSource,
+            promo_code:           discountSource === "promo" ? promoCode : null,
+            promo_code_id:        promoCodeId,
+            auto_discount_id:     autoDiscountId,
+            merchant_discount_id: merchantDiscountId,
+            source,
+            guest_name:           body.guest_name ?? null,
+          };
+      await fetch(`${SUPABASE_URL}/rest/v1/bookings?${cashFilter}`, {
+        method: "PATCH",
+        headers: { ...svc, "Accept-Profile": "bookings", "Content-Profile": "bookings" },
+        body: JSON.stringify(cashPatch),
+      });
+      return json({
+        booking_id: !isGroup ? rpcResult.id : undefined,
+        group_id:   isGroup  ? rpcResult.group_id : undefined,
+        cash:       true,
+        amount_iqd: finalIqd,
         source,
       }, 200);
     }
@@ -948,6 +1002,26 @@ async function dashboardPaymentRequired(
     if (res.ok) {
       const [row] = await res.json() as { dashboard_payment_required: boolean | null }[];
       if (row && row.dashboard_payment_required === false) return false;
+    }
+  } catch { /* default true */ }
+  return true;
+}
+
+/** Whether the merchant accepts cash payment for bookings. */
+async function cashEnabled(
+  supabaseUrl: string,
+  svc: Record<string, string>,
+  merchantId: string | null,
+): Promise<boolean> {
+  if (!merchantId) return false; // safe default: no merchant to hand cash to
+  try {
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/merchants?id=eq.${merchantId}&select=cash_enabled`,
+      { headers: { ...svc, "Accept-Profile": "business" } },
+    );
+    if (res.ok) {
+      const [row] = await res.json() as { cash_enabled: boolean | null }[];
+      if (row && row.cash_enabled === false) return false;
     }
   } catch { /* default true */ }
   return true;
