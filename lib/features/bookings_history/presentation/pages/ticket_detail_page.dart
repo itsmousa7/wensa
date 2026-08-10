@@ -386,6 +386,7 @@ class _MembershipDetailBody extends ConsumerWidget {
       buildStatusBadge: () => TicketStatusBadge.membership(
         status: membership.status,
         isArabic: isArabic,
+        awaitingActivation: notYetActivated,
       ),
       cells: cells,
       waylCode: membership.waylCode,

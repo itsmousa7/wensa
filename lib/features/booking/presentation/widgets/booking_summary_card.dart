@@ -205,6 +205,7 @@ class BookingSummaryCard extends StatelessWidget {
                           color: colorScheme.primary.withValues(alpha: 0.15)),
                     ),
                     child: Row(
+                      textDirection: TextDirection.rtl,
                       children: [
                         Icon(Icons.payments_rounded,
                             size: 20, color: colorScheme.primary),
@@ -302,7 +303,12 @@ class _DetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    // Icon + label pinned to the right, value to the left, in both
+    // languages — Arabic already reads this way under its natural RTL
+    // ambient direction; forcing it here keeps English visually consistent
+    // with that instead of mirroring to icon-left/value-right.
     return Row(
+      textDirection: TextDirection.rtl,
       children: [
         Icon(row.icon, size: 16, color: colorScheme.outline),
         const SizedBox(width: 8),
@@ -350,6 +356,7 @@ class _SummaryLineRow extends StatelessWidget {
       fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
     );
     return Row(
+      textDirection: TextDirection.rtl,
       children: [
         Text(label, style: style),
         const Spacer(),

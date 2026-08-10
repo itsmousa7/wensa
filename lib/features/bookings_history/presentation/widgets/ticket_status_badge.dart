@@ -10,18 +10,26 @@ class TicketStatusBadge extends StatelessWidget {
     required BookingStatus status,
     this.isArabic = false,
   })  : _bookingStatus = status,
-        _membershipStatus = null;
+        _membershipStatus = null,
+        awaitingActivation = false;
 
   const TicketStatusBadge.membership({
     super.key,
     required MembershipStatus status,
     this.isArabic = false,
+    this.awaitingActivation = false,
   })  : _membershipStatus = status,
         _bookingStatus = null;
 
   final BookingStatus? _bookingStatus;
   final MembershipStatus? _membershipStatus;
   final bool isArabic;
+
+  /// A paid membership is stored with status='active' the moment it's
+  /// bought — starts_at/ends_at only get set on the first confirmed QR
+  /// scan. Without this flag the badge would say "Active" even though
+  /// nothing has actually started yet, which is misleading.
+  final bool awaitingActivation;
 
   // ── Booking ────────────────────────────────────────────────────────────────
 
@@ -138,6 +146,9 @@ class TicketStatusBadge extends StatelessWidget {
     if (bs != null) {
       label = _bookingLabel(bs, isArabic);
       color = _bookingColor(bs);
+    } else if (awaitingActivation) {
+      label = isArabic ? 'بانتظار التفعيل' : 'Waiting for Activation';
+      color = Colors.orange;
     } else {
       // _membershipStatus is guaranteed non-null when _bookingStatus is null
       // (enforced by the named constructors).

@@ -481,6 +481,7 @@ class _MembershipCard extends ConsumerWidget {
                             TicketStatusBadge.membership(
                               status: membership.status,
                               isArabic: isArabic,
+                              awaitingActivation: notYetActivated,
                             ),
                           ],
                         ),
