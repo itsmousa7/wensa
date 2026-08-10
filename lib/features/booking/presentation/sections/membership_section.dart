@@ -10,6 +10,7 @@ import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/membership_plan_card.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_sheet.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
     show bookingsRefreshProvider;
@@ -119,10 +120,17 @@ class _MembershipSectionState extends ConsumerState<MembershipSection> {
   Widget build(BuildContext context) {
     ref.listen<BookingSubmitState>(membershipSubmitProvider, (prev, next) {
       next.maybeWhen(
-        success: (bookingId, paymentUrl, holdUntil, waylReferenceId) {
+        success: (bookingId, paymentUrl, holdUntil, waylReferenceId, cash) {
           if (paymentUrl.isNotEmpty) {
             _openMembershipPaymentWebView(
                 context, ref, bookingId, paymentUrl, waylReferenceId);
+          } else if (cash) {
+            goToCashBookingSuccess(
+              context: context,
+              ref: ref,
+              routeId: 'm_$bookingId',
+              resetSubmitState: ref.read(membershipSubmitProvider.notifier).reset,
+            );
           } else {
             ref.read(membershipSubmitProvider.notifier).reset();
             ScaffoldMessenger.of(context).showSnackBar(
@@ -373,31 +381,47 @@ class _MembershipFormView extends ConsumerWidget {
                               : null,
                           actionLabel:
                               isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
-                          onAction: () {
+                          onAction: () async {
                             // If a pending membership already exists, reuse
                             // its payment URL instead of creating a new one
                             // (avoids the DB constraint on the still-open
                             // pending row).
                             final current = ref.read(membershipSubmitProvider);
-                            current.maybeWhen(
+                            final resumed = current.maybeWhen(
                               success: (bookingId, paymentUrl, holdUntil,
-                                  waylReferenceId) {
+                                  waylReferenceId, cash) {
                                 if (paymentUrl.isNotEmpty) {
                                   _openMembershipPaymentWebView(context, ref,
                                       bookingId, paymentUrl, waylReferenceId);
+                                } else if (cash) {
+                                  goToCashBookingSuccess(
+                                    context: context,
+                                    ref: ref,
+                                    routeId: 'm_$bookingId',
+                                    resetSubmitState: ref
+                                        .read(membershipSubmitProvider.notifier)
+                                        .reset,
+                                  );
                                 }
+                                return true;
                               },
-                              orElse: () {
-                                final plan = selectedPlan;
-                                ref
-                                    .read(membershipSubmitProvider.notifier)
-                                    .createMembership(
-                                      placeId: placeId,
-                                      planId: plan.id,
-                                      promoCode: promo?.code,
-                                    );
-                              },
+                              orElse: () => false,
                             );
+                            if (resumed) return;
+                            final method = await showPaymentMethodSheet(
+                              context,
+                              cashEnabled: place?.cashEnabled ?? true,
+                            );
+                            if (method == null) return;
+                            final plan = selectedPlan;
+                            ref
+                                .read(membershipSubmitProvider.notifier)
+                                .createMembership(
+                                  placeId: placeId,
+                                  planId: plan.id,
+                                  promoCode: promo?.code,
+                                  paymentMethod: method,
+                                );
                           },
                           isLoading: isLoading,
                         ),
