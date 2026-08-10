@@ -34,6 +34,7 @@ class BookingSubmit extends _$BookingSubmit {
     required String courtId,
     required String startsAt, // ISO datetime string
     required int hours,
+    required PaymentMethod paymentMethod,
     String? promoCode,
   }) async {
     state = const BookingSubmitState.loading();
@@ -47,6 +48,7 @@ class BookingSubmit extends _$BookingSubmit {
           'court_id': courtId,
           'starts_at': startsAt,
           'hours': hours,
+          'payment_method': paymentMethod.name,
           if (promoCode != null && promoCode.isNotEmpty)
             'promo_code': promoCode.toUpperCase(),
         },
@@ -55,9 +57,10 @@ class BookingSubmit extends _$BookingSubmit {
       final data = result.data as Map<String, dynamic>;
       state = BookingSubmitState.success(
         bookingId: data['booking_id'] as String,
-        paymentUrl: data['payment_url'] as String,
+        paymentUrl: data['payment_url'] as String? ?? '',
         holdUntil: data['hold_until'] as String? ?? '',
-        waylReferenceId: data['reference_id'] as String,
+        waylReferenceId: data['reference_id'] as String? ?? '',
+        cash: data['cash'] == true,
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
@@ -68,6 +71,7 @@ class BookingSubmit extends _$BookingSubmit {
     required String placeId,
     required String date, // 'yyyy-MM-dd'
     required FarmShiftType shiftType,
+    required PaymentMethod paymentMethod,
     String? promoCode,
     int? partySize,
     bool bringingParty = false,
@@ -82,6 +86,7 @@ class BookingSubmit extends _$BookingSubmit {
           'place_id': placeId,
           'date': date,
           'shift_type': shiftType.name,
+          'payment_method': paymentMethod.name,
           if (promoCode != null && promoCode.isNotEmpty)
             'promo_code': promoCode.toUpperCase(),
           if (partySize case int s) 'party_size': s,
@@ -92,9 +97,10 @@ class BookingSubmit extends _$BookingSubmit {
       final data = result.data as Map<String, dynamic>;
       state = BookingSubmitState.success(
         bookingId: data['booking_id'] as String,
-        paymentUrl: data['payment_url'] as String,
+        paymentUrl: data['payment_url'] as String? ?? '',
         holdUntil: data['hold_until'] as String? ?? '',
-        waylReferenceId: data['reference_id'] as String,
+        waylReferenceId: data['reference_id'] as String? ?? '',
+        cash: data['cash'] == true,
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
@@ -143,6 +149,7 @@ class BookingSubmit extends _$BookingSubmit {
     required String eventId,
     required String sectionId,
     required int quantity,
+    required PaymentMethod paymentMethod,
   }) async {
     state = const BookingSubmitState.loading();
     try {
@@ -154,6 +161,7 @@ class BookingSubmit extends _$BookingSubmit {
           'event_id': eventId,
           'section_id': sectionId,
           'quantity': quantity,
+          'payment_method': paymentMethod.name,
         },
       );
       if (result.status != 200) throw Exception(result.data.toString());
@@ -163,6 +171,7 @@ class BookingSubmit extends _$BookingSubmit {
         paymentUrl: (data['payment_url'] ?? '') as String,
         holdUntil: (data['hold_until'] ?? '') as String? ?? '',
         waylReferenceId: (data['reference_id'] ?? '') as String,
+        cash: data['cash'] == true,
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
@@ -172,6 +181,7 @@ class BookingSubmit extends _$BookingSubmit {
   Future<void> createConcertBooking({
     required String eventId,
     required List<String> seatIds,
+    required PaymentMethod paymentMethod,
   }) async {
     state = const BookingSubmitState.loading();
     try {
@@ -182,6 +192,7 @@ class BookingSubmit extends _$BookingSubmit {
           'category': 'venue_seat',
           'event_id': eventId,
           'seat_ids': seatIds,
+          'payment_method': paymentMethod.name,
         },
       );
       if (result.status != 200) throw Exception(result.data.toString());
@@ -189,9 +200,10 @@ class BookingSubmit extends _$BookingSubmit {
       // Concerts return group_id (not booking_id) — use group_id as bookingId
       state = BookingSubmitState.success(
         bookingId: (data['group_id'] ?? data['booking_id'] ?? '') as String,
-        paymentUrl: data['payment_url'] as String,
-        holdUntil: data['hold_until'] as String? ?? '',
-        waylReferenceId: data['reference_id'] as String,
+        paymentUrl: (data['payment_url'] ?? '') as String,
+        holdUntil: (data['hold_until'] ?? '') as String? ?? '',
+        waylReferenceId: (data['reference_id'] ?? '') as String,
+        cash: data['cash'] == true,
       );
     } catch (e) {
       state = BookingSubmitState.error(e.toString());
