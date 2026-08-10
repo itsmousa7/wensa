@@ -345,7 +345,7 @@ class _MembershipFormView extends ConsumerWidget {
                               label: isAr ? 'المدة' : 'Duration',
                               value: isAr
                                   ? 'صالحة ${selectedPlan.durationDays} يوماً من أول تفعيل'
-                                  : '${selectedPlan.durationDays} Day${selectedPlan.durationDays == 1 ? '' : 's'}',
+                                  : '${selectedPlan.durationDays} Day${selectedPlan.durationDays == 1 ? '' : 's'} After Activation',
                             ),
                           ],
                           subtotalLabel: isAr ? 'المجموع' : 'Subtotal',
