@@ -1019,12 +1019,12 @@ async function cashEnabled(
       `${supabaseUrl}/rest/v1/merchants?id=eq.${merchantId}&select=cash_enabled`,
       { headers: { ...svc, "Accept-Profile": "business" } },
     );
-    if (res.ok) {
-      const [row] = await res.json() as { cash_enabled: boolean | null }[];
-      if (row && row.cash_enabled === false) return false;
-    }
-  } catch { /* default true */ }
-  return true;
+    if (!res.ok) return false; // fail closed on a bad response
+    const [row] = await res.json() as { cash_enabled: boolean | null }[];
+    return row?.cash_enabled !== false; // true unless the row explicitly opted out
+  } catch {
+    return false; // fail closed on network error
+  }
 }
 
 function isGroupCategory(cat: BookingCategory): boolean {
