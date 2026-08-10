@@ -301,6 +301,29 @@ Deno.serve(async (req: Request) => {
     const autoDiscountId     = discount.autoDiscountId;
     const merchantDiscountId = discount.merchantDiscountId;
 
+    // ── Look up merchant commission (needed by both the cash and Wayl paths) ──
+    // Priority: temp override (when current Asia/Baghdad date is in window)
+    //           → merchant.commission_percentage → 12% default.
+    let commissionPct: number = 12;
+    if (ctx.merchantId) {
+      try {
+        const merchantRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/merchants?id=eq.${ctx.merchantId}` +
+          `&select=commission_percentage,temp_commission_percentage,temp_commission_from,temp_commission_to`,
+          { headers: { ...svc, "Accept-Profile": "business" } },
+        );
+        if (merchantRes.ok) {
+          const [merchant] = await merchantRes.json() as {
+            commission_percentage: number | null;
+            temp_commission_percentage: number | null;
+            temp_commission_from: string | null;
+            temp_commission_to:   string | null;
+          }[];
+          commissionPct = resolveCommissionPct(merchant);
+        }
+      } catch { /* default 12% */ }
+    }
+
     // ── Free path: dashboard booking for a merchant with payment toggle OFF ──
     if (isDashboardBooking && !(await dashboardPaymentRequired(SUPABASE_URL, svc, ctx.merchantId))) {
       const freeFilter = isGroup ? `group_id=eq.${rpcResult.group_id}` : `id=eq.${rpcResult.id}`;
@@ -356,13 +379,14 @@ Deno.serve(async (req: Request) => {
       const cashPatch = isGroup
         ? {
             status: "confirmed", payment_status: "paid", payment_method: "cash",
-            hold_until: null, source, guest_name: body.guest_name ?? null,
+            hold_until: null, commission_pct: commissionPct, source, guest_name: body.guest_name ?? null,
           }
         : {
             status:               "confirmed",
             payment_status:       "paid",
             payment_method:       "cash",
             hold_until:           null,
+            commission_pct:       commissionPct,
             amount_iqd:           finalIqd,
             original_amount_iqd:  subtotalIqd,
             discount_amount_iqd:  discountAmount,
@@ -374,11 +398,30 @@ Deno.serve(async (req: Request) => {
             source,
             guest_name:           body.guest_name ?? null,
           };
-      await fetch(`${SUPABASE_URL}/rest/v1/bookings?${cashFilter}`, {
+      // Use return=representation (not the shared minimal-return headers) so we
+      // can verify the PATCH actually matched a row before telling the client
+      // their cash booking is confirmed — a silent failure here would leave the
+      // row `pending` with hold_until cleared client-side but not server-side,
+      // and the row would auto-expire via the holds cron while the customer
+      // believes they're booked.
+      const cashRes = await fetch(`${SUPABASE_URL}/rest/v1/bookings?${cashFilter}`, {
         method: "PATCH",
-        headers: { ...svc, "Accept-Profile": "bookings", "Content-Profile": "bookings" },
+        headers: {
+          ...svc, "Accept-Profile": "bookings", "Content-Profile": "bookings",
+          Prefer: "return=representation",
+        },
         body: JSON.stringify(cashPatch),
       });
+      if (!cashRes.ok) {
+        const cashErr = await cashRes.json().catch(() => ({}));
+        console.error(`create-booking: cash PATCH failed ${cashRes.status} filter=${cashFilter}`, cashErr);
+        return json({ error: "Failed to confirm cash booking" }, 500);
+      }
+      const cashUpdated = await cashRes.json().catch(() => []) as unknown[];
+      if (!Array.isArray(cashUpdated) || !cashUpdated.length) {
+        console.error(`create-booking: cash PATCH affected 0 rows filter=${cashFilter}`);
+        return json({ error: "Failed to confirm cash booking" }, 500);
+      }
       return json({
         booking_id: !isGroup ? rpcResult.id : undefined,
         group_id:   isGroup  ? rpcResult.group_id : undefined,
@@ -429,28 +472,7 @@ Deno.serve(async (req: Request) => {
     const paymentUrl = waylJson.data.url;
     const waylCode   = waylJson.data.code;
 
-    // ── Look up merchant commission to snapshot onto booking ───────────────
-    // Priority: temp override (when current Asia/Baghdad date is in window)
-    //           → merchant.commission_percentage → 12% default.
-    let commissionPct: number = 12;
-    if (ctx.merchantId) {
-      try {
-        const merchantRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/merchants?id=eq.${ctx.merchantId}` +
-          `&select=commission_percentage,temp_commission_percentage,temp_commission_from,temp_commission_to`,
-          { headers: { ...svc, "Accept-Profile": "business" } },
-        );
-        if (merchantRes.ok) {
-          const [merchant] = await merchantRes.json() as {
-            commission_percentage: number | null;
-            temp_commission_percentage: number | null;
-            temp_commission_from: string | null;
-            temp_commission_to:   string | null;
-          }[];
-          commissionPct = resolveCommissionPct(merchant);
-        }
-      } catch { /* default 12% */ }
-    }
+    // commissionPct was already resolved above (shared with the cash path).
 
     // ── Persist payment reference, commission, and discount audit ──────────
     if (!isGroup) {
@@ -1021,7 +1043,7 @@ async function cashEnabled(
     );
     if (!res.ok) return false; // fail closed on a bad response
     const [row] = await res.json() as { cash_enabled: boolean | null }[];
-    return row?.cash_enabled !== false; // true unless the row explicitly opted out
+    return row?.cash_enabled === true; // only true when a row was found and explicitly opted in
   } catch {
     return false; // fail closed on network error
   }
