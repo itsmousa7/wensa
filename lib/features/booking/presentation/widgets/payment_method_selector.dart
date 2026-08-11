@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 
@@ -19,6 +21,11 @@ class PaymentMethodSelector extends StatelessWidget {
 
   final PaymentMethod? selected;
   final ValueChanged<PaymentMethod> onChanged;
+
+  /// Key carried by the inner filled dot of the *selected* row's radio
+  /// indicator. Only present on the selected row, so tests (and callers) can
+  /// assert which method is currently picked.
+  static const radioFillKey = ValueKey('payment-method-radio-fill');
 
   @override
   Widget build(BuildContext context) {
@@ -144,6 +151,7 @@ class _RadioDot extends StatelessWidget {
       child: isSelected
           ? Center(
               child: Container(
+                key: PaymentMethodSelector.radioFillKey,
                 width: 11,
                 height: 11,
                 decoration: BoxDecoration(
@@ -193,7 +201,9 @@ class _DashedLinePainter extends CustomPainter {
       ..strokeWidth = 1;
     var x = 0.0;
     while (x < size.width) {
-      canvas.drawLine(Offset(x, 0), Offset(x + dashWidth, 0), paint);
+      // Clamp so the final dash stops at the edge instead of overshooting.
+      final end = math.min(x + dashWidth, size.width);
+      canvas.drawLine(Offset(x, 0), Offset(end, 0), paint);
       x += dashWidth + dashGap;
     }
   }

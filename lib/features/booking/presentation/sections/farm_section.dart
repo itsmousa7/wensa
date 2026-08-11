@@ -266,6 +266,14 @@ class _FarmBookingFormView extends ConsumerWidget {
     );
     final promo = ref.watch(_farmPromoProvider);
     final selectedPaymentMethod = ref.watch(_farmPaymentMethodProvider);
+    // A stranded pending booking (user closed the payment webview and came
+    // back) is resumed by the Proceed handler without creating a new booking,
+    // so it must not be gated behind picking a payment method. Derived from
+    // the already-watched submit state so the button re-enables reactively.
+    final hasPendingToResume = submitState.maybeWhen(
+      success: (_, paymentUrl, _, _, cash) => paymentUrl.isNotEmpty || cash,
+      orElse: () => false,
+    );
 
     // Opens the payment webview for the given booking details.
     // Defined here so it can be reused by both ref.listen and onAction.
@@ -635,7 +643,8 @@ class _FarmBookingFormView extends ConsumerWidget {
                           actionLabel: isAr
                               ? 'المتابعة للدفع'
                               : 'Proceed to Payment',
-                          onAction: selectedPaymentMethod == null
+                          onAction: (selectedPaymentMethod == null &&
+                                  !hasPendingToResume)
                               ? null
                               : () async {
                                   if (guestCountRequired) {
@@ -692,7 +701,10 @@ class _FarmBookingFormView extends ConsumerWidget {
                                     orElse: () => false,
                                   );
                                   if (resumed) return;
+                                  // Only reachable without a method when a
+                                  // pending booking was expected but is gone.
                                   final method = selectedPaymentMethod;
+                                  if (method == null) return;
                                   final shift = selectedShift;
                                   ref
                                       .read(bookingSubmitProvider.notifier)

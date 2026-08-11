@@ -239,6 +239,14 @@ class _MembershipFormView extends ConsumerWidget {
     final promo = ref.watch(_membershipPromoProvider);
     final selectedPaymentMethod =
         ref.watch(_membershipPaymentMethodProvider);
+    // A stranded pending membership (user closed the payment webview and came
+    // back) is resumed by the Proceed handler without creating a new row, so
+    // it must not be gated behind picking a payment method. Derived from the
+    // already-watched submit state so the button re-enables reactively.
+    final hasPendingToResume = submitState.maybeWhen(
+      success: (_, paymentUrl, _, _, cash) => paymentUrl.isNotEmpty || cash,
+      orElse: () => false,
+    );
 
     return SingleChildScrollView(
       child: Column(
@@ -404,7 +412,8 @@ class _MembershipFormView extends ConsumerWidget {
                               : null,
                           actionLabel:
                               isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
-                          onAction: selectedPaymentMethod == null
+                          onAction: (selectedPaymentMethod == null &&
+                                  !hasPendingToResume)
                               ? null
                               : () async {
                                   // If a pending membership already exists, reuse
@@ -439,7 +448,11 @@ class _MembershipFormView extends ConsumerWidget {
                                     orElse: () => false,
                                   );
                                   if (resumed) return;
+                                  // Only reachable without a method when a
+                                  // pending membership was expected but is
+                                  // gone.
                                   final method = selectedPaymentMethod;
+                                  if (method == null) return;
                                   final plan = selectedPlan;
                                   ref
                                       .read(membershipSubmitProvider.notifier)

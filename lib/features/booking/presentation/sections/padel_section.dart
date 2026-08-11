@@ -242,6 +242,14 @@ class _BookingFormView extends ConsumerWidget {
     ));
     final promo = ref.watch(_padelPromoProvider);
     final selectedPaymentMethod = ref.watch(_padelPaymentMethodProvider);
+    // A stranded pending booking (user closed the payment webview and came
+    // back) is resumed by the Proceed handler without creating a new booking,
+    // so it must not be gated behind picking a payment method. Derived from
+    // the already-watched submit state so the button re-enables reactively.
+    final hasPendingToResume = submitState.maybeWhen(
+      success: (_, paymentUrl, _, _, cash) => paymentUrl.isNotEmpty || cash,
+      orElse: () => false,
+    );
 
     final slotsAsync = selectedCourt != null
         ? ref.watch(availableSlotsProvider(
@@ -590,7 +598,8 @@ class _BookingFormView extends ConsumerWidget {
                               : null,
                           actionLabel:
                               isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
-                          onAction: selectedPaymentMethod == null
+                          onAction: (selectedPaymentMethod == null &&
+                                  !hasPendingToResume)
                               ? null
                               : () async {
                                   // If a pending booking already exists, reuse its payment URL
@@ -619,7 +628,10 @@ class _BookingFormView extends ConsumerWidget {
                                     orElse: () => false,
                                   );
                                   if (resumed) return;
+                                  // Only reachable without a method when a
+                                  // pending booking was expected but is gone.
                                   final method = selectedPaymentMethod;
+                                  if (method == null) return;
                                   final sorted = selectedSlots.toList()
                                     ..sort();
                                   ref

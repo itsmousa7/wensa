@@ -52,6 +52,58 @@ void main() {
     expect(picked, PaymentMethod.cash);
   });
 
+  // The radio indicator only paints its inner fill on the selected row, so
+  // locating that fill inside a given row proves which method is shown as
+  // selected.
+  Finder fillInRow(String rowTitle) => find.descendant(
+    of: find.ancestor(
+      of: find.text(rowTitle),
+      matching: find.byType(InkWell),
+    ),
+    matching: find.byKey(PaymentMethodSelector.radioFillKey),
+  );
+
+  testWidgets('marks only the selected row in the radio indicator', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        PaymentMethodSelector(
+          cashEnabled: true,
+          selected: null,
+          onChanged: (_) {},
+        ),
+      ),
+    );
+    expect(find.byKey(PaymentMethodSelector.radioFillKey), findsNothing);
+
+    await tester.pumpWidget(
+      wrap(
+        PaymentMethodSelector(
+          cashEnabled: true,
+          selected: PaymentMethod.cash,
+          onChanged: (_) {},
+        ),
+      ),
+    );
+    expect(find.byKey(PaymentMethodSelector.radioFillKey), findsOneWidget);
+    expect(fillInRow('Cash'), findsOneWidget);
+    expect(fillInRow('E-Payment'), findsNothing);
+
+    await tester.pumpWidget(
+      wrap(
+        PaymentMethodSelector(
+          cashEnabled: true,
+          selected: PaymentMethod.wayl,
+          onChanged: (_) {},
+        ),
+      ),
+    );
+    expect(find.byKey(PaymentMethodSelector.radioFillKey), findsOneWidget);
+    expect(fillInRow('Cash'), findsNothing);
+    expect(fillInRow('E-Payment'), findsOneWidget);
+  });
+
   testWidgets('tapping E-Payment calls onChanged with PaymentMethod.wayl', (
     tester,
   ) async {

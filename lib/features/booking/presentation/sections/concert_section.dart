@@ -821,11 +821,23 @@ class _ReviewSheet extends ConsumerWidget {
         ref.watch(eventDetailsProvider(eventId)).value?.cashEnabled ?? false;
     final selectedPaymentMethod =
         ref.watch(_concertReviewPaymentMethodProvider);
+    // A pending group whose payment webview was closed is resumed by the
+    // Proceed handler without creating a new booking, so it must not be gated
+    // behind picking a payment method. Mirrors the handler's own resume
+    // condition (only a non-empty payment URL does anything there); a cash
+    // success never survives here — the parent listener pops this sheet.
+    final hasPendingToResume = submitState.maybeWhen(
+      success: (_, paymentUrl, _, _, _) => paymentUrl.isNotEmpty,
+      orElse: () => false,
+    );
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.6,
+      // The inline payment-method selector lives in the fixed chrome below
+      // the seat list, so the sheet needs to open taller to leave the list
+      // usable room on small screens.
+      initialChildSize: 0.75,
       maxChildSize: 0.9,
       builder: (_, controller) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -932,7 +944,9 @@ class _ReviewSheet extends ConsumerWidget {
             PrimaryActionButton(
               label: isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
               isLoading: isLoading,
-              onTap: (selectedSeats.isEmpty || selectedPaymentMethod == null)
+              onTap:
+                  (selectedSeats.isEmpty ||
+                      (selectedPaymentMethod == null && !hasPendingToResume))
                   ? null
                   : () async {
                       // If a pending group already exists (e.g. the user
@@ -959,7 +973,10 @@ class _ReviewSheet extends ConsumerWidget {
                         orElse: () => false,
                       );
                       if (resumed) return;
+                      // Only reachable without a method when a pending group
+                      // was expected but is gone.
                       final method = selectedPaymentMethod;
+                      if (method == null) return;
                       // Keep the sheet visible while create-booking runs.
                       // The parent listener pops it once the Wayl URL is
                       // ready (see `_dismissCheckoutSheet`).
@@ -1027,213 +1044,232 @@ class _GASheetState extends ConsumerState<_GASheet> {
     final eventCashEnabled =
         ref.watch(eventDetailsProvider(widget.eventId)).value?.cashEnabled ??
             false;
+    // A pending group whose payment webview was closed is resumed by the
+    // Proceed handler without creating a new booking, so it must not be gated
+    // behind picking a payment method. Mirrors the handler's own resume
+    // condition (only a non-empty payment URL does anything there); a cash
+    // success never survives here — the parent listener pops this sheet.
+    final hasPendingToResume = submitState.maybeWhen(
+      success: (_, paymentUrl, _, _, _) => paymentUrl.isNotEmpty,
+      orElse: () => false,
+    );
 
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isAr
-                  ? (widget.section.nameAr.isNotEmpty
-                        ? widget.section.nameAr
-                        : widget.section.nameEn)
-                  : (widget.section.nameEn.isNotEmpty
-                        ? widget.section.nameEn
-                        : widget.section.nameAr),
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              isAr
-                  ? "مقاعد عامة — الجلوس حر"
-                  : "General admission — open seating",
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: AppSpacing.borderRadiusMD,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    tierName,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w100,
-                      color: Theme.of(context).colorScheme.onTertiary,
-                    ),
-                  ),
-                  Text(
-                    price > 0
-                        ? _formatIqd(price)
-                        : (isAr ? "السعر قيد التحديد" : "Price TBD"),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  isAr ? "الكمية" : "Quantity",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
+      // The inline payment-method selector made this sheet tall enough to
+      // overflow short screens / large text scales, so let it scroll.
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                Row(
-                  children: [
-                    IconButton.outlined(
-                      onPressed: _quantity > 1
-                          ? () => setState(() => _quantity--)
-                          : null,
-                      icon: const Icon(Icons.remove),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        "$_quantity",
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
-                      ),
-                    ),
-                    IconButton.outlined(
-                      onPressed: _quantity < maxQty
-                          ? () => setState(() => _quantity++)
-                          : null,
-                      icon: const Icon(Icons.add),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
+              ),
+              const SizedBox(height: 16),
+              Text(
                 isAr
-                    ? "$remaining تذكرة متاحة"
-                    : "$remaining tickets remaining",
+                    ? (widget.section.nameAr.isNotEmpty
+                          ? widget.section.nameAr
+                          : widget.section.nameEn)
+                    : (widget.section.nameEn.isNotEmpty
+                          ? widget.section.nameEn
+                          : widget.section.nameAr),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                isAr
+                    ? "مقاعد عامة — الجلوس حر"
+                    : "General admission — open seating",
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.outline,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            PaymentMethodSelector(
-              cashEnabled: eventCashEnabled,
-              selected: _paymentMethod,
-              onChanged: (m) => setState(() => _paymentMethod = m),
-            ),
-            const SizedBox(height: 16),
-            const Divider(),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: AppSpacing.borderRadiusMD,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      tierName,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w100,
+                        color: Theme.of(context).colorScheme.onTertiary,
+                      ),
+                    ),
+                    Text(
+                      price > 0
+                          ? _formatIqd(price)
+                          : (isAr ? "السعر قيد التحديد" : "Price TBD"),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isAr ? "الإجمالي" : "Total",
+                    isAr ? "الكمية" : "Quantity",
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: Theme.of(context).colorScheme.outline,
                     ),
                   ),
-                  Text(
-                    total > 0 ? _formatIqd(total) : "—",
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
+                  Row(
+                    children: [
+                      IconButton.outlined(
+                        onPressed: _quantity > 1
+                            ? () => setState(() => _quantity--)
+                            : null,
+                        icon: const Icon(Icons.remove),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          "$_quantity",
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                        ),
+                      ),
+                      IconButton.outlined(
+                        onPressed: _quantity < maxQty
+                            ? () => setState(() => _quantity++)
+                            : null,
+                        icon: const Icon(Icons.add),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 8),
-            PrimaryActionButton(
-              label: isAr ? "متابعة للدفع" : "Proceed to Payment",
-              isLoading: isLoading,
-              onTap: (remaining <= 0 || price <= 0 || _paymentMethod == null)
-                  ? null
-                  : () async {
-                      // If a pending group already exists (e.g. the user
-                      // closed the payment webview and is retrying), reuse
-                      // its payment URL instead of creating a new one.
-                      final current = ref.read(bookingSubmitProvider);
-                      final resumed = current.maybeWhen(
-                        success: (groupId, paymentUrl, holdUntil,
-                            waylReferenceId, cash) {
-                          if (paymentUrl.isNotEmpty) {
-                            _openConcertPaymentWebView(
-                              context,
-                              ref,
-                              eventId: widget.eventId,
-                              groupId: groupId,
-                              paymentUrl: paymentUrl,
-                              holdUntil: holdUntil,
-                              waylReferenceId: waylReferenceId,
-                            );
-                          }
-                          return true;
-                        },
-                        orElse: () => false,
-                      );
-                      if (resumed) return;
-                      final method = _paymentMethod!;
-                      // Keep the sheet visible until the parent's
-                      // listener dismisses it once the Wayl URL is
-                      // available.
-                      ref
-                          .read(bookingSubmitProvider.notifier)
-                          .createGeneralAdmissionBooking(
-                            eventId: widget.eventId,
-                            sectionId: widget.section.id,
-                            quantity: _quantity,
-                            paymentMethod: method,
-                          );
-                    },
-            ),
-            if (price <= 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerRight,
                 child: Text(
                   isAr
-                      ? "لم يتم تحديد السعر لهذه المنطقة بعد. تواصل مع الإدارة."
-                      : "Price has not been configured for this zone yet.",
+                      ? "$remaining تذكرة متاحة"
+                      : "$remaining tickets remaining",
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
+                    color: Theme.of(context).colorScheme.outline,
+                    fontWeight: FontWeight.w600,
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
-          ],
+              const SizedBox(height: 16),
+              PaymentMethodSelector(
+                cashEnabled: eventCashEnabled,
+                selected: _paymentMethod,
+                onChanged: (m) => setState(() => _paymentMethod = m),
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isAr ? "الإجمالي" : "Total",
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                    Text(
+                      total > 0 ? _formatIqd(total) : "—",
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              PrimaryActionButton(
+                label: isAr ? "متابعة للدفع" : "Proceed to Payment",
+                isLoading: isLoading,
+                onTap:
+                    (remaining <= 0 ||
+                        price <= 0 ||
+                        (_paymentMethod == null && !hasPendingToResume))
+                    ? null
+                    : () async {
+                        // If a pending group already exists (e.g. the user
+                        // closed the payment webview and is retrying), reuse
+                        // its payment URL instead of creating a new one.
+                        final current = ref.read(bookingSubmitProvider);
+                        final resumed = current.maybeWhen(
+                          success: (groupId, paymentUrl, holdUntil,
+                              waylReferenceId, cash) {
+                            if (paymentUrl.isNotEmpty) {
+                              _openConcertPaymentWebView(
+                                context,
+                                ref,
+                                eventId: widget.eventId,
+                                groupId: groupId,
+                                paymentUrl: paymentUrl,
+                                holdUntil: holdUntil,
+                                waylReferenceId: waylReferenceId,
+                              );
+                            }
+                            return true;
+                          },
+                          orElse: () => false,
+                        );
+                        if (resumed) return;
+                        // Only reachable without a method when a pending
+                        // group was expected but is gone.
+                        final method = _paymentMethod;
+                        if (method == null) return;
+                        // Keep the sheet visible until the parent's
+                        // listener dismisses it once the Wayl URL is
+                        // available.
+                        ref
+                            .read(bookingSubmitProvider.notifier)
+                            .createGeneralAdmissionBooking(
+                              eventId: widget.eventId,
+                              sectionId: widget.section.id,
+                              quantity: _quantity,
+                              paymentMethod: method,
+                            );
+                      },
+              ),
+              if (price <= 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    isAr
+                        ? "لم يتم تحديد السعر لهذه المنطقة بعد. تواصل مع الإدارة."
+                        : "Price has not been configured for this zone yet.",
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

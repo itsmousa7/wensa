@@ -99,6 +99,10 @@ class BookingSummaryCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final isDisabled = isLoading || onAction == null;
+    // The disabled pill is a light grey, so white-on-grey would be invisible
+    // in light theme — use the on-surface variant colour instead.
+    final foreground =
+        isDisabled ? colorScheme.onSurfaceVariant : Colors.white;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -183,10 +187,13 @@ class BookingSummaryCard extends StatelessWidget {
                 ],
 
                 if (paymentMethodSlot != null) ...[
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 10),
-                    child: Divider(height: 1),
-                  ),
+                  // Only separate from the detail rows when there are any —
+                  // otherwise the divider hangs under the header alone.
+                  if (rows.isNotEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 10),
+                      child: Divider(height: 1),
+                    ),
                   paymentMethodSlot!,
                 ],
 
@@ -273,18 +280,18 @@ class BookingSummaryCard extends StatelessWidget {
                         splashColor: Colors.white.withValues(alpha: 0.2),
                         child: Center(
                           child: isLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 22,
                                   height: 22,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    color: Colors.white,
+                                    color: foreground,
                                   ),
                                 )
                               : Text(
                                   actionLabel,
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: foreground,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 15,
                                     letterSpacing: 0.3,
