@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/court.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
@@ -8,6 +9,7 @@ import 'package:future_riverpod/features/booking/presentation/providers/booking_
 import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_label.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_selector.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_sheet.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/slot_grid.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
@@ -72,6 +74,16 @@ class _PadelPromoNotifier extends Notifier<PromoApplied?> {
   @override
   PromoApplied? build() => null;
   void set(PromoApplied? p) => state = p;
+}
+
+final _padelPaymentMethodProvider =
+    NotifierProvider.autoDispose<_PadelPaymentMethodNotifier, PaymentMethod?>(
+        _PadelPaymentMethodNotifier.new);
+
+class _PadelPaymentMethodNotifier extends Notifier<PaymentMethod?> {
+  @override
+  PaymentMethod? build() => null;
+  void set(PaymentMethod? m) => state = m;
 }
 
 // ---------------------------------------------------------------------------
@@ -229,6 +241,7 @@ class _BookingFormView extends ConsumerWidget {
       PlaceDiscountKey(placeId: placeId, merchantId: place?.merchantId),
     ));
     final promo = ref.watch(_padelPromoProvider);
+    final selectedPaymentMethod = ref.watch(_padelPaymentMethodProvider);
 
     final slotsAsync = selectedCourt != null
         ? ref.watch(availableSlotsProvider(
@@ -551,6 +564,13 @@ class _BookingFormView extends ConsumerWidget {
                               isAr ? 'المبلغ الإجمالي' : 'Total Amount',
                           totalValue:
                               _BookingFormView._formatIqd(eff.finalAmount),
+                          paymentMethodSlot: PaymentMethodSelector(
+                            cashEnabled: place?.cashEnabled ?? false,
+                            selected: selectedPaymentMethod,
+                            onChanged: (m) => ref
+                                .read(_padelPaymentMethodProvider.notifier)
+                                .set(m),
+                          ),
                           extraSlot: promoBase > 0
                               ? PromoCodeField(
                                   orderType: 'bookings',
@@ -570,48 +590,49 @@ class _BookingFormView extends ConsumerWidget {
                               : null,
                           actionLabel:
                               isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
-                          onAction: () async {
-                            // If a pending booking already exists, reuse its payment URL
-                            // instead of creating a new booking (avoids DB constraint error).
-                            final current = ref.read(bookingSubmitProvider);
-                            final resumed = current.maybeWhen(
-                              success: (bookingId, paymentUrl, holdUntil,
-                                  waylReferenceId, cash) {
-                                if (paymentUrl.isNotEmpty) {
-                                  openPaymentWebView(
-                                      bookingId, paymentUrl, waylReferenceId);
-                                } else if (cash) {
-                                  goToCashBookingSuccess(
-                                    context: context,
-                                    ref: ref,
-                                    routeId: bookingId,
-                                    resetSubmitState: ref
-                                        .read(bookingSubmitProvider.notifier)
-                                        .reset,
+                          onAction: selectedPaymentMethod == null
+                              ? null
+                              : () async {
+                                  // If a pending booking already exists, reuse its payment URL
+                                  // instead of creating a new booking (avoids DB constraint error).
+                                  final current =
+                                      ref.read(bookingSubmitProvider);
+                                  final resumed = current.maybeWhen(
+                                    success: (bookingId, paymentUrl,
+                                        holdUntil, waylReferenceId, cash) {
+                                      if (paymentUrl.isNotEmpty) {
+                                        openPaymentWebView(bookingId,
+                                            paymentUrl, waylReferenceId);
+                                      } else if (cash) {
+                                        goToCashBookingSuccess(
+                                          context: context,
+                                          ref: ref,
+                                          routeId: bookingId,
+                                          resetSubmitState: ref
+                                              .read(bookingSubmitProvider
+                                                  .notifier)
+                                              .reset,
+                                        );
+                                      }
+                                      return true;
+                                    },
+                                    orElse: () => false,
                                   );
-                                }
-                                return true;
-                              },
-                              orElse: () => false,
-                            );
-                            if (resumed) return;
-                            final method = await showPaymentMethodSheet(
-                              context,
-                              cashEnabled: place?.cashEnabled ?? false,
-                            );
-                            if (method == null) return;
-                            final sorted = selectedSlots.toList()..sort();
-                            ref
-                                .read(bookingSubmitProvider.notifier)
-                                .createPadelBooking(
-                                  placeId: placeId,
-                                  courtId: selectedCourt.id,
-                                  startsAt: sorted.first,
-                                  hours: selectedSlots.length,
-                                  promoCode: promo?.code,
-                                  paymentMethod: method,
-                                );
-                          },
+                                  if (resumed) return;
+                                  final method = selectedPaymentMethod;
+                                  final sorted = selectedSlots.toList()
+                                    ..sort();
+                                  ref
+                                      .read(bookingSubmitProvider.notifier)
+                                      .createPadelBooking(
+                                        placeId: placeId,
+                                        courtId: selectedCourt.id,
+                                        startsAt: sorted.first,
+                                        hours: selectedSlots.length,
+                                        promoCode: promo?.code,
+                                        paymentMethod: method,
+                                      );
+                                },
                           isLoading: isLoading,
                         ),
                       );
