@@ -13,7 +13,6 @@ import 'package:future_riverpod/features/booking/presentation/providers/availabi
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/hold_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_selector.dart';
-import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_sheet.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/seat_map_web_view.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
@@ -1005,6 +1004,7 @@ class _GASheet extends ConsumerStatefulWidget {
 
 class _GASheetState extends ConsumerState<_GASheet> {
   int _quantity = 1;
+  PaymentMethod? _paymentMethod;
 
   @override
   Widget build(BuildContext context) {
@@ -1148,6 +1148,12 @@ class _GASheetState extends ConsumerState<_GASheet> {
               ),
             ),
             const SizedBox(height: 16),
+            PaymentMethodSelector(
+              cashEnabled: eventCashEnabled,
+              selected: _paymentMethod,
+              onChanged: (m) => setState(() => _paymentMethod = m),
+            ),
+            const SizedBox(height: 16),
             const Divider(),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1174,7 +1180,7 @@ class _GASheetState extends ConsumerState<_GASheet> {
             PrimaryActionButton(
               label: isAr ? "متابعة للدفع" : "Proceed to Payment",
               isLoading: isLoading,
-              onTap: remaining <= 0 || price <= 0
+              onTap: (remaining <= 0 || price <= 0 || _paymentMethod == null)
                   ? null
                   : () async {
                       // If a pending group already exists (e.g. the user
@@ -1200,11 +1206,7 @@ class _GASheetState extends ConsumerState<_GASheet> {
                         orElse: () => false,
                       );
                       if (resumed) return;
-                      final method = await showPaymentMethodSheet(
-                        context,
-                        cashEnabled: eventCashEnabled,
-                      );
-                      if (method == null) return;
+                      final method = _paymentMethod!;
                       // Keep the sheet visible until the parent's
                       // listener dismisses it once the Wayl URL is
                       // available.
