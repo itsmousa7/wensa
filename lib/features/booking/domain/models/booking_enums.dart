@@ -92,6 +92,19 @@ extension MembershipStatusFromString on MembershipStatus {
   }
 }
 
+extension PaymentMethodFromString on PaymentMethod {
+  static PaymentMethod fromString(String value) {
+    switch (value) {
+      case 'cash':
+        return PaymentMethod.cash;
+      case 'wayl':
+        return PaymentMethod.wayl;
+      default:
+        return PaymentMethod.wayl;
+    }
+  }
+}
+
 extension SeatStatusFromString on SeatStatus {
   static SeatStatus fromString(String value) {
     switch (value) {

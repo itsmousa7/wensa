@@ -21,6 +21,9 @@ _Membership _$MembershipFromJson(Map<String, dynamic> json) => _Membership(
   amountIqd: (json['amountIqd'] as num?)?.toInt() ?? 0,
   paymentId: json['paymentId'] as String?,
   paymentStatus: json['paymentStatus'] as String?,
+  paymentMethod:
+      $enumDecodeNullable(_$PaymentMethodEnumMap, json['paymentMethod']) ??
+      PaymentMethod.wayl,
   waylCode: json['waylCode'] as String?,
   qrToken: json['qrToken'] as String? ?? '',
   isFrozen: json['isFrozen'] as bool? ?? false,
@@ -41,6 +44,7 @@ Map<String, dynamic> _$MembershipToJson(_Membership instance) =>
       'amountIqd': instance.amountIqd,
       'paymentId': instance.paymentId,
       'paymentStatus': instance.paymentStatus,
+      'paymentMethod': _$PaymentMethodEnumMap[instance.paymentMethod]!,
       'waylCode': instance.waylCode,
       'qrToken': instance.qrToken,
       'isFrozen': instance.isFrozen,
@@ -54,4 +58,9 @@ const _$MembershipStatusEnumMap = {
   MembershipStatus.expired: 'expired',
   MembershipStatus.cancelled: 'cancelled',
   MembershipStatus.used: 'used',
+};
+
+const _$PaymentMethodEnumMap = {
+  PaymentMethod.wayl: 'wayl',
+  PaymentMethod.cash: 'cash',
 };

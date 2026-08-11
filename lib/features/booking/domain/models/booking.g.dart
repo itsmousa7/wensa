@@ -23,6 +23,9 @@ _Booking _$BookingFromJson(Map<String, dynamic> json) => _Booking(
   amountIqd: (json['amountIqd'] as num?)?.toInt() ?? 0,
   paymentId: json['paymentId'] as String?,
   paymentStatus: json['paymentStatus'] as String?,
+  paymentMethod:
+      $enumDecodeNullable(_$PaymentMethodEnumMap, json['paymentMethod']) ??
+      PaymentMethod.wayl,
   waylCode: json['waylCode'] as String?,
   qrToken: json['qrToken'] as String? ?? '',
   holdUntil: json['holdUntil'] as String?,
@@ -47,6 +50,7 @@ Map<String, dynamic> _$BookingToJson(_Booking instance) => <String, dynamic>{
   'amountIqd': instance.amountIqd,
   'paymentId': instance.paymentId,
   'paymentStatus': instance.paymentStatus,
+  'paymentMethod': _$PaymentMethodEnumMap[instance.paymentMethod]!,
   'waylCode': instance.waylCode,
   'qrToken': instance.qrToken,
   'holdUntil': instance.holdUntil,
@@ -72,4 +76,9 @@ const _$BookingStatusEnumMap = {
   BookingStatus.expired: 'expired',
   BookingStatus.noShow: 'noShow',
   BookingStatus.used: 'used',
+};
+
+const _$PaymentMethodEnumMap = {
+  PaymentMethod.wayl: 'wayl',
+  PaymentMethod.cash: 'cash',
 };

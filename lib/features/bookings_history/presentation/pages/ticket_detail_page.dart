@@ -89,6 +89,12 @@ class TicketDetailPage extends ConsumerWidget {
   }
 }
 
+String _paymentMethodLabel(PaymentMethod method, bool ar) {
+  return method == PaymentMethod.cash
+      ? (ar ? 'نقداً' : 'Cash')
+      : (ar ? 'دفع الكتروني' : 'E-Payment');
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  Booking detail
 // ─────────────────────────────────────────────────────────────────────────────
@@ -270,6 +276,10 @@ class _BookingDetailBody extends ConsumerWidget {
         label: isArabic ? 'المبلغ' : 'Amount',
         value: _amount(booking.amountIqd),
       ),
+      TicketInfoCell(
+        label: isArabic ? 'طريقة الدفع' : 'Payment Method',
+        value: _paymentMethodLabel(booking.paymentMethod, isArabic),
+      ),
       ...extraCells,
     ];
 
@@ -359,7 +369,8 @@ class _MembershipDetailBody extends ConsumerWidget {
     }
 
     final notYetActivated =
-        membership.status == MembershipStatus.active && membership.startsAt.isEmpty;
+        membership.status == MembershipStatus.active &&
+        membership.startsAt.isEmpty;
 
     final cells = [
       if (notYetActivated)
@@ -376,6 +387,10 @@ class _MembershipDetailBody extends ConsumerWidget {
       TicketInfoCell(
         label: isArabic ? 'المبلغ' : 'Amount',
         value: _amount(membership.amountIqd),
+      ),
+      TicketInfoCell(
+        label: isArabic ? 'طريقة الدفع' : 'Payment Method',
+        value: _paymentMethodLabel(membership.paymentMethod, isArabic),
       ),
     ];
 

@@ -69,7 +69,7 @@ class PaymentMethodSelector extends StatelessWidget {
           _SelectorRow(
             icon: Icons.credit_card_rounded,
             iconBg: cs.primary,
-            title: isAr ? 'الدفع الإلكتروني' : 'E-Payment',
+            title: isAr ? 'دفع الكتروني' : 'E-Payment',
             subtitle: isAr ? 'ادفع الآن عبر الإنترنت' : 'Pay online now',
             isSelected: selected == PaymentMethod.wayl,
             onTap: () => onChanged(PaymentMethod.wayl),

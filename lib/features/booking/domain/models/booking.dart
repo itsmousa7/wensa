@@ -19,6 +19,7 @@ abstract class Booking with _$Booking {
     @Default(0) int amountIqd,
     String? paymentId,
     String? paymentStatus,
+    @Default(PaymentMethod.wayl) PaymentMethod paymentMethod,
     String? waylCode,
     @Default('') String qrToken,
     String? holdUntil,
@@ -41,6 +42,9 @@ abstract class Booking with _$Booking {
     amountIqd: (json['amount_iqd'] as num?)?.toInt() ?? 0,
     paymentId: json['payment_id'],
     paymentStatus: json['payment_status'],
+    paymentMethod: PaymentMethodFromString.fromString(
+      json['payment_method'] ?? '',
+    ),
     waylCode: json['wayl_code'],
     qrToken: json['qr_token'] ?? '',
     holdUntil: json['hold_until'],
