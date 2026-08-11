@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership_plan.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
@@ -10,6 +11,7 @@ import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_summary_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/membership_plan_card.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_selector.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_sheet.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
@@ -45,6 +47,17 @@ class _MembershipPromoNotifier extends Notifier<PromoApplied?> {
   @override
   PromoApplied? build() => null;
   void set(PromoApplied? p) => state = p;
+}
+
+final _membershipPaymentMethodProvider = NotifierProvider.autoDispose<
+    _MembershipPaymentMethodNotifier, PaymentMethod?>(
+  _MembershipPaymentMethodNotifier.new,
+);
+
+class _MembershipPaymentMethodNotifier extends Notifier<PaymentMethod?> {
+  @override
+  PaymentMethod? build() => null;
+  void set(PaymentMethod? m) => state = m;
 }
 
 // ---------------------------------------------------------------------------
@@ -224,6 +237,8 @@ class _MembershipFormView extends ConsumerWidget {
       categoryId: place?.categoryId,
     )));
     final promo = ref.watch(_membershipPromoProvider);
+    final selectedPaymentMethod =
+        ref.watch(_membershipPaymentMethodProvider);
 
     return SingleChildScrollView(
       child: Column(
@@ -365,6 +380,14 @@ class _MembershipFormView extends ConsumerWidget {
                               : null,
                           totalLabel: isAr ? 'الإجمالي' : 'Total Amount',
                           totalValue: _formatPrice(eff.finalAmount),
+                          paymentMethodSlot: PaymentMethodSelector(
+                            cashEnabled: place?.cashEnabled ?? false,
+                            selected: selectedPaymentMethod,
+                            onChanged: (m) => ref
+                                .read(
+                                    _membershipPaymentMethodProvider.notifier)
+                                .set(m),
+                          ),
                           extraSlot: subtotal > 0
                               ? PromoCodeField(
                                   orderType: 'memberships',
@@ -381,48 +404,52 @@ class _MembershipFormView extends ConsumerWidget {
                               : null,
                           actionLabel:
                               isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
-                          onAction: () async {
-                            // If a pending membership already exists, reuse
-                            // its payment URL instead of creating a new one
-                            // (avoids the DB constraint on the still-open
-                            // pending row).
-                            final current = ref.read(membershipSubmitProvider);
-                            final resumed = current.maybeWhen(
-                              success: (bookingId, paymentUrl, holdUntil,
-                                  waylReferenceId, cash) {
-                                if (paymentUrl.isNotEmpty) {
-                                  _openMembershipPaymentWebView(context, ref,
-                                      bookingId, paymentUrl, waylReferenceId);
-                                } else if (cash) {
-                                  goToCashBookingSuccess(
-                                    context: context,
-                                    ref: ref,
-                                    routeId: 'm_$bookingId',
-                                    resetSubmitState: ref
-                                        .read(membershipSubmitProvider.notifier)
-                                        .reset,
+                          onAction: selectedPaymentMethod == null
+                              ? null
+                              : () async {
+                                  // If a pending membership already exists, reuse
+                                  // its payment URL instead of creating a new one
+                                  // (avoids the DB constraint on the still-open
+                                  // pending row).
+                                  final current =
+                                      ref.read(membershipSubmitProvider);
+                                  final resumed = current.maybeWhen(
+                                    success: (bookingId, paymentUrl,
+                                        holdUntil, waylReferenceId, cash) {
+                                      if (paymentUrl.isNotEmpty) {
+                                        _openMembershipPaymentWebView(
+                                            context,
+                                            ref,
+                                            bookingId,
+                                            paymentUrl,
+                                            waylReferenceId);
+                                      } else if (cash) {
+                                        goToCashBookingSuccess(
+                                          context: context,
+                                          ref: ref,
+                                          routeId: 'm_$bookingId',
+                                          resetSubmitState: ref
+                                              .read(membershipSubmitProvider
+                                                  .notifier)
+                                              .reset,
+                                        );
+                                      }
+                                      return true;
+                                    },
+                                    orElse: () => false,
                                   );
-                                }
-                                return true;
-                              },
-                              orElse: () => false,
-                            );
-                            if (resumed) return;
-                            final method = await showPaymentMethodSheet(
-                              context,
-                              cashEnabled: place?.cashEnabled ?? false,
-                            );
-                            if (method == null) return;
-                            final plan = selectedPlan;
-                            ref
-                                .read(membershipSubmitProvider.notifier)
-                                .createMembership(
-                                  placeId: placeId,
-                                  planId: plan.id,
-                                  promoCode: promo?.code,
-                                  paymentMethod: method,
-                                );
-                          },
+                                  if (resumed) return;
+                                  final method = selectedPaymentMethod;
+                                  final plan = selectedPlan;
+                                  ref
+                                      .read(membershipSubmitProvider.notifier)
+                                      .createMembership(
+                                        placeId: placeId,
+                                        planId: plan.id,
+                                        promoCode: promo?.code,
+                                        paymentMethod: method,
+                                      );
+                                },
                           isLoading: isLoading,
                         ),
                       );
