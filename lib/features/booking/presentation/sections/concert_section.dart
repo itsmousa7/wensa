@@ -12,6 +12,7 @@ import 'package:future_riverpod/features/booking/presentation/pages/payment_webv
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/hold_provider.dart';
+import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_selector.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_sheet.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/seat_map_web_view.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
@@ -775,6 +776,22 @@ class _HoldExpiryWatcher extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
+// Payment-method selection for the seat review sheet. autoDispose so a
+// fresh sheet always starts unselected.
+// ---------------------------------------------------------------------------
+
+final _concertReviewPaymentMethodProvider = NotifierProvider.autoDispose<
+    _ConcertReviewPaymentMethodNotifier, PaymentMethod?>(
+  _ConcertReviewPaymentMethodNotifier.new,
+);
+
+class _ConcertReviewPaymentMethodNotifier extends Notifier<PaymentMethod?> {
+  @override
+  PaymentMethod? build() => null;
+  void set(PaymentMethod? m) => state = m;
+}
+
+// ---------------------------------------------------------------------------
 // Review bottom sheet
 // ---------------------------------------------------------------------------
 
@@ -803,6 +820,8 @@ class _ReviewSheet extends ConsumerWidget {
     );
     final eventCashEnabled =
         ref.watch(eventDetailsProvider(eventId)).value?.cashEnabled ?? false;
+    final selectedPaymentMethod =
+        ref.watch(_concertReviewPaymentMethodProvider);
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return DraggableScrollableSheet(
@@ -877,6 +896,15 @@ class _ReviewSheet extends ConsumerWidget {
                 },
               ),
             ),
+            const SizedBox(height: 8),
+            PaymentMethodSelector(
+              cashEnabled: eventCashEnabled,
+              selected: selectedPaymentMethod,
+              onChanged: (m) => ref
+                  .read(_concertReviewPaymentMethodProvider.notifier)
+                  .set(m),
+            ),
+            const SizedBox(height: 8),
             const Divider(),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -905,7 +933,7 @@ class _ReviewSheet extends ConsumerWidget {
             PrimaryActionButton(
               label: isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
               isLoading: isLoading,
-              onTap: selectedSeats.isEmpty
+              onTap: (selectedSeats.isEmpty || selectedPaymentMethod == null)
                   ? null
                   : () async {
                       // If a pending group already exists (e.g. the user
@@ -932,11 +960,7 @@ class _ReviewSheet extends ConsumerWidget {
                         orElse: () => false,
                       );
                       if (resumed) return;
-                      final method = await showPaymentMethodSheet(
-                        context,
-                        cashEnabled: eventCashEnabled,
-                      );
-                      if (method == null) return;
+                      final method = selectedPaymentMethod;
                       // Keep the sheet visible while create-booking runs.
                       // The parent listener pops it once the Wayl URL is
                       // ready (see `_dismissCheckoutSheet`).
