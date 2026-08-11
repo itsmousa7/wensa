@@ -64,11 +64,13 @@ final _selectedCourtProvider =
     NotifierProvider.autoDispose<_CourtNotifier, Court?>(_CourtNotifier.new);
 final _selectedSlotsProvider =
     NotifierProvider.autoDispose<_SlotsNotifier, Set<String>>(
-        _SlotsNotifier.new);
+      _SlotsNotifier.new,
+    );
 
 final _padelPromoProvider =
     NotifierProvider.autoDispose<_PadelPromoNotifier, PromoApplied?>(
-        _PadelPromoNotifier.new);
+      _PadelPromoNotifier.new,
+    );
 
 class _PadelPromoNotifier extends Notifier<PromoApplied?> {
   @override
@@ -78,7 +80,8 @@ class _PadelPromoNotifier extends Notifier<PromoApplied?> {
 
 final _padelPaymentMethodProvider =
     NotifierProvider.autoDispose<_PadelPaymentMethodNotifier, PaymentMethod?>(
-        _PadelPaymentMethodNotifier.new);
+      _PadelPaymentMethodNotifier.new,
+    );
 
 class _PadelPaymentMethodNotifier extends Notifier<PaymentMethod?> {
   @override
@@ -205,8 +208,7 @@ class _BookingFormView extends ConsumerWidget {
       } catch (_) {}
     }
     if (discountedHours == 0) return (amount: 0, label: '');
-    var amt =
-        (pricePerHour * discountedHours * discount.percent / 100).round();
+    var amt = (pricePerHour * discountedHours * discount.percent / 100).round();
     final cap = discount.maxDiscountAmount;
     if (cap != null && amt > cap) amt = cap.round();
     if (amt > subtotal) amt = subtotal;
@@ -220,8 +222,10 @@ class _BookingFormView extends ConsumerWidget {
     final selectedSlots = ref.watch(_selectedSlotsProvider);
     final courtsAsync = ref.watch(courtsProvider(placeId));
     final submitState = ref.watch(bookingSubmitProvider);
-    final isLoading =
-        submitState.maybeWhen(loading: () => true, orElse: () => false);
+    final isLoading = submitState.maybeWhen(
+      loading: () => true,
+      orElse: () => false,
+    );
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     final closedDatesAsync = ref.watch(placeClosedDatesProvider(placeId));
@@ -231,15 +235,21 @@ class _BookingFormView extends ConsumerWidget {
 
     final placeAsync = ref.watch(placeDetailsProvider(placeId));
     final place = placeAsync.value;
-    final autoDiscount = ref.watch(bestAutoDiscountProvider(AutoDiscountKey(
-      orderType: 'bookings',
-      placeId: placeId,
-      merchantId: place?.merchantId,
-      categoryId: place?.categoryId,
-    )));
-    final merchantDiscount = ref.watch(placeMerchantDiscountProvider(
-      PlaceDiscountKey(placeId: placeId, merchantId: place?.merchantId),
-    ));
+    final autoDiscount = ref.watch(
+      bestAutoDiscountProvider(
+        AutoDiscountKey(
+          orderType: 'bookings',
+          placeId: placeId,
+          merchantId: place?.merchantId,
+          categoryId: place?.categoryId,
+        ),
+      ),
+    );
+    final merchantDiscount = ref.watch(
+      placeMerchantDiscountProvider(
+        PlaceDiscountKey(placeId: placeId, merchantId: place?.merchantId),
+      ),
+    );
     final promo = ref.watch(_padelPromoProvider);
     final selectedPaymentMethod = ref.watch(_padelPaymentMethodProvider);
     // A stranded pending booking (user closed the payment webview and came
@@ -252,10 +262,12 @@ class _BookingFormView extends ConsumerWidget {
     );
 
     final slotsAsync = selectedCourt != null
-        ? ref.watch(availableSlotsProvider(
-            courtId: selectedCourt.id,
-            date: bookingFormatDate(selectedDate),
-          ))
+        ? ref.watch(
+            availableSlotsProvider(
+              courtId: selectedCourt.id,
+              date: bookingFormatDate(selectedDate),
+            ),
+          )
         : null;
 
     // Cancels any pending booking row + resets local submit state.
@@ -268,7 +280,10 @@ class _BookingFormView extends ConsumerWidget {
     // Opens the payment webview for the given booking details.
     // Defined here so it can be reused by both ref.listen and onAction.
     void openPaymentWebView(
-        String bookingId, String paymentUrl, String waylReferenceId) {
+      String bookingId,
+      String paymentUrl,
+      String waylReferenceId,
+    ) {
       PaymentWebViewPage.push(
         context,
         paymentUrl,
@@ -299,10 +314,12 @@ class _BookingFormView extends ConsumerWidget {
           // held by a confirmed (paid) booking.
           await ref.read(bookingSubmitProvider.notifier).cancelPending();
           if (selectedCourt != null) {
-            ref.invalidate(availableSlotsProvider(
-              courtId: selectedCourt.id,
-              date: bookingFormatDate(selectedDate),
-            ));
+            ref.invalidate(
+              availableSlotsProvider(
+                courtId: selectedCourt.id,
+                date: bookingFormatDate(selectedDate),
+              ),
+            );
           }
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -332,7 +349,8 @@ class _BookingFormView extends ConsumerWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text(
-                    'Unable to get payment link. Please try again.'),
+                  'Unable to get payment link. Please try again.',
+                ),
                 backgroundColor: Theme.of(context).colorScheme.error,
               ),
             );
@@ -384,10 +402,12 @@ class _BookingFormView extends ConsumerWidget {
             data: (courts) => courts.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    child: Text(isAr
-                        ? 'لا توجد ملاعب متاحة.'
-                        : 'No courts available.'),
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    child: Text(
+                      isAr ? 'لا توجد ملاعب متاحة.' : 'No courts available.',
+                    ),
                   )
                 : _CourtsRow(
                     courts: courts,
@@ -407,19 +427,20 @@ class _BookingFormView extends ConsumerWidget {
             duration: const Duration(milliseconds: 300),
             switchInCurve: Curves.easeOut,
             switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: animation,
-              child: child,
-            ),
+            transitionBuilder: (child, animation) =>
+                FadeTransition(opacity: animation, child: child),
             child: selectedCourt != null
                 ? Column(
                     key: ValueKey(
-                        '${selectedCourt.id}-${bookingFormatDate(selectedDate)}'),
+                      '${selectedCourt.id}-${bookingFormatDate(selectedDate)}',
+                    ),
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      BookingSectionLabel(isAr
-                          ? 'الأوقات المتاحة — ${bookingDisplayDate(selectedDate, isArabic: true)}'
-                          : 'Available Times — ${bookingDisplayDate(selectedDate)}'),
+                      BookingSectionLabel(
+                        isAr
+                            ? 'الأوقات المتاحة — ${bookingDisplayDate(selectedDate, isArabic: true)}'
+                            : 'Available Times — ${bookingDisplayDate(selectedDate)}',
+                      ),
                       if (slotsAsync != null)
                         slotsAsync.when(
                           loading: () => const Padding(
@@ -427,22 +448,25 @@ class _BookingFormView extends ConsumerWidget {
                             child: Center(child: CircularProgressIndicator()),
                           ),
                           error: (e, _) => Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20),
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: Text('Error loading times: $e'),
                           ),
                           data: (slots) {
                             if (isSelectedDateClosed) {
                               return const Padding(
                                 padding: EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 4),
+                                  horizontal: 16,
+                                  vertical: 4,
+                                ),
                                 child: _ClosedDay(),
                               );
                             }
                             if (slots.isEmpty) {
                               return const Padding(
                                 padding: EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 24),
+                                  horizontal: 20,
+                                  vertical: 24,
+                                ),
                                 child: _EmptySlots(),
                               );
                             }
@@ -451,8 +475,9 @@ class _BookingFormView extends ConsumerWidget {
                             // SlotGrid handles expiry on the real timestamps, so
                             // a day's already-passed early hours show as Closed.
                             return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               child: SlotGrid(
                                 slots: slots,
                                 selectedStartTimes: selectedSlots,
@@ -480,13 +505,16 @@ class _BookingFormView extends ConsumerWidget {
             transitionBuilder: (child, animation) => FadeTransition(
               opacity: animation,
               child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.08),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
+                position:
+                    Tween<Offset>(
+                      begin: const Offset(0, 0.08),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      ),
+                    ),
                 child: child,
               ),
             ),
@@ -495,15 +523,15 @@ class _BookingFormView extends ConsumerWidget {
                     key: const ValueKey('summary-visible'),
                     builder: (context) {
                       final hours = selectedSlots.length;
-                      final subtotal =
-                          (selectedCourt.pricePerHour * hours).toInt();
+                      final subtotal = (selectedCourt.pricePerHour * hours)
+                          .toInt();
                       final merchantHourly =
                           _BookingFormView._computeMerchantHourly(
-                        discount: merchantDiscount,
-                        slots: selectedSlots,
-                        pricePerHour: selectedCourt.pricePerHour.toInt(),
-                        subtotal: subtotal,
-                      );
+                            discount: merchantDiscount,
+                            slots: selectedSlots,
+                            pricePerHour: selectedCourt.pricePerHour.toInt(),
+                            subtotal: subtotal,
+                          );
                       // Promo stacks on top of the hourly discount, so it
                       // applies to (subtotal − merchantHourly).
                       final promoBase = subtotal - merchantHourly.amount;
@@ -521,132 +549,161 @@ class _BookingFormView extends ConsumerWidget {
                         merchantHourlyAmount: merchantHourly.amount,
                         merchantHourlyLabel: merchantHourly.label,
                       );
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: BookingSummaryCard(
-                          title: isAr ? 'ملخص الحجز' : 'Booking Summary',
-                          badgeText: isAr
-                              ? '${selectedSlots.length} ${selectedSlots.length == 1 ? 'ساعة' : 'ساعات'}'
-                              : '${selectedSlots.length} ${selectedSlots.length == 1 ? 'hour' : 'hours'}',
-                          rows: [
-                            BookingSummaryRow(
-                              icon: Icons.sports_tennis_rounded,
-                              label: isAr ? 'الملعب' : 'Court',
-                              valueWidget: BilingualLabel(
-                                ar: selectedCourt.nameAr,
-                                en: selectedCourt.nameEn,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .outline,
-                                    ),
-                              ),
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: PaymentMethodSelector(
+                              cashEnabled: place?.cashEnabled ?? false,
+                              selected: selectedPaymentMethod,
+                              onChanged: (m) => ref
+                                  .read(_padelPaymentMethodProvider.notifier)
+                                  .set(m),
                             ),
-                            BookingSummaryRow(
-                              icon: Icons.calendar_today_rounded,
-                              label: isAr ? 'التاريخ' : 'Date',
-                              value: bookingDisplayDate(selectedDate,
-                                  isArabic: isAr),
-                            ),
-                            BookingSummaryRow(
-                              icon: Icons.schedule_rounded,
-                              label: isAr ? 'الوقت' : 'Time',
-                              value:
-                                  _BookingFormView._timeRange(selectedSlots),
-                            ),
-                          ],
-                          subtotalLabel: isAr ? 'المجموع' : 'Subtotal',
-                          subtotalValue: eff.discount > 0
-                              ? _BookingFormView._formatIqd(subtotal)
-                              : null,
-                          discountLabel:
-                              eff.discount > 0 ? eff.label : null,
-                          discountValue: eff.discount > 0
-                              ? '−${_BookingFormView._formatIqd(eff.discount)}'
-                              : null,
-                          totalLabel:
-                              isAr ? 'المبلغ الإجمالي' : 'Total Amount',
-                          totalValue:
-                              _BookingFormView._formatIqd(eff.finalAmount),
-                          paymentMethodSlot: PaymentMethodSelector(
-                            cashEnabled: place?.cashEnabled ?? false,
-                            selected: selectedPaymentMethod,
-                            onChanged: (m) => ref
-                                .read(_padelPaymentMethodProvider.notifier)
-                                .set(m),
                           ),
-                          extraSlot: promoBase > 0
-                              ? PromoCodeField(
-                                  orderType: 'bookings',
-                                  subtotal: promoBase,
-                                  placeId: placeId,
-                                  merchantId: place?.merchantId,
-                                  categoryId: place?.categoryId,
-                                  applied: promo,
-                                  isAr: isAr,
-                                  onChange: (p) {
-                                    ref
-                                        .read(_padelPromoProvider.notifier)
-                                        .set(p);
-                                    resetPendingBooking();
-                                  },
-                                )
-                              : null,
-                          actionLabel:
-                              isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
-                          onAction: (selectedPaymentMethod == null &&
-                                  !hasPendingToResume)
-                              ? null
-                              : () async {
-                                  // If a pending booking already exists, reuse its payment URL
-                                  // instead of creating a new booking (avoids DB constraint error).
-                                  final current =
-                                      ref.read(bookingSubmitProvider);
-                                  final resumed = current.maybeWhen(
-                                    success: (bookingId, paymentUrl,
-                                        holdUntil, waylReferenceId, cash) {
-                                      if (paymentUrl.isNotEmpty) {
-                                        openPaymentWebView(bookingId,
-                                            paymentUrl, waylReferenceId);
-                                      } else if (cash) {
-                                        goToCashBookingSuccess(
-                                          context: context,
-                                          ref: ref,
-                                          routeId: bookingId,
-                                          resetSubmitState: ref
-                                              .read(bookingSubmitProvider
-                                                  .notifier)
-                                              .reset,
-                                        );
-                                      }
-                                      return true;
-                                    },
-                                    orElse: () => false,
-                                  );
-                                  if (resumed) return;
-                                  // Only reachable without a method when a
-                                  // pending booking was expected but is gone.
-                                  final method = selectedPaymentMethod;
-                                  if (method == null) return;
-                                  final sorted = selectedSlots.toList()
-                                    ..sort();
-                                  ref
-                                      .read(bookingSubmitProvider.notifier)
-                                      .createPadelBooking(
-                                        placeId: placeId,
-                                        courtId: selectedCourt.id,
-                                        startsAt: sorted.first,
-                                        hours: selectedSlots.length,
-                                        promoCode: promo?.code,
-                                        paymentMethod: method,
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: BookingSummaryCard(
+                              title: isAr ? 'ملخص الحجز' : 'Booking Summary',
+                              badgeText: isAr
+                                  ? '${selectedSlots.length} ${selectedSlots.length == 1 ? 'ساعة' : 'ساعات'}'
+                                  : '${selectedSlots.length} ${selectedSlots.length == 1 ? 'hour' : 'hours'}',
+                              rows: [
+                                BookingSummaryRow(
+                                  icon: Icons.sports_tennis_rounded,
+                                  label: isAr ? 'الملعب' : 'Court',
+                                  valueWidget: BilingualLabel(
+                                    ar: selectedCourt.nameAr,
+                                    en: selectedCourt.nameEn,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.outline,
+                                        ),
+                                  ),
+                                ),
+                                BookingSummaryRow(
+                                  icon: Icons.calendar_today_rounded,
+                                  label: isAr ? 'التاريخ' : 'Date',
+                                  value: bookingDisplayDate(
+                                    selectedDate,
+                                    isArabic: isAr,
+                                  ),
+                                ),
+                                BookingSummaryRow(
+                                  icon: Icons.schedule_rounded,
+                                  label: isAr ? 'الوقت' : 'Time',
+                                  value: _BookingFormView._timeRange(
+                                    selectedSlots,
+                                  ),
+                                ),
+                              ],
+                              subtotalLabel: isAr ? 'المجموع' : 'Subtotal',
+                              subtotalValue: eff.discount > 0
+                                  ? _BookingFormView._formatIqd(subtotal)
+                                  : null,
+                              discountLabel: eff.discount > 0
+                                  ? eff.label
+                                  : null,
+                              discountValue: eff.discount > 0
+                                  ? '−${_BookingFormView._formatIqd(eff.discount)}'
+                                  : null,
+                              totalLabel: isAr
+                                  ? 'المبلغ الإجمالي'
+                                  : 'Total Amount',
+                              totalValue: _BookingFormView._formatIqd(
+                                eff.finalAmount,
+                              ),
+                              extraSlot: promoBase > 0
+                                  ? PromoCodeField(
+                                      orderType: 'bookings',
+                                      subtotal: promoBase,
+                                      placeId: placeId,
+                                      merchantId: place?.merchantId,
+                                      categoryId: place?.categoryId,
+                                      applied: promo,
+                                      isAr: isAr,
+                                      onChange: (p) {
+                                        ref
+                                            .read(_padelPromoProvider.notifier)
+                                            .set(p);
+                                        resetPendingBooking();
+                                      },
+                                    )
+                                  : null,
+                              actionLabel: isAr
+                                  ? 'المتابعة للدفع'
+                                  : 'Proceed to Payment',
+                              onAction:
+                                  (selectedPaymentMethod == null &&
+                                      !hasPendingToResume)
+                                  ? null
+                                  : () async {
+                                      // If a pending booking already exists, reuse its payment URL
+                                      // instead of creating a new booking (avoids DB constraint error).
+                                      final current = ref.read(
+                                        bookingSubmitProvider,
                                       );
-                                },
-                          isLoading: isLoading,
-                        ),
+                                      final resumed = current.maybeWhen(
+                                        success:
+                                            (
+                                              bookingId,
+                                              paymentUrl,
+                                              holdUntil,
+                                              waylReferenceId,
+                                              cash,
+                                            ) {
+                                              if (paymentUrl.isNotEmpty) {
+                                                openPaymentWebView(
+                                                  bookingId,
+                                                  paymentUrl,
+                                                  waylReferenceId,
+                                                );
+                                              } else if (cash) {
+                                                goToCashBookingSuccess(
+                                                  context: context,
+                                                  ref: ref,
+                                                  routeId: bookingId,
+                                                  resetSubmitState: ref
+                                                      .read(
+                                                        bookingSubmitProvider
+                                                            .notifier,
+                                                      )
+                                                      .reset,
+                                                );
+                                              }
+                                              return true;
+                                            },
+                                        orElse: () => false,
+                                      );
+                                      if (resumed) return;
+                                      // Only reachable without a method when a
+                                      // pending booking was expected but is gone.
+                                      final method = selectedPaymentMethod;
+                                      if (method == null) return;
+                                      final sorted = selectedSlots.toList()
+                                        ..sort();
+                                      ref
+                                          .read(bookingSubmitProvider.notifier)
+                                          .createPadelBooking(
+                                            placeId: placeId,
+                                            courtId: selectedCourt.id,
+                                            startsAt: sorted.first,
+                                            hours: selectedSlots.length,
+                                            promoCode: promo?.code,
+                                            paymentMethod: method,
+                                          );
+                                    },
+                              isLoading: isLoading,
+                            ),
+                          ),
+                        ],
                       );
                     },
                   )
@@ -694,8 +751,10 @@ class _CourtsRow extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeInOut,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? colorScheme.primary : colorScheme.surface,
                   borderRadius: AppSpacing.borderRadiusLG,
@@ -735,14 +794,18 @@ class _CourtsRow extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
-                        color:
-                            isSelected ? Colors.white : colorScheme.onSurface,
+                        color: isSelected
+                            ? Colors.white
+                            : colorScheme.onSurface,
                       ),
                     ),
                     if (isSelected) ...[
                       const SizedBox(width: 8),
-                      const Icon(Icons.check_circle_rounded,
-                          color: Colors.white, size: 15),
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: Colors.white,
+                        size: 15,
+                      ),
                     ],
                   ],
                 ),
@@ -774,20 +837,26 @@ class _EmptySlots extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(Icons.event_busy_rounded,
-              size: 36, color: colorScheme.outline.withValues(alpha: 0.5)),
+          Icon(
+            Icons.event_busy_rounded,
+            size: 36,
+            color: colorScheme.outline.withValues(alpha: 0.5),
+          ),
           const SizedBox(height: 8),
-          Builder(builder: (context) {
-            final isAr = Localizations.localeOf(context).languageCode == 'ar';
-            return Text(
-              isAr
-                  ? 'لا توجد أوقات متاحة لهذا التاريخ.'
-                  : 'No available times for this date.',
-              style: TextStyle(
+          Builder(
+            builder: (context) {
+              final isAr = Localizations.localeOf(context).languageCode == 'ar';
+              return Text(
+                isAr
+                    ? 'لا توجد أوقات متاحة لهذا التاريخ.'
+                    : 'No available times for this date.',
+                style: TextStyle(
                   color: colorScheme.onSurface.withValues(alpha: 0.5),
-                  fontSize: 13),
-            );
-          }),
+                  fontSize: 13,
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -815,15 +884,20 @@ class _ClosedDay extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(Icons.block_rounded,
-              size: 36, color: cs.error.withValues(alpha: 0.45)),
+          Icon(
+            Icons.block_rounded,
+            size: 36,
+            color: cs.error.withValues(alpha: 0.45),
+          ),
           const SizedBox(height: 8),
           Text(
             isAr
                 ? 'هذا المكان مغلق في هذا التاريخ.'
                 : 'This place is closed on this date.',
             style: TextStyle(
-                color: cs.onSurface.withValues(alpha: 0.5), fontSize: 13),
+              color: cs.onSurface.withValues(alpha: 0.5),
+              fontSize: 13,
+            ),
           ),
         ],
       ),

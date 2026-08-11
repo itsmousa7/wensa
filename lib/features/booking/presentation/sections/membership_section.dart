@@ -41,7 +41,8 @@ final _selectedMembershipPlanProvider =
 
 final _membershipPromoProvider =
     NotifierProvider.autoDispose<_MembershipPromoNotifier, PromoApplied?>(
-        _MembershipPromoNotifier.new);
+      _MembershipPromoNotifier.new,
+    );
 
 class _MembershipPromoNotifier extends Notifier<PromoApplied?> {
   @override
@@ -49,10 +50,11 @@ class _MembershipPromoNotifier extends Notifier<PromoApplied?> {
   void set(PromoApplied? p) => state = p;
 }
 
-final _membershipPaymentMethodProvider = NotifierProvider.autoDispose<
-    _MembershipPaymentMethodNotifier, PaymentMethod?>(
-  _MembershipPaymentMethodNotifier.new,
-);
+final _membershipPaymentMethodProvider =
+    NotifierProvider.autoDispose<
+      _MembershipPaymentMethodNotifier,
+      PaymentMethod?
+    >(_MembershipPaymentMethodNotifier.new);
 
 class _MembershipPaymentMethodNotifier extends Notifier<PaymentMethod?> {
   @override
@@ -107,9 +109,7 @@ void _openMembershipPaymentWebView(
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Payment successful! Your membership is now active.',
-            ),
+            content: Text('Payment successful! Your membership is now active.'),
             backgroundColor: Colors.green,
           ),
         );
@@ -136,20 +136,28 @@ class _MembershipSectionState extends ConsumerState<MembershipSection> {
         success: (bookingId, paymentUrl, holdUntil, waylReferenceId, cash) {
           if (paymentUrl.isNotEmpty) {
             _openMembershipPaymentWebView(
-                context, ref, bookingId, paymentUrl, waylReferenceId);
+              context,
+              ref,
+              bookingId,
+              paymentUrl,
+              waylReferenceId,
+            );
           } else if (cash) {
             goToCashBookingSuccess(
               context: context,
               ref: ref,
               routeId: 'm_$bookingId',
-              resetSubmitState: ref.read(membershipSubmitProvider.notifier).reset,
+              resetSubmitState: ref
+                  .read(membershipSubmitProvider.notifier)
+                  .reset,
             );
           } else {
             ref.read(membershipSubmitProvider.notifier).reset();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text(
-                    'Unable to get payment link. Please try again.'),
+                  'Unable to get payment link. Please try again.',
+                ),
                 backgroundColor: Theme.of(context).colorScheme.error,
               ),
             );
@@ -168,7 +176,9 @@ class _MembershipSectionState extends ConsumerState<MembershipSection> {
     });
 
     return _MembershipFormView(
-        placeId: widget.placeId, placeName: widget.placeName);
+      placeId: widget.placeId,
+      placeName: widget.placeName,
+    );
   }
 }
 
@@ -230,15 +240,18 @@ class _MembershipFormView extends ConsumerWidget {
 
     final placeAsync = ref.watch(placeDetailsProvider(placeId));
     final place = placeAsync.value;
-    final autoDiscount = ref.watch(bestAutoDiscountProvider(AutoDiscountKey(
-      orderType: 'memberships',
-      placeId: placeId,
-      merchantId: place?.merchantId,
-      categoryId: place?.categoryId,
-    )));
+    final autoDiscount = ref.watch(
+      bestAutoDiscountProvider(
+        AutoDiscountKey(
+          orderType: 'memberships',
+          placeId: placeId,
+          merchantId: place?.merchantId,
+          categoryId: place?.categoryId,
+        ),
+      ),
+    );
     final promo = ref.watch(_membershipPromoProvider);
-    final selectedPaymentMethod =
-        ref.watch(_membershipPaymentMethodProvider);
+    final selectedPaymentMethod = ref.watch(_membershipPaymentMethodProvider);
     // A stranded pending membership (user closed the payment webview and came
     // back) is resumed by the Proceed handler without creating a new row, so
     // it must not be gated behind picking a payment method. Derived from the
@@ -342,129 +355,163 @@ class _MembershipFormView extends ConsumerWidget {
 
                       // Re-validate promo on subtotal change.
                       if (promo != null &&
-                          promo.finalAmount + promo.discountAmount != subtotal) {
+                          promo.finalAmount + promo.discountAmount !=
+                              subtotal) {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           ref.read(_membershipPromoProvider.notifier).set(null);
                         });
                       }
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: BookingSummaryCard(
-                          title: isAr ? 'ملخص العضوية' : 'Membership Summary',
-                          badgeText: isAr
-                              ? '${selectedPlan.durationDays} أيام'
-                              : '${selectedPlan.durationDays} days',
-                          rows: [
-                            BookingSummaryRow(
-                              icon: Icons.store_rounded,
-                              label: isAr ? 'المكان' : 'Venue',
-                              value: placeName,
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: PaymentMethodSelector(
+                              cashEnabled: place?.cashEnabled ?? false,
+                              selected: selectedPaymentMethod,
+                              onChanged: (m) => ref
+                                  .read(
+                                    _membershipPaymentMethodProvider.notifier,
+                                  )
+                                  .set(m),
                             ),
-                            BookingSummaryRow(
-                              icon: Icons.card_membership_rounded,
-                              label: isAr ? 'الخطة' : 'Plan',
-                              valueWidget: BilingualLabel(
-                                ar: selectedPlan.nameAr,
-                                en: selectedPlan.nameEn,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(fontWeight: FontWeight.w500),
-                              ),
-                            ),
-                            BookingSummaryRow(
-                              icon: Icons.date_range_rounded,
-                              label: isAr ? 'المدة' : 'Duration',
-                              value: isAr
-                                  ? 'صالحة ${selectedPlan.durationDays} يوماً من أول تفعيل'
-                                  : '${selectedPlan.durationDays} Day${selectedPlan.durationDays == 1 ? '' : 's'} After Activation',
-                            ),
-                          ],
-                          subtotalLabel: isAr ? 'المجموع' : 'Subtotal',
-                          subtotalValue:
-                              eff.discount > 0 ? _formatPrice(subtotal) : null,
-                          discountLabel: eff.discount > 0 ? eff.label : null,
-                          discountValue: eff.discount > 0
-                              ? '−${_formatPrice(eff.discount)}'
-                              : null,
-                          totalLabel: isAr ? 'الإجمالي' : 'Total Amount',
-                          totalValue: _formatPrice(eff.finalAmount),
-                          paymentMethodSlot: PaymentMethodSelector(
-                            cashEnabled: place?.cashEnabled ?? false,
-                            selected: selectedPaymentMethod,
-                            onChanged: (m) => ref
-                                .read(
-                                    _membershipPaymentMethodProvider.notifier)
-                                .set(m),
                           ),
-                          extraSlot: subtotal > 0
-                              ? PromoCodeField(
-                                  orderType: 'memberships',
-                                  subtotal: subtotal,
-                                  placeId: placeId,
-                                  merchantId: place?.merchantId,
-                                  categoryId: place?.categoryId,
-                                  applied: promo,
-                                  isAr: isAr,
-                                  onChange: (p) => ref
-                                      .read(_membershipPromoProvider.notifier)
-                                      .set(p),
-                                )
-                              : null,
-                          actionLabel:
-                              isAr ? 'المتابعة للدفع' : 'Proceed to Payment',
-                          onAction: (selectedPaymentMethod == null &&
-                                  !hasPendingToResume)
-                              ? null
-                              : () async {
-                                  // If a pending membership already exists, reuse
-                                  // its payment URL instead of creating a new one
-                                  // (avoids the DB constraint on the still-open
-                                  // pending row).
-                                  final current =
-                                      ref.read(membershipSubmitProvider);
-                                  final resumed = current.maybeWhen(
-                                    success: (bookingId, paymentUrl,
-                                        holdUntil, waylReferenceId, cash) {
-                                      if (paymentUrl.isNotEmpty) {
-                                        _openMembershipPaymentWebView(
-                                            context,
-                                            ref,
-                                            bookingId,
-                                            paymentUrl,
-                                            waylReferenceId);
-                                      } else if (cash) {
-                                        goToCashBookingSuccess(
-                                          context: context,
-                                          ref: ref,
-                                          routeId: 'm_$bookingId',
-                                          resetSubmitState: ref
-                                              .read(membershipSubmitProvider
-                                                  .notifier)
-                                              .reset,
-                                        );
-                                      }
-                                      return true;
-                                    },
-                                    orElse: () => false,
-                                  );
-                                  if (resumed) return;
-                                  // Only reachable without a method when a
-                                  // pending membership was expected but is
-                                  // gone.
-                                  final method = selectedPaymentMethod;
-                                  if (method == null) return;
-                                  final plan = selectedPlan;
-                                  ref
-                                      .read(membershipSubmitProvider.notifier)
-                                      .createMembership(
-                                        placeId: placeId,
-                                        planId: plan.id,
-                                        promoCode: promo?.code,
-                                        paymentMethod: method,
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: BookingSummaryCard(
+                              title: isAr
+                                  ? 'ملخص العضوية'
+                                  : 'Membership Summary',
+                              badgeText: isAr
+                                  ? '${selectedPlan.durationDays} أيام'
+                                  : '${selectedPlan.durationDays} days',
+                              rows: [
+                                BookingSummaryRow(
+                                  icon: Icons.store_rounded,
+                                  label: isAr ? 'المكان' : 'Venue',
+                                  value: placeName,
+                                ),
+                                BookingSummaryRow(
+                                  icon: Icons.card_membership_rounded,
+                                  label: isAr ? 'الخطة' : 'Plan',
+                                  valueWidget: BilingualLabel(
+                                    ar: selectedPlan.nameAr,
+                                    en: selectedPlan.nameEn,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(fontWeight: FontWeight.w500),
+                                  ),
+                                ),
+                                BookingSummaryRow(
+                                  icon: Icons.date_range_rounded,
+                                  label: isAr ? 'المدة' : 'Duration',
+                                  value: isAr
+                                      ? 'صالحة ${selectedPlan.durationDays} يوماً من أول تفعيل'
+                                      : '${selectedPlan.durationDays} Day${selectedPlan.durationDays == 1 ? '' : 's'} After Activation',
+                                ),
+                              ],
+                              subtotalLabel: isAr ? 'المجموع' : 'Subtotal',
+                              subtotalValue: eff.discount > 0
+                                  ? _formatPrice(subtotal)
+                                  : null,
+                              discountLabel: eff.discount > 0
+                                  ? eff.label
+                                  : null,
+                              discountValue: eff.discount > 0
+                                  ? '−${_formatPrice(eff.discount)}'
+                                  : null,
+                              totalLabel: isAr ? 'الإجمالي' : 'Total Amount',
+                              totalValue: _formatPrice(eff.finalAmount),
+                              extraSlot: subtotal > 0
+                                  ? PromoCodeField(
+                                      orderType: 'memberships',
+                                      subtotal: subtotal,
+                                      placeId: placeId,
+                                      merchantId: place?.merchantId,
+                                      categoryId: place?.categoryId,
+                                      applied: promo,
+                                      isAr: isAr,
+                                      onChange: (p) => ref
+                                          .read(
+                                            _membershipPromoProvider.notifier,
+                                          )
+                                          .set(p),
+                                    )
+                                  : null,
+                              actionLabel: isAr
+                                  ? 'المتابعة للدفع'
+                                  : 'Proceed to Payment',
+                              onAction:
+                                  (selectedPaymentMethod == null &&
+                                      !hasPendingToResume)
+                                  ? null
+                                  : () async {
+                                      // If a pending membership already exists, reuse
+                                      // its payment URL instead of creating a new one
+                                      // (avoids the DB constraint on the still-open
+                                      // pending row).
+                                      final current = ref.read(
+                                        membershipSubmitProvider,
                                       );
-                                },
-                          isLoading: isLoading,
-                        ),
+                                      final resumed = current.maybeWhen(
+                                        success:
+                                            (
+                                              bookingId,
+                                              paymentUrl,
+                                              holdUntil,
+                                              waylReferenceId,
+                                              cash,
+                                            ) {
+                                              if (paymentUrl.isNotEmpty) {
+                                                _openMembershipPaymentWebView(
+                                                  context,
+                                                  ref,
+                                                  bookingId,
+                                                  paymentUrl,
+                                                  waylReferenceId,
+                                                );
+                                              } else if (cash) {
+                                                goToCashBookingSuccess(
+                                                  context: context,
+                                                  ref: ref,
+                                                  routeId: 'm_$bookingId',
+                                                  resetSubmitState: ref
+                                                      .read(
+                                                        membershipSubmitProvider
+                                                            .notifier,
+                                                      )
+                                                      .reset,
+                                                );
+                                              }
+                                              return true;
+                                            },
+                                        orElse: () => false,
+                                      );
+                                      if (resumed) return;
+                                      // Only reachable without a method when a
+                                      // pending membership was expected but is
+                                      // gone.
+                                      final method = selectedPaymentMethod;
+                                      if (method == null) return;
+                                      final plan = selectedPlan;
+                                      ref
+                                          .read(
+                                            membershipSubmitProvider.notifier,
+                                          )
+                                          .createMembership(
+                                            placeId: placeId,
+                                            planId: plan.id,
+                                            promoCode: promo?.code,
+                                            paymentMethod: method,
+                                          );
+                                    },
+                              isLoading: isLoading,
+                            ),
+                          ),
+                        ],
                       );
                     },
                   )

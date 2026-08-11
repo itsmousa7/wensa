@@ -3,10 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 
-/// Inline "Payment Method" section, shown directly inside the checkout
-/// container (as [BookingSummaryCard.paymentMethodSlot] or inline in a
-/// checkout sheet) instead of a modal dialog. Purely presentational — the
-/// caller owns the selected value.
+/// Standalone "Payment Method" card, placed above the booking summary card
+/// (or inline in a checkout sheet) instead of a modal dialog. Purely
+/// presentational — the caller owns the selected value.
 class PaymentMethodSelector extends StatelessWidget {
   const PaymentMethodSelector({
     super.key,
@@ -32,36 +31,51 @@ class PaymentMethodSelector extends StatelessWidget {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final cs = Theme.of(context).colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          isAr ? 'طريقة الدفع' : 'Payment Method',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 8),
-        if (cashEnabled) ...[
-          _SelectorRow(
-            icon: Icons.payments_rounded,
-            iconBg: const Color(0xFF17A673),
-            title: isAr ? 'نقداً' : 'Cash',
-            subtitle: isAr ? 'ادفع عند الوصول' : 'Pay at the venue',
-            isSelected: selected == PaymentMethod.cash,
-            onTap: () => onChanged(PaymentMethod.cash),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.12)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
-          const _DashedDivider(),
         ],
-        _SelectorRow(
-          icon: Icons.credit_card_rounded,
-          iconBg: cs.primary,
-          title: isAr ? 'الدفع الإلكتروني' : 'E-Payment',
-          subtitle: isAr ? 'ادفع الآن عبر الإنترنت' : 'Pay online now',
-          isSelected: selected == PaymentMethod.wayl,
-          onTap: () => onChanged(PaymentMethod.wayl),
-        ),
-      ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isAr ? 'طريقة الدفع' : 'Payment Method',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          if (cashEnabled) ...[
+            _SelectorRow(
+              icon: Icons.payments_rounded,
+              iconBg: cs.primary,
+              title: isAr ? 'نقداً' : 'Cash',
+              subtitle: isAr ? 'ادفع عند الوصول' : 'Pay at the venue',
+              isSelected: selected == PaymentMethod.cash,
+              onTap: () => onChanged(PaymentMethod.cash),
+            ),
+            const _DashedDivider(),
+          ],
+          _SelectorRow(
+            icon: Icons.credit_card_rounded,
+            iconBg: cs.primary,
+            title: isAr ? 'الدفع الإلكتروني' : 'E-Payment',
+            subtitle: isAr ? 'ادفع الآن عبر الإنترنت' : 'Pay online now',
+            isSelected: selected == PaymentMethod.wayl,
+            onTap: () => onChanged(PaymentMethod.wayl),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -172,9 +186,7 @@ class _DashedDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(
-      context,
-    ).colorScheme.outline.withValues(alpha: 0.3);
+    final color = Theme.of(context).colorScheme.outline.withValues(alpha: 0.3);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: SizedBox(

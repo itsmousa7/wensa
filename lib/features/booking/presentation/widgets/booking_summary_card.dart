@@ -47,7 +47,6 @@ class BookingSummaryCard extends StatelessWidget {
     this.discountLabel,
     this.discountValue,
     this.extraSlot,
-    this.paymentMethodSlot,
     required this.actionLabel,
     required this.onAction,
     required this.isLoading,
@@ -82,10 +81,6 @@ class BookingSummaryCard extends StatelessWidget {
   /// promo-code field).
   final Widget? extraSlot;
 
-  /// Optional payment-method selector, rendered after the detail rows and
-  /// before the subtotal/discount/total block.
-  final Widget? paymentMethodSlot;
-
   /// Text on the action button.
   final String actionLabel;
 
@@ -101,8 +96,7 @@ class BookingSummaryCard extends StatelessWidget {
     final isDisabled = isLoading || onAction == null;
     // The disabled pill is a light grey, so white-on-grey would be invisible
     // in light theme — use the on-surface variant colour instead.
-    final foreground =
-        isDisabled ? colorScheme.onSurfaceVariant : Colors.white;
+    final foreground = isDisabled ? colorScheme.onSurfaceVariant : Colors.white;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -126,8 +120,9 @@ class BookingSummaryCard extends StatelessWidget {
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: colorScheme.primary,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
             ),
             child: Row(
               children: [
@@ -137,22 +132,27 @@ class BookingSummaryCard extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.receipt_long_rounded,
-                      color: Colors.white, size: 18),
+                  child: const Icon(
+                    Icons.receipt_long_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 if (badgeText != null) ...[
                   const Spacer(),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: AppSpacing.borderRadiusXL,
@@ -186,17 +186,6 @@ class BookingSummaryCard extends StatelessWidget {
                     ),
                 ],
 
-                if (paymentMethodSlot != null) ...[
-                  // Only separate from the detail rows when there are any —
-                  // otherwise the divider hangs under the header alone.
-                  if (rows.isNotEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      child: Divider(height: 1),
-                    ),
-                  paymentMethodSlot!,
-                ],
-
                 // Subtotal + discount + total stack
                 if (totalValue != null) ...[
                   const SizedBox(height: 16),
@@ -218,18 +207,24 @@ class BookingSummaryCard extends StatelessWidget {
                   ],
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        vertical: 14, horizontal: 16),
+                      vertical: 14,
+                      horizontal: 16,
+                    ),
                     decoration: BoxDecoration(
                       color: colorScheme.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                          color: colorScheme.primary.withValues(alpha: 0.15)),
+                        color: colorScheme.primary.withValues(alpha: 0.15),
+                      ),
                     ),
                     child: Row(
                       textDirection: TextDirection.rtl,
                       children: [
-                        Icon(Icons.payments_rounded,
-                            size: 20, color: colorScheme.primary),
+                        Icon(
+                          Icons.payments_rounded,
+                          size: 20,
+                          color: colorScheme.primary,
+                        ),
                         const SizedBox(width: 10),
                         Text(
                           totalLabel ?? 'Total Amount',
@@ -296,7 +291,8 @@ class BookingSummaryCard extends StatelessWidget {
                                     fontSize: 15,
                                     letterSpacing: 0.3,
                                     fontFamily: AppTypography.buttonFontFamily(
-                                        isAr ? 'ar' : 'en'),
+                                      isAr ? 'ar' : 'en',
+                                    ),
                                   ),
                                 ),
                         ),
@@ -335,19 +331,18 @@ class _DetailRow extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           row.label,
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(color: colorScheme.outline),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: colorScheme.outline),
         ),
         const Spacer(),
         row.valueWidget ??
             Text(
               row.value ?? '',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: colorScheme.outline,
-                  ),
+                fontWeight: FontWeight.w500,
+                color: colorScheme.outline,
+              ),
             ),
       ],
     );

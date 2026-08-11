@@ -342,7 +342,8 @@ class _FarmBookingFormView extends ConsumerWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text(
-                    'Unable to get payment link. Please try again.'),
+                  'Unable to get payment link. Please try again.',
+                ),
                 backgroundColor: Theme.of(context).colorScheme.error,
               ),
             );
@@ -556,176 +557,200 @@ class _FarmBookingFormView extends ConsumerWidget {
                         });
                       }
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: BookingSummaryCard(
-                          title: isAr ? 'ملخص الحجز' : 'Booking Summary',
-                          badgeText: _shiftLabel(
-                            selectedShift.shiftType,
-                            isArabic: isAr,
-                          ),
-                          rows: [
-                            BookingSummaryRow(
-                              icon: Icons.calendar_today_rounded,
-                              label: isAr ? 'التاريخ' : 'Date',
-                              value: bookingDisplayDate(
-                                selectedDate,
-                                isArabic: isAr,
-                              ),
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: PaymentMethodSelector(
+                              cashEnabled: place?.cashEnabled ?? false,
+                              selected: selectedPaymentMethod,
+                              onChanged: (m) => ref
+                                  .read(_farmPaymentMethodProvider.notifier)
+                                  .set(m),
                             ),
-                            BookingSummaryRow(
-                              icon: Icons.wb_sunny_rounded,
-                              label: isAr ? 'الوردية' : 'Shift',
-                              value: _shiftLabel(
+                          ),
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: BookingSummaryCard(
+                              title: isAr ? 'ملخص الحجز' : 'Booking Summary',
+                              badgeText: _shiftLabel(
                                 selectedShift.shiftType,
                                 isArabic: isAr,
                               ),
-                            ),
-                            BookingSummaryRow(
-                              icon: Icons.schedule_rounded,
-                              label: isAr ? 'الوقت' : 'Time',
-                              value:
-                                  '${_toTime12h(selectedShift.startsTime)} – ${_toTime12h(selectedShift.endsTime)}',
-                            ),
-                            if (partyOn && selectedShift.partyFlatFeeIqd > 0)
-                              BookingSummaryRow(
-                                icon: Icons.groups_rounded,
-                                label: isAr
-                                    ? 'رسوم الضيوف الاضافيين'
-                                    : 'Extra Guests Fee',
-                                value: _FarmBookingFormView._formatIqd(
-                                  selectedShift.partyFlatFeeIqd,
+                              rows: [
+                                BookingSummaryRow(
+                                  icon: Icons.calendar_today_rounded,
+                                  label: isAr ? 'التاريخ' : 'Date',
+                                  value: bookingDisplayDate(
+                                    selectedDate,
+                                    isArabic: isAr,
+                                  ),
                                 ),
-                              ),
-                            if (extraGuests > 0)
-                              BookingSummaryRow(
-                                icon: Icons.person_add_alt_1_rounded,
-                                label: isAr ? 'ضيوف إضافيون' : 'Extra guests',
-                                value: _FarmBookingFormView._formatIqd(
-                                  extraGuests *
-                                      selectedShift.partyExtraPersonFeeIqd,
+                                BookingSummaryRow(
+                                  icon: Icons.wb_sunny_rounded,
+                                  label: isAr ? 'الوردية' : 'Shift',
+                                  value: _shiftLabel(
+                                    selectedShift.shiftType,
+                                    isArabic: isAr,
+                                  ),
                                 ),
+                                BookingSummaryRow(
+                                  icon: Icons.schedule_rounded,
+                                  label: isAr ? 'الوقت' : 'Time',
+                                  value:
+                                      '${_toTime12h(selectedShift.startsTime)} – ${_toTime12h(selectedShift.endsTime)}',
+                                ),
+                                if (partyOn &&
+                                    selectedShift.partyFlatFeeIqd > 0)
+                                  BookingSummaryRow(
+                                    icon: Icons.groups_rounded,
+                                    label: isAr
+                                        ? 'رسوم الضيوف الاضافيين'
+                                        : 'Extra Guests Fee',
+                                    value: _FarmBookingFormView._formatIqd(
+                                      selectedShift.partyFlatFeeIqd,
+                                    ),
+                                  ),
+                                if (extraGuests > 0)
+                                  BookingSummaryRow(
+                                    icon: Icons.person_add_alt_1_rounded,
+                                    label: isAr
+                                        ? 'ضيوف إضافيون'
+                                        : 'Extra guests',
+                                    value: _FarmBookingFormView._formatIqd(
+                                      extraGuests *
+                                          selectedShift.partyExtraPersonFeeIqd,
+                                    ),
+                                  ),
+                              ],
+                              subtotalLabel: isAr ? 'المجموع' : 'Subtotal',
+                              subtotalValue: eff.discount > 0
+                                  ? _FarmBookingFormView._formatIqd(subtotal)
+                                  : null,
+                              discountLabel: eff.discount > 0
+                                  ? eff.label
+                                  : null,
+                              discountValue: eff.discount > 0
+                                  ? '−${_FarmBookingFormView._formatIqd(eff.discount)}'
+                                  : null,
+                              totalLabel: isAr ? 'الإجمالي' : 'Total Amount',
+                              totalValue: _FarmBookingFormView._formatIqd(
+                                eff.finalAmount,
                               ),
-                          ],
-                          subtotalLabel: isAr ? 'المجموع' : 'Subtotal',
-                          subtotalValue: eff.discount > 0
-                              ? _FarmBookingFormView._formatIqd(subtotal)
-                              : null,
-                          discountLabel: eff.discount > 0 ? eff.label : null,
-                          discountValue: eff.discount > 0
-                              ? '−${_FarmBookingFormView._formatIqd(eff.discount)}'
-                              : null,
-                          totalLabel: isAr ? 'الإجمالي' : 'Total Amount',
-                          totalValue: _FarmBookingFormView._formatIqd(
-                            eff.finalAmount,
-                          ),
-                          paymentMethodSlot: PaymentMethodSelector(
-                            cashEnabled: place?.cashEnabled ?? false,
-                            selected: selectedPaymentMethod,
-                            onChanged: (m) => ref
-                                .read(_farmPaymentMethodProvider.notifier)
-                                .set(m),
-                          ),
-                          extraSlot: subtotal > 0
-                              ? PromoCodeField(
-                                  orderType: 'bookings',
-                                  subtotal: subtotal,
-                                  placeId: placeId,
-                                  merchantId: place?.merchantId,
-                                  categoryId: place?.categoryId,
-                                  applied: promo,
-                                  isAr: isAr,
-                                  onChange: (p) => ref
-                                      .read(_farmPromoProvider.notifier)
-                                      .set(p),
-                                )
-                              : null,
-                          actionLabel: isAr
-                              ? 'المتابعة للدفع'
-                              : 'Proceed to Payment',
-                          onAction: (selectedPaymentMethod == null &&
-                                  !hasPendingToResume)
-                              ? null
-                              : () async {
-                                  if (guestCountRequired) {
-                                    ref
-                                        .read(_farmGuestCountErrorProvider
-                                            .notifier)
-                                        .set(true);
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          isAr
-                                              ? 'الرجاء إدخال عدد الأشخاص القادمين'
-                                              : 'Please enter the number of guests',
-                                          style: const TextStyle(
-                                              color: Colors.white),
-                                        ),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                    return;
-                                  }
-                                  // If a pending booking already exists, reuse its payment URL
-                                  // instead of creating a new booking (avoids DB constraint error).
-                                  final current =
-                                      ref.read(bookingSubmitProvider);
-                                  final resumed = current.maybeWhen(
-                                    success: (
-                                      bookingId,
-                                      paymentUrl,
-                                      holdUntil,
-                                      waylReferenceId,
-                                      cash,
-                                    ) {
-                                      if (paymentUrl.isNotEmpty) {
-                                        openPaymentWebView(
-                                          bookingId,
-                                          paymentUrl,
-                                          waylReferenceId,
+                              extraSlot: subtotal > 0
+                                  ? PromoCodeField(
+                                      orderType: 'bookings',
+                                      subtotal: subtotal,
+                                      placeId: placeId,
+                                      merchantId: place?.merchantId,
+                                      categoryId: place?.categoryId,
+                                      applied: promo,
+                                      isAr: isAr,
+                                      onChange: (p) => ref
+                                          .read(_farmPromoProvider.notifier)
+                                          .set(p),
+                                    )
+                                  : null,
+                              actionLabel: isAr
+                                  ? 'المتابعة للدفع'
+                                  : 'Proceed to Payment',
+                              onAction:
+                                  (selectedPaymentMethod == null &&
+                                      !hasPendingToResume)
+                                  ? null
+                                  : () async {
+                                      if (guestCountRequired) {
+                                        ref
+                                            .read(
+                                              _farmGuestCountErrorProvider
+                                                  .notifier,
+                                            )
+                                            .set(true);
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              isAr
+                                                  ? 'الرجاء إدخال عدد الأشخاص القادمين'
+                                                  : 'Please enter the number of guests',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          ),
                                         );
-                                      } else if (cash) {
-                                        goToCashBookingSuccess(
-                                          context: context,
-                                          ref: ref,
-                                          routeId: bookingId,
-                                          resetSubmitState: ref
-                                              .read(bookingSubmitProvider
-                                                  .notifier)
-                                              .reset,
-                                        );
+                                        return;
                                       }
-                                      return true;
-                                    },
-                                    orElse: () => false,
-                                  );
-                                  if (resumed) return;
-                                  // Only reachable without a method when a
-                                  // pending booking was expected but is gone.
-                                  final method = selectedPaymentMethod;
-                                  if (method == null) return;
-                                  final shift = selectedShift;
-                                  ref
-                                      .read(bookingSubmitProvider.notifier)
-                                      .createFarmBooking(
-                                        placeId: placeId,
-                                        date: bookingFormatDate(
-                                            selectedDate),
-                                        shiftType: shift.shiftType,
-                                        promoCode: promo?.code,
-                                        partySize:
-                                            (!partyOn &&
-                                                shift.partyExtraPersonFeeIqd >
-                                                    0)
-                                            ? partyCount
-                                            : null,
-                                        bringingParty: partyOn,
-                                        paymentMethod: method,
+                                      // If a pending booking already exists, reuse its payment URL
+                                      // instead of creating a new booking (avoids DB constraint error).
+                                      final current = ref.read(
+                                        bookingSubmitProvider,
                                       );
-                                },
-                          isLoading: isLoading,
-                        ),
+                                      final resumed = current.maybeWhen(
+                                        success:
+                                            (
+                                              bookingId,
+                                              paymentUrl,
+                                              holdUntil,
+                                              waylReferenceId,
+                                              cash,
+                                            ) {
+                                              if (paymentUrl.isNotEmpty) {
+                                                openPaymentWebView(
+                                                  bookingId,
+                                                  paymentUrl,
+                                                  waylReferenceId,
+                                                );
+                                              } else if (cash) {
+                                                goToCashBookingSuccess(
+                                                  context: context,
+                                                  ref: ref,
+                                                  routeId: bookingId,
+                                                  resetSubmitState: ref
+                                                      .read(
+                                                        bookingSubmitProvider
+                                                            .notifier,
+                                                      )
+                                                      .reset,
+                                                );
+                                              }
+                                              return true;
+                                            },
+                                        orElse: () => false,
+                                      );
+                                      if (resumed) return;
+                                      // Only reachable without a method when a
+                                      // pending booking was expected but is gone.
+                                      final method = selectedPaymentMethod;
+                                      if (method == null) return;
+                                      final shift = selectedShift;
+                                      ref
+                                          .read(bookingSubmitProvider.notifier)
+                                          .createFarmBooking(
+                                            placeId: placeId,
+                                            date: bookingFormatDate(
+                                              selectedDate,
+                                            ),
+                                            shiftType: shift.shiftType,
+                                            promoCode: promo?.code,
+                                            partySize:
+                                                (!partyOn &&
+                                                    shift.partyExtraPersonFeeIqd >
+                                                        0)
+                                                ? partyCount
+                                                : null,
+                                            bringingParty: partyOn,
+                                            paymentMethod: method,
+                                          );
+                                    },
+                              isLoading: isLoading,
+                            ),
+                          ),
+                        ],
                       );
                     },
                   )
