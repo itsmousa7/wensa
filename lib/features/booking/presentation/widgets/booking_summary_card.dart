@@ -47,6 +47,7 @@ class BookingSummaryCard extends StatelessWidget {
     this.discountLabel,
     this.discountValue,
     this.extraSlot,
+    this.paymentMethodSlot,
     required this.actionLabel,
     required this.onAction,
     required this.isLoading,
@@ -81,6 +82,10 @@ class BookingSummaryCard extends StatelessWidget {
   /// promo-code field).
   final Widget? extraSlot;
 
+  /// Optional payment-method selector, rendered after the detail rows and
+  /// before the subtotal/discount/total block.
+  final Widget? paymentMethodSlot;
+
   /// Text on the action button.
   final String actionLabel;
 
@@ -93,6 +98,7 @@ class BookingSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final isDisabled = isLoading || onAction == null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -176,6 +182,14 @@ class BookingSummaryCard extends StatelessWidget {
                     ),
                 ],
 
+                if (paymentMethodSlot != null) ...[
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: Divider(height: 1),
+                  ),
+                  paymentMethodSlot!,
+                ],
+
                 // Subtotal + discount + total stack
                 if (totalValue != null) ...[
                   const SizedBox(height: 16),
@@ -246,7 +260,7 @@ class BookingSummaryCard extends StatelessWidget {
                   height: 54,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: isLoading
+                      color: isDisabled
                           ? colorScheme.surfaceContainerHighest
                           : colorScheme.primary,
                       borderRadius: AppSpacing.borderRadiusLG,
@@ -254,7 +268,7 @@ class BookingSummaryCard extends StatelessWidget {
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: isLoading ? null : onAction,
+                        onTap: isDisabled ? null : onAction,
                         borderRadius: AppSpacing.borderRadiusLG,
                         splashColor: Colors.white.withValues(alpha: 0.2),
                         child: Center(
