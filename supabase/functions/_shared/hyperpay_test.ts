@@ -3,16 +3,22 @@
  * Run: deno test --allow-env --allow-net=none _shared/hyperpay_test.ts
  */
 
-import { assert, assertEquals, assertFalse } from "jsr:@std/assert";
+import { assert, assertEquals, assertFalse, assertThrows } from "jsr:@std/assert";
 import {
+  assertBaseMatchesEnv,
   buildCheckoutParams,
   buildRegistrationChargeParams,
+  buildReverseParams,
+  DEFAULT_BASE_PROD,
+  DEFAULT_BASE_TEST,
+  envPrefix,
   extractPaymentDetails,
   isPaid,
   isPaymentSuccessful,
   isPending,
   isTransient,
   normalizeEnv,
+  readScoped,
 } from "./hyperpay.ts";
 
 // ── isPaymentSuccessful — success matrix ────────────────────────────────────
@@ -126,7 +132,7 @@ Deno.test("buildCheckoutParams: EXACT key set — test env, no tokenize", () => 
     { amount: 25000, merchantTransactionId: "booking-abc", tokenize: false },
     { entityId: "ent1", env: "test" },
   );
-  assertEquals(Object.keys(p).sort(), [...CHECKOUT_BASE, "testMode"].sort());
+  assertEquals(Object.keys(p).sort(), [...CHECKOUT_BASE].sort());
 });
 
 Deno.test("buildCheckoutParams: EXACT key set — prod env, no tokenize", () => {
@@ -144,7 +150,7 @@ Deno.test("buildCheckoutParams: EXACT key set — test env, tokenize", () => {
   );
   assertEquals(
     Object.keys(p).sort(),
-    [...CHECKOUT_BASE, ...TOKENIZE_KEYS, "testMode"].sort(),
+    [...CHECKOUT_BASE, ...TOKENIZE_KEYS].sort(),
   );
 });
 
@@ -199,7 +205,7 @@ Deno.test("buildRegistrationChargeParams: EXACT key set — test env, with initi
   );
   assertEquals(
     Object.keys(p).sort(),
-    [...MIT_BASE, "standingInstruction.initialTransactionId", "testMode"].sort(),
+    [...MIT_BASE, "standingInstruction.initialTransactionId"].sort(),
   );
 });
 
@@ -209,6 +215,111 @@ Deno.test("buildRegistrationChargeParams: EXACT key set — prod env, no initial
     { entityId: "ent1", env: "prod" },
   );
   assertEquals(Object.keys(p).sort(), [...MIT_BASE].sort());
+});
+
+// ── RECURRING CHANNEL ROUTING ───────────────────────────────────────────────
+// HyperPay provisions a SEPARATE entity for merchant-initiated recurring
+// charges. Every MIT charge must carry it; the checkout entity must never be
+// substituted when a recurring entity is configured.
+
+Deno.test("buildRegistrationChargeParams: MIT charge goes to the RECURRING entity", () => {
+  const p = buildRegistrationChargeParams(
+    { amount: 5000, merchantTransactionId: "mit-1" },
+    { entityId: "checkout-ent", recurringEntityId: "recurring-ent", env: "prod" },
+  );
+  assertEquals(p.entityId, "recurring-ent");
+  // routing must not disturb the pinned key set (800.100.156 guard)
+  assertEquals(Object.keys(p).sort(), [...MIT_BASE].sort());
+});
+
+Deno.test("buildRegistrationChargeParams: falls back to entityId when no recurring entity", () => {
+  for (const c of [
+    { entityId: "checkout-ent", env: "test" as const },
+    { entityId: "checkout-ent", recurringEntityId: "", env: "test" as const },
+  ]) {
+    const p = buildRegistrationChargeParams({ amount: 1, merchantTransactionId: "mit-1" }, c);
+    assertEquals(p.entityId, "checkout-ent");
+  }
+});
+
+Deno.test("buildCheckoutParams: the CHECKOUT entity is never the recurring one", () => {
+  // The initial CIT checkout (even when it tokenizes) stays on the checkout
+  // entity — only the later MIT charge moves to the recurring channel.
+  const p = buildCheckoutParams(
+    { amount: 1, merchantTransactionId: "booking-1", tokenize: true },
+    { entityId: "checkout-ent", env: "prod" },
+  );
+  assertEquals(p.entityId, "checkout-ent");
+});
+
+Deno.test("buildReverseParams: RV honours the entity override (reverse where it was captured)", () => {
+  assertEquals(buildReverseParams({ entityId: "checkout-ent", env: "prod" }).entityId, "checkout-ent");
+  assertEquals(
+    buildReverseParams({ entityId: "checkout-ent", env: "prod" }, "recurring-ent").entityId,
+    "recurring-ent",
+  );
+  // an empty override must not blank the entityId
+  assertEquals(buildReverseParams({ entityId: "checkout-ent", env: "prod" }, "").entityId, "checkout-ent");
+});
+
+// ── TEST/LIVE CREDENTIAL SELECTION ──────────────────────────────────────────
+// HYPERPAY_ENV is the single switch: the scoped secret for the selected env
+// wins, the legacy unscoped secret is the fallback.
+
+const ENV_FIXTURE: Record<string, string> = {
+  HYPERPAY_TEST_ENTITY_ID: "test-ent",
+  HYPERPAY_TEST_AUTH_TOKEN: "test-tok",
+  HYPERPAY_LIVE_ENTITY_ID: "live-ent",
+  HYPERPAY_LIVE_AUTH_TOKEN: "live-tok",
+  HYPERPAY_ENTITY_ID: "legacy-ent",
+  HYPERPAY_AUTH_TOKEN: "legacy-tok",
+};
+const fake = (over: Record<string, string> = {}) => {
+  const m = { ...ENV_FIXTURE, ...over };
+  return (k: string) => m[k];
+};
+
+Deno.test("readScoped: live env reads HYPERPAY_LIVE_*, test env reads HYPERPAY_TEST_*", () => {
+  assertEquals(readScoped("ENTITY_ID", "prod", fake()), "live-ent");
+  assertEquals(readScoped("AUTH_TOKEN", "prod", fake()), "live-tok");
+  assertEquals(readScoped("ENTITY_ID", "test", fake()), "test-ent");
+  assertEquals(readScoped("AUTH_TOKEN", "test", fake()), "test-tok");
+});
+
+Deno.test("readScoped: falls back to the legacy unscoped secret", () => {
+  const only = (k: string) => ({ HYPERPAY_ENTITY_ID: "legacy-ent" } as Record<string, string>)[k];
+  assertEquals(readScoped("ENTITY_ID", "prod", only), "legacy-ent");
+  assertEquals(readScoped("ENTITY_ID", "test", only), "legacy-ent");
+  assertEquals(readScoped("AUTH_TOKEN", "test", only), undefined);
+});
+
+Deno.test("readScoped: a blank scoped secret does NOT shadow the fallback", () => {
+  // An entityId of "" would be sent to the acquirer verbatim — 800.100.156.
+  assertEquals(readScoped("ENTITY_ID", "prod", fake({ HYPERPAY_LIVE_ENTITY_ID: "   " })), "legacy-ent");
+  assertEquals(readScoped("ENTITY_ID", "prod", fake({ HYPERPAY_LIVE_ENTITY_ID: "" })), "legacy-ent");
+  // and values are trimmed, never passed through with whitespace
+  assertEquals(readScoped("ENTITY_ID", "prod", fake({ HYPERPAY_LIVE_ENTITY_ID: " live-ent \n" })), "live-ent");
+});
+
+Deno.test("readScoped: unset everywhere ⇒ undefined", () => {
+  assertEquals(readScoped("RECURRING_ENTITY_ID", "prod", () => undefined), undefined);
+});
+
+Deno.test("envPrefix maps the normalised env to its secret prefix", () => {
+  assertEquals(envPrefix("prod"), "HYPERPAY_LIVE_");
+  assertEquals(envPrefix("test"), "HYPERPAY_TEST_");
+  assertEquals(envPrefix(normalizeEnv("live")), "HYPERPAY_LIVE_");
+});
+
+Deno.test("assertBaseMatchesEnv: a stale test host under live env throws (and vice versa)", () => {
+  // The exact cutover trap: an unscoped HYPERPAY_BASE left pinned to eu-test
+  // would silently route LIVE money to the test host.
+  assertThrows(() => assertBaseMatchesEnv("https://eu-test.oppwa.com", "prod"));
+  assertThrows(() => assertBaseMatchesEnv("https://eu-prod.oppwa.com", "test"));
+  assertBaseMatchesEnv(DEFAULT_BASE_PROD, "prod");
+  assertBaseMatchesEnv(DEFAULT_BASE_TEST, "test");
+  // a non-oppwa proxy host is not second-guessed
+  assertBaseMatchesEnv("https://gateway.example.com", "prod");
 });
 
 // ── merchantTransactionId invariants ────────────────────────────────────────
@@ -262,12 +373,11 @@ Deno.test("merchantTransactionId: a valid id survives buildCheckoutParams/buildR
 });
 
 // ── buildCheckoutParams ─────────────────────────────────────────────────────
-Deno.test("buildCheckoutParams: test env sets testMode=EXTERNAL", () => {
+Deno.test("buildCheckoutParams: base body, no tokenize", () => {
   const p = buildCheckoutParams(
     { amount: 25000, merchantTransactionId: "tx1", tokenize: false },
     { entityId: "ent1", env: "test" },
   );
-  assertEquals(p.testMode, "EXTERNAL");
   assertEquals(p.entityId, "ent1");
   assertEquals(p.amount, "25000");
   assertEquals(p.currency, "IQD");
@@ -281,12 +391,41 @@ Deno.test("buildCheckoutParams: test env sets testMode=EXTERNAL", () => {
   assertEquals(p["standingInstruction.type"], undefined);
 });
 
-Deno.test("buildCheckoutParams: prod env omits testMode", () => {
-  const p = buildCheckoutParams(
-    { amount: 100, merchantTransactionId: "tx2", tokenize: false },
-    { entityId: "ent1", env: "prod" },
+// ── testMode is GONE from every request shape ───────────────────────────────
+// It used to be sent as EXTERNAL in the test env. Now no builder emits it in
+// either environment, so the outgoing body is byte-identical between test and
+// live and the live cutover cannot change the request shape.
+Deno.test("testMode is never sent — any builder, either env", () => {
+  const bodies = [
+    buildCheckoutParams({ amount: 1, merchantTransactionId: "tx", tokenize: false }, { entityId: "e", env: "test" }),
+    buildCheckoutParams({ amount: 1, merchantTransactionId: "tx", tokenize: false }, { entityId: "e", env: "prod" }),
+    buildCheckoutParams({ amount: 1, merchantTransactionId: "tx", tokenize: true }, { entityId: "e", env: "test" }),
+    buildCheckoutParams({ amount: 1, merchantTransactionId: "tx", tokenize: true }, { entityId: "e", env: "prod" }),
+    buildRegistrationChargeParams({ amount: 1, merchantTransactionId: "m" }, { entityId: "e", env: "test" }),
+    buildRegistrationChargeParams({ amount: 1, merchantTransactionId: "m" }, { entityId: "e", env: "prod" }),
+    buildReverseParams({ entityId: "e", env: "test" }),
+    buildReverseParams({ entityId: "e", env: "prod" }),
+  ];
+  for (const b of bodies) {
+    assertFalse("testMode" in b, `testMode leaked back in: ${JSON.stringify(b)}`);
+  }
+});
+
+Deno.test("test and prod bodies are IDENTICAL for every builder", () => {
+  for (const tokenize of [false, true]) {
+    assertEquals(
+      buildCheckoutParams({ amount: 1, merchantTransactionId: "tx", tokenize }, { entityId: "e", env: "test" }),
+      buildCheckoutParams({ amount: 1, merchantTransactionId: "tx", tokenize }, { entityId: "e", env: "prod" }),
+    );
+  }
+  assertEquals(
+    buildRegistrationChargeParams({ amount: 1, merchantTransactionId: "m" }, { entityId: "e", env: "test" }),
+    buildRegistrationChargeParams({ amount: 1, merchantTransactionId: "m" }, { entityId: "e", env: "prod" }),
   );
-  assertEquals(p.testMode, undefined);
+  assertEquals(
+    buildReverseParams({ entityId: "e", env: "test" }),
+    buildReverseParams({ entityId: "e", env: "prod" }),
+  );
 });
 
 Deno.test("buildCheckoutParams: tokenize adds createRegistration + CIT trio", () => {
@@ -323,19 +462,6 @@ Deno.test("buildRegistrationChargeParams: MIT trio always present", () => {
   assertEquals(p.currency, "IQD");
   assertEquals(p.paymentType, "DB");
   assertEquals(p.merchantTransactionId, "mit1");
-});
-
-Deno.test("buildRegistrationChargeParams: testMode only in test env", () => {
-  const t = buildRegistrationChargeParams(
-    { amount: 5000, merchantTransactionId: "mit2" },
-    { entityId: "ent1", env: "test" },
-  );
-  assertEquals(t.testMode, "EXTERNAL");
-  const pr = buildRegistrationChargeParams(
-    { amount: 5000, merchantTransactionId: "mit3" },
-    { entityId: "ent1", env: "prod" },
-  );
-  assertEquals(pr.testMode, undefined);
 });
 
 Deno.test("buildRegistrationChargeParams: initialTransactionId only when provided", () => {

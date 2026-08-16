@@ -19,9 +19,10 @@
  *
  * Env vars required:
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY
- *   HYPERPAY_ENTITY_ID, HYPERPAY_AUTH_TOKEN — see _shared/hyperpay.ts
- *   HYPERPAY_ENV           — "live"/"prod" ⇒ prod, anything else ⇒ test
- *   HYPERPAY_BASE          — set explicitly; otherwise selected by env
+ *   HYPERPAY_ENV           — "live"/"prod" ⇒ prod, anything else ⇒ test.
+ *                            The ONE switch: it selects which credential set
+ *                            (HYPERPAY_LIVE_* vs HYPERPAY_TEST_*) cfg() reads.
+ *   HYPERPAY_{LIVE,TEST}_ENTITY_ID / _AUTH_TOKEN / _BASE — see _shared/hyperpay.ts
  */
 
 import { cfg, createCheckout } from "../_shared/hyperpay.ts";

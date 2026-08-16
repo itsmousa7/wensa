@@ -31,7 +31,7 @@
  * never fails the payment).
  *
  * Env: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
- *      HYPERPAY_BASE, HYPERPAY_ENTITY_ID, HYPERPAY_AUTH_TOKEN
+ *      HYPERPAY_ENV (selects the LIVE vs TEST credential set — see _shared/hyperpay.ts)
  */
 
 import {

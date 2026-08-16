@@ -41,7 +41,11 @@
  * response with a slot-unavailable description instead.
  *
  * Env: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
- *      HYPERPAY_BASE, HYPERPAY_ENTITY_ID, HYPERPAY_AUTH_TOKEN, HYPERPAY_ENV
+ *      HYPERPAY_ENV (selects the LIVE vs TEST credential set — see _shared/hyperpay.ts)
+ *
+ * ENTITY: this MIT charge is sent to the RECURRING channel entity
+ * (HYPERPAY_{LIVE,TEST}_RECURRING_ENTITY_ID), not the checkout entity — the
+ * initial CIT checkout that created the token still runs on the checkout one.
  */
 
 import {

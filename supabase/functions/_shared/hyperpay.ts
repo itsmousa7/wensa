@@ -3,11 +3,28 @@
  *
  * Ported from the working Python UAT integration (hyper-db-uat/app.py).
  *
- * Env vars required (Supabase Edge Function secrets):
- *   HYPERPAY_ENTITY_ID   — OPPWA entity id
- *   HYPERPAY_AUTH_TOKEN  — OPPWA Bearer token
- *   HYPERPAY_ENV         — "test" | "prod"  (default "test")
- *   HYPERPAY_BASE        — optional; defaults to eu-test/eu-prod.oppwa.com by env
+ * Env vars (Supabase Edge Function secrets):
+ *   HYPERPAY_ENV — the ONLY switch between the two credential sets.
+ *                  "live"/"prod" ⇒ production, anything else (incl. unset) ⇒ test.
+ *
+ *   Per-environment credentials (preferred — both sets can live side by side,
+ *   so flipping HYPERPAY_ENV is the whole cutover):
+ *     HYPERPAY_TEST_ENTITY_ID  / HYPERPAY_LIVE_ENTITY_ID   — checkout entity
+ *     HYPERPAY_TEST_AUTH_TOKEN / HYPERPAY_LIVE_AUTH_TOKEN  — Bearer token
+ *     HYPERPAY_TEST_RECURRING_ENTITY_ID / HYPERPAY_LIVE_RECURRING_ENTITY_ID
+ *                                                          — recurring (MIT) channel
+ *     HYPERPAY_TEST_BASE       / HYPERPAY_LIVE_BASE        — optional host override
+ *
+ *   Legacy unscoped fallbacks (still read when the scoped one is unset):
+ *     HYPERPAY_ENTITY_ID, HYPERPAY_AUTH_TOKEN,
+ *     HYPERPAY_RECURRING_ENTITY_ID, HYPERPAY_BASE
+ *
+ * RECURRING CHANNEL (critical):
+ *   HyperPay issues a SEPARATE entity for merchant-initiated recurring charges.
+ *   Every MIT charge on a stored token MUST be sent to that entity — see
+ *   buildRegistrationChargeParams(), which uses recurringEntityId, not entityId.
+ *   When the recurring entity is unset it falls back to entityId, which is what
+ *   the single-entity deployment has always done.
  *
  * SUCCESS RULE (critical, per business requirement):
  *   test: any "successfully processed in test mode" code — 000.100.1xx
@@ -28,6 +45,8 @@ export type HyperPayEnv = "test" | "prod";
 
 export interface HyperPayConfig {
   entityId: string;
+  /** Recurring (MIT) channel entity. Falls back to entityId when unconfigured. */
+  recurringEntityId: string;
   authToken: string;
   env: HyperPayEnv;
   base: string;
@@ -60,16 +79,64 @@ export function normalizeEnv(raw: string | undefined | null): HyperPayEnv {
   return v === "live" || v === "prod" ? "prod" : "test";
 }
 
-export function cfg(): HyperPayConfig {
-  const entityId = Deno.env.get("HYPERPAY_ENTITY_ID");
-  const authToken = Deno.env.get("HYPERPAY_AUTH_TOKEN");
-  const env = normalizeEnv(Deno.env.get("HYPERPAY_ENV"));
-  if (!entityId || !authToken) {
-    throw new Error("HYPERPAY_ENTITY_ID / HYPERPAY_AUTH_TOKEN not configured");
+/** Env prefix carrying the credentials for a given environment. */
+export function envPrefix(env: HyperPayEnv): "HYPERPAY_LIVE_" | "HYPERPAY_TEST_" {
+  return env === "prod" ? "HYPERPAY_LIVE_" : "HYPERPAY_TEST_";
+}
+
+/**
+ * Read a credential for `env`, preferring the scoped secret and falling back to
+ * the legacy unscoped one. Blank/whitespace values count as unset — an empty
+ * secret must not shadow the fallback (or, worse, be sent as an entityId).
+ */
+export function readScoped(
+  suffix: string,
+  env: HyperPayEnv,
+  get: (k: string) => string | undefined = (k) => Deno.env.get(k),
+): string | undefined {
+  const clean = (v: string | undefined) => {
+    const t = (v ?? "").trim();
+    return t === "" ? undefined : t;
+  };
+  return clean(get(envPrefix(env) + suffix)) ?? clean(get("HYPERPAY_" + suffix));
+}
+
+export const DEFAULT_BASE_PROD = "https://eu-prod.oppwa.com";
+export const DEFAULT_BASE_TEST = "https://eu-test.oppwa.com";
+
+/**
+ * Guard against the cutover's sharpest edge: a leftover unscoped HYPERPAY_BASE
+ * pinned to the test host would silently route LIVE payments to eu-test (and
+ * vice versa). Fail loudly instead of taking money on the wrong host.
+ */
+export function assertBaseMatchesEnv(base: string, env: HyperPayEnv): void {
+  const b = base.toLowerCase();
+  const wrong = env === "prod" ? "eu-test." : "eu-prod.";
+  if (b.includes(wrong)) {
+    throw new Error(
+      `HYPERPAY_BASE (${base}) points at the ${env === "prod" ? "TEST" : "PROD"} host ` +
+        `while HYPERPAY_ENV selects ${env}. Set ${envPrefix(env)}BASE (or clear HYPERPAY_BASE).`,
+    );
   }
-  const base = Deno.env.get("HYPERPAY_BASE") ??
-    (env === "prod" ? "https://eu-prod.oppwa.com" : "https://eu-test.oppwa.com");
-  return { entityId, authToken, env, base };
+}
+
+export function cfg(): HyperPayConfig {
+  const env = normalizeEnv(Deno.env.get("HYPERPAY_ENV"));
+  const entityId = readScoped("ENTITY_ID", env);
+  const authToken = readScoped("AUTH_TOKEN", env);
+  if (!entityId || !authToken) {
+    throw new Error(
+      `${envPrefix(env)}ENTITY_ID / ${envPrefix(env)}AUTH_TOKEN not configured ` +
+        `(HYPERPAY_ENV=${env}); no legacy HYPERPAY_ENTITY_ID / HYPERPAY_AUTH_TOKEN either`,
+    );
+  }
+  // Recurring charges must go to the dedicated recurring entity; a deployment
+  // that has not been given one keeps the historical single-entity behaviour.
+  const recurringEntityId = readScoped("RECURRING_ENTITY_ID", env) ?? entityId;
+  const base = readScoped("BASE", env) ??
+    (env === "prod" ? DEFAULT_BASE_PROD : DEFAULT_BASE_TEST);
+  assertBaseMatchesEnv(base, env);
+  return { entityId, recurringEntityId, authToken, env, base };
 }
 
 // ── Pure helpers (unit-tested in hyperpay_test.ts) ──────────────────────────
@@ -125,7 +192,8 @@ export function buildCheckoutParams(o: CheckoutOptions, c: Pick<HyperPayConfig, 
   // Do NOT send customer.*/billing.* here: the acquirer rejected that block with
   // 800.100.156 "transaction declined (format error)". The working UAT body omits
   // them entirely. (3DS simulator params are optional and also omitted.)
-  if (c.env === "test") params.testMode = "EXTERNAL";
+  // testMode is NOT sent in either environment — the body is identical in test
+  // and prod, and a test entity routes to its own simulator without it.
   if (o.tokenize) {
     // Initial customer-initiated transaction that also stores the card.
     params.createRegistration = "true";
@@ -143,10 +211,20 @@ export interface RegistrationChargeOptions {
   initialTransactionId?: string | null;
 }
 
-/** Params for POST /v1/registrations/{id}/payments (merchant-initiated charge). */
-export function buildRegistrationChargeParams(o: RegistrationChargeOptions, c: Pick<HyperPayConfig, "entityId" | "env">): Record<string, string> {
+/**
+ * Params for POST /v1/registrations/{id}/payments (merchant-initiated charge).
+ *
+ * Sends the RECURRING channel entity — HyperPay provisions a separate entity
+ * for MIT/recurring traffic and rejects repeated standing-instruction charges
+ * on the plain checkout entity. Falls back to entityId only when no recurring
+ * entity is configured.
+ */
+export function buildRegistrationChargeParams(
+  o: RegistrationChargeOptions,
+  c: Pick<HyperPayConfig, "entityId" | "env"> & { recurringEntityId?: string },
+): Record<string, string> {
   const params: Record<string, string> = {
-    entityId: c.entityId,
+    entityId: c.recurringEntityId || c.entityId,
     amount: String(o.amount),
     currency: "IQD",
     paymentType: "DB",
@@ -155,10 +233,9 @@ export function buildRegistrationChargeParams(o: RegistrationChargeOptions, c: P
     "standingInstruction.source": "MIT",
     "standingInstruction.type": "UNSCHEDULED",
   };
-  // EXTERNAL to match buildCheckoutParams. This is a merchant-initiated (MIT)
-  // charge on a stored token — exempt from the 3DS challenge, so it carries no
-  // 3Dsimulator params.
-  if (c.env === "test") params.testMode = "EXTERNAL";
+  // No testMode, matching buildCheckoutParams. This is a merchant-initiated
+  // (MIT) charge on a stored token — exempt from the 3DS challenge, so it also
+  // carries no 3Dsimulator params.
   if (o.initialTransactionId) {
     params["standingInstruction.initialTransactionId"] = o.initialTransactionId;
   }
@@ -272,29 +349,49 @@ export function extractPaymentDetails(result: HyperPayResult): PaymentDetails {
 // acquirer. This repo's copy never had RV because the app previously refunded
 // through Wayl; booking-action now needs it to reverse HyperPay bookings.
 
-/** RV (reverse/void) request params for an original payment's unique id. */
+/**
+ * RV (reverse/void) request params for an original payment's unique id.
+ * `entityIdOverride` lets the caller reverse on the recurring channel — an RV
+ * must be sent to the SAME entity that captured the payment.
+ */
 export function buildReverseParams(
   c: Pick<HyperPayConfig, "entityId" | "env">,
+  entityIdOverride?: string,
 ): Record<string, string> {
-  const params: Record<string, string> = { entityId: c.entityId, paymentType: "RV" };
-  if (c.env === "test") params.testMode = "EXTERNAL";
-  return params;
+  // No testMode in either environment — see buildCheckoutParams.
+  return {
+    entityId: entityIdOverride || c.entityId,
+    paymentType: "RV",
+  };
 }
 
-/** Reverse (void) a captured HyperPay payment by its original unique_id. */
+/**
+ * Reverse (void) a captured HyperPay payment by its original unique_id.
+ *
+ * The caller (booking-action) cannot tell a CIT checkout payment from an MIT
+ * saved-card charge, and the two were captured on different entities. So: try
+ * the checkout entity, and if that fails and a distinct recurring entity is
+ * configured, retry there once. A successful RV never reaches the retry, and a
+ * genuinely declined RV just declines twice — so the fallback cannot double-void.
+ */
 export async function reversePayment(
   uniqueId: string,
   c: HyperPayConfig,
 ): Promise<{ ok: boolean; code?: string; description?: string }> {
-  const j = await postForm(
-    `${c.base}/v1/payments/${encodeURIComponent(uniqueId)}`,
-    buildReverseParams(c),
-    c.authToken,
-  );
-  const code = j.result?.code;
-  return {
-    ok: isPaymentSuccessful(code, c.env),
-    code,
-    description: j.result?.description,
+  const url = `${c.base}/v1/payments/${encodeURIComponent(uniqueId)}`;
+  const attempt = async (entityId: string) => {
+    const j = await postForm(url, buildReverseParams(c, entityId), c.authToken);
+    const code = j.result?.code;
+    return { ok: isPaymentSuccessful(code, c.env), code, description: j.result?.description };
   };
+
+  const first = await attempt(c.entityId);
+  if (first.ok || !c.recurringEntityId || c.recurringEntityId === c.entityId) {
+    return first;
+  }
+  console.log(
+    `hyperpay: RV on checkout entity failed (code=${first.code}); retrying on recurring entity uid=${uniqueId}`,
+  );
+  const second = await attempt(c.recurringEntityId);
+  return second.ok ? second : first;
 }
