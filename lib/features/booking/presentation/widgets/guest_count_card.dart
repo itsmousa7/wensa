@@ -42,8 +42,8 @@ class GuestCountCard extends StatefulWidget {
 }
 
 class _GuestCountCardState extends State<GuestCountCard> {
-  static const double _itemExtent = 56;
-  static const double _wheelHeight = 72;
+  static const double _itemExtent = 44;
+  static const double _wheelHeight = 48;
 
   late final FixedExtentScrollController _controller;
 
@@ -105,7 +105,7 @@ class _GuestCountCardState extends State<GuestCountCard> {
                 : '+${GuestCountCard._formatIqd(extraTotal)} IQD for $extraGuests extra guest(s)');
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: hasError ? AppColors.danger.withValues(alpha: 0.06) : cs.surface,
         borderRadius: BorderRadius.circular(14),
@@ -126,10 +126,10 @@ class _GuestCountCardState extends State<GuestCountCard> {
         children: [
           Text(
             isAr ? 'كم عدد الأشخاص القادمين؟' : 'How many people are going?',
-            style: (tt.bodyMedium ?? const TextStyle())
+            style: (tt.bodySmall ?? const TextStyle())
                 .copyWith(color: cs.onSurface.withValues(alpha: 0.7)),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           _GuestWheel(
             controller: _controller,
             maxGuests: widget.maxGuests,
@@ -140,10 +140,10 @@ class _GuestCountCardState extends State<GuestCountCard> {
             height: _wheelHeight,
             onSelected: _onSelected,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             helperText,
-            style: (tt.bodySmall ?? const TextStyle()).copyWith(
+            style: (tt.labelSmall ?? const TextStyle()).copyWith(
               color: hasError
                   ? AppColors.danger
                   : extraGuests > 0
@@ -199,7 +199,7 @@ class _GuestWheel extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         color: cs.onSurface.withValues(alpha: 0.035),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Stack(
         alignment: Alignment.center,
@@ -207,10 +207,10 @@ class _GuestWheel extends StatelessWidget {
           // Selection indicator sitting behind the numbers.
           Container(
             width: itemExtent,
-            height: height - 14,
+            height: height - 10,
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(color: accent.withValues(alpha: 0.35)),
             ),
           ),
@@ -247,8 +247,8 @@ class _GuestWheel extends StatelessWidget {
                         child: Text(
                           '$index',
                           style: (isSelected
-                                  ? (tt.titleLarge ?? const TextStyle())
-                                  : (tt.titleMedium ?? const TextStyle()))
+                                  ? (tt.titleMedium ?? const TextStyle())
+                                  : (tt.bodyMedium ?? const TextStyle()))
                               .copyWith(
                             fontWeight:
                                 isSelected ? FontWeight.w800 : FontWeight.w500,
