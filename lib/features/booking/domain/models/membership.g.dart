@@ -63,4 +63,5 @@ const _$MembershipStatusEnumMap = {
 const _$PaymentMethodEnumMap = {
   PaymentMethod.wayl: 'wayl',
   PaymentMethod.cash: 'cash',
+  PaymentMethod.hyperpay: 'hyperpay',
 };

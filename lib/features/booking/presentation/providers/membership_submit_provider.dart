@@ -42,9 +42,10 @@ class MembershipSubmit extends _$MembershipSubmit {
       final data = result.data as Map<String, dynamic>;
       state = BookingSubmitState.success(
         bookingId: data['membership_id'] as String,
-        paymentUrl: data['payment_url'] as String? ?? '',
+        checkoutId: data['checkout_id'] as String? ?? '',
         holdUntil: '',
-        waylReferenceId: data['reference_id'] as String? ?? '',
+        referenceId: data['reference_id'] as String? ?? '',
+        paymentMode: data['payment_mode'] as String? ?? 'TEST',
         cash: data['cash'] == true,
       );
     } catch (e) {

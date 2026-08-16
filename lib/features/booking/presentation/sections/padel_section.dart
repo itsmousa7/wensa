@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/court.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
-import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_label.dart';
@@ -12,7 +11,6 @@ import 'package:future_riverpod/features/booking/presentation/widgets/booking_su
 import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_selector.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_sheet.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/slot_grid.dart';
-import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
     show bookingsRefreshProvider;
@@ -22,6 +20,7 @@ import 'package:future_riverpod/features/discounts/domain/models/merchant_discou
 import 'package:future_riverpod/features/discounts/presentation/providers/merchant_discounts_provider.dart';
 import 'package:future_riverpod/features/discounts/presentation/providers/user_purchase_history_provider.dart';
 import 'package:future_riverpod/features/discounts/presentation/widgets/promo_code_field.dart';
+import 'package:future_riverpod/features/hyperpay_payment/hyperpay_payment.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:go_router/go_router.dart';
 
@@ -252,12 +251,12 @@ class _BookingFormView extends ConsumerWidget {
     );
     final promo = ref.watch(_padelPromoProvider);
     final selectedPaymentMethod = ref.watch(_padelPaymentMethodProvider);
-    // A stranded pending booking (user closed the payment webview and came
-    // back) is resumed by the Proceed handler without creating a new booking,
-    // so it must not be gated behind picking a payment method. Derived from
-    // the already-watched submit state so the button re-enables reactively.
+    // A stranded pending booking (user closed the card sheet and came back)
+    // is resumed by the Proceed handler without creating a new booking, so it
+    // must not be gated behind picking a payment method. Derived from the
+    // already-watched submit state so the button re-enables reactively.
     final hasPendingToResume = submitState.maybeWhen(
-      success: (_, paymentUrl, _, _, cash) => paymentUrl.isNotEmpty || cash,
+      success: (_, checkoutId, _, _, _, cash) => checkoutId.isNotEmpty || cash,
       orElse: () => false,
     );
 
@@ -277,19 +276,22 @@ class _BookingFormView extends ConsumerWidget {
     Future<void> resetPendingBooking() =>
         ref.read(bookingSubmitProvider.notifier).cancelPending();
 
-    // Opens the payment webview for the given booking details.
+    // Opens the HyperPay card sheet for the given booking details.
     // Defined here so it can be reused by both ref.listen and onAction.
-    void openPaymentWebView(
+    void openCardPayment(
       String bookingId,
-      String paymentUrl,
-      String waylReferenceId,
+      String checkoutId,
+      String referenceId,
+      String paymentMode,
     ) {
-      PaymentWebViewPage.push(
+      launchHyperpayPayment(
         context,
-        paymentUrl,
-        referenceId: waylReferenceId,
-        redirectionUrl: 'wansa://payment',
-        onPaymentSuccess: (_, orderId) async {
+        checkoutId: checkoutId,
+        referenceId: referenceId,
+        entityKind: 'booking',
+        entityId: bookingId,
+        paymentMode: paymentMode,
+        onConfirmed: (orderId) async {
           try {
             await ref
                 .read(bookingRepositoryProvider)
@@ -298,17 +300,9 @@ class _BookingFormView extends ConsumerWidget {
           ref.read(bookingSubmitProvider.notifier).reset();
           ref.read(bookingsRefreshProvider.notifier).bump();
           ref.invalidate(userPurchaseHistoryProvider);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Payment successful! Your booking is confirmed.'),
-                backgroundColor: Colors.green,
-              ),
-            );
-            context.go('/bookings/$bookingId');
-          }
+          return () => context.go('/bookings/$bookingId');
         },
-        onPaymentFailed: () async {
+        onAborted: (_) async {
           // Release the pending row so the slot frees up immediately instead
           // of staying "booked" until the expiry cron. The slot is only ever
           // held by a confirmed (paid) booking.
@@ -321,22 +315,16 @@ class _BookingFormView extends ConsumerWidget {
               ),
             );
           }
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment failed. Please try again.'),
-              backgroundColor: AppColors.danger,
-            ),
-          );
         },
       );
     }
 
     ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
       next.maybeWhen(
-        success: (bookingId, paymentUrl, holdUntil, waylReferenceId, cash) {
-          if (paymentUrl.isNotEmpty) {
-            openPaymentWebView(bookingId, paymentUrl, waylReferenceId);
+        success:
+            (bookingId, checkoutId, holdUntil, referenceId, paymentMode, cash) {
+          if (checkoutId.isNotEmpty) {
+            openCardPayment(bookingId, checkoutId, referenceId, paymentMode);
           } else if (cash) {
             goToCashBookingSuccess(
               context: context,
@@ -349,7 +337,7 @@ class _BookingFormView extends ConsumerWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text(
-                  'Unable to get payment link. Please try again.',
+                  'Unable to start payment. Please try again.',
                 ),
                 backgroundColor: Theme.of(context).colorScheme.error,
               ),
@@ -654,16 +642,18 @@ class _BookingFormView extends ConsumerWidget {
                                         success:
                                             (
                                               bookingId,
-                                              paymentUrl,
+                                              checkoutId,
                                               holdUntil,
-                                              waylReferenceId,
+                                              referenceId,
+                                              paymentMode,
                                               cash,
                                             ) {
-                                              if (paymentUrl.isNotEmpty) {
-                                                openPaymentWebView(
+                                              if (checkoutId.isNotEmpty) {
+                                                openCardPayment(
                                                   bookingId,
-                                                  paymentUrl,
-                                                  waylReferenceId,
+                                                  checkoutId,
+                                                  referenceId,
+                                                  paymentMode,
                                                 );
                                               } else if (cash) {
                                                 goToCashBookingSuccess(

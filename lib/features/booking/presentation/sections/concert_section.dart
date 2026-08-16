@@ -8,13 +8,12 @@ import 'package:future_riverpod/features/booking/domain/models/venue_layout.dart
 import 'package:future_riverpod/features/booking/domain/models/venue_section.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
 import 'package:future_riverpod/features/booking/domain/seat_validation.dart';
-import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
+import 'package:future_riverpod/features/hyperpay_payment/hyperpay_payment.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/hold_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_selector.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/seat_map_web_view.dart';
-import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/core/constants/theme/app_spacing.dart';
 import 'package:future_riverpod/core/widgets/primary_action_button.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
@@ -31,8 +30,8 @@ String _formatIqd(int amount) {
 }
 
 /// Route name used for the concert review / GA checkout bottom sheets so
-/// the parent listener can dismiss the right route once the Wayl payment
-/// webview is ready to show — keeps the sheet visible while we wait on the
+/// the parent listener can dismiss the right route once the HyperPay card
+/// sheet is ready to show — keeps the sheet visible while we wait on the
 /// create-booking round trip.
 const String _concertCheckoutSheetRoute = '_concert_checkout_sheet';
 
@@ -42,39 +41,43 @@ void _dismissCheckoutSheet(BuildContext context) {
   ).popUntil((route) => route.settings.name != _concertCheckoutSheetRoute);
 }
 
-/// Opens the payment webview for a concert group. Shared by the success
+/// Opens the HyperPay card sheet for a concert group. Shared by the success
 /// listener and by a Proceed re-tap that finds an already-pending group —
-/// closing the webview no longer cancels the pending group, so a retry must
+/// closing the sheet no longer cancels the pending group, so a retry must
 /// resume it instead of creating a new one, which would conflict with the
 /// still-held seats.
-void _openConcertPaymentWebView(
+void _openConcertCardPayment(
   BuildContext context,
   WidgetRef ref, {
   required String eventId,
   required String groupId,
-  required String paymentUrl,
+  required String checkoutId,
   required String holdUntil,
-  required String waylReferenceId,
+  required String referenceId,
+  required String paymentMode,
 }) {
   // Re-anchor local hold timer to the server's actual expiry so the
   // client-side watcher doesn't fire a false "expired" message while the
-  // user is inside the payment webview.
+  // user is inside the card sheet.
   if (holdUntil.isNotEmpty) {
     ref.read(_concertSelectionProvider.notifier).setHoldUntil(holdUntil);
   }
   // The review / GA sheet stays open with its loading spinner while
-  // create-booking runs; dismiss it now that we have the Wayl URL so the
-  // webview lands cleanly on the booking page.
+  // create-booking runs; dismiss it now that we have the checkout id so the
+  // card sheet lands cleanly on the booking page.
   _dismissCheckoutSheet(context);
-  PaymentWebViewPage.push(
+  launchHyperpayPayment(
     context,
-    paymentUrl,
-    referenceId: waylReferenceId,
-    redirectionUrl: 'wansa://payment',
-    onPaymentSuccess: (_, orderId) async {
+    checkoutId: checkoutId,
+    referenceId: referenceId,
+    // Concerts confirm by group, not by individual booking row — one payment
+    // covers every seat in the group.
+    entityKind: 'concert_group',
+    entityId: groupId,
+    paymentMode: paymentMode,
+    onConfirmed: (orderId) async {
       // Flip every row in the concert group to confirmed before the cron
-      // can expire it — same backstop as padel/farm in case the Wayl
-      // webhook is delayed.
+      // can expire it — same backstop as padel/farm.
       String? firstBookingId;
       try {
         firstBookingId = await ref
@@ -84,36 +87,21 @@ void _openConcertPaymentWebView(
       ref.read(bookingSubmitProvider.notifier).reset();
       ref.read(_concertSelectionProvider.notifier).reset();
       ref.read(bookingsRefreshProvider.notifier).bump();
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Payment successful! Your tickets are confirmed.',
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
+      return () {
         if (firstBookingId != null && firstBookingId.isNotEmpty) {
           context.go('/bookings/$firstBookingId');
         } else {
           context.goNamed('bookingsHistory');
         }
-      }
+      };
     },
-    onPaymentFailed: () async {
+    onAborted: (_) async {
       // Cancel the group so seats are released immediately rather than
       // waiting up to 3 min for the cron to expire them.
       await ref.read(bookingSubmitProvider.notifier).cancelConcertGroup(
             groupId,
           );
       ref.invalidate(availableSeatsProvider(eventId));
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Payment failed. Please try again.'),
-          backgroundColor: AppColors.danger,
-        ),
-      );
     },
   );
 }
@@ -223,16 +211,18 @@ class ConcertSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.listen<BookingSubmitState>(bookingSubmitProvider, (prev, next) {
       next.maybeWhen(
-        success: (groupId, paymentUrl, holdUntil, waylReferenceId, cash) {
-          if (paymentUrl.isNotEmpty) {
-            _openConcertPaymentWebView(
+        success:
+            (groupId, checkoutId, holdUntil, referenceId, paymentMode, cash) {
+          if (checkoutId.isNotEmpty) {
+            _openConcertCardPayment(
               context,
               ref,
               eventId: eventId,
               groupId: groupId,
-              paymentUrl: paymentUrl,
+              checkoutId: checkoutId,
               holdUntil: holdUntil,
-              waylReferenceId: waylReferenceId,
+              referenceId: referenceId,
+                              paymentMode: paymentMode,
             );
           } else if (cash) {
             _dismissCheckoutSheet(context);
@@ -619,7 +609,7 @@ class _ConcertBookingViewState extends ConsumerState<_ConcertBookingView> {
           .read(bookingSubmitProvider)
           .maybeWhen(
             loading: () => true,
-            success: (_, _, _, _, _) => true,
+            success: (_, _, _, _, _, _) => true,
             orElse: () => false,
           );
       if (!isPaymentActive) {
@@ -762,7 +752,7 @@ class _HoldExpiryWatcher extends ConsumerWidget {
         .watch(bookingSubmitProvider)
         .maybeWhen(
           loading: () => true,
-          success: (_, _, _, _, _) => true,
+          success: (_, _, _, _, _, _) => true,
           orElse: () => false,
         );
 
@@ -827,7 +817,7 @@ class _ReviewSheet extends ConsumerWidget {
     // condition (only a non-empty payment URL does anything there); a cash
     // success never survives here — the parent listener pops this sheet.
     final hasPendingToResume = submitState.maybeWhen(
-      success: (_, paymentUrl, _, _, _) => paymentUrl.isNotEmpty,
+      success: (_, checkoutId, _, _, _, _) => checkoutId.isNotEmpty,
       orElse: () => false,
     );
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
@@ -955,17 +945,18 @@ class _ReviewSheet extends ConsumerWidget {
                       // avoids conflicting with the still-held seats.
                       final current = ref.read(bookingSubmitProvider);
                       final resumed = current.maybeWhen(
-                        success: (groupId, paymentUrl, holdUntil,
-                            waylReferenceId, cash) {
-                          if (paymentUrl.isNotEmpty) {
-                            _openConcertPaymentWebView(
+                        success: (groupId, checkoutId, holdUntil,
+                            referenceId, paymentMode, cash) {
+                          if (checkoutId.isNotEmpty) {
+                            _openConcertCardPayment(
                               context,
                               ref,
                               eventId: eventId,
                               groupId: groupId,
-                              paymentUrl: paymentUrl,
+                              checkoutId: checkoutId,
                               holdUntil: holdUntil,
-                              waylReferenceId: waylReferenceId,
+                              referenceId: referenceId,
+                              paymentMode: paymentMode,
                             );
                           }
                           return true;
@@ -1050,7 +1041,7 @@ class _GASheetState extends ConsumerState<_GASheet> {
     // condition (only a non-empty payment URL does anything there); a cash
     // success never survives here — the parent listener pops this sheet.
     final hasPendingToResume = submitState.maybeWhen(
-      success: (_, paymentUrl, _, _, _) => paymentUrl.isNotEmpty,
+      success: (_, checkoutId, _, _, _, _) => checkoutId.isNotEmpty,
       orElse: () => false,
     );
 
@@ -1220,17 +1211,18 @@ class _GASheetState extends ConsumerState<_GASheet> {
                         // its payment URL instead of creating a new one.
                         final current = ref.read(bookingSubmitProvider);
                         final resumed = current.maybeWhen(
-                          success: (groupId, paymentUrl, holdUntil,
-                              waylReferenceId, cash) {
-                            if (paymentUrl.isNotEmpty) {
-                              _openConcertPaymentWebView(
+                          success: (groupId, checkoutId, holdUntil,
+                              referenceId, paymentMode, cash) {
+                            if (checkoutId.isNotEmpty) {
+                              _openConcertCardPayment(
                                 context,
                                 ref,
                                 eventId: widget.eventId,
                                 groupId: groupId,
-                                paymentUrl: paymentUrl,
+                                checkoutId: checkoutId,
                                 holdUntil: holdUntil,
-                                waylReferenceId: waylReferenceId,
+                                referenceId: referenceId,
+                              paymentMode: paymentMode,
                               );
                             }
                             return true;

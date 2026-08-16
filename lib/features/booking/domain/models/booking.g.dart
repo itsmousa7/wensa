@@ -81,4 +81,5 @@ const _$BookingStatusEnumMap = {
 const _$PaymentMethodEnumMap = {
   PaymentMethod.wayl: 'wayl',
   PaymentMethod.cash: 'cash',
+  PaymentMethod.hyperpay: 'hyperpay',
 };

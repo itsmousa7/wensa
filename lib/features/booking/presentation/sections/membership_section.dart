@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:future_riverpod/features/booking/domain/models/booking_enums.dart';
 import 'package:future_riverpod/features/booking/domain/models/membership_plan.dart';
 import 'package:future_riverpod/features/booking/domain/repositories/booking_repository.dart';
-import 'package:future_riverpod/features/booking/presentation/pages/payment_webview_page.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/availability_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/booking_submit_provider.dart';
+import 'package:future_riverpod/features/hyperpay_payment/hyperpay_payment.dart';
 import 'package:future_riverpod/features/booking/presentation/providers/membership_submit_provider.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/bilingual_label.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/booking_date_strip.dart';
@@ -13,7 +13,6 @@ import 'package:future_riverpod/features/booking/presentation/widgets/booking_su
 import 'package:future_riverpod/features/booking/presentation/widgets/membership_plan_card.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_selector.dart';
 import 'package:future_riverpod/features/booking/presentation/widgets/payment_method_sheet.dart';
-import 'package:future_riverpod/core/constants/theme/app_colors.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/providers/tickets_provider.dart'
     show bookingsRefreshProvider;
 import 'package:future_riverpod/features/discounts/domain/discount_math.dart';
@@ -85,19 +84,22 @@ class MembershipSection extends ConsumerStatefulWidget {
 /// membership — closing the webview no longer cancels the pending row, so a
 /// retry must resume it instead of creating a new one, which would hit the
 /// DB constraint on the still-open row.
-void _openMembershipPaymentWebView(
+void _openMembershipCardPayment(
   BuildContext context,
   WidgetRef ref,
   String bookingId,
-  String paymentUrl,
-  String waylReferenceId,
+  String checkoutId,
+  String referenceId,
+  String paymentMode,
 ) {
-  PaymentWebViewPage.push(
+  launchHyperpayPayment(
     context,
-    paymentUrl,
-    referenceId: waylReferenceId,
-    redirectionUrl: 'wansa://payment',
-    onPaymentSuccess: (_, orderId) async {
+    checkoutId: checkoutId,
+    referenceId: referenceId,
+    entityKind: 'membership',
+    entityId: bookingId,
+    paymentMode: paymentMode,
+    onConfirmed: (orderId) async {
       try {
         await ref
             .read(bookingRepositoryProvider)
@@ -106,24 +108,11 @@ void _openMembershipPaymentWebView(
       ref.read(membershipSubmitProvider.notifier).reset();
       ref.read(bookingsRefreshProvider.notifier).bump();
       ref.invalidate(userPurchaseHistoryProvider);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Payment successful! Your membership is now active.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        context.go('/bookings/m_$bookingId');
-      }
+      // `m_` prefix is the id shape /bookings/:id expects for a membership.
+      return () => context.go('/bookings/m_$bookingId');
     },
-    onPaymentFailed: () {
+    onAborted: (_) async {
       ref.read(membershipSubmitProvider.notifier).reset();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Payment failed. Please try again.'),
-          backgroundColor: AppColors.danger,
-        ),
-      );
     },
   );
 }
@@ -133,14 +122,16 @@ class _MembershipSectionState extends ConsumerState<MembershipSection> {
   Widget build(BuildContext context) {
     ref.listen<BookingSubmitState>(membershipSubmitProvider, (prev, next) {
       next.maybeWhen(
-        success: (bookingId, paymentUrl, holdUntil, waylReferenceId, cash) {
-          if (paymentUrl.isNotEmpty) {
-            _openMembershipPaymentWebView(
+        success:
+            (bookingId, checkoutId, holdUntil, referenceId, paymentMode, cash) {
+          if (checkoutId.isNotEmpty) {
+            _openMembershipCardPayment(
               context,
               ref,
               bookingId,
-              paymentUrl,
-              waylReferenceId,
+              checkoutId,
+              referenceId,
+              paymentMode,
             );
           } else if (cash) {
             goToCashBookingSuccess(
@@ -257,7 +248,7 @@ class _MembershipFormView extends ConsumerWidget {
     // it must not be gated behind picking a payment method. Derived from the
     // already-watched submit state so the button re-enables reactively.
     final hasPendingToResume = submitState.maybeWhen(
-      success: (_, paymentUrl, _, _, cash) => paymentUrl.isNotEmpty || cash,
+      success: (_, checkoutId, _, _, _, cash) => checkoutId.isNotEmpty || cash,
       orElse: () => false,
     );
 
@@ -460,18 +451,20 @@ class _MembershipFormView extends ConsumerWidget {
                                         success:
                                             (
                                               bookingId,
-                                              paymentUrl,
+                                              checkoutId,
                                               holdUntil,
-                                              waylReferenceId,
+                                              referenceId,
+                                              paymentMode,
                                               cash,
                                             ) {
-                                              if (paymentUrl.isNotEmpty) {
-                                                _openMembershipPaymentWebView(
+                                              if (checkoutId.isNotEmpty) {
+                                                _openMembershipCardPayment(
                                                   context,
                                                   ref,
                                                   bookingId,
-                                                  paymentUrl,
-                                                  waylReferenceId,
+                                                  checkoutId,
+                                                  referenceId,
+                                                  paymentMode,
                                                 );
                                               } else if (cash) {
                                                 goToCashBookingSuccess(
