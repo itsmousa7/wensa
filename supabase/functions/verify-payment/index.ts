@@ -202,6 +202,38 @@ Deno.serve(async (req: Request) => {
     // the payment result page (matches the id visible in the HyperPay BIP).
     const merchantTransactionId = details.merchantTransactionId;
 
+    // SECURITY: bind this checkout to the entity being confirmed.
+    //
+    // The rowEntityId guard above only runs when a payment_transactions row
+    // ALREADY exists, i.e. from the second call onward. On the FIRST call for a
+    // checkout there is nothing to compare against, so without this a caller
+    // could pay for a cheap booking, never verify it, then present that paid
+    // checkout_id alongside a DIFFERENT pending booking's id and have the
+    // expensive one confirmed for free. The confirm RPCs key only on
+    // (id, uid, status) and never see the checkout, so they offer no defence.
+    //
+    // create-booking / create-membership derive merchantTransactionId
+    // deterministically from the entity, so the gateway's own echo of it is
+    // proof of which entity the money was for.
+    //
+    // Only rejects on a PRESENT-and-mismatched value: the field is genuinely
+    // absent in some gateway responses, and failing closed there would break
+    // legitimate payments. A forged replay always carries the other entity's
+    // id, so the attack is still caught.
+    const expectedTxnId = body.kind === "membership"
+      ? `membership-${body.id}`.slice(0, 32)
+      : body.kind === "concert_group"
+      ? `booking-venue-${body.id}`.slice(0, 32)
+      : `booking-${body.id}`.slice(0, 32);
+    if (merchantTransactionId && merchantTransactionId !== expectedTxnId) {
+      console.error(
+        `verify-payment: REJECTED checkout/entity mismatch — checkout=${body.checkout_id} ` +
+        `carries mtx=${merchantTransactionId} but entity=${body.id} (kind=${body.kind}) ` +
+        `expects mtx=${expectedTxnId} (user=${jwtSub(authHeader.slice(7))})`,
+      );
+      return json({ error: "Forbidden" }, 403);
+    }
+
     // Non-final codes (3DS still in flight, gateway rate limit) and a lost
     // 200.300.404 race with no persisted row yet: nothing to persist or
     // confirm — report unpaid and let the app retry.
