@@ -22,7 +22,6 @@ class _FakeChannel extends HyperpayChannel {
     required String checkoutId,
     required String brand,
     required String cardNumber,
-    required String holderName,
     required String expiryMonth,
     required String expiryYear,
     required String cvv,
@@ -37,7 +36,6 @@ class _RecordingChannel extends HyperpayChannel {
     required String checkoutId,
     required String brand,
     required String cardNumber,
-    required String holderName,
     required String expiryMonth,
     required String expiryYear,
     required String cvv,
@@ -95,70 +93,11 @@ void main() {
       find.byKey(const Key('card_number')),
       '4111111111111111',
     );
-    await tester.enterText(find.byKey(const Key('holder_name')), 'M ALHAMAD');
     await tester.enterText(find.byKey(const Key('expiry')), '12/39');
     await tester.enterText(find.byKey(const Key('cvv')), '123');
     await tester.pump();
 
     expect(tester.widget<PrimaryActionButton>(payButton).onTap, isNotNull);
-  });
-
-  testWidgets('an Arabic holder name survives the input filter and enables PAY',
-      (tester) async {
-    await tester.pumpWidget(
-      _wrap(
-        const CardPaymentScreen(
-          checkoutId: 'chk_1',
-          referenceId: 'ref_1',
-          entityKindForVerify: 'booking',
-          entityId: 'b1',
-          paymentMode: 'TEST',
-        ),
-      ),
-    );
-
-    await tester.enterText(
-      find.byKey(const Key('card_number')),
-      '4111111111111111',
-    );
-    // Arabic was previously stripped character-by-character by the
-    // [a-zA-Z ] filter, leaving the field empty and PAY permanently disabled.
-    await tester.enterText(find.byKey(const Key('holder_name')), 'علي حسن');
-    await tester.enterText(find.byKey(const Key('expiry')), '12/39');
-    await tester.enterText(find.byKey(const Key('cvv')), '123');
-    await tester.pump();
-
-    expect(
-      tester.widget<TextField>(find.byKey(const Key('holder_name'))).controller!.text,
-      'علي حسن',
-    );
-    expect(
-      tester.widget<PrimaryActionButton>(find.byType(PrimaryActionButton)).onTap,
-      isNotNull,
-    );
-  });
-
-  testWidgets('Arabic-Indic digits are still rejected in the holder name',
-      (tester) async {
-    await tester.pumpWidget(
-      _wrap(
-        const CardPaymentScreen(
-          checkoutId: 'chk_1',
-          referenceId: 'ref_1',
-          entityKindForVerify: 'booking',
-          entityId: 'b1',
-          paymentMode: 'TEST',
-        ),
-      ),
-    );
-
-    await tester.enterText(find.byKey(const Key('holder_name')), 'علي٢ حسن٣');
-    await tester.pump();
-
-    expect(
-      tester.widget<TextField>(find.byKey(const Key('holder_name'))).controller!.text,
-      'علي حسن',
-    );
   });
 
   testWidgets('invalid Luhn number keeps PAY disabled', (tester) async {
@@ -178,7 +117,6 @@ void main() {
       find.byKey(const Key('card_number')),
       '4111111111111112',
     );
-    await tester.enterText(find.byKey(const Key('holder_name')), 'M ALHAMAD');
     await tester.enterText(find.byKey(const Key('expiry')), '12/39');
     await tester.enterText(find.byKey(const Key('cvv')), '123');
     await tester.pump();
@@ -211,7 +149,6 @@ void main() {
       find.byKey(const Key('card_number')),
       '4111111111111111',
     );
-    await tester.enterText(find.byKey(const Key('holder_name')), 'M ALHAMAD');
     await tester.enterText(find.byKey(const Key('expiry')), '12/39');
     await tester.enterText(find.byKey(const Key('cvv')), '123');
     await tester.pump();
@@ -246,7 +183,6 @@ void main() {
       find.byKey(const Key('card_number')),
       '4111111111111111',
     );
-    await tester.enterText(find.byKey(const Key('holder_name')), 'M ALHAMAD');
     await tester.enterText(find.byKey(const Key('expiry')), '12/39');
     await tester.enterText(find.byKey(const Key('cvv')), '123');
     await tester.pump();
@@ -284,8 +220,7 @@ void main() {
         find.byKey(const Key('card_number')),
         '4111111111111111',
       );
-      await tester.enterText(find.byKey(const Key('holder_name')), 'M ALHAMAD');
-      await tester.enterText(find.byKey(const Key('expiry')), '12/39');
+        await tester.enterText(find.byKey(const Key('expiry')), '12/39');
       await tester.enterText(find.byKey(const Key('cvv')), '123');
       await tester.pump();
 
@@ -318,7 +253,6 @@ void main() {
       find.byKey(const Key('card_number')),
       '4111111111111111',
     );
-    await tester.enterText(find.byKey(const Key('holder_name')), 'M ALHAMAD');
     await tester.enterText(find.byKey(const Key('expiry')), '12/39');
     await tester.enterText(find.byKey(const Key('cvv')), '123');
     await tester.pump();

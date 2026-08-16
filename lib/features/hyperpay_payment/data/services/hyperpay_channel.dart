@@ -25,11 +25,17 @@ class HyperpayChannel {
 
   static const _channel = MethodChannel('app.wensa.mobile/hyperpay');
 
+  /// Value sent as OPPWA's `card.holder`.
+  ///
+  /// The form no longer asks for a cardholder name: it was an extra field the
+  /// customer had to fill for a value nothing downstream reads. OPPWA still
+  /// requires the parameter, so every card carries this constant instead.
+  static const cardHolder = 'Wensa App';
+
   Future<void> submitCardPayment({
     required String checkoutId,
     required String brand,
     required String cardNumber,
-    required String holderName,
     required String expiryMonth,
     required String expiryYear,
     required String cvv,
@@ -40,7 +46,7 @@ class HyperpayChannel {
         'checkoutid': checkoutId,
         'brand': brand,
         'card_number': cardNumber,
-        'holder_name': holderName,
+        'holder_name': cardHolder,
         'month': expiryMonth,
         'year': normalizeYear(expiryYear),
         'cvv': cvv,

@@ -28,16 +28,11 @@ class PaymentStrings {
   );
 
   // ── Card form ─────────────────────────────────────────────────────────
-  String get cardHolderName => _pick('اسم حامل البطاقة', 'Card Holder Name');
   String get invalidCardNumber =>
       _pick('رقم البطاقة غير صحيح', 'Invalid card number');
   String get invalidExpiryDate =>
       _pick('تاريخ الانتهاء غير صحيح', 'Invalid expiry date');
   String get invalidCvv => _pick('رمز CVV غير صحيح', 'Invalid CVV');
-  String get invalidHolderName => _pick(
-    'اكتب الاسم الأول والأخير (مثال: Ali Hassan)',
-    'Enter first and last name (e.g. John Doe)',
-  );
 
   // ── Failures ──────────────────────────────────────────────────────────
   String get slotNoLongerAvailable => _pick(

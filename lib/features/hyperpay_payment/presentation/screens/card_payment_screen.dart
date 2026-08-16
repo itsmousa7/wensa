@@ -15,9 +15,11 @@ import '../widgets/card_brand_icon.dart';
 import '../widgets/payment_sheet_shell.dart';
 
 /// Wensa-styled HyperPay card form, shown as a modal bottom sheet. Field
-/// order: card number, expiry, CVV, cardholder name (auto-advances focus
-/// once each field is valid). Field keys (used by widget tests):
-/// card_number, expiry, cvv, holder_name.
+/// order: card number, expiry, CVV (auto-advances focus once each field is
+/// valid). Field keys (used by widget tests): card_number, expiry, cvv.
+///
+/// No cardholder name is collected — OPPWA's `card.holder` is always sent as
+/// [HyperpayChannel.cardHolder].
 class CardPaymentScreen extends StatefulWidget {
   const CardPaymentScreen({
     super.key,
@@ -64,13 +66,11 @@ class CardPaymentScreen extends StatefulWidget {
 
 class _CardPaymentScreenState extends State<CardPaymentScreen> {
   final _numberController = TextEditingController();
-  final _holderController = TextEditingController();
   final _expiryController = TextEditingController();
   final _cvvController = TextEditingController();
 
   final _expiryFocus = FocusNode();
   final _cvvFocus = FocusNode();
-  final _holderFocus = FocusNode();
 
   bool _processing = false;
   bool _resultHandled = false;
@@ -81,7 +81,6 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
   String? _numberError;
   String? _expiryError;
   String? _cvvError;
-  String? _holderError;
 
   int _prevNumberLen = 0;
   int _prevExpiryLen = 0;
@@ -93,11 +92,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
     _numberController.addListener(_onNumberChanged);
     _expiryController.addListener(_onExpiryChanged);
     _cvvController.addListener(_onCvvChanged);
-    _holderController.addListener(_onFieldChanged);
-    _holderFocus.addListener(_onHolderFocusChanged);
   }
-
-  void _onFieldChanged() => setState(() {});
 
   PaymentStrings get _s => PaymentStrings.of(context);
 
@@ -135,30 +130,21 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
     if (len == 3 && !isValidCvv(_cvv)) {
       error = _s.invalidCvv;
     }
-    final shouldAdvance = len == 3 && error == null && _prevCvvLen < 3;
+    // CVV is the last field now that the holder name is no longer collected,
+    // so a complete entry dismisses the keyboard instead of advancing focus —
+    // that uncovers the Pay button.
+    final shouldDismiss = len == 3 && error == null && _prevCvvLen < 3;
     setState(() {
       _cvvError = error;
       _prevCvvLen = len;
     });
-    if (shouldAdvance) FocusScope.of(context).requestFocus(_holderFocus);
-  }
-
-  void _onHolderFocusChanged() {
-    if (_holderFocus.hasFocus) {
-      setState(() => _holderError = null);
-      return;
-    }
-    if (_holder.trim().isEmpty) return;
-    setState(() {
-      _holderError = isValidHolderName(_holder) ? null : _s.invalidHolderName;
-    });
+    if (shouldDismiss) FocusScope.of(context).unfocus();
   }
 
   @override
   void dispose() {
     for (final controller in [
       _numberController,
-      _holderController,
       _expiryController,
       _cvvController,
     ]) {
@@ -166,7 +152,6 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
     }
     _expiryFocus.dispose();
     _cvvFocus.dispose();
-    _holderFocus.dispose();
     // If we leave the screen without success/failure (X button, system back,
     // gesture, OS pop), treat it as a user cancel so the parent can release
     // any pending booking row server-side. Guarded by `_resultHandled` to
@@ -179,7 +164,6 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
   }
 
   String get _number => _numberController.text.replaceAll(' ', '');
-  String get _holder => _holderController.text;
   List<String> get _expiryParts => _expiryController.text.split('/');
   String get _month => _expiryParts.first;
   String get _year => _expiryParts.length > 1 ? _expiryParts[1] : '';
@@ -195,7 +179,6 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
   bool get _formValid =>
       luhnCheck(_number) &&
       detectBrand(_number) != null &&
-      isValidHolderName(_holder) &&
       isValidExpiry(_month, _year) &&
       isValidCvv(_cvv);
 
@@ -226,7 +209,6 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
           checkoutId: widget.checkoutId,
           brand: detectBrand(_number)!,
           cardNumber: _number,
-          holderName: _holder,
           expiryMonth: _month,
           expiryYear: _year,
           cvv: _cvv,
@@ -448,28 +430,6 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                TextField(
-                  key: const Key('holder_name'),
-                  style: fieldStyle,
-                  controller: _holderController,
-                  focusNode: _holderFocus,
-                  textCapitalization: TextCapitalization.words,
-                  inputFormatters: [
-                    // Latin plus Arabic script. U+0621-U+0652 covers the
-                    // Arabic letters, tatweel and harakat while deliberately
-                    // stopping short of U+0660 (Arabic-Indic digits) and
-                    // U+066A-U+066D (punctuation) -- neither belongs in a name.
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r'[a-zA-Zء-ْ ]'),
-                    ),
-                  ],
-                  decoration: _decoration(
-                    context,
-                    s.cardHolderName,
-                    errorText: _holderError,
-                  ),
                 ),
               ],
             ),

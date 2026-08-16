@@ -21,7 +21,6 @@ void main() {
     checkoutId: 'chk_1',
     brand: 'VISA',
     cardNumber: '4111111111111111',
-    holderName: 'M ALHAMAD',
     expiryMonth: '12',
     expiryYear: '39',
     cvv: '123',
@@ -35,6 +34,15 @@ void main() {
     expect(capturedArgs!['checkoutid'], 'chk_1');
     expect(capturedArgs!['brand'], 'VISA');
     expect(capturedArgs!['mode'], 'TEST');
+  });
+
+  test('always sends the fixed card holder, since the form never asks', () async {
+    mockNative(() => 'SYNC');
+    await submit(HyperpayChannel());
+    // Reaches the native layer as OPPCardPaymentParams(holder:) on iOS and
+    // CardPaymentParams(..., holder, ...) on Android — i.e. OPPWA card.holder.
+    expect(capturedArgs!['holder_name'], 'Wensa App');
+    expect(HyperpayChannel.cardHolder, 'Wensa App');
   });
 
   test('completes on success result', () async {

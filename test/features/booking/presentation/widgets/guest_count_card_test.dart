@@ -29,7 +29,22 @@ void main() {
     expect(find.text('+10,000 IQD for 2 extra guest(s)'), findsOneWidget);
   });
 
-  testWidgets('tapping + increments the count', (tester) async {
+  FixedExtentScrollController wheelController(WidgetTester tester) =>
+      tester.widget<ListWheelScrollView>(find.byType(ListWheelScrollView))
+          .controller as FixedExtentScrollController;
+
+  testWidgets('the wheel opens centred on the current guest count',
+      (tester) async {
+    await tester.pumpWidget(wrap(GuestCountCard(
+      includedPersons: 10,
+      extraPersonFeeIqd: 5000,
+      guestCount: 12,
+      onGuestCountChanged: (_) {},
+    )));
+    expect(wheelController(tester).selectedItem, 12);
+  });
+
+  testWidgets('picking a value on the wheel reports it', (tester) async {
     int? changedTo;
     await tester.pumpWidget(wrap(GuestCountCard(
       includedPersons: 10,
@@ -37,37 +52,49 @@ void main() {
       guestCount: 12,
       onGuestCountChanged: (v) => changedTo = v,
     )));
-    await tester.tap(find.byIcon(Icons.add_rounded));
-    await tester.pump();
-    expect(changedTo, 13);
+    wheelController(tester).jumpToItem(15);
+    await tester.pumpAndSettle();
+    expect(changedTo, 15);
   });
 
-  testWidgets('minus button is disabled when guestCount is 0', (tester) async {
+  testWidgets('dragging the wheel forward raises the count', (tester) async {
+    int? changedTo;
+    await tester.pumpWidget(wrap(GuestCountCard(
+      includedPersons: 10,
+      extraPersonFeeIqd: 5000,
+      guestCount: 12,
+      onGuestCountChanged: (v) => changedTo = v,
+    )));
+    await tester.drag(find.byType(ListWheelScrollView), const Offset(-120, 0));
+    await tester.pumpAndSettle();
+    expect(changedTo, greaterThan(12));
+  });
+
+  testWidgets('the wheel cannot go below zero guests', (tester) async {
+    int? changedTo;
     await tester.pumpWidget(wrap(GuestCountCard(
       includedPersons: 5,
       extraPersonFeeIqd: 5000,
       guestCount: 0,
-      onGuestCountChanged: (_) {},
+      onGuestCountChanged: (v) => changedTo = v,
     )));
-    final minusButton = tester.widget<InkWell>(find.ancestor(
-      of: find.byIcon(Icons.remove_rounded),
-      matching: find.byType(InkWell),
-    ));
-    expect(minusButton.onTap, isNull);
+    await tester.drag(find.byType(ListWheelScrollView), const Offset(200, 0));
+    await tester.pumpAndSettle();
+    expect(wheelController(tester).selectedItem, 0);
+    expect(changedTo, isNull);
   });
 
-  testWidgets('minus button is enabled when guestCount is 1', (tester) async {
+  testWidgets('the wheel stops at maxGuests', (tester) async {
     await tester.pumpWidget(wrap(GuestCountCard(
       includedPersons: 5,
       extraPersonFeeIqd: 5000,
-      guestCount: 1,
+      guestCount: 20,
+      maxGuests: 20,
       onGuestCountChanged: (_) {},
     )));
-    final minusButton = tester.widget<InkWell>(find.ancestor(
-      of: find.byIcon(Icons.remove_rounded),
-      matching: find.byType(InkWell),
-    ));
-    expect(minusButton.onTap, isNotNull);
+    await tester.drag(find.byType(ListWheelScrollView), const Offset(-400, 0));
+    await tester.pumpAndSettle();
+    expect(wheelController(tester).selectedItem, 20);
   });
 
   testWidgets('does not show the required prompt at guestCount 0 until showError is set',
