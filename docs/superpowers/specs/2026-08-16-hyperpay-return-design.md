@@ -235,6 +235,19 @@ to the gateway for every booking, which is precisely the class of change that ne
 UAT first. Adding a defensive cap inside `_shared/hyperpay.ts` is acceptable only if
 it is provably a no-op for already-compliant inputs.
 
+**The two repos solve this differently and both are correct. Do not unify them.**
+
+| Repo | Call site | Where compliance comes from |
+|---|---|---|
+| `wensa` | `` `booking-{uuid}`.slice(0, 32) `` | pre-capped **before** the builder |
+| `wansa-admin-dashboard` | `` `plan-${crypto.randomUUID()}` `` (41 chars, not pre-capped) | `capMerchantTransactionId()` **inside** `buildCheckoutParams` |
+
+That 41-char `plan-{uuid}` is the case that actually failed in production, which is
+why the admin builder caps. Each repo's mechanism is load-bearing where it sits.
+Unifying in either direction changes the gateway value for every payment for zero
+functional gain — nothing parses `merchantTransactionId` back; reconciliation is by
+`checkout_id` + `reference_id`.
+
 ### 4a. Refunds must stay two-gateway
 
 `booking-action` today refunds *any* non-cash paid booking through `_shared/wayl.ts`,
@@ -256,6 +269,16 @@ Tokenization returns as frozen: `tokenize: true` on every checkout, the card
 persisted only when `verify-payment` receives `save_card: true`, the save-card
 checkbox, the one-tap sheet, and the profile → Saved Cards page. No migration is
 needed — `user_payment_tokens` and the `lock_for_payment` RPCs are still applied.
+
+**Coupling to verify explicitly.** `tokenize: true` rides on *every* checkout
+(createRegistration + CIT standing instruction), but the card is only *persisted*
+when the app sends `save_card: true` and `verify-payment` writes the
+`registrationId` into `bookings.user_payment_tokens`. Since `verify-payment` is the
+piece being restored from scratch, that opt-in write is the coupling point — if it
+is dropped, saving a card silently no-ops and one-tap never populates. Cover it with
+an explicit test: pay with `save_card: false` → no token row; pay with
+`save_card: true` → exactly one row, and a repeat save refreshes `registration_id`
+via the dedupe index rather than inserting a duplicate.
 
 The known bug is fixed. `charge-saved-card` currently randomises
 `merchantTransactionId` (`mit-` + 28 uuid-hex chars) per call, which defeats the DB
