@@ -94,7 +94,7 @@ void main() {
       wrap(
         PaymentMethodSelector(
           cashEnabled: true,
-          selected: PaymentMethod.wayl,
+          selected: PaymentMethod.hyperpay,
           onChanged: (_) {},
         ),
       ),
@@ -104,7 +104,7 @@ void main() {
     expect(fillInRow('E-Payment'), findsOneWidget);
   });
 
-  testWidgets('tapping E-Payment calls onChanged with PaymentMethod.wayl', (
+  testWidgets('tapping E-Payment calls onChanged with PaymentMethod.hyperpay', (
     tester,
   ) async {
     PaymentMethod? picked;
@@ -119,6 +119,26 @@ void main() {
     );
     await tester.tap(find.text('E-Payment'));
     await tester.pump();
-    expect(picked, PaymentMethod.wayl);
+    expect(picked, PaymentMethod.hyperpay);
+  });
+
+  test('hyperpay round-trips through fromString and .name', () {
+    expect(PaymentMethodFromString.fromString('hyperpay'), PaymentMethod.hyperpay);
+    expect(PaymentMethod.hyperpay.name, 'hyperpay');
+  });
+
+  test('historical wayl rows still resolve', () {
+    // Bookings paid through Wayl between 2026-07-31 and the HyperPay return
+    // keep this value forever; the ticket UI renders it as "E-Payment".
+    expect(PaymentMethodFromString.fromString('wayl'), PaymentMethod.wayl);
+  });
+
+  test('unknown payment_method never resolves to cash', () {
+    // Cash means "no money collected yet". Reading an unknown value as cash
+    // would mark an unpaid booking as awaiting cash at the venue.
+    expect(
+      PaymentMethodFromString.fromString('martian-pay'),
+      isNot(PaymentMethod.cash),
+    );
   });
 }
