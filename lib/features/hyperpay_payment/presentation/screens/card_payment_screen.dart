@@ -457,7 +457,13 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                   focusNode: _holderFocus,
                   textCapitalization: TextCapitalization.words,
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
+                    // Latin plus Arabic script. U+0621-U+0652 covers the
+                    // Arabic letters, tatweel and harakat while deliberately
+                    // stopping short of U+0660 (Arabic-Indic digits) and
+                    // U+066A-U+066D (punctuation) -- neither belongs in a name.
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'[a-zA-Zء-ْ ]'),
+                    ),
                   ],
                   decoration: _decoration(
                     context,
