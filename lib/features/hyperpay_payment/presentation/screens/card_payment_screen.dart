@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:future_riverpod/core/constants/theme/app_colors.dart';
@@ -266,11 +267,22 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
       if (e.kind != HyperpayFailureKind.cancelled && mounted) {
         setState(() => _errorText = e.message);
       }
-    } catch (_) {
+    } catch (e) {
       // Verify (or another) network error. Keep _verifyPending set so the
       // next Pay tap retries only the verify step, not the channel call.
+      //
+      // The cause is surfaced in debug builds only: this branch catches
+      // everything that isn't a HyperpayPaymentException (MissingPluginException
+      // from an unregistered native channel, a non-200 from verify-payment, a
+      // JSON shape change), and swallowing it silently makes every one of those
+      // look like the same "check your connection" problem.
+      debugPrint('[hyperpay] payment step failed: $e');
       if (mounted) {
-        setState(() => _errorText = _s.couldNotConfirmPayment);
+        setState(() {
+          _errorText = kDebugMode
+              ? '${_s.couldNotConfirmPayment}\n\n[debug] $e'
+              : _s.couldNotConfirmPayment;
+        });
       }
     } finally {
       if (mounted) {
