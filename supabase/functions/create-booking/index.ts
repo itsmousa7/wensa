@@ -1,5 +1,5 @@
 /**
- * create-booking — orchestrates booking creation + Wayl payment link.
+ * create-booking — orchestrates booking creation + HyperPay checkout.
  *
  * Flow:
  *   1. Validate caller JWT
@@ -7,8 +7,9 @@
  *   3. Call the appropriate bookings.create_* RPC (inserts pending row(s))
  *   4. Apply discount server-side (promo OR auto), persist audit columns +
  *      final amount on the booking row(s).
- *   5. Create a Wayl payment link for the *final* amount
- *   6. Return { booking_id?, group_id?, payment_url, hold_until, reference_id }
+ *   5. Create a HyperPay checkout for the *final* amount
+ *   6. Return { booking_id?, group_id?, checkout_id, payment_mode, hold_until,
+ *      reference_id } — or { cash: true } when the customer pays at the venue.
  *
  * referenceId format:
  *   bookings:  booking_{booking_id}_{timestamp}
@@ -16,19 +17,22 @@
  *
  * Env vars required:
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY
- *   WAYL_API_KEY, WAYL_WEBHOOK_SECRET, WAYL_WEBHOOK_URL
- *   WAYL_ENV               — "live" | "test" (default: "live")
- *   APP_DEEP_LINK_BASE     — e.g. "wansa://payment"
+ *   HYPERPAY_ENTITY_ID, HYPERPAY_AUTH_TOKEN — see _shared/hyperpay.ts
+ *   HYPERPAY_ENV           — "live"/"prod" ⇒ prod, anything else ⇒ test
+ *   HYPERPAY_BASE          — set explicitly; otherwise selected by env
  *   MERCHANT_PORTAL_URL    — e.g. "http://localhost:5173" (QR deep-link host)
+ *
+ * Wayl is gone from this function. booking-action still refunds historical
+ * payment_method='wayl' rows via _shared/wayl.ts — do not delete that module.
  */
+
+import { cfg, createCheckout } from "../_shared/hyperpay.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
-
-const WAYL_BASE = "https://api.thewayl.com";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -40,7 +44,7 @@ interface BasePaylod {
   promo_code?: string;
   guest_name?: string; // dashboard: name the booking is held under
   client?: "dashboard"; // dashboard-only hint; narrows `source` (see below)
-  payment_method?: "wayl" | "cash"; // customer's choice; default "wayl"
+  payment_method?: "hyperpay" | "cash"; // customer's choice; default "hyperpay"
 }
 
 interface HourlyPayload extends BasePaylod {
@@ -97,11 +101,6 @@ Deno.serve(async (req: Request) => {
 
   const SUPABASE_URL    = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_KEY     = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const WAYL_API_KEY    = Deno.env.get("WAYL_API_KEY")!;
-  const WAYL_WEBHOOK_SECRET = Deno.env.get("WAYL_WEBHOOK_SECRET")!;
-  const WAYL_WEBHOOK_URL    = Deno.env.get("WAYL_BOOKING_WEBHOOK_URL") ?? Deno.env.get("WAYL_WEBHOOK_URL")!;
-  const APP_DEEP_LINK   = Deno.env.get("APP_DEEP_LINK_BASE") ?? "wansa://payment";
-  const WAYL_ENV        = Deno.env.get("WAYL_ENV") ?? "live";
 
   try {
     // ── Auth ───────────────────────────────────────────────────────────────
@@ -144,7 +143,7 @@ Deno.serve(async (req: Request) => {
     // gate for EVERY dashboard-only power: the free-booking path (payment toggle
     // OFF) and the `source` label. Without it, a merchant booking at their own
     // venue from the MOBILE app would hit the free path when their toggle is off,
-    // returning { free: true } with no payment_url — the app then errors on the
+    // returning { free: true } with no checkout_id — the app then errors on the
     // missing checkout while the slot is already booked. Gating on the hint keeps
     // the toggle scoped to the dashboard; the mobile app always requires payment.
     const isDashboardBooking = hasDashboardRole && body.client === "dashboard";
@@ -162,7 +161,6 @@ Deno.serve(async (req: Request) => {
     let referenceId: string;
     let customParameter: string;
     let subtotalIqd: number;
-    let lineItemLabel: string;
     const ts = Date.now();
 
     if (body.category === "hourly") {
@@ -176,7 +174,6 @@ Deno.serve(async (req: Request) => {
       subtotalIqd     = rpcResult.amount_iqd as number;
       referenceId     = `booking_${rpcResult.id}_${ts}`;
       customParameter = String(rpcResult.id);
-      lineItemLabel   = `Hourly court booking — ${p.hours}h`;
 
     } else if (body.category === "shift") {
       const p = body as ShiftPayload;
@@ -190,7 +187,6 @@ Deno.serve(async (req: Request) => {
       subtotalIqd     = rpcResult.amount_iqd as number;
       referenceId     = `booking_${rpcResult.id}_${ts}`;
       customParameter = String(rpcResult.id);
-      lineItemLabel   = `Shift booking — ${p.shift_type} shift`;
 
     } else if (body.category === "venue_seat") {
       const p = body as VenueSeatPayload;
@@ -201,7 +197,6 @@ Deno.serve(async (req: Request) => {
       subtotalIqd     = rpcResult.total_iqd as number;
       referenceId     = `booking_venue_${rpcResult.group_id}_${ts}`;
       customParameter = String(rpcResult.group_id);
-      lineItemLabel   = `Seat / Venue ticket(s) × ${rpcResult.seat_count}`;
 
     } else if (body.category === "general_admission") {
       const p = body as GeneralAdmissionPayload;
@@ -213,7 +208,6 @@ Deno.serve(async (req: Request) => {
       subtotalIqd     = rpcResult.total_iqd as number;
       referenceId     = `booking_${rpcResult.id}_${ts}`;
       customParameter = String(rpcResult.id);
-      lineItemLabel   = `General admission × ${rpcResult.quantity}`;
 
     } else if (body.category === "reservation") {
       const p = body as ReservationPayload;
@@ -226,7 +220,6 @@ Deno.serve(async (req: Request) => {
       subtotalIqd     = (rpcResult.amount_iqd as number) ?? 0;
       referenceId     = `booking_${rpcResult.id}_${ts}`;
       customParameter = String(rpcResult.id);
-      lineItemLabel   = `Reservation — party of ${p.party_size}`;
 
     } else {
       return json({ error: "Unsupported category" }, 400);
@@ -301,7 +294,7 @@ Deno.serve(async (req: Request) => {
     const autoDiscountId     = discount.autoDiscountId;
     const merchantDiscountId = discount.merchantDiscountId;
 
-    // ── Look up merchant commission (needed by both the cash and Wayl paths) ──
+    // ── Look up merchant commission (needed by both the cash and card paths) ──
     // Priority: temp override (when current Asia/Baghdad date is in window)
     //           → merchant.commission_percentage → 12% default.
     let commissionPct: number = 12;
@@ -431,46 +424,49 @@ Deno.serve(async (req: Request) => {
       }, 200);
     }
 
-    // ── Create Wayl payment link for the FINAL amount ──────────────────────
-    // Always carry referenceId + category to the redirect target so the post-
-    // payment landing page (mobile deep link OR the dashboard confirmation page)
-    // can look the booking up on a fresh page load. A caller-supplied
-    // redirect_url is treated as a base; we append the params either way.
-    const redirectBase = body.redirect_url ?? APP_DEEP_LINK;
-    const redirectSep  = redirectBase.includes("?") ? "&" : "?";
-    const redirectUrl  = `${redirectBase}${redirectSep}referenceId=${referenceId}&category=${body.category}`;
+    // ── Create HyperPay checkout for the FINAL amount ──────────────────────
+    // The app submits the card via the native mSDK using this checkout id.
+    //
+    // merchantTransactionId mirrors the dashboard's `banner-{id}` shape:
+    //   booking-{booking_id} / booking-venue-{group_id} — no timestamp suffix,
+    // capped at 32 chars. customParameter is a UUID, so the value is dashes-only
+    // and underscore-free; longer values or underscores trigger the acquirer's
+    // 800.100.156 "format error". Nothing parses it back — reconciliation is by
+    // checkout_id + reference_id — it exists for HyperPay-side audit only.
+    //
+    // NOTE: the cap lives HERE, at the call site, not inside _shared/hyperpay.ts
+    // (which passes merchantTransactionId through raw). That is deliberate and
+    // differs from the admin dashboard repo, which caps inside its builder
+    // because its `plan-{uuid}` call site is 41 chars and not pre-capped. Both
+    // mechanisms are load-bearing where they sit; do not unify them — it would
+    // change the value sent to the gateway for every payment, for no gain.
+    const merchantTxnId = (isGroup
+      ? `booking-venue-${customParameter}`
+      : `booking-${customParameter}`
+    ).slice(0, 32);
 
-    const waylBody = {
-      env:             WAYL_ENV,
-      referenceId,
-      total:           finalIqd,
-      currency:        "IQD",
-      customParameter,
-      lineItem: [
-        { label: lineItemLabel, amount: finalIqd, type: "increase" },
-      ],
-      webhookUrl:     WAYL_WEBHOOK_URL,
-      webhookSecret:  WAYL_WEBHOOK_SECRET,
-      redirectionUrl: redirectUrl,
-    };
+    // cfg() reads HYPERPAY_* from the environment and normalises HYPERPAY_ENV
+    // ("live"/"prod" ⇒ prod, anything else ⇒ test) via normalizeEnv().
+    const hpConfig = cfg();
 
-    const waylRes = await fetch(`${WAYL_BASE}/api/v1/links`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-WAYL-AUTHENTICATION": WAYL_API_KEY,
-      },
-      body: JSON.stringify(waylBody),
-    });
+    // tokenize: every checkout carries createRegistration + CIT standing
+    // instruction (the dashboard does this on all checkouts — proven with this
+    // acquirer). The card is only PERSISTED if the user opts in: verify-payment
+    // saves the registrationId into bookings.user_payment_tokens when the app
+    // passes save_card=true.
+    const checkout = await createCheckout(
+      { amount: Math.round(finalIqd), merchantTransactionId: merchantTxnId, tokenize: true },
+      hpConfig,
+    );
 
-    if (!waylRes.ok) {
-      const waylErr = await waylRes.json().catch(() => ({}));
-      throw new Error(`Wayl error ${waylRes.status}: ${JSON.stringify(waylErr)}`);
+    if (!checkout.id) {
+      throw new Error(
+        `HyperPay checkout error: ${JSON.stringify(checkout.result ?? checkout)}`,
+      );
     }
 
-    const waylJson = await waylRes.json() as { data: { id: string; url: string; code?: string } };
-    const paymentUrl = waylJson.data.url;
-    const waylCode   = waylJson.data.code;
+    const checkoutId  = checkout.id;
+    const paymentMode = hpConfig.env === "prod" ? "LIVE" : "TEST";
 
     // commissionPct was already resolved above (shared with the cash path).
 
@@ -483,8 +479,12 @@ Deno.serve(async (req: Request) => {
           headers: { ...svc, "Accept-Profile": "bookings", "Content-Profile": "bookings" },
           body: JSON.stringify({
             payment_id:           referenceId,
+            payment_method:       "hyperpay",
             commission_pct:       commissionPct,
-            amount_iqd:           finalIqd,
+            // Must match the amount actually sent to the gateway above
+            // (Math.round(finalIqd)) — IQD is 0-decimal, so an unrounded value
+            // here would let the DB and HyperPay disagree.
+            amount_iqd:           Math.round(finalIqd),
             original_amount_iqd:  subtotalIqd,
             discount_amount_iqd:  discountAmount,
             discount_source:      discountSource,
@@ -494,7 +494,6 @@ Deno.serve(async (req: Request) => {
             merchant_discount_id: merchantDiscountId,
             source,
             guest_name:           body.guest_name ?? null,
-            ...(waylCode ? { wayl_code: waylCode } : {}),
           }),
         },
       );
@@ -509,13 +508,13 @@ Deno.serve(async (req: Request) => {
           method: "PATCH",
           headers: { ...svc, "Accept-Profile": "bookings", "Content-Profile": "bookings" },
           body: JSON.stringify({
+            payment_method:      "hyperpay",
             commission_pct:      commissionPct,
             original_amount_iqd: null, // per-seat, see below
             discount_source:     discountSource,
             auto_discount_id:    autoDiscountId,
             source,
             guest_name:          body.guest_name ?? null,
-            ...(waylCode ? { wayl_code: waylCode } : {}),
           }),
         },
       );
@@ -526,7 +525,8 @@ Deno.serve(async (req: Request) => {
     return json({
       booking_id:  !isGroup ? rpcResult.id : undefined,
       group_id:    isGroup  ? rpcResult.group_id : undefined,
-      payment_url: paymentUrl,
+      checkout_id:  checkoutId,
+      payment_mode: paymentMode,
       hold_until:  rpcResult.hold_until ?? rpcResult.expires_at,
       reference_id: referenceId,
       amount_iqd:          finalIqd,
