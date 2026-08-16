@@ -1,5 +1,5 @@
 /**
- * create-membership — creates a membership record + Wayl payment link.
+ * create-membership — creates a membership record + HyperPay checkout.
  *
  * Flow:
  *   1. Validate caller JWT
@@ -9,19 +9,22 @@
  *   3. Call bookings.create_membership RPC (inserts pending row at subtotal)
  *   4. Apply discount server-side (promo OR auto), persist audit columns + final
  *      amount on the membership row.
- *   5. Create a Wayl payment link for the *final* amount.
+ *   5. Create a HyperPay checkout for the *final* amount.
  *   6. Persist payment reference + commission, return
- *      { membership_id, payment_url, reference_id }.
+ *      { membership_id, checkout_id, payment_mode, reference_id }, or
+ *      { membership_id, cash: true } when the customer pays at the venue.
  *
  * referenceId format:
  *   membership_{membership_id}_{timestamp}
  *
  * Env vars required:
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY
- *   WAYL_API_KEY, WAYL_WEBHOOK_SECRET, WAYL_WEBHOOK_URL
- *   WAYL_ENV               — "live" | "test" (default: "live")
- *   APP_DEEP_LINK_BASE     — e.g. "wansa://payment"
+ *   HYPERPAY_ENTITY_ID, HYPERPAY_AUTH_TOKEN — see _shared/hyperpay.ts
+ *   HYPERPAY_ENV           — "live"/"prod" ⇒ prod, anything else ⇒ test
+ *   HYPERPAY_BASE          — set explicitly; otherwise selected by env
  */
+
+import { cfg, createCheckout } from "../_shared/hyperpay.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,19 +32,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const WAYL_BASE = "https://api.thewayl.com";
-
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   const SUPABASE_URL        = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_KEY         = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const WAYL_API_KEY        = Deno.env.get("WAYL_API_KEY")!;
-  const WAYL_WEBHOOK_SECRET = Deno.env.get("WAYL_WEBHOOK_SECRET")!;
-  const WAYL_WEBHOOK_URL    = Deno.env.get("WAYL_BOOKING_WEBHOOK_URL") ?? Deno.env.get("WAYL_WEBHOOK_URL")!;
-  const APP_DEEP_LINK       = Deno.env.get("APP_DEEP_LINK_BASE") ?? "wansa://payment";
-  const WAYL_ENV            = Deno.env.get("WAYL_ENV") ?? "live";
 
   try {
     // ── Auth ────────────────────────────────────────────────────────────────
@@ -67,7 +63,7 @@ Deno.serve(async (req: Request) => {
       promo_code?: string;
       guest_name?: string;
       client?: "dashboard";
-      payment_method?: "wayl" | "cash";
+      payment_method?: "hyperpay" | "cash";
     };
     if (!body.place_id) return json({ error: "place_id is required" }, 400);
     if (!body.plan_id)  return json({ error: "plan_id is required" }, 400);
@@ -106,7 +102,7 @@ Deno.serve(async (req: Request) => {
     // EVERY dashboard-only power: the free-purchase path (payment toggle OFF) and
     // the `source` label. Without it, a merchant buying their own place's
     // membership from the MOBILE app would hit the free path when their toggle is
-    // off, returning { free: true } with no payment_url — the app then errors on
+    // off, returning { free: true } with no checkout_id — the app then errors on
     // the missing link while the membership is already created. Gating on the
     // hint keeps the toggle scoped to the dashboard; mobile always requires payment.
     const isDashboardPurchase = hasDashboardRole && body.client === "dashboard";
@@ -163,7 +159,7 @@ Deno.serve(async (req: Request) => {
     const promoCodeId     = discount.promoCodeId;
     const autoDiscountId  = discount.autoDiscountId;
 
-    // ── Look up merchant commission (needed by both the cash and Wayl paths) ──
+    // ── Look up merchant commission (needed by both the cash and card paths) ──
     // Priority: temp override (when current Asia/Baghdad date is in window)
     //           → merchant.commission_percentage → 12% default.
     let commissionPct: number = 12;
@@ -258,46 +254,33 @@ Deno.serve(async (req: Request) => {
       return json({ membership_id: membershipId, cash: true, amount_iqd: finalIqd, source }, 200);
     }
 
-    // ── Create Wayl payment link for the FINAL amount ──────────────────────
-    // Carry referenceId + category to the redirect target so the post-payment
-    // landing page (mobile deep link OR the dashboard confirmation page) can
-    // look the membership up on a fresh page load. A caller-supplied
-    // redirect_url is treated as a base; we append the params either way.
-    const redirectBase = body.redirect_url ?? APP_DEEP_LINK;
-    const redirectSep  = redirectBase.includes("?") ? "&" : "?";
-    const redirectUrl  = `${redirectBase}${redirectSep}referenceId=${referenceId}&category=membership`;
+    // ── Create HyperPay checkout for the FINAL amount ─────────────────────
+    // The app submits the card via the native mSDK using this checkout id.
+    //
+    // merchantTransactionId: dashes only, no underscore, capped at 32 chars —
+    // membershipId is a UUID, so the value is already dash-safe. Any deviation
+    // gets 800.100.156 "format error" from this acquirer. Nothing parses it
+    // back; reconciliation is by checkout_id + reference_id.
+    const merchantTxnId = `membership-${membershipId}`.slice(0, 32);
 
-    const waylBody = {
-      env:            WAYL_ENV,
-      referenceId,
-      total:          finalIqd,
-      currency:       "IQD",
-      customParameter: membershipId,
-      lineItem: [
-        { label: "Gym membership", amount: finalIqd, type: "increase" },
-      ],
-      webhookUrl:     WAYL_WEBHOOK_URL,
-      webhookSecret:  WAYL_WEBHOOK_SECRET,
-      redirectionUrl: redirectUrl,
-    };
+    const hpConfig = cfg();
 
-    const waylRes = await fetch(`${WAYL_BASE}/api/v1/links`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-WAYL-AUTHENTICATION": WAYL_API_KEY,
-      },
-      body: JSON.stringify(waylBody),
-    });
+    // tokenize: every checkout carries createRegistration + CIT standing
+    // instruction. The card is only PERSISTED when the app passes
+    // save_card=true and verify-payment writes bookings.user_payment_tokens.
+    const checkout = await createCheckout(
+      { amount: Math.round(finalIqd), merchantTransactionId: merchantTxnId, tokenize: true },
+      hpConfig,
+    );
 
-    if (!waylRes.ok) {
-      const waylErr = await waylRes.json().catch(() => ({}));
-      throw new Error(`Wayl error ${waylRes.status}: ${JSON.stringify(waylErr)}`);
+    if (!checkout.id) {
+      throw new Error(
+        `HyperPay checkout error: ${JSON.stringify(checkout.result ?? checkout)}`,
+      );
     }
 
-    const waylJson = await waylRes.json() as { data: { id: string; url: string; code?: string } };
-    const paymentUrl = waylJson.data.url;
-    const waylCode   = waylJson.data.code;
+    const checkoutId  = checkout.id;
+    const paymentMode = hpConfig.env === "prod" ? "LIVE" : "TEST";
 
     // commissionPct was already resolved above (shared with the cash path).
 
@@ -313,8 +296,10 @@ Deno.serve(async (req: Request) => {
         },
         body: JSON.stringify({
           payment_id:          referenceId,
+          payment_method:      "hyperpay",
           commission_pct:      commissionPct,
-          amount_iqd:          finalIqd,
+          // Must match the amount actually sent to the gateway above.
+          amount_iqd:          Math.round(finalIqd),
           original_amount_iqd: subtotalIqd,
           discount_amount_iqd: discountAmount,
           discount_source:     discountSource,
@@ -323,14 +308,14 @@ Deno.serve(async (req: Request) => {
           auto_discount_id:    autoDiscountId,
           source,
           guest_name:          body.guest_name ?? null,
-          ...(waylCode ? { wayl_code: waylCode } : {}),
         }),
       },
     );
 
     return json({
       membership_id: membershipId,
-      payment_url:   paymentUrl,
+      checkout_id:   checkoutId,
+      payment_mode:  paymentMode,
       reference_id:  referenceId,
       amount_iqd:    finalIqd,
       original_amount_iqd: subtotalIqd,
