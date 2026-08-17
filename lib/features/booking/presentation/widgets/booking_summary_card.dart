@@ -95,8 +95,14 @@ class BookingSummaryCard extends StatelessWidget {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final isDisabled = isLoading || onAction == null;
     // The disabled pill is a light grey, so white-on-grey would be invisible
-    // in light theme — use the on-surface variant colour instead.
-    final foreground = isDisabled ? colorScheme.onSurfaceVariant : Colors.white;
+    // in light theme — use the app's disabled-text colour instead. This
+    // scheme doesn't override onSurfaceVariant, so its Material default
+    // (~#49454F) reads as near-black rather than a clearly "disabled" grey.
+    final foreground = isDisabled
+        ? (Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkTextDisabled
+              : AppColors.lightTextDisabled)
+        : Colors.white;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),

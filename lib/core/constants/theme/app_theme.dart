@@ -21,7 +21,12 @@ class AppTheme {
       onPrimary: AppColors.white,
       secondary: AppColors.lightGreenSecondary,
       onSecondary: AppColors.black,
-      error: AppColors.lightRedPrimary,
+      // lightRedPrimary is a pale pink meant for background tints, not a
+      // foreground error color — every place that reads colorScheme.error
+      // directly (SnackBars, icons, status text) was rendering pink instead
+      // of red. lightRedSecondary is the actual red already used elsewhere
+      // in the app (discount badges, danger banners).
+      error: AppColors.lightRedSecondary,
       onError: AppColors.white,
       surface: AppColors.lightPrimary,
       onSurface: AppColors.lightTextPrimary,
@@ -367,7 +372,10 @@ class AppTheme {
       onPrimary: AppColors.white,
       secondary: AppColors.darkGreenSecondary,
       onSecondary: AppColors.white,
-      error: AppColors.darkRedPrimary,
+      // Same fix as the light scheme: darkRedPrimary is a muted background
+      // tint, not a real red — use darkRedSecondary for the foreground
+      // error color so cs.error reads as red, not a dull brownish pink.
+      error: AppColors.darkRedSecondary,
       onError: AppColors.white,
       surface: AppColors.darkPrimary,
       onSurface: AppColors.darkTextPrimary,
