@@ -19,7 +19,6 @@ import android.view.WindowManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -100,7 +99,7 @@ class MainActivity : FlutterFragmentActivity(), ITransactionListener {
     private val challengeUiHook = object : Application.ActivityLifecycleCallbacks {
         override fun onActivityStarted(activity: Activity) {
             if (activity !is AsyncPaymentActivity) return
-            activity.findViewById<ImageButton>(R.id.wensa_challenge_close)
+            activity.findViewById<TextView>(R.id.wensa_challenge_close)
                 ?.setOnClickListener { activity.onBackPressedDispatcher.onBackPressed() }
         }
 
@@ -261,13 +260,15 @@ class MainActivity : FlutterFragmentActivity(), ITransactionListener {
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(56),
             )
         }
-        val closeBtn = ImageButton(this).apply {
-            setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
-            setColorFilter(Color.WHITE)
+        val closeBtn = TextView(this).apply {
+            text = getString(R.string.wensa_challenge_cancel)
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            gravity = Gravity.CENTER
             background = null
-            setPadding(dp(12), 0, dp(12), 0)
+            setPadding(dp(16), 0, dp(16), 0)
         }
-        toolbar.addView(closeBtn, LinearLayout.LayoutParams(dp(48), dp(56)))
+        toolbar.addView(closeBtn, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(56)))
         val urlLabel = TextView(this).apply {
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)

@@ -300,7 +300,7 @@ final class ChallengeWebViewController: UIViewController, WKNavigationDelegate {
     super.viewDidLoad()
     title = url.host
     navigationItem.leftBarButtonItem = UIBarButtonItem(
-      barButtonSystemItem: .close, target: self, action: #selector(cancelTapped))
+      barButtonSystemItem: .cancel, target: self, action: #selector(cancelTapped))
     webView = WKWebView(frame: .zero)
     webView.navigationDelegate = self
     view = webView

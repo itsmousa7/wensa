@@ -20,14 +20,20 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <ImageButton
+        <TextView
             android:id="@+id/wensa_challenge_close"
-            android:layout_width="48dp"
+            android:layout_width="wrap_content"
             android:layout_height="56dp"
+            android:layout_marginStart="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@android:string/cancel"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:tint="@android:color/white" />
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingStart="8dp"
+            android:paddingEnd="16dp"
+            android:text="@string/wensa_challenge_cancel"
+            android:textColor="@android:color/white"
+            android:textSize="15sp" />
 
         <TextView
             android:layout_width="0dp"

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="wensa_challenge_title">التحقق الآمن</string>
+    <string name="wensa_challenge_cancel">إلغاء</string>
 </resources>
