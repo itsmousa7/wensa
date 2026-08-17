@@ -173,6 +173,25 @@ export function isTransient(code: string | undefined | null): boolean {
   return code === "800.120.100" || (!!code && code.startsWith("900."));
 }
 
+/**
+ * 200.300.404 "invalid or missing parameter" on a registration-payment (MIT)
+ * charge — in practice this is the acquirer rejecting a REUSED
+ * merchantTransactionId, not a card decline. charge-saved-card derives a
+ * DETERMINISTIC id per (kind, id) to prevent double-charging on a genuine
+ * double-tap; the cost is that if an earlier attempt for the same id was
+ * ever sent (even one that came back pending/transient and was never
+ * persisted, so we have no local record of it), a later attempt resubmits
+ * the identical id and the acquirer answers 200.300.404 for the
+ * resubmission itself — regardless of whether the original charge was
+ * captured. So this must be treated the same as isPending/isTransient: the
+ * outcome is UNKNOWN, never a confirmed decline. (Observed in production:
+ * HyperPay's own portal showed the transaction settled while this code
+ * caused the booking to be auto-cancelled — see charge-saved-card.)
+ */
+export function isDuplicateMerchantTxnId(code: string | undefined | null): boolean {
+  return code === "200.300.404";
+}
+
 export interface CheckoutOptions {
   amount: number;                   // IQD, integer (0-decimal currency)
   merchantTransactionId?: string;   // omitted entirely when not provided

@@ -24,14 +24,19 @@ class HyperpayPaymentPage {
     onPaymentFailed,
     void Function()? onPaymentCancelled,
   }) {
-    // Drag-down (and tap-outside) dismissal is allowed: leaving the sheet
-    // without an outcome fires onPaymentCancelled via the content's dispose,
-    // same as the X button.
+    // Drag and tap-outside dismissal are disabled: both bypass the route's
+    // widget tree (BottomSheet.onClosing calls Navigator.pop directly, which
+    // PopScope cannot intercept — see PaymentMethodSheet/CardPaymentScreen),
+    // so a mid-charge swipe or stray tap could close the sheet while the
+    // charge is still in flight, firing onPaymentCancelled (and releasing
+    // the booking hold) even though the card may end up charged. The X
+    // button is the only close affordance, and it disables itself while a
+    // charge is in flight.
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      isDismissible: true,
-      enableDrag: true,
+      isDismissible: false,
+      enableDrag: false,
       useSafeArea: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(

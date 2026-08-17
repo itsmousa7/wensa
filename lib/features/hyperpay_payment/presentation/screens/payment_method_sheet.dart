@@ -190,44 +190,52 @@ class _PaymentMethodSheetState extends ConsumerState<PaymentMethodSheet> {
         if (cards.isEmpty) return _cardForm();
 
         final charging = _chargingCardId != null;
-        return PaymentSheetShell(
-          onClose: charging ? null : _handleClose,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final card in cards) ...[
-                SavedCardTile(
-                  card: card,
-                  trailing: _chargingCardId == card.id
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.chevron_right),
-                  enabled: !charging,
-                  onTap: () => _payWithCard(card),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-              ],
-              const SizedBox(height: 4.0),
-              UseNewCardButton(
-                enabled: !charging,
-                onTap: () => setState(() => _useNewCard = true),
-              ),
-              if (_errorText != null) ...[
-                const SizedBox(height: AppSpacing.sm),
-                // Selectable so the appended transaction id can be copied.
-                SelectableText(
-                  _errorText!,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.danger,
+        return PopScope(
+          // Blocks the system back gesture/button while a saved-card charge
+          // is in flight — mirrors the X button and card-tile disabling
+          // below. Without this, backing out mid-charge would fire
+          // onPaymentCancelled (releasing the booking hold) even though the
+          // card may end up charged.
+          canPop: !charging,
+          child: PaymentSheetShell(
+            onClose: charging ? null : _handleClose,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final card in cards) ...[
+                  SavedCardTile(
+                    card: card,
+                    trailing: _chargingCardId == card.id
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.chevron_right),
+                    enabled: !charging,
+                    onTap: () => _payWithCard(card),
                   ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+                const SizedBox(height: 4.0),
+                UseNewCardButton(
+                  enabled: !charging,
+                  onTap: () => setState(() => _useNewCard = true),
                 ),
+                if (_errorText != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  // Selectable so the appended transaction id can be copied.
+                  SelectableText(
+                    _errorText!,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.danger,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.sm),
               ],
-              const SizedBox(height: AppSpacing.sm),
-            ],
+            ),
           ),
         );
       },

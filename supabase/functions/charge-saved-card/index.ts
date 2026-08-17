@@ -52,6 +52,7 @@ import {
   cfg,
   chargeRegistration,
   extractPaymentDetails,
+  isDuplicateMerchantTxnId,
   isPaid,
   isPending,
   isTransient,
@@ -219,19 +220,32 @@ Deno.serve(async (req: Request) => {
     // booking on money that was taken, and would poison any reconciliation
     // sweep (the row would look like a settled failure). So: persist nothing,
     // and answer with a distinct retryable signal instead of paid:false alone.
-    if (isPending(code) || isTransient(code)) {
+    //
+    // 200.300.404 gets the SAME treatment but is NOT retryable: it means the
+    // acquirer rejected this merchantTransactionId as already-used, which can
+    // only happen if some earlier attempt (possibly one we never persisted,
+    // e.g. a pending/transient result) already reached HyperPay under this
+    // id — see isDuplicateMerchantTxnId. Since the id is deterministic, a
+    // client retry would resend the exact same id and collide again, so this
+    // needs manual reconciliation, not another tap.
+    if (isPending(code) || isTransient(code) || isDuplicateMerchantTxnId(code)) {
       console.error(
         `charge-saved-card: NON-FINAL result — outcome unknown, may be captured. ` +
         `kind=${body.kind} id=${body.id} amount=${amount} code=${code} ` +
         `mtx=${merchantTransactionId} uniqueId=${details.uniqueId} desc=${description}`,
       );
+      const duplicate = isDuplicateMerchantTxnId(code);
       return json({
         paid: false,
         pending: true,
-        retryable: true,
+        retryable: !duplicate,
         status: "pending",
         code,
-        description,
+        description: duplicate
+          ? "We could not confirm this payment automatically. Please check " +
+            "your bookings or contact support with this transaction ID " +
+            "before trying again."
+          : description,
         merchant_transaction_id: merchantTransactionId,
       }, 200);
     }

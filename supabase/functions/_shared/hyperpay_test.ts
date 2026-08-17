@@ -13,6 +13,7 @@ import {
   DEFAULT_BASE_TEST,
   envPrefix,
   extractPaymentDetails,
+  isDuplicateMerchantTxnId,
   isPaid,
   isPaymentSuccessful,
   isPending,
@@ -109,6 +110,17 @@ Deno.test("isTransient", () => {
   assertFalse(isTransient(undefined));
   assertFalse(isTransient(null));
   assertFalse(isTransient(""));
+});
+
+// ── isDuplicateMerchantTxnId — 200.300.404 on a MIT retry ───────────────────
+Deno.test("isDuplicateMerchantTxnId", () => {
+  assert(isDuplicateMerchantTxnId("200.300.404"));
+  assertFalse(isDuplicateMerchantTxnId("800.100.156"));
+  assertFalse(isDuplicateMerchantTxnId("000.200.000"));
+  assertFalse(isDuplicateMerchantTxnId("900.100.300"));
+  assertFalse(isDuplicateMerchantTxnId(undefined));
+  assertFalse(isDuplicateMerchantTxnId(null));
+  assertFalse(isDuplicateMerchantTxnId(""));
 });
 
 // ── REQUEST-BODY KEY SETS (the 800.100.156 guard) ───────────────────────────

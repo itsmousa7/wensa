@@ -8,7 +8,9 @@ enum PaymentAbort {
   /// HyperPay returned a terminal decline.
   declined,
 
-  /// The user closed the sheet (X, drag, system back) before an outcome.
+  /// The user closed the sheet (X, or system back while idle) before an
+  /// outcome. Drag and tap-outside dismissal are disabled, and every close
+  /// path is blocked while a charge is in flight.
   cancelled,
 }
 

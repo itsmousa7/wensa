@@ -359,121 +359,132 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
       color: theme.colorScheme.onSurface,
     );
 
-    return PaymentSheetShell(
-      onClose: _handleBack,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Directionality(
-            textDirection: TextDirection.ltr,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextField(
-                  key: const Key('card_number'),
-                  style: fieldStyle,
-                  controller: _numberController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(16),
-                    _CardNumberFormatter(),
-                  ],
-                  decoration: _decoration(
-                    context,
-                    '4111 1111 1111 1111',
-                    errorText: _numberError,
-                    suffixIcon: _cardIcon(brand),
+    return PopScope(
+      // Blocks the system back gesture/button while a charge is in flight —
+      // the X button and Pay button are the only other close/submit paths,
+      // and both already disable themselves via _processing. Without this,
+      // backing out mid-charge would fire onPaymentCancelled (releasing the
+      // booking hold) even though the card may end up charged.
+      canPop: !_processing,
+      child: PaymentSheetShell(
+        onClose: _processing ? null : _handleBack,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    key: const Key('card_number'),
+                    style: fieldStyle,
+                    controller: _numberController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(16),
+                      _CardNumberFormatter(),
+                    ],
+                    decoration: _decoration(
+                      context,
+                      '4111 1111 1111 1111',
+                      errorText: _numberError,
+                      suffixIcon: _cardIcon(brand),
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        key: const Key('expiry'),
-                        style: fieldStyle,
-                        controller: _expiryController,
-                        focusNode: _expiryFocus,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(4),
-                          _ExpiryDateFormatter(),
-                        ],
-                        decoration: _decoration(
-                          context,
-                          '12/31',
-                          errorText: _expiryError,
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          key: const Key('expiry'),
+                          style: fieldStyle,
+                          controller: _expiryController,
+                          focusNode: _expiryFocus,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(4),
+                            _ExpiryDateFormatter(),
+                          ],
+                          decoration: _decoration(
+                            context,
+                            '12/31',
+                            errorText: _expiryError,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: TextField(
-                        key: const Key('cvv'),
-                        style: fieldStyle,
-                        controller: _cvvController,
-                        focusNode: _cvvFocus,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(3),
-                        ],
-                        decoration: _decoration(
-                          context,
-                          'CVV',
-                          errorText: _cvvError,
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: TextField(
+                          key: const Key('cvv'),
+                          style: fieldStyle,
+                          controller: _cvvController,
+                          focusNode: _cvvFocus,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(3),
+                          ],
+                          decoration: _decoration(
+                            context,
+                            'CVV',
+                            errorText: _cvvError,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          // Save-card opt-in: the checkout already carries the CIT
-          // registration; checking this asks verify-payment to persist
-          // the token for one-tap payments.
-          InkWell(
-            key: const Key('save_card_toggle'),
-            borderRadius: AppSpacing.borderRadiusLG,
-            onTap: _processing
-                ? null
-                : () => setState(() => _saveCard = !_saveCard),
-            child: Row(
-              children: [
-                Checkbox(
-                  value: _saveCard,
-                  onChanged: _processing
-                      ? null
-                      : (v) => setState(() => _saveCard = v ?? false),
-                ),
-                Expanded(
-                  child: Text(s.saveCardForFuturePayments, style: fieldStyle),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          PrimaryActionButton(
-            label: s.pay,
-            isLoading: _processing,
-            onTap: _formValid && !_processing ? _pay : null,
-          ),
-          if (_errorText != null) ...[
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              _errorText!,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: AppColors.danger,
+                    ],
+                  ),
+                ],
               ),
             ),
+            const SizedBox(height: AppSpacing.sm),
+            // Save-card opt-in: the checkout already carries the CIT
+            // registration; checking this asks verify-payment to persist
+            // the token for one-tap payments.
+            InkWell(
+              key: const Key('save_card_toggle'),
+              borderRadius: AppSpacing.borderRadiusLG,
+              onTap: _processing
+                  ? null
+                  : () => setState(() => _saveCard = !_saveCard),
+              child: Row(
+                children: [
+                  Checkbox(
+                    value: _saveCard,
+                    onChanged: _processing
+                        ? null
+                        : (v) => setState(() => _saveCard = v ?? false),
+                  ),
+                  Expanded(
+                    child: Text(
+                      s.saveCardForFuturePayments,
+                      style: fieldStyle,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            PrimaryActionButton(
+              label: s.pay,
+              isLoading: _processing,
+              onTap: _formValid && !_processing ? _pay : null,
+            ),
+            if (_errorText != null) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                _errorText!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.danger,
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

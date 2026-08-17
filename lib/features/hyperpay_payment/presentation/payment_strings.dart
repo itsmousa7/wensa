@@ -40,12 +40,12 @@ class PaymentStrings {
     'This slot is no longer available. Please start again.',
   );
   String get couldNotConfirmPayment => _pick(
-    'تعذّر تأكيد الدفع — تحقق من الاتصال واضغط ادفع مرة أخرى.',
-    'Could not confirm payment — check your connection and tap Pay again.',
+    'تعذّر تأكيد الدفع. تحقق من الاتصال واضغط ادفع مرة أخرى.',
+    'Could not confirm payment. Check your connection and tap Pay again.',
   );
   String get couldNotCompletePayment => _pick(
-    'تعذّر إتمام الدفع — تحقق من الاتصال وحاول مرة أخرى.',
-    'Could not complete payment — check your connection and try again.',
+    'تعذّر إتمام الدفع. تحقق من الاتصال وحاول مرة أخرى.',
+    'Could not complete payment. Check your connection and try again.',
   );
   String get paymentFailedTryAgain => _pick(
     'فشلت عملية الدفع. يرجى المحاولة مرة أخرى.',
