@@ -28,7 +28,9 @@
  * Checkouts are created with createRegistration=true (create-booking), so a
  * successful status result carries a registrationId. When save_card is true
  * we upsert it into bookings.user_payment_tokens for the caller (best-effort,
- * never fails the payment).
+ * never fails the payment) — unless the admin dashboard's card-saving toggle
+ * (public.app_settings key card_saving_enabled) is off, in which case the
+ * save is silently skipped and the payment still succeeds.
  *
  * Env: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
  *      HYPERPAY_ENV (selects the LIVE vs TEST credential set — see _shared/hyperpay.ts)
@@ -56,6 +58,26 @@ import {
 } from "../_shared/payment_flow.ts";
 
 /**
+ * Whether the admin dashboard's "allow saving cards" toggle is on
+ * (public.app_settings, key card_saving_enabled). Missing row or any value
+ * other than the literal string "false" defaults to enabled, matching the
+ * seeded default.
+ */
+async function isCardSavingEnabled(supabaseUrl: string, serviceKey: string): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/app_settings?key=eq.card_saving_enabled&select=value`,
+      { headers: serviceHeaders(serviceKey) },
+    );
+    if (!res.ok) return true;
+    const rows = await res.json() as Array<{ value: string }>;
+    return rows[0]?.value !== "false";
+  } catch {
+    return true;
+  }
+}
+
+/**
  * Upsert the card token from a successful payment result into
  * bookings.user_payment_tokens for the JWT's user. Conflict target is the
  * (user_id, brand, last4, exp_month, exp_year) unique index so re-saving the
@@ -69,6 +91,8 @@ async function saveCardToken(
 ): Promise<void> {
   try {
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    if (!(await isCardSavingEnabled(supabaseUrl, SERVICE_KEY))) return;
+
     const userId = jwtSub(jwt);
     if (!userId) return;
 
