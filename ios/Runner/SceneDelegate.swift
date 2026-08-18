@@ -299,8 +299,12 @@ final class ChallengeWebViewController: UIViewController, WKNavigationDelegate {
   override func viewDidLoad() {
     super.viewDidLoad()
     title = url.host
+    // A custom-titled item, not `barButtonSystemItem: .cancel`: since iOS 26 the
+    // system Cancel item is drawn as a circular X glyph instead of the word, and
+    // the bare icon reads as ambiguous mid-challenge. A plain title stays text.
     navigationItem.leftBarButtonItem = UIBarButtonItem(
-      barButtonSystemItem: .cancel, target: self, action: #selector(cancelTapped))
+      title: NSLocalizedString("Cancel", comment: "3DS challenge dismiss button"),
+      style: .plain, target: self, action: #selector(cancelTapped))
     webView = WKWebView(frame: .zero)
     webView.navigationDelegate = self
     view = webView
