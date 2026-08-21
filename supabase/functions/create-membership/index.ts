@@ -33,6 +33,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+/**
+ * Platform cut when the merchant has no `commission_percentage` of their own
+ * and no active temporary override. Mirrored in the admin dashboard's
+ * `src/shared/pricing.ts` (DEFAULT_COMMISSION_PCT) — change both together.
+ */
+const DEFAULT_COMMISSION_PCT = 7;
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -162,8 +169,8 @@ Deno.serve(async (req: Request) => {
 
     // ── Look up merchant commission (needed by both the cash and card paths) ──
     // Priority: temp override (when current Asia/Baghdad date is in window)
-    //           → merchant.commission_percentage → 12% default.
-    let commissionPct: number = 12;
+    //           → merchant.commission_percentage → DEFAULT_COMMISSION_PCT.
+    let commissionPct: number = DEFAULT_COMMISSION_PCT;
     if (merchantId) {
       try {
         const merchantRes = await fetch(
@@ -180,7 +187,7 @@ Deno.serve(async (req: Request) => {
           }[];
           commissionPct = resolveCommissionPct(merchant);
         }
-      } catch { /* default 12% */ }
+      } catch { /* fall through to the default */ }
     }
 
     // ── Free path: dashboard membership for a merchant with payment toggle OFF ──
@@ -617,7 +624,7 @@ function resolveCommissionPct(merchant: {
   temp_commission_from: string | null;
   temp_commission_to:   string | null;
 } | undefined): number {
-  if (!merchant) return 12;
+  if (!merchant) return DEFAULT_COMMISSION_PCT;
   const tempPct = merchant.temp_commission_percentage;
   const from = merchant.temp_commission_from?.slice(0, 10) ?? null;
   const to   = merchant.temp_commission_to?.slice(0, 10) ?? null;
@@ -626,5 +633,5 @@ function resolveCommissionPct(merchant: {
     if (today >= from && today <= to) return Number(tempPct);
   }
   if (merchant.commission_percentage != null) return Number(merchant.commission_percentage);
-  return 12;
+  return DEFAULT_COMMISSION_PCT;
 }
