@@ -19,8 +19,7 @@ abstract class Booking with _$Booking {
     @Default(0) int amountIqd,
     String? paymentId,
     String? paymentStatus,
-    @Default(PaymentMethod.wayl) PaymentMethod paymentMethod,
-    String? waylCode,
+    @Default(PaymentMethod.hyperpay) PaymentMethod paymentMethod,
     @Default('') String qrToken,
     String? holdUntil,
     @Default(<String, dynamic>{}) Map<String, dynamic> categoryData,
@@ -45,7 +44,6 @@ abstract class Booking with _$Booking {
     paymentMethod: PaymentMethodFromString.fromString(
       json['payment_method'] ?? '',
     ),
-    waylCode: json['wayl_code'],
     qrToken: json['qr_token'] ?? '',
     holdUntil: json['hold_until'],
     categoryData: json['category_data'] != null

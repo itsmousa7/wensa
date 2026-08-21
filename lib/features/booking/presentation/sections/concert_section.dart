@@ -969,7 +969,7 @@ class _ReviewSheet extends ConsumerWidget {
                       final method = selectedPaymentMethod;
                       if (method == null) return;
                       // Keep the sheet visible while create-booking runs.
-                      // The parent listener pops it once the Wayl URL is
+                      // The parent listener pops it once the checkout URL is
                       // ready (see `_dismissCheckoutSheet`).
                       ref
                           .read(bookingSubmitProvider.notifier)
@@ -1235,7 +1235,7 @@ class _GASheetState extends ConsumerState<_GASheet> {
                         final method = _paymentMethod;
                         if (method == null) return;
                         // Keep the sheet visible until the parent's
-                        // listener dismisses it once the Wayl URL is
+                        // listener dismisses it once the checkout URL is
                         // available.
                         ref
                             .read(bookingSubmitProvider.notifier)

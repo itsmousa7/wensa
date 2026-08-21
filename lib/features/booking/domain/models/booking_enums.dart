@@ -1,8 +1,6 @@
 enum BookingCategory { hourly, shift, reservation, venueSeat, membership }
 
-/// `wayl` is historical-only — it records bookings paid through Wayl while it
-/// was the PSP (2026-07-31 → 2026-08-16) and is never sent for a new booking.
-enum PaymentMethod { wayl, cash, hyperpay }
+enum PaymentMethod { cash, hyperpay }
 
 enum BookingStatus { pending, confirmed, completed, cancelled, expired, noShow, used }
 
@@ -101,13 +99,12 @@ extension PaymentMethodFromString on PaymentMethod {
         return PaymentMethod.cash;
       case 'hyperpay':
         return PaymentMethod.hyperpay;
-      case 'wayl':
-        return PaymentMethod.wayl;
       default:
-        // Unknown values fall back to `wayl`, which renders as "E-Payment".
-        // Never default to `cash` — that means "no money collected yet", so an
-        // unpaid booking would show as awaiting cash at the venue.
-        return PaymentMethod.wayl;
+        // Unknown values — including retired gateways on historical rows —
+        // fall back to `hyperpay`, which renders as "E-Payment". Never default
+        // to `cash`: that means "no money collected yet", so an already-paid
+        // booking would show as awaiting cash at the venue.
+        return PaymentMethod.hyperpay;
     }
   }
 }

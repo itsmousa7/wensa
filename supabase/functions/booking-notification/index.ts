@@ -3,7 +3,7 @@
  *
  * Called by:
  *   - DB trigger (pg_net) on bookings.bookings status → confirmed / cancelled / expired
- *   - booking-wayl-webhook after payment confirmation (belt-and-suspenders)
+ *   - verify-payment after payment confirmation (belt-and-suspenders)
  *
  * Payload: { booking_id: string, old_status: string, new_status: string }
  *
@@ -236,7 +236,7 @@ Deno.serve(async (req: Request) => {
     // ── Persist to the in-app notification center ─────────────────────────
     // profiles.user_notifications backs the app's inbox. Deduped on
     // (user_id, kind, data.<id>) so a re-fired trigger or a belt-and-suspenders
-    // caller (e.g. booking-wayl-webhook) doesn't create duplicate inbox rows.
+    // caller (e.g. verify-payment) doesn't create duplicate inbox rows.
     // Written regardless of push tokens so the entry survives even when the user
     // has no registered device.
     const idKey = isMembership ? "membership_id" : "booking_id";

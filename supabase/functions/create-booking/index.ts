@@ -22,9 +22,6 @@
  *                            (HYPERPAY_LIVE_* vs HYPERPAY_TEST_*) cfg() reads.
  *   HYPERPAY_{LIVE,TEST}_ENTITY_ID / _AUTH_TOKEN / _BASE — see _shared/hyperpay.ts
  *   MERCHANT_PORTAL_URL    — e.g. "http://localhost:5173" (QR deep-link host)
- *
- * Wayl is gone from this function. booking-action still refunds historical
- * payment_method='wayl' rows via _shared/wayl.ts — do not delete that module.
  */
 
 import { cfg, createCheckout } from "../_shared/hyperpay.ts";

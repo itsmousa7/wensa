@@ -127,10 +127,10 @@ void main() {
     expect(PaymentMethod.hyperpay.name, 'hyperpay');
   });
 
-  test('historical wayl rows still resolve', () {
-    // Bookings paid through Wayl between 2026-07-31 and the HyperPay return
-    // keep this value forever; the ticket UI renders it as "E-Payment".
-    expect(PaymentMethodFromString.fromString('wayl'), PaymentMethod.wayl);
+  test('a retired gateway on a historical row reads as e-payment', () {
+    // Rows written by a previous PSP keep its name forever. They are paid, so
+    // they must resolve to an electronic method, not to cash.
+    expect(PaymentMethodFromString.fromString('wayl'), PaymentMethod.hyperpay);
   });
 
   test('unknown payment_method never resolves to cash', () {

@@ -16,7 +16,7 @@ import UIKit
   }
 }
 
-// WKWebView (used by the webview_flutter plugin, e.g. the Wayl payment
+// WKWebView (used by the webview_flutter plugin, e.g. the 3DS challenge
 // screen) automatically shows a native form-navigation toolbar (prev/next
 // field chevrons + a Done checkmark) above the keyboard whenever a focused
 // <input> lives inside the page — the classic "this looks like a browser"

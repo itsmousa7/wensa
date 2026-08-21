@@ -14,7 +14,7 @@ full inventory, so the resubmission does not fail again on a second data type.
 |---|---|---|
 | Supabase (`qvozjwlkzordudkhamcu`) | account, profile, bookings, avatars, FCM tokens | ours (processor) |
 | Firebase Cloud Messaging | device push token | Google |
-| Wayl | card details, entered in Wayl's own hosted checkout WebView | third-party PSP |
+| HyperPay | card details, entered in the app's own card form and passed to the HyperPay SDK | third-party PSP |
 
 No analytics, crash-reporting, advertising, or attribution SDK is present —
 `pubspec.yaml` has only `firebase_core` and `firebase_messaging`. No location
@@ -22,9 +22,8 @@ permission is requested and no geolocation API is called.
 
 ## Data types to declare as COLLECTED
 
-All are transmitted off device. All are encrypted in transit (release builds
-verify certificates — the debug-only bypass in `wayl_api_service.dart` is gated
-on `kDebugMode`). None are ephemeral-only.
+All are transmitted off device. All are encrypted in transit. None are
+ephemeral-only.
 
 | Google data type | Category | Where it comes from | Purpose | Optional? |
 |---|---|---|---|---|
@@ -41,15 +40,17 @@ answer **yes** to "users can request that their data be deleted".
 
 ## Judgement calls worth reading before you submit
 
-- **Payment info.** Card details are typed into Wayl's hosted checkout inside an
-  in-app WebView. No card data touches Dart code or our backend, so this is not
-  declared as collected by the app. Some reviewers treat an in-app WebView as
-  in-app collection; if Play pushes back, declaring *Payment info → collected,
-  not shared, App functionality* is the safe resolution.
+- **Payment info — RE-CHECK THIS.** The app now renders its OWN card form
+  (`card_payment_screen.dart`) and hands the PAN, expiry and CVV to the native
+  HyperPay SDK through `hyperpay_channel.dart`. Card data therefore passes
+  through Dart, unlike the earlier hosted-checkout arrangement this file used to
+  describe. It is never stored and never reaches our backend, but *Payment info
+  → collected, not shared, App functionality* is now the defensible answer.
+  Confirm before the next submission.
 - **"Shared" vs "collected".** Supabase and Firebase process data on our behalf,
-  which Google treats as collection rather than sharing. Wayl is an independent
-  processor for payments. Confirm against Google's current definitions — this is
-  a policy question, not an engineering one.
+  which Google treats as collection rather than sharing. HyperPay is an
+  independent processor for payments. Confirm against Google's current
+  definitions — this is a policy question, not an engineering one.
 - **Avatars are world-readable.** `uploadAvatar` returns `getPublicUrl`, so the
   `avatars` bucket serves unauthenticated URLs. That is a product decision, not
   a form field, but it is worth knowing when answering the security questions.

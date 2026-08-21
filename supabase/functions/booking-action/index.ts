@@ -16,7 +16,6 @@
  * Output: { success: true, status: <new status> }
  */
 
-import { buildRefundReason, cfg, refundPayment } from "../_shared/wayl.ts";
 import { cfg as hyperpayCfg, reversePayment } from "../_shared/hyperpay.ts";
 import { isWithinRefundWindow } from "./refund.ts";
 
@@ -109,13 +108,6 @@ Deno.serve(async (req: Request) => {
         return json({ error: "Refund window has passed" }, 409);
       }
 
-      // Two gateways coexist here and always will:
-      //   'hyperpay' — every booking made since the 2026-08-16 return
-      //   'wayl'     — historical rows paid while Wayl was the PSP. They are
-      //                real money and some are still inside their refund
-      //                window, so this path must never be deleted.
-      const isHyperpay = row.payment_method === "hyperpay";
-
       // Refund the amount actually charged. A concert group shares ONE payment
       // while each row carries only its own seat's amount_iqd, so a per-row
       // amount would under-refund the customer.
@@ -126,43 +118,20 @@ Deno.serve(async (req: Request) => {
         return json({ error: "No refundable amount found" }, 409);
       }
 
-      // Wayl refunds key on OUR reference (the stored payment_id); HyperPay
-      // reverses against the gateway's own unique_id, which verify-payment
-      // recorded in bookings.payment_transactions.
-      const referenceId = row.payment_id;
-      let reversalId: string | null = null;
+      // A HyperPay reversal keys on the gateway's own unique_id, which
+      // verify-payment recorded in bookings.payment_transactions.
+      const reversalId = await lookupHyperpayUniqueId(
+        SUPABASE_URL, svc, id, row.group_id, body.is_membership === true,
+      );
+      if (!reversalId) return json({ error: "No reversible payment found" }, 409);
 
-      if (isHyperpay) {
-        reversalId = await lookupHyperpayUniqueId(
-          SUPABASE_URL, svc, id, row.group_id, body.is_membership === true,
-        );
-        if (!reversalId) return json({ error: "No reversible payment found" }, 409);
-
-        // RV voids the ORIGINAL payment in full — there is no partial reverse.
-        // That is correct for a concert group, where one payment covered every
-        // seat and refundAmount is already the group total.
-        const rev = await reversePayment(reversalId, hyperpayCfg());
-        if (!rev.ok) {
-          console.log(`booking-action: reverse declined id=${id} uid=${reversalId} code=${rev.code} desc=${rev.description}`);
-          return json({ error: "Refund declined", description: rev.description }, 409);
-        }
-      } else {
-        if (!referenceId) return json({ error: "No refundable payment found" }, 409);
-
-        const rv = await refundPayment({
-          referenceId,
-          amountIqd: refundAmount,
-          reason: buildRefundReason({
-            kind: body.is_membership ? "membership" : "booking",
-            referenceId,
-            actorRole,
-            amountIqd: refundAmount,
-          }),
-        }, cfg());
-        if (!rv.ok) {
-          console.log(`booking-action: refund declined id=${id} ref=${referenceId} desc=${rv.description}`);
-          return json({ error: "Refund declined", description: rv.description }, 409);
-        }
+      // RV voids the ORIGINAL payment in full — there is no partial reverse.
+      // That is correct for a concert group, where one payment covered every
+      // seat and refundAmount is already the group total.
+      const rev = await reversePayment(reversalId, hyperpayCfg());
+      if (!rev.ok) {
+        console.log(`booking-action: reverse declined id=${id} uid=${reversalId} code=${rev.code} desc=${rev.description}`);
+        return json({ error: "Refund declined", description: rev.description }, 409);
       }
 
       // Money refunded — cancel + mark refunded. Concerts patch the whole group.
@@ -176,8 +145,7 @@ Deno.serve(async (req: Request) => {
       } catch (patchErr) {
         // The money is already back with the customer but the row didn't
         // update. Surface a distinct, loud signal for manual reconciliation —
-        // a plain retry would submit a SECOND refund/reversal. Gateway-
-        // agnostic on purpose: both paths land here.
+        // a plain retry would submit a SECOND reversal.
         console.error(`booking-action: RECONCILE — refund accepted but cancel PATCH failed id=${id} target=${patchTarget}:`, patchErr);
         return json({ error: "Payment refunded but booking update failed — needs reconciliation", reconcile: true }, 500);
       }
@@ -187,17 +155,9 @@ Deno.serve(async (req: Request) => {
         await notifyMembershipRefund(SUPABASE_URL, SUPABASE_ANON_KEY, id);
       }
 
-      // Mark the Wayl webhook_logs row so the admin Transactions feed agrees.
-      // HyperPay has no webhook_logs row — get-transactions reads those from
-      // payment_transactions instead — so this is Wayl-only.
-      if (!isHyperpay && referenceId) {
-        await markWebhookRefunded(SUPABASE_URL, svc, referenceId);
-      }
-
       console.log(
         `booking-action: refund+cancel ${table} id=${id} by=${uid} ` +
-        `gateway=${isHyperpay ? "hyperpay" : "wayl"} ` +
-        `ref=${isHyperpay ? reversalId : referenceId} amount=${refundAmount}`,
+        `uid=${reversalId} amount=${refundAmount}`,
       );
       return json({ success: true, status: "cancelled", refunded: true }, 200);
     }
@@ -218,9 +178,9 @@ Deno.serve(async (req: Request) => {
 
 /**
  * Mirrors bookings.is_merchant_staff_of() OR public.is_admin(), for a
- * service-role caller. Returns WHICH role authorized the call (null = neither)
- * so the generated Wayl refund reason can name the actor. Admin wins when the
- * caller happens to be both.
+ * service-role caller. Returns WHICH role authorized the call (null = neither),
+ * so callers can log or branch on the actor. Admin wins when the caller happens
+ * to be both.
  */
 async function resolveActorRole(
   supabaseUrl: string,
@@ -264,10 +224,9 @@ async function groupTotalIqd(
 /**
  * Find the HyperPay gateway id to reverse, from bookings.payment_transactions.
  *
- * A HyperPay reversal keys on the ACQUIRER's unique_id, not on our reference_id
- * — that is the one real difference from the Wayl refund path. verify-payment
- * (and charge-saved-card) write one row per final result; we want the newest
- * successful one.
+ * A HyperPay reversal keys on the ACQUIRER's unique_id, not on our reference_id.
+ * verify-payment (and charge-saved-card) write one row per final result; we want
+ * the newest successful one.
  *
  * A concert group is looked up by group_id because the single payment is
  * recorded against the group, not against any individual seat row.
@@ -299,27 +258,6 @@ async function lookupHyperpayUniqueId(
   } catch (e) {
     console.error("lookupHyperpayUniqueId error:", e);
     return null;
-  }
-}
-
-/**
- * Flag the Wayl webhook_logs row as refunded. Best-effort: the money is already
- * back and the Transactions feed derives refund state from payment_status too,
- * so a failure here must not fail the request.
- */
-async function markWebhookRefunded(
-  supabaseUrl: string,
-  svc: Record<string, string>,
-  referenceId: string,
-): Promise<void> {
-  try {
-    const res = await fetch(
-      `${supabaseUrl}/rest/v1/webhook_logs?body->>referenceId=eq.${encodeURIComponent(referenceId)}`,
-      { method: "PATCH", headers: { ...svc }, body: JSON.stringify({ refunded: true }) },
-    );
-    if (!res.ok) console.warn(`booking-action: webhook_logs refund flag failed (${res.status})`);
-  } catch (e) {
-    console.warn("booking-action: webhook_logs refund flag error:", e);
   }
 }
 

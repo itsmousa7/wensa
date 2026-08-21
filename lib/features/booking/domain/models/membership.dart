@@ -19,8 +19,7 @@ abstract class Membership with _$Membership {
     @Default(0) int amountIqd,
     String? paymentId,
     String? paymentStatus,
-    @Default(PaymentMethod.wayl) PaymentMethod paymentMethod,
-    String? waylCode,
+    @Default(PaymentMethod.hyperpay) PaymentMethod paymentMethod,
     @Default('') String qrToken,
     @Default(false) bool isFrozen,
     String? createdAt,
@@ -42,7 +41,6 @@ abstract class Membership with _$Membership {
     paymentMethod: PaymentMethodFromString.fromString(
       json['payment_method'] ?? '',
     ),
-    waylCode: json['wayl_code'],
     qrToken: json['qr_token'] ?? '',
     isFrozen: json['is_frozen'] ?? false,
     createdAt: json['created_at'],

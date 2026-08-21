@@ -365,8 +365,7 @@ export function extractPaymentDetails(result: HyperPayResult): PaymentDetails {
 
 // ── Payment reversal (RV) ────────────────────────────────────────────────────
 // Ported from the admin-dashboard repo, which has run this against the live
-// acquirer. This repo's copy never had RV because the app previously refunded
-// through Wayl; booking-action now needs it to reverse HyperPay bookings.
+// acquirer. booking-action uses it to reverse HyperPay bookings.
 
 /**
  * RV (reverse/void) request params for an original payment's unique id.

@@ -28,7 +28,7 @@ Full customer-facing booking system for the Wensa Flutter app, covering 5 venue/
 | File | Purpose |
 |------|---------|
 | `lib/features/booking/presentation/providers/availability_provider.dart` | Courts, slots, farm shifts, tiers, seats, seating options, membership plans |
-| `lib/features/booking/presentation/providers/booking_submit_provider.dart` | Freezed state machine; calls `create-booking` edge function; opens Wayl payment URL |
+| `lib/features/booking/presentation/providers/booking_submit_provider.dart` | Freezed state machine; calls `create-booking` edge function; opens the HyperPay checkout |
 | `lib/features/booking/presentation/providers/hold_provider.dart` | 1-second countdown timer; disposes cleanly on widget exit |
 | `lib/features/booking/presentation/providers/membership_submit_provider.dart` | Create / freeze / resume membership |
 

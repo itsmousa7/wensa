@@ -17,6 +17,7 @@ import 'package:future_riverpod/features/bookings_history/presentation/providers
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/ticket_status_badge.dart';
 import 'package:future_riverpod/features/bookings_history/presentation/widgets/ticket_visual_card.dart';
 import 'package:future_riverpod/features/events/presentation/providers/event_details_provider.dart';
+import 'package:future_riverpod/features/hyperpay_payment/presentation/domain/merchant_txn_id.dart';
 import 'package:future_riverpod/features/places/presentation/providers/place_details_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -283,6 +284,20 @@ class _BookingDetailBody extends ConsumerWidget {
       ...extraCells,
     ];
 
+    // Mirrors create-booking's merchantTransactionId: venue-seat bookings pay
+    // as a group (`booking-venue-{group_id}`), everything else per booking.
+    // Cash bookings never reach the gateway, so they have no transaction id.
+    final isGroup = booking.category == BookingCategory.venueSeat;
+    final groupId = booking.groupId ?? '';
+    final transactionId =
+        booking.paymentMethod == PaymentMethod.cash ||
+            (isGroup && groupId.isEmpty)
+        ? null
+        : merchantTxnFallback(
+            kind: isGroup ? 'concert_group' : 'booking',
+            id: isGroup ? groupId : booking.id,
+          );
+
     return _TicketScreen(
       qrToken: booking.qrToken,
       displayName: name,
@@ -290,7 +305,7 @@ class _BookingDetailBody extends ConsumerWidget {
       buildStatusBadge: () =>
           TicketStatusBadge.booking(status: booking.status, isArabic: isArabic),
       cells: cells,
-      waylCode: booking.waylCode,
+      transactionId: transactionId,
     );
   }
 }
@@ -404,7 +419,9 @@ class _MembershipDetailBody extends ConsumerWidget {
         awaitingActivation: notYetActivated,
       ),
       cells: cells,
-      waylCode: membership.waylCode,
+      transactionId: membership.paymentMethod == PaymentMethod.cash
+          ? null
+          : merchantTxnFallback(kind: 'membership', id: membership.id),
     );
   }
 }
@@ -420,7 +437,7 @@ class _TicketScreen extends StatefulWidget {
     required this.isArabic,
     required this.buildStatusBadge,
     required this.cells,
-    this.waylCode,
+    this.transactionId,
   });
 
   final String qrToken;
@@ -428,7 +445,7 @@ class _TicketScreen extends StatefulWidget {
   final bool isArabic;
   final Widget Function() buildStatusBadge;
   final List<TicketInfoCell> cells;
-  final String? waylCode;
+  final String? transactionId;
 
   @override
   State<_TicketScreen> createState() => _TicketScreenState();
@@ -451,7 +468,6 @@ class _TicketScreenState extends State<_TicketScreen> {
           isArabic: widget.isArabic,
           statusBadge: widget.buildStatusBadge(),
           cells: widget.cells,
-          waylCode: widget.waylCode,
         ),
         isAr: widget.isArabic,
         delay: const Duration(milliseconds: 300),
@@ -494,7 +510,7 @@ class _TicketScreenState extends State<_TicketScreen> {
             isArabic: widget.isArabic,
             statusBadge: widget.buildStatusBadge(),
             cells: widget.cells,
-            waylCode: widget.waylCode,
+            transactionId: widget.transactionId,
           ),
           const SizedBox(height: 20),
           SizedBox(

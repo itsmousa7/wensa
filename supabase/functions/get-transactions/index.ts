@@ -203,9 +203,11 @@ Deno.serve(async (req: Request) => {
           referenceId: b.payment_id ?? "",
           total: b.amount_iqd ?? 0,
           paymentStatus: isFree ? "Free" : "Paid",
-          paymentMethod: isFree ? "—" : b.payment_method === "cash" ? "Cash" : hp ? "HyperPay" : "Wayl",
+          paymentMethod: isFree ? "—" : b.payment_method === "cash" ? "Cash" : hp ? "HyperPay" : "E-Payment",
           customer: { name: userNameMap[b.user_id] ?? (b.user_id ?? "").slice(0, 8).toUpperCase(), phone: userPhoneMap[b.user_id] ?? "" },
           items: [{ label: b.category ?? "" }],
+          // `wayl_code` is a retired column kept only so pre-HyperPay rows still
+          // show the reference their money was collected under.
           code: hp?.unique_id ?? b.wayl_code ?? "—",
           ...(hp ? {
             uniqueId: hp.unique_id ?? undefined,
@@ -238,9 +240,11 @@ Deno.serve(async (req: Request) => {
           referenceId: m.payment_id ?? "",
           total: m.amount_iqd ?? 0,
           paymentStatus: isFree ? "Free" : "Paid",
-          paymentMethod: isFree ? "—" : m.payment_method === "cash" ? "Cash" : hp ? "HyperPay" : "Wayl",
+          paymentMethod: isFree ? "—" : m.payment_method === "cash" ? "Cash" : hp ? "HyperPay" : "E-Payment",
           customer: { name: userNameMap[m.user_id] ?? (m.user_id ?? "").slice(0, 8).toUpperCase(), phone: userPhoneMap[m.user_id] ?? "" },
           items: [{ label: "membership" }],
+          // `wayl_code` is a retired column kept only so pre-HyperPay rows still
+          // show the reference their money was collected under.
           code: hp?.unique_id ?? m.wayl_code ?? "—",
           ...(hp ? {
             uniqueId: hp.unique_id ?? undefined,

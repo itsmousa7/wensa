@@ -32,7 +32,7 @@ class TicketVisualCard extends StatefulWidget {
     required this.isArabic,
     required this.statusBadge,
     required this.cells,
-    this.waylCode,
+    this.transactionId,
     this.shareMode = false,
   });
 
@@ -41,7 +41,11 @@ class TicketVisualCard extends StatefulWidget {
   final bool isArabic;
   final Widget statusBadge;
   final List<TicketInfoCell> cells;
-  final String? waylCode;
+
+  /// HyperPay merchantTransactionId — the reference support asks for. Shown
+  /// only on the live card: it's a copy-to-clipboard affordance, so it would
+  /// be dead weight in the shared image.
+  final String? transactionId;
   final bool shareMode;
 
   @override
@@ -103,19 +107,21 @@ class _TicketVisualCardState extends State<TicketVisualCard> {
                     widget.statusBadge,
                     const SizedBox(height: 20),
                     _InfoGrid(cells: widget.cells),
-                    if (widget.waylCode != null &&
-                        widget.waylCode!.isNotEmpty) ...[
+                    if (!widget.shareMode &&
+                        widget.transactionId != null &&
+                        widget.transactionId!.isNotEmpty) ...[
                       const SizedBox(height: 16),
-                      if (widget.shareMode)
-                        _CodePill(
-                          code: widget.waylCode!,
-                          isArabic: widget.isArabic,
-                        )
-                      else
-                        _CodeFieldRow(
-                          code: widget.waylCode!,
-                          isArabic: widget.isArabic,
-                        ),
+                      _GlassFieldRow(
+                        label: widget.isArabic
+                            ? 'رقم العملية'
+                            : 'Transaction ID',
+                        value: widget.transactionId!,
+                        isArabic: widget.isArabic,
+                        // 32-char ids don't fit a capsule on one line; a
+                        // rounded rect wraps cleanly to two.
+                        capsule: false,
+                        compactValue: true,
+                      ),
                     ],
                   ],
                 ),
@@ -187,7 +193,6 @@ class ShareableTicketVisualCard extends StatelessWidget {
     required this.isArabic,
     required this.statusBadge,
     required this.cells,
-    this.waylCode,
   });
 
   final String qrToken;
@@ -195,7 +200,6 @@ class ShareableTicketVisualCard extends StatelessWidget {
   final bool isArabic;
   final Widget statusBadge;
   final List<TicketInfoCell> cells;
-  final String? waylCode;
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +219,6 @@ class ShareableTicketVisualCard extends StatelessWidget {
             isArabic: isArabic,
             statusBadge: statusBadge,
             cells: cells,
-            waylCode: waylCode,
             shareMode: true,
           ),
         ],
@@ -292,20 +295,42 @@ class _InfoGrid extends StatelessWidget {
   }
 }
 
-class _CodeFieldRow extends StatelessWidget {
-  const _CodeFieldRow({required this.code, required this.isArabic});
-  final String code;
+/// A copyable field on the ticket (Code, Transaction ID).
+///
+/// On iOS 26+ the pill itself is a native Liquid Glass container and the copy
+/// button is a native glass button. Everywhere else (Android, iOS < 26, where
+/// `LiquidGlassContainer` renders nothing at all) it falls back to the
+/// hand-rolled frosted gradient this started as.
+class _GlassFieldRow extends StatelessWidget {
+  const _GlassFieldRow({
+    required this.label,
+    required this.value,
+    required this.isArabic,
+    this.capsule = true,
+    this.compactValue = false,
+  });
+
+  final String label;
+  final String value;
   final bool isArabic;
+
+  /// Capsule for short values; a rounded rect for ones that wrap.
+  final bool capsule;
+
+  /// Smaller, tighter value type so a long id fits the card width.
+  final bool compactValue;
+
+  static const double _kRectRadius = 22.0;
 
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
     final borderColor = cs.onSurface.withValues(alpha: 0.18);
-    final labelColor = cs.primary;
 
     void onCopy() {
-      Clipboard.setData(ClipboardData(text: code));
+      Clipboard.setData(ClipboardData(text: value));
+      HapticFeedback.lightImpact();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(isArabic ? 'تم النسخ' : 'Copied'),
@@ -346,45 +371,73 @@ class _CodeFieldRow extends StatelessWidget {
 
     final textColumn = Expanded(
       child: Column(
-        crossAxisAlignment:
-            isArabic ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isArabic
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            isArabic ? 'الرمز' : 'Code',
+            label,
             style: tt.labelSmall?.copyWith(
-              color: labelColor,
+              color: cs.primary,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.3,
             ),
-            textDirection:
-                isArabic ? TextDirection.rtl : TextDirection.ltr,
+            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
           ),
           const SizedBox(height: 3),
           Text(
-            code,
-            style: tt.titleSmall?.copyWith(
-              color: cs.onSurface,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
-            textDirection:
-                isArabic ? TextDirection.rtl : TextDirection.ltr,
+            value,
+            // Values here are Latin/numeric references. Force LTR so the
+            // Arabic layout doesn't reorder them.
+            textDirection: TextDirection.ltr,
+            textAlign: isArabic ? TextAlign.end : TextAlign.start,
+            maxLines: 2,
+            style: compactValue
+                ? tt.bodySmall?.copyWith(
+                    color: cs.onSurface,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  )
+                : tt.titleSmall?.copyWith(
+                    color: cs.onSurface,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
           ),
         ],
       ),
     );
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     // Force LTR on the Row so the explicit child order is visually respected
     // regardless of the app's text direction (Arabic RTL would otherwise flip it).
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: isArabic
+            ? [copyButton, const SizedBox(width: 12), textColumn]
+            : [textColumn, const SizedBox(width: 12), copyButton],
+      ),
+    );
+
+    final Widget field;
+    if (PlatformVersion.supportsLiquidGlass) {
+      field = LiquidGlassContainer(
+        config: LiquidGlassConfig(
+          shape: capsule
+              ? CNGlassEffectShape.capsule
+              : CNGlassEffectShape.rect,
+          cornerRadius: capsule ? null : _kRectRadius,
+        ),
+        child: content,
+      );
+    } else {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final radius = BorderRadius.circular(capsule ? 999 : _kRectRadius);
+      field = Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: radius,
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -410,58 +463,11 @@ class _CodeFieldRow extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
-          children: isArabic
-              ? [copyButton, const SizedBox(width: 12), textColumn]
-              : [textColumn, const SizedBox(width: 12), copyButton],
-        ),
-      ),
-    );
-  }
-}
+        child: content,
+      );
+    }
 
-class _CodePill extends StatelessWidget {
-  const _CodePill({required this.code, required this.isArabic});
-  final String code;
-  final bool isArabic;
-
-  @override
-  Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    final cs = Theme.of(context).colorScheme;
-    final borderColor = cs.onSurface.withValues(alpha: 0.18);
-    final labelColor = cs.onSurface.withValues(alpha: 0.55);
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 8, 18, 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: borderColor, width: 1.2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            isArabic ? 'الرمز' : 'Code',
-            style: tt.labelMedium?.copyWith(
-              color: labelColor,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            code,
-            style: tt.bodyMedium?.copyWith(
-              color: cs.onSurface,
-              fontWeight: FontWeight.w600,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
+    return Directionality(textDirection: TextDirection.ltr, child: field);
   }
 }
 

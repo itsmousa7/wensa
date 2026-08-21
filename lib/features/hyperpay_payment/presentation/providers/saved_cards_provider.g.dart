@@ -9,17 +9,23 @@ part of 'saved_cards_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// The signed-in user's saved HyperPay cards (newest first). RLS scopes the
-/// select/delete to the caller; inserts happen server-side (verify-payment).
+/// select to the caller; inserts happen server-side (verify-payment) and
+/// removal goes through the hyperpay-deregister-tokens edge function, which
+/// revokes the token at the gateway before deleting the row.
 
 @ProviderFor(SavedCards)
 final savedCardsProvider = SavedCardsProvider._();
 
 /// The signed-in user's saved HyperPay cards (newest first). RLS scopes the
-/// select/delete to the caller; inserts happen server-side (verify-payment).
+/// select to the caller; inserts happen server-side (verify-payment) and
+/// removal goes through the hyperpay-deregister-tokens edge function, which
+/// revokes the token at the gateway before deleting the row.
 final class SavedCardsProvider
     extends $AsyncNotifierProvider<SavedCards, List<SavedCard>> {
   /// The signed-in user's saved HyperPay cards (newest first). RLS scopes the
-  /// select/delete to the caller; inserts happen server-side (verify-payment).
+  /// select to the caller; inserts happen server-side (verify-payment) and
+  /// removal goes through the hyperpay-deregister-tokens edge function, which
+  /// revokes the token at the gateway before deleting the row.
   SavedCardsProvider._()
     : super(
         from: null,
@@ -39,10 +45,12 @@ final class SavedCardsProvider
   SavedCards create() => SavedCards();
 }
 
-String _$savedCardsHash() => r'08e5cc7c66dfc6d51e72be3470df5e1557ebd96d';
+String _$savedCardsHash() => r'9c6f20c17f809c6b91a0a033733d44c9de7e0db6';
 
 /// The signed-in user's saved HyperPay cards (newest first). RLS scopes the
-/// select/delete to the caller; inserts happen server-side (verify-payment).
+/// select to the caller; inserts happen server-side (verify-payment) and
+/// removal goes through the hyperpay-deregister-tokens edge function, which
+/// revokes the token at the gateway before deleting the row.
 
 abstract class _$SavedCards extends $AsyncNotifier<List<SavedCard>> {
   FutureOr<List<SavedCard>> build();
