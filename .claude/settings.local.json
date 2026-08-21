@@ -82,7 +82,8 @@
       "Bash(xcodebuild -project Runner.xcodeproj -showBuildSettings)",
       "Bash(flutter config *)",
       "Bash(vercel --version)",
-      "Bash(vercel *)"
+      "Bash(vercel *)",
+      "Bash(xcodebuild -showBuildSettings -workspace Runner.xcworkspace -scheme Runner -configuration Release)"
     ]
   }
 }
